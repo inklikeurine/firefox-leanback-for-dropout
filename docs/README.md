@@ -9,5 +9,6 @@
 | [development.md](./development.md) | You're running it locally, debugging a frame, running the test checklist, handing verification to the HTPC shell lead, or cutting a release. |
 | [htpc-integration.md](./htpc-integration.md) | You're working on the HTPC shell's Dropout web app or `tv-nav` and need to know what moves where. |
 
-The product spec and guidance for AI coding agents lives one level up in
-[`../agents.md`](../agents.md).
+The product spec is [spec.md](./spec.md) in this folder. The rules AI coding
+agents follow for every extension in this repository are in the root
+[`AGENTS.md`](../../AGENTS.md).

@@ -6,7 +6,7 @@ Enter plays, Escape goes back, and media keys control the player. Five keys
 are enough — no mouse.
 
 **Status: specification — no code yet.** The product spec is in
-[agents.md](./agents.md); the design, site research, key map and test plan
+[docs/spec.md](./docs/spec.md); the design, site research, key map and test plan
 are in [docs/](./docs/). This README describes the extension as specified.
 
 **Version:** 0.1.0 (planned) · **Manifest:** v2 · **Minimum Firefox:** 140
@@ -105,7 +105,7 @@ or `<all_urls>`.
 
 | File | Contents |
 | --- | --- |
-| [agents.md](./agents.md) | Product spec: goals, non-goals, functionality, settings, testing, release checklist |
+| [docs/spec.md](./docs/spec.md) | Product spec: goals, non-goals, functionality, settings, testing, release checklist |
 | [docs/architecture.md](./docs/architecture.md) | Components, frame relay, spatial navigation, theater layout, messages, draft manifest and rules file |
 | [docs/site-notes.md](./docs/site-notes.md) | How watch.dropout.tv is built: hosts, routes, selectors — verified vs. still to check |
 | [docs/keymap.md](./docs/keymap.md) | Keys → actions → behaviour per context; what the W1 remote's buttons do |
@@ -115,4 +115,4 @@ or `<all_urls>`.
 
 ## License
 
-Public domain under [The Unlicense](../LICENSE).
+Public domain under [The Unlicense](../UNLICENSE).
