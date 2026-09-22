@@ -1,0 +1,73 @@
+{
+  "site": "dropout",
+  "hosts": ["watch.dropout.tv"],
+  "browseUrl": "https://watch.dropout.tv/browse",
+  "searchUrl": "https://watch.dropout.tv/search",
+  "routes": [
+    { "kind": "browse", "path": "^/browse/?$" },
+    { "kind": "grid", "path": "^/(series|collections)(/|$)" },
+    { "kind": "video", "path": "/videos/[^/]+/?$" },
+    { "kind": "search", "path": "^/search(/|$)" },
+    { "kind": "other", "path": "^/(login|logout|register|signup|checkout|contact|privacy|terms|help|settings|purchases|forgot|reset|gift|redeem|profile|account|activate|billing)(/|$)" },
+    { "kind": "series", "path": "^/[^/]+(/season:\\d+)?/?$" }
+  ],
+  "common": {
+    "header": ".site-header",
+    "headerLinks": ".site-header a[href]",
+    "focusable": [".site-header a[href]"],
+    "modals": [".reveal-modal.open", "[id^='ketch-']"],
+    "modalClose": [".close-reveal-modal", "[aria-label='Close']"],
+    "banner": ".promo-banner .js-banner-close",
+    "hoverSuppress": [".tooltip"]
+  },
+  "pages": {
+    "browse": {
+      "rows": ".horizontal-row-container, .carousel-layout-container",
+      "rowItem": ".horizontal-row-item, .featured-carousel-slide",
+      "target": "a[href]",
+      "scrollNext": ".carousel-arrow--right",
+      "scrollPrev": ".carousel-arrow--left",
+      "initialFocus": ".horizontal-row-container .horizontal-row-item a[href]"
+    },
+    "grid": {
+      "tile": ".browse-item-card",
+      "target": "a.browse-item-link",
+      "loadMore": "a.js-load-more-link, [data-load-more]",
+      "initialFocus": ".browse-item-card a.browse-item-link"
+    },
+    "series": {
+      "focusable": ["a.custom-btn-action-trailer", "select.js-switch-season", "select.js-sort-items"],
+      "tile": ".browse-item-card",
+      "target": "a.browse-item-link",
+      "selectStep": ["select.js-switch-season", "select.js-sort-items"],
+      "loadMore": "a.js-load-more-link, [data-load-more]",
+      "episodeLinks": ".episode-container .browse-item-card a.browse-item-link",
+      "initialFocus": ".episode-container a.browse-item-link"
+    },
+    "video": {
+      "theaterRoot": "#watch-player",
+      "playerMount": "#watch-player .embed",
+      "playerFrame": "#watch-player iframe[src*='embed.vhx.tv']",
+      "unauthorized": "#watch-unauthorized",
+      "seriesLink": ".series-title a.context-link",
+      "focusable": ["#watch-info a[href]", "[data-similar-items-site] a[href]"],
+      "tile": ".browse-item-card",
+      "target": "a.browse-item-link",
+      "theaterHide": [".site-header", ".promo-banner"]
+    },
+    "search": {
+      "focusable": ["input[type='search'], input[type='text']"],
+      "tile": ".browse-item-card",
+      "target": "a.browse-item-link",
+      "initialFocus": "input[type='search'], input[type='text']"
+    },
+    "other": {
+      "focusable": ["a[href]", "button", "input", "select", "textarea"]
+    }
+  },
+  "player": {
+    "video": "video",
+    "captionsButton": "button[aria-label*='aption'], button[aria-label*='ubtitle'], .vp-cc-button, [data-cc-button]",
+    "upNextOverlay": "[class*='up-next'], [class*='upnext'], [data-testid*='up-next']"
+  }
+}

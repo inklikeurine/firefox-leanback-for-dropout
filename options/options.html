@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>10-Foot Dropout settings</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <h1>10-Foot Dropout</h1>
+      <p class="lead">TV-style navigation for watch.dropout.tv. Changes are saved as you make them.</p>
+
+      <form id="form">
+        <fieldset>
+          <legend>General</legend>
+          <label class="row">
+            <input type="checkbox" id="enabled">
+            <span>Turn on for Dropout (the toolbar button toggles this too)</span>
+          </label>
+          <label class="row">
+            <input type="checkbox" id="skipMarketingSite">
+            <span>Forward www.dropout.tv to the Browse page</span>
+          </label>
+          <label class="row">
+            <input type="checkbox" id="hintBar">
+            <span>Show the hint bar (the <kbd>i</kbd> key toggles it while browsing)</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Focus ring</legend>
+          <div class="row">
+            <label for="ringColor">Colour</label>
+            <input type="color" id="ringColor">
+            <input type="text" id="ringColorText" size="8" pattern="#[0-9a-fA-F]{6}" aria-label="Colour as hex">
+          </div>
+          <div class="row">
+            <label for="ringWidth">Width (px)</label>
+            <input type="number" id="ringWidth" min="2" max="12" step="1">
+          </div>
+          <label class="row">
+            <input type="checkbox" id="ringScale">
+            <span>Slightly enlarge the focused tile (off when the system asks for reduced motion)</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Player</legend>
+          <div class="row">
+            <label for="theater">Theater layout</label>
+            <select id="theater">
+              <option value="auto">On every video page</option>
+              <option value="manual">When Enter is pressed on the player</option>
+              <option value="off">Never</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="seekStep">Seek step (seconds)</label>
+            <input type="number" id="seekStep" min="1" max="120" step="1">
+          </div>
+          <label class="row">
+            <input type="checkbox" id="autoplayNext">
+            <span>Play the next episode when one ends</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Leaving</legend>
+          <div class="row">
+            <label for="exitHook">Back on the Browse page</label>
+            <select id="exitHook">
+              <option value="none">Does nothing</option>
+              <option value="close-tab">Closes this tab (kiosk setups)</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" id="reset">Reset to defaults</button>
+          <span id="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <p class="note">
+        A keyboard shortcut for turning it on and off can be set in
+        <code>about:addons</code> → the gear menu → Manage Extension Shortcuts.
+      </p>
+    </main>
+    <script src="../lib/settings.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

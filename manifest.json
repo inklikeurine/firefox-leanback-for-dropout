@@ -1,0 +1,70 @@
+{
+  "manifest_version": 2,
+  "name": "10-Foot Dropout",
+  "version": "0.1.0",
+  "description": "Drive watch.dropout.tv with arrow keys, Enter and Escape: a big focus ring, a theater player layout and media-key control for the couch",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "10-foot-dropout@inklikeurine.dev",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "*://watch.dropout.tv/*",
+    "*://embed.vhx.tv/*",
+    "*://www.dropout.tv/*"
+  ],
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "background": {
+    "scripts": ["lib/settings.js", "background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://watch.dropout.tv/*"],
+      "js": [
+        "lib/settings.js",
+        "nav/keymap.js",
+        "nav/site-rules.js",
+        "nav/spatial.js",
+        "nav/focus-ring.js",
+        "content/page.js"
+      ],
+      "css": ["content/page.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://embed.vhx.tv/*"],
+      "js": ["lib/settings.js", "nav/keymap.js", "content/player.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://www.dropout.tv/", "*://www.dropout.tv/?*"],
+      "js": ["lib/settings.js", "content/marketing.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_action": {
+    "default_title": "10-Foot Dropout: click to turn TV navigation on or off"
+  },
+  "commands": {
+    "toggle-tv-mode": {
+      "description": "Turn 10-Foot Dropout on or off"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
+}
