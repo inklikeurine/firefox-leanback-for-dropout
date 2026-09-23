@@ -7,6 +7,7 @@
   const RING_CLASS = "tenfoot-ring";
   const HINTS_CLASS = "tenfoot-hints";
   const SCALED_CLASS = "tenfoot-scaled";
+  const SCALE = 1.04; // must match .tenfoot-scaled in content/page.css
   const SETTLE_MS = 600; // keep following a target while smooth scroll settles
 
   function reducedMotion(win) {
@@ -216,5 +217,17 @@
     });
   }
 
-  globalThis.TenfootFocusRing = Object.freeze({ createRing, createHintBar, RING_CLASS, HINTS_CLASS, SCALED_CLASS });
+  // The element's rect as it would be without the focus scale, so geometry
+  // does not see the focused tile as slightly bigger than its neighbours.
+  function unscaledRect(el) {
+    const r = el.getBoundingClientRect();
+    if (!el.classList || !el.classList.contains(SCALED_CLASS)) return r;
+    const w = r.width / SCALE;
+    const h = r.height / SCALE;
+    const left = r.left + (r.width - w) / 2;
+    const top = r.top + (r.height - h) / 2;
+    return { left, top, width: w, height: h, right: left + w, bottom: top + h, x: left, y: top };
+  }
+
+  globalThis.TenfootFocusRing = Object.freeze({ createRing, createHintBar, unscaledRect, RING_CLASS, HINTS_CLASS, SCALED_CLASS, SCALE });
 })();

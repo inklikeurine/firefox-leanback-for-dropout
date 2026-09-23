@@ -334,8 +334,7 @@
         if (!target && (dir === "left" || dir === "right")) return true; // row ends: no wrap
       }
       if (!target) {
-        const from = cur.getBoundingClientRect();
-        target = Spatial.pick(dir, from, candidates.filter((c) => c.el !== cur));
+        target = Spatial.pick(dir, Ring.unscaledRect(cur), candidates.filter((c) => c.el !== cur));
       }
     } else {
       const vp = viewport();
@@ -608,7 +607,7 @@
     const mount = qs(state.page.playerMount);
     const { candidates } = collect();
     const others = candidates.filter((c) => c.el !== mount);
-    const t = mount ? Spatial.pick("down", mount.getBoundingClientRect(), others) : others[0];
+    const t = mount ? Spatial.pick("down", Ring.unscaledRect(mount), others) : others[0];
     if (t) focusEl(t.el);
     else if (mount) focusEl(mount);
     return true;

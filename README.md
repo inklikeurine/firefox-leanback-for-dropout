@@ -10,7 +10,7 @@ Unofficial. Not affiliated with Dropout or Vimeo. You need a Dropout
 subscription exactly as on the website — the extension changes how you
 navigate, not what you can watch.
 
-**Version:** 0.1.0 · **Manifest:** v2 · **Minimum Firefox:** 140 (desktop)
+**Version:** 0.1.1 · **Manifest:** v2 · **Minimum Firefox:** 140 (desktop)
 
 ## What it does
 

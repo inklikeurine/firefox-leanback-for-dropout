@@ -8,6 +8,7 @@
 
 (function () {
   const EDGE_TOLERANCE = 2; // px a leading edge may overlap the trailing edge
+  const CENTRE_TOLERANCE = 4; // px a centre must be past the current centre (loose pass)
 
   function centre(r) {
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
@@ -27,16 +28,16 @@
     const gapY = Math.max(0, r.top - from.bottom, from.top - r.bottom);
     switch (direction) {
       case "up":
-        if (strict ? r.bottom > from.top + EDGE_TOLERANCE : rc.y >= fc.y) return null;
+        if (strict ? r.bottom > from.top + EDGE_TOLERANCE : rc.y > fc.y - CENTRE_TOLERANCE) return null;
         return { axis: Math.max(0, from.top - r.bottom), gap: gapX, centre: Math.abs(rc.x - fc.x), overlap: gapX === 0 };
       case "down":
-        if (strict ? r.top < from.bottom - EDGE_TOLERANCE : rc.y <= fc.y) return null;
+        if (strict ? r.top < from.bottom - EDGE_TOLERANCE : rc.y < fc.y + CENTRE_TOLERANCE) return null;
         return { axis: Math.max(0, r.top - from.bottom), gap: gapX, centre: Math.abs(rc.x - fc.x), overlap: gapX === 0 };
       case "left":
-        if (strict ? r.right > from.left + EDGE_TOLERANCE : rc.x >= fc.x) return null;
+        if (strict ? r.right > from.left + EDGE_TOLERANCE : rc.x > fc.x - CENTRE_TOLERANCE) return null;
         return { axis: Math.max(0, from.left - r.right), gap: gapY, centre: Math.abs(rc.y - fc.y), overlap: gapY === 0 };
       case "right":
-        if (strict ? r.left < from.right - EDGE_TOLERANCE : rc.x <= fc.x) return null;
+        if (strict ? r.left < from.right - EDGE_TOLERANCE : rc.x < fc.x + CENTRE_TOLERANCE) return null;
         return { axis: Math.max(0, r.left - from.right), gap: gapY, centre: Math.abs(rc.y - fc.y), overlap: gapY === 0 };
       default:
         return null;
@@ -223,5 +224,5 @@
     return { candidates, rows };
   }
 
-  globalThis.TenfootSpatial = Object.freeze({ pick, rowPick, collect, isVisible, centre, EDGE_TOLERANCE });
+  globalThis.TenfootSpatial = Object.freeze({ pick, rowPick, collect, isVisible, centre, EDGE_TOLERANCE, CENTRE_TOLERANCE });
 })();

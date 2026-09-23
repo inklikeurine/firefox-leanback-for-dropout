@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "10-Foot Dropout",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drive watch.dropout.tv with arrow keys, Enter and Escape: a big focus ring, a theater player layout and media-key control for the couch",
   "browser_specific_settings": {
     "gecko": {
