@@ -1,5 +1,5 @@
 /* global browser, chrome */
-// 10-Foot Dropout — www.dropout.tv, site root only, at document_start.
+// Leanback for Dropout — www.dropout.tv, site root only, at document_start.
 // The marketing home page is useless on a TV; with the "skip marketing site"
 // setting on (default) it forwards straight to the app's Browse page.
 

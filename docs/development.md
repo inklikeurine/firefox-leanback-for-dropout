@@ -15,20 +15,20 @@ From the repository root:
 
 ```sh
 # fresh profile each time
-web-ext run --source-dir ./dropout-tv-mode --start-url https://watch.dropout.tv/browse
+web-ext run --source-dir ./leanback-for-dropout --start-url https://watch.dropout.tv/browse
 
 # persistent profile so the Dropout login survives restarts
-web-ext run --source-dir ./dropout-tv-mode \
-  --firefox-profile dropout-tv-mode-dev --keep-profile-changes \
+web-ext run --source-dir ./leanback-for-dropout \
+  --firefox-profile leanback-for-dropout-dev --keep-profile-changes \
   --start-url https://watch.dropout.tv/browse
 
 # kiosk, as the HTPC shell will run it (Escape does not leave kiosk; use the exit hook or kill the process)
-web-ext run --source-dir ./dropout-tv-mode --firefox-profile dropout-tv-mode-dev --keep-profile-changes \
+web-ext run --source-dir ./leanback-for-dropout --firefox-profile leanback-for-dropout-dev --keep-profile-changes \
   --start-url https://watch.dropout.tv/browse --args=--kiosk
 ```
 
 Without `web-ext`: `about:debugging#/runtime/this-firefox` → **Load Temporary
-Add-on…** → `dropout-tv-mode/manifest.json`.
+Add-on…** → `leanback-for-dropout/manifest.json`.
 
 Inside the HTPC shell dev container the same commands run as
 `dev/hx web-ext run …` from `~/src/htpc-shell` with `--source-dir` pointing at
@@ -90,13 +90,13 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 13 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on); hint bar names it |
 | 14 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
 | 15 | Fresh profile, first visit | Cookie dialog is reachable by arrows and closable by Enter |
-| 16 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox; click again restores TV Mode |
+| 16 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox; click again restores it |
 | 17 | Change ring colour in options, reload | New colour |
 | 18 | Set exit hook to *close this tab*, go to `/browse`, Escape | Tab closes (in kiosk: Firefox exits) |
 | 19 | `/search`: type a query | Letters reach the input; Escape leaves the field |
 | 20 | Wiggle the mouse over tiles on `/browse` | The ring does not move; no hover tooltips appear |
 | 21 | Press the keyboard's *Menu* key (`ContextMenu`) on `/browse` | Header gets focus; no context menu |
-| 22 | `web-ext lint --source-dir ./dropout-tv-mode --warnings-as-errors` | Passes |
+| 22 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Verification hand-off
 
@@ -153,15 +153,18 @@ Time: ~10 minutes.
 1. Bump `version` in `manifest.json`; note the change in the README if user
    visible.
 2. Run the selector drift check and the manual checklist.
-3. `web-ext lint --source-dir ./dropout-tv-mode --warnings-as-errors`.
-4. `web-ext build --source-dir ./dropout-tv-mode` → `web-ext-artifacts/*.zip`.
+3. `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors`.
+4. `web-ext build --source-dir ./leanback-for-dropout` → `web-ext-artifacts/*.zip`.
 5. Submit on [addons.mozilla.org](https://addons.mozilla.org/developers/) as
    **unlisted** (self-distributed). The signed `.xpi` is what the HTPC shell's
    `policies.json` installs and what users can install permanently.
 6. Before the **first** submission, check the add-on name against Mozilla's
-   current add-on policies on trademarks. "TV Mode for Dropout" uses the
-   "X for <brand>" form that policies generally allow; the listing must say it
-   is unofficial and not affiliated with Dropout.
+   current add-on policies on trademarks. **"Leanback for Dropout" puts the brand
+   second**, which reads more like an official Dropout product than the
+   "X for <brand>" form ("Couch Mode for Dropout") that the policies most
+   clearly allow — worth settling before the name is locked, because the
+   extension ID cannot change after the first release. Either way the listing
+   and the README must say it is unofficial and not affiliated with Dropout.
 
 ## Coding conventions
 

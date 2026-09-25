@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>10-Foot Dropout settings</title>
+    <title>Leanback for Dropout settings</title>
     <link rel="stylesheet" href="options.css">
   </head>
   <body>
     <main>
-      <h1>10-Foot Dropout</h1>
+      <h1>Leanback for Dropout</h1>
       <p class="lead">TV-style navigation for watch.dropout.tv. Changes are saved as you make them.</p>
 
       <form id="form">
@@ -39,15 +39,23 @@
             <label for="ringWidth">Width (px)</label>
             <input type="number" id="ringWidth" min="2" max="12" step="1">
           </div>
-          <label class="row">
-            <input type="checkbox" id="ringScale">
-            <span>Slightly enlarge the focused tile (off when the system asks for reduced motion)</span>
-          </label>
+          <div class="row">
+            <label for="focusZoom">Enlarge selection (%)</label>
+            <input type="number" id="focusZoom" min="0" max="25" step="5">
+            <span class="hint">0 turns it off; ignored when the system asks for reduced motion</span>
+          </div>
         </fieldset>
 
         <fieldset>
           <legend>Player</legend>
           <div class="row">
+            <label>
+              Player controls
+              <select id="playerChrome">
+                <option value="leanback">Leanback's own transport bar</option>
+                <option value="site">The site's own player controls</option>
+              </select>
+            </label>
             <label for="theater">Theater layout</label>
             <select id="theater">
               <option value="auto">On every video page</option>
@@ -56,12 +64,24 @@
             </select>
           </div>
           <div class="row">
-            <label for="seekStep">Seek step (seconds)</label>
-            <input type="number" id="seekStep" min="1" max="120" step="1">
+            <label for="seekStep">Seek step</label>
+            <select id="seekStep">
+              <option value="5">5 seconds</option>
+              <option value="10">10 seconds</option>
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="120">2 minutes</option>
+              <option value="300">5 minutes</option>
+            </select>
           </div>
           <label class="row">
             <input type="checkbox" id="autoplayNext">
             <span>Play the next episode when one ends</span>
+          </label>
+          <label class="row">
+            <input type="checkbox" id="startMuted">
+            <span>Start videos muted (off by default: Dropout starts them muted because Firefox blocks autoplay with sound, and this turns the sound back on)</span>
           </label>
         </fieldset>
 

@@ -1,16 +1,16 @@
-# 10-Foot Dropout
+# Leanback for Dropout
 
 A Firefox extension that lets you drive [Dropout](https://watch.dropout.tv)
 from the couch: arrow keys move a big focus ring between shows and episodes,
 Enter plays, Escape goes back, and media keys control the player. Five keys
-are enough — no mouse. ("10-foot" is the name for interfaces you use from
-three metres away, on a TV.)
+are enough — no mouse. ("Leanback" is the industry term for an interface you
+use from the sofa rather than leaning forward at a desk.)
 
 Unofficial. Not affiliated with Dropout or Vimeo. You need a Dropout
 subscription exactly as on the website — the extension changes how you
 navigate, not what you can watch.
 
-**Version:** 0.1.1 · **Manifest:** v2 · **Minimum Firefox:** 140 (desktop)
+**Version:** 0.7.0 · **Manifest:** v2 · **Minimum Firefox:** 140 (desktop)
 
 ## What it does
 
@@ -48,7 +48,7 @@ click **Load Temporary Add-on…** and select `manifest.json` inside this folder
 The extension is removed when Firefox restarts.
 
 **With `web-ext` (for development):**
-`web-ext run --source-dir ./10-foot-dropout --start-url https://watch.dropout.tv/browse`
+`web-ext run --source-dir ./leanback-for-dropout --start-url https://watch.dropout.tv/browse`
 launches a clean Firefox profile with the extension loaded.
 
 **Permanent install:** Firefox only permanently installs signed extensions.
@@ -57,30 +57,126 @@ launches a clean Firefox profile with the extension loaded.
 (unlisted self-distribution is fine). Release-channel Firefox on a TV box
 needs the signed build; see [docs/development.md](./docs/development.md#releasing).
 
-Source: https://github.com/inklikeurine/firefox-extensions/tree/main/10-foot-dropout
+Source: https://github.com/inklikeurine/firefox-extensions/tree/main/leanback-for-dropout
+
+## Sound on autoplay
+
+Firefox blocks autoplay with sound by default, which is why Dropout starts its
+videos muted — muted is the only way the site gets them to play at all. **No
+extension can lift that.** Firefox exposes no WebExtension API for the autoplay
+permission, and the events a content script creates carry no user activation,
+so unmuting before you have pressed anything makes Firefox stop the video.
+
+Leanback asks Firefox what the profile allows
+(`navigator.getAutoplayPolicy("mediaelement")`) and unmutes straight away when
+the answer is "allowed". Otherwise it waits for your first button press, which
+is the earliest moment Firefox permits. Grant the permission and episodes start
+with sound and no press at all.
+
+Three ways to grant it — pick by how the machine is set up:
+
+**By hand, once, on a normal install.** Settings → Privacy & Security →
+Autoplay → Settings… → add `https://watch.dropout.tv` → **Allow Audio and
+Video**. Kept in that profile.
+
+**In a kiosk profile**, add to `user.js` in the profile directory:
+
+```
+user_pref("media.autoplay.default", 0);
+```
+
+`0` allows audio and video, `1` blocks audio (the Firefox default) and `5`
+blocks both. Leave `media.autoplay.blocking_policy` alone.
+
+**Across a managed machine**, in `policies.json` (`/etc/firefox/policies/` on
+Linux, or `distribution/` beside the binary):
+
+```json
+{
+  "policies": {
+    "Permissions": {
+      "Autoplay": {
+        "Allow": ["https://watch.dropout.tv"],
+        "Default": "block-audio"
+      }
+    }
+  }
+}
+```
+
+`Default` takes `allow-audio-video`, `block-audio` or `block-audio-video`. The
+example above leaves every other site blocked and allows only Dropout.
+
+**There is no command-line switch for this.** Release Firefox accepts no
+`--pref`; the setting lives in the profile or in a policy file, so a kiosk
+launcher grants it through the profile `--profile` already points at:
+
+```
+firefox --kiosk --new-instance --profile <profile-dir> https://watch.dropout.tv/browse
+```
+
+To check it took, open an episode and run
+`navigator.getAutoplayPolicy("mediaelement")` in the console on the player
+frame — `"allowed"` means Leanback will unmute from the first frame.
 
 ## Usage
 
 Open `watch.dropout.tv`. The ring is on the first tile.
 
-| Key | Does |
-| --- | --- |
-| ← ↑ → ↓ | Move the ring; on a season control, ← → switch season |
-| Enter | Open / play; in the player, play–pause |
-| Escape (or Backspace) | Close a dialog → leave the player → back one page |
-| ← → in the player | Seek −10 s / +10 s (setting) |
-| ↓ in the player | Move down to the page (series link, up next) |
-| Media keys | Play/pause, stop, next/previous episode |
-| `i` | Show/hide the hint bar; in the player, also title and time |
-| `/` | Search (needs a keyboard from there on) |
-| Menu key (`ContextMenu`, `F2`) | Jump to the site header and back |
-| Home | Go to Browse |
+**This extension is driven by a remote, not a keyboard.** Only the buttons a
+TV remote actually has are mapped, so nothing is hidden behind a letter key.
+
+| Button | Arrives as | Does |
+| --- | --- | --- |
+| ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. Nothing else, ever. In the player, ◀ ▶ move the playhead and ▼ opens the transport bar (▼ again continues to the page) |
+| OK | `Enter` | Open, play, pause; start a dropdown changing; take the "up next" offer when the site shows it |
+| back | `BrowserBack` (also `Escape`) | Cancel a dropdown → close the options panel or a dialog → leave the player → back one page |
+| menu | `ContextMenu` | Open the **options panel**: next and previous episode, the link to the show, Browse, Search, settings (which open in the page, not another tab), and turning the extension off |
+| home | `BrowserHome` | **Reserved for your TV shell — never intercepted** |
+| volume | `AudioVolume*` | Your desktop's, never intercepted |
+| media keys | `Media*` | Play/pause, stop, seek, next/previous episode, for remotes that have them |
+
+The one keyboard exception is `/`, which opens the search field — searching
+needs typing from that point anyway. Pressing it again closes search and
+returns you where you were.
+
+**The transport bar**: press ▼ while a video is playing. The bar is the
+extension's own — **play/pause · position · settings · fullscreen** — and
+◀ ▶ walk it, OK takes a control, back closes it and gives ◀ ▶ back to seeking.
+The position is shown but never selected: seeking is ◀ ▶ whenever the bar is
+not holding a button.
+
+**Settings** opens a full-height panel from the right and pauses the picture.
+It holds the player's settings and Leanback's in one list: Quality, Speed, Seek
+Step, Play Next Episode, Button Hints, Closed Captions, and **Leanback
+Settings** as a submenu. Quality, Speed and Closed Captions are the player's own
+— opening one shows what it offers, caption font, background and window
+included. ▲ ▼
+move, **▶ opens a submenu and ◀ leaves one**, OK toggles or steps a value, back
+closes. Closing it starts the picture again, unless it was already paused.
+
+**The options button** opens that panel during playback. Anywhere else it opens
+Leanback's settings directly, with Browse, Search and *Turn Leanback off* at the
+foot of the list.
+
+**Player controls** can be handed back to the site. *Player controls → the
+site's own* leaves the player's own bar alone and draws nothing over the video —
+useful for reaching something the player offers that Leanback has no equivalent
+for, and as a fallback if our bar ever breaks. Arrow navigation everywhere else
+is unaffected.
+
+**Back** goes one layer up, never "back to the previous page": the settings
+panel to the transport bar, the bar to playback, an episode to the season you
+were watching, a season to Browse.
 
 Full table: [docs/keymap.md](./docs/keymap.md).
 
-**Settings** (`about:addons` → 10-Foot Dropout → Preferences): ring colour
+**Settings** — on the menu button, under "Leanback settings", where they open
+as a panel on the page (the extension never navigates your tab away). The same
+settings are at `about:addons` → Leanback for Dropout → Preferences: ring colour
 and width · hint bar · theater layout (auto / manual / off) · seek step ·
-autoplay next · skip marketing site · what Escape does on the Browse page
+autoplay next · start videos muted · skip marketing site · what back does on
+the Browse page
 (nothing / close this tab — for kiosk setups). The toolbar button turns the
 extension on and off; a keyboard shortcut for that can be set under
 *Manage Extension Shortcuts*.
@@ -114,9 +210,15 @@ network requests of its own. The manifest declares
   depends on and how to re-check it. The rows on the Browse page and the
   inside of the player frame were written from the site's script bundles,
   not from a logged-in session; they may need a first correction.
-- Login and search need a keyboard (or a phone with the HTPC shell's companion).
-- Firefox may block autoplay with sound until you press Enter once or allow
-  autoplay for the site.
+- Login and search need a keyboard (or a phone with the HTPC shell's companion);
+  `/` opens the search field, and from there you are typing.
+- Only remote buttons are mapped, by design. If you are at a desk, the ones
+  you have are the arrow keys, Enter, Escape and the menu key — there are no
+  letter shortcuts to learn, and no feature that needs them.
+- Sound on the first frame needs a profile setting Firefox will not let an
+  extension make — see [Sound on autoplay](#sound-on-autoplay). Without it the
+  sound comes on at your first button press. "Start videos muted" turns the
+  whole thing off.
 - Firefox only. Uses the `browser.*` API; no other browser is supported.
 - Permanent installs need the AMO-signed build (release-channel Firefox
   refuses unsigned extensions) — a temporary load is enough to try it.

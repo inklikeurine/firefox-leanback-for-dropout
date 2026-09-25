@@ -1,4 +1,4 @@
-// 10-Foot Dropout — helpers over a site rules object (sites/<site>.json).
+// Leanback for Dropout — helpers over a site rules object (sites/<site>.json).
 // Pure: no DOM, no browser API. The rules file is the only place site
 // knowledge lives; this file only knows its shape.
 

@@ -1,0 +1,350 @@
+/* Leanback for Dropout — styles for the player frame (embed.vhx.tv).
+
+   The transport bar is drawn by the extension (content/transport.js), so the
+   player's own chrome stays off the screen for good and this stylesheet needs
+   no site selector: content/player.js stamps what to hide from the rules. */
+
+:root {
+  --tenfoot-ring-color: #feea3b;
+  --tenfoot-ring-width: 4px;
+  --tenfoot-edge: rgba(11, 12, 16, 0.9);
+  --tenfoot-scrim: rgba(11, 12, 16, 0.92);
+  --tenfoot-text: #ffffff;
+}
+
+/* The ring: one fixed element over the focused target. Kept for the up-next
+   offer and anything else in the frame the bar does not own. */
+.tenfoot-ring {
+  position: fixed;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 2147483647;
+  border: var(--tenfoot-ring-width) solid var(--tenfoot-ring-color);
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--tenfoot-edge), inset 0 0 0 2px var(--tenfoot-edge);
+  transition: left 150ms ease-out, top 150ms ease-out, width 150ms ease-out, height 150ms ease-out;
+  margin: 0;
+  padding: 0;
+}
+.tenfoot-ring[hidden] {
+  display: none;
+}
+
+/* Controls that must never appear on a TV: volume (always full, never muted),
+   picture-in-picture and the transcript. */
+[data-tenfoot-hide] {
+  display: none !important;
+}
+
+/* The player's own chrome — control bar, overlay play button, side dock,
+   title. We draw our own, so this never comes back. It is hidden rather than
+   removed because the settings and captions panels still ask the player's
+   menus what they hold, and a display:none subtree may never mount. */
+[data-tenfoot-bar] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+   the transport bar
+   --------------------------------------------------------------------------- */
+
+.tenfoot-transport {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  padding: 24px 40px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--tenfoot-text);
+  font: 500 20px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(to top, rgba(11, 12, 16, 0.94) 0%, rgba(11, 12, 16, 0.78) 55%, rgba(11, 12, 16, 0) 100%);
+}
+.tenfoot-transport[hidden] {
+  display: none;
+}
+
+.tenfoot-transport-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* A control on the row. The selection is stamped by transport.js, never read
+   from :focus — the page moves the focus and the highlight must not go with
+   it. */
+.tenfoot-tc {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0;
+  padding: 0;
+  border: var(--tenfoot-ring-width) solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.tenfoot-tc svg {
+  width: 30px;
+  height: 30px;
+}
+.tenfoot-tc:focus {
+  outline: none;
+}
+.tenfoot-tc[data-tenfoot-current="true"] {
+  border-color: var(--tenfoot-ring-color);
+  background: rgba(255, 255, 255, 0.22);
+}
+/* Captions on: the one control with a state worth showing at a distance. */
+.tenfoot-tc[data-tenfoot-on="true"] {
+  color: #0b0c10;
+  background: var(--tenfoot-ring-color);
+}
+.tenfoot-tc-cc {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+/* Position. Shown, never selected: ◀ ▶ seek whenever the row is not holding a
+   button, so there is nothing here to walk onto. */
+.tenfoot-scrub {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+.tenfoot-scrub-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.24);
+}
+.tenfoot-scrub-buffered,
+.tenfoot-scrub-played {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+}
+.tenfoot-scrub-buffered {
+  background: rgba(255, 255, 255, 0.32);
+}
+.tenfoot-scrub-played {
+  background: var(--tenfoot-ring-color);
+}
+.tenfoot-scrub-head {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--tenfoot-ring-color);
+  box-shadow: 0 0 0 3px var(--tenfoot-edge);
+}
+.tenfoot-scrub-time {
+  flex: 0 0 auto;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 21px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   the captions and settings panels
+   --------------------------------------------------------------------------- */
+
+.tenfoot-panel {
+  align-self: flex-end;
+  box-sizing: border-box;
+  min-width: 380px;
+  max-width: 560px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--tenfoot-scrim);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+}
+.tenfoot-panel[hidden] {
+  display: none;
+}
+.tenfoot-panel-title {
+  margin: 0 0 12px;
+  padding: 0 14px;
+  font-size: 17px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+.tenfoot-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tenfoot-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tenfoot-panel-item:focus {
+  outline: none;
+}
+.tenfoot-panel-item[data-tenfoot-current="true"] {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 var(--tenfoot-ring-width) var(--tenfoot-ring-color);
+}
+.tenfoot-panel-label {
+  flex: 1 1 auto;
+}
+.tenfoot-panel-value {
+  flex: 0 0 auto;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+.tenfoot-panel-mark {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+.tenfoot-panel-mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenfoot-ring {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   the settings panel
+
+   Full height, flown in from the right. Dropout's own font stack, so it reads
+   as part of the site rather than as something bolted on.
+   --------------------------------------------------------------------------- */
+
+.tenfoot-settings {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  width: min(460px, 42vw);
+  overflow-y: auto;
+  padding: 40px 0;
+  background: #000000;
+  color: #ffffff;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  box-shadow: -24px 0 64px rgba(0, 0, 0, 0.7);
+  transform: translateX(0);
+  transition: transform 250ms ease-out;
+}
+.tenfoot-settings[hidden] {
+  display: none;
+}
+/* The fly-in. The panel is laid out first and slid into place on the next
+   frame, so it arrives from off screen rather than appearing over the video. */
+html:not(.tenfoot-settings-open) .tenfoot-settings {
+  transform: translateX(100%);
+}
+
+.tenfoot-settings-title {
+  margin: 0 0 20px;
+  padding: 0 32px;
+  font-size: 17px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
+
+.tenfoot-settings-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tenfoot-settings-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 18px 32px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tenfoot-settings-item:focus {
+  outline: none;
+}
+/* The selection: Dropout's yellow, black text. Stamped by transport.js rather
+   than read from :focus, so the page cannot take the highlight away. */
+.tenfoot-settings-item[data-tenfoot-current="true"] {
+  background: var(--tenfoot-ring-color, #feea3b);
+  color: #000000;
+}
+.tenfoot-settings-label {
+  flex: 1 1 auto;
+}
+.tenfoot-settings-value {
+  flex: 0 0 auto;
+  font-weight: 400;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+.tenfoot-settings-item[data-tenfoot-current="true"] .tenfoot-settings-value {
+  opacity: 0.85;
+}
+.tenfoot-settings-mark {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+.tenfoot-settings-mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenfoot-settings {
+    transition: none;
+  }
+}

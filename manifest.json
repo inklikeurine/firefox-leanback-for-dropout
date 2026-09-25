@@ -1,14 +1,16 @@
 {
   "manifest_version": 2,
-  "name": "10-Foot Dropout",
-  "version": "0.1.1",
+  "name": "Leanback for Dropout",
+  "version": "0.13.1",
   "description": "Drive watch.dropout.tv with arrow keys, Enter and Escape: a big focus ring, a theater player layout and media-key control for the couch",
   "browser_specific_settings": {
     "gecko": {
-      "id": "10-foot-dropout@inklikeurine.dev",
+      "id": "leanback-for-dropout@inklikeurine.dev",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
-        "required": ["none"]
+        "required": [
+          "none"
+        ]
       }
     },
     "gecko_android": {
@@ -26,41 +28,68 @@
     "96": "icons/icon.svg"
   },
   "background": {
-    "scripts": ["lib/settings.js", "background.js"],
+    "scripts": [
+      "lib/settings.js",
+      "background.js"
+    ],
     "persistent": false
   },
   "content_scripts": [
     {
-      "matches": ["*://watch.dropout.tv/*"],
+      "matches": [
+        "*://watch.dropout.tv/*"
+      ],
       "js": [
         "lib/settings.js",
         "nav/keymap.js",
         "nav/site-rules.js",
         "nav/spatial.js",
         "nav/focus-ring.js",
+        "nav/menu.js",
         "content/page.js"
       ],
-      "css": ["content/page.css"],
+      "css": [
+        "content/page.css"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["*://embed.vhx.tv/*"],
-      "js": ["lib/settings.js", "nav/keymap.js", "content/player.js"],
+      "matches": [
+        "*://embed.vhx.tv/*"
+      ],
+      "js": [
+        "lib/settings.js",
+        "nav/keymap.js",
+        "nav/site-rules.js",
+        "nav/spatial.js",
+        "nav/focus-ring.js",
+        "content/transport.js",
+        "content/player.js"
+      ],
       "run_at": "document_idle",
-      "all_frames": true
+      "all_frames": true,
+      "css": [
+        "content/player.css"
+      ]
     },
     {
-      "matches": ["*://www.dropout.tv/", "*://www.dropout.tv/?*"],
-      "js": ["lib/settings.js", "content/marketing.js"],
+      "matches": [
+        "*://www.dropout.tv/",
+        "*://www.dropout.tv/?*"
+      ],
+      "js": [
+        "lib/settings.js",
+        "content/marketing.js"
+      ],
       "run_at": "document_start"
     }
   ],
   "browser_action": {
-    "default_title": "10-Foot Dropout: click to turn TV navigation on or off"
+    "default_title": "Leanback for Dropout: click to turn TV navigation on or off"
   },
   "commands": {
     "toggle-tv-mode": {
-      "description": "Turn 10-Foot Dropout on or off"
+      "description": "Turn Leanback for Dropout on or off"
     }
   },
   "options_ui": {

@@ -34,13 +34,13 @@ neither project has to guess.
    (proposal Appendix C style) points at this extension:
 
 ```toml
-# dropout.toml — desktop site; navigation comes from the standalone TV Mode for Dropout extension
+# dropout.toml — desktop site; navigation comes from the standalone Leanback for Dropout extension
 [webapp]
 id          = "tv.dropout"
 name        = "Dropout"
 url         = "https://watch.dropout.tv/browse"
 engine      = "firefox"
-extensions  = ["ublock-origin", "dropout-tv-mode"]      # AMO id: dropout-tv-mode@inklikeurine.dev
+extensions  = ["ublock-origin", "leanback-for-dropout"]      # AMO id: leanback-for-dropout@inklikeurine.dev
 tvnav       = { mode = "external" }                     # navigation comes from the site extension
 keymap      = { back = "Escape", select = "Enter", play_pause = "MediaPlayPause" }
 drm_note    = "DRM-free."

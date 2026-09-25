@@ -1,4 +1,4 @@
-// 10-Foot Dropout — the focus ring and the hint bar. Site-agnostic DOM only:
+// Leanback for Dropout — the focus ring and the hint bar. Site-agnostic DOM only:
 // two fixed elements appended to <html> (outside <body>, so the site's CSS
 // resets never touch them), positioned from getBoundingClientRect(). Styles
 // are in content/page.css and driven by CSS custom properties.
@@ -7,7 +7,7 @@
   const RING_CLASS = "tenfoot-ring";
   const HINTS_CLASS = "tenfoot-hints";
   const SCALED_CLASS = "tenfoot-scaled";
-  const SCALE = 1.04; // must match .tenfoot-scaled in content/page.css
+  const SCALE_VAR = "--tenfoot-zoom"; // percent; content/page.css does the maths
   const SETTLE_MS = 600; // keep following a target while smooth scroll settles
 
   function reducedMotion(win) {
@@ -37,7 +37,7 @@
     let raf = 0;
     let settleUntil = 0;
     let width = 4;
-    let scale = true;
+    let zoom = 5;
 
     function place() {
       raf = 0;
@@ -64,20 +64,37 @@
       raf = win.requestAnimationFrame(place);
     }
 
+    // The zoom goes on the focused element itself. A transform does nothing to
+    // a non-replaced inline box — which is why the old setting appeared to do
+    // nothing on the browse rows — so an inline target is made inline-block
+    // first. It deliberately does NOT scale the tile around it: a transform
+    // makes its element the containing block for positioned descendants, which
+    // moves the very thing we are trying to highlight.
+    function scaleTarget(el, on) {
+      if (!on) {
+        el.classList.remove(SCALED_CLASS);
+        return;
+      }
+      el.classList.add(SCALED_CLASS);
+      try {
+        if (win.getComputedStyle(el).display === "inline") el.style.display = "inline-block";
+      } catch (_err) { /* the class alone still applies */ }
+    }
+
     function follow(next) {
-      if (target && target !== next) target.classList.remove(SCALED_CLASS);
+      if (target && target !== next) scaleTarget(target, false);
       target = next || null;
       if (!target) {
         hide();
         return;
       }
-      if (scale && !reducedMotion(win)) target.classList.add(SCALED_CLASS);
+      if (zoom > 0) scaleTarget(target, true);
       settleUntil = win.performance ? win.performance.now() + SETTLE_MS : 0;
       place();
     }
 
     function hide() {
-      if (target) target.classList.remove(SCALED_CLASS);
+      if (target) scaleTarget(target, false);
       target = null;
       el.hidden = true;
     }
@@ -89,9 +106,10 @@
         width = st.width;
         root.style.setProperty("--tenfoot-ring-width", `${st.width}px`);
       }
-      if (typeof st.scale === "boolean") {
-        scale = st.scale;
-        if (target) target.classList.toggle(SCALED_CLASS, scale && !reducedMotion(win));
+      if (typeof st.zoom === "number") {
+        zoom = st.zoom;
+        root.style.setProperty(SCALE_VAR, String(zoom));
+        if (target) scaleTarget(target, zoom > 0);
       }
       if (target) place();
     }
@@ -138,7 +156,7 @@
     el.appendChild(osd);
     el.appendChild(list);
     let enabled = o.enabled !== false;
-    let autoHideMs = typeof o.autoHideMs === "number" ? o.autoHideMs : 3000;
+    let autoHideMs = typeof o.autoHideMs === "number" ? o.autoHideMs : 0; // 0 = stay up
     let timer = 0;
     let lastItems = [];
 
@@ -217,17 +235,21 @@
     });
   }
 
-  // The element's rect as it would be without the focus scale, so geometry
-  // does not see the focused tile as slightly bigger than its neighbours.
-  function unscaledRect(el) {
+  // The element's rect as it would be without the focus zoom, so geometry does
+  // not see the focused tile as slightly bigger than its neighbours.
+  function unscaledRect(el, doc) {
     const r = el.getBoundingClientRect();
     if (!el.classList || !el.classList.contains(SCALED_CLASS)) return r;
-    const w = r.width / SCALE;
-    const h = r.height / SCALE;
+    const d = doc || el.ownerDocument;
+    const pct = Number((d && d.documentElement.style.getPropertyValue(SCALE_VAR)) || 0);
+    const scale = 1 + (Number.isFinite(pct) ? pct : 0) / 100;
+    if (scale <= 1) return r;
+    const w = r.width / scale;
+    const h = r.height / scale;
     const left = r.left + (r.width - w) / 2;
     const top = r.top + (r.height - h) / 2;
     return { left, top, width: w, height: h, right: left + w, bottom: top + h, x: left, y: top };
   }
 
-  globalThis.TenfootFocusRing = Object.freeze({ createRing, createHintBar, unscaledRect, RING_CLASS, HINTS_CLASS, SCALED_CLASS, SCALE });
+  globalThis.TenfootFocusRing = Object.freeze({ createRing, createHintBar, unscaledRect, RING_CLASS, HINTS_CLASS, SCALED_CLASS, SCALE_VAR });
 })();

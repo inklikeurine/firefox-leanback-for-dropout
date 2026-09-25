@@ -1,24 +1,53 @@
 {
   "site": "dropout",
-  "hosts": ["watch.dropout.tv"],
+  "hosts": [
+    "watch.dropout.tv"
+  ],
   "browseUrl": "https://watch.dropout.tv/browse",
   "searchUrl": "https://watch.dropout.tv/search",
   "routes": [
-    { "kind": "browse", "path": "^/browse/?$" },
-    { "kind": "grid", "path": "^/(series|collections)(/|$)" },
-    { "kind": "video", "path": "/videos/[^/]+/?$" },
-    { "kind": "search", "path": "^/search(/|$)" },
-    { "kind": "other", "path": "^/(login|logout|register|signup|checkout|contact|privacy|terms|help|settings|purchases|forgot|reset|gift|redeem|profile|account|activate|billing)(/|$)" },
-    { "kind": "series", "path": "^/[^/]+(/season:\\d+)?/?$" }
+    {
+      "kind": "browse",
+      "path": "^/browse/?$"
+    },
+    {
+      "kind": "grid",
+      "path": "^/(series|collections)(/|$)"
+    },
+    {
+      "kind": "video",
+      "path": "/videos/[^/]+/?$"
+    },
+    {
+      "kind": "search",
+      "path": "^/search(/|$)"
+    },
+    {
+      "kind": "other",
+      "path": "^/(login|logout|register|signup|checkout|contact|privacy|terms|help|settings|purchases|forgot|reset|gift|redeem|profile|account|activate|billing)(/|$)"
+    },
+    {
+      "kind": "series",
+      "path": "^/[^/]+(/season:\\d+)?/?$"
+    }
   ],
   "common": {
     "header": ".site-header",
     "headerLinks": ".site-header a[href]",
-    "focusable": [".site-header a[href]"],
-    "modals": [".reveal-modal.open", "[id^='ketch-']"],
-    "modalClose": [".close-reveal-modal", "[aria-label='Close']"],
-    "banner": ".promo-banner .js-banner-close",
-    "hoverSuppress": [".tooltip"]
+    "focusable": [
+      ".site-header a[href]"
+    ],
+    "modals": [
+      ".reveal-modal.open",
+      "[id^='ketch-']"
+    ],
+    "modalClose": [
+      ".close-reveal-modal",
+      "[aria-label='Close']"
+    ],
+    "hoverSuppress": [
+      ".tooltip"
+    ]
   },
   "pages": {
     "browse": {
@@ -36,10 +65,13 @@
       "initialFocus": ".browse-item-card a.browse-item-link"
     },
     "series": {
-      "focusable": ["a.custom-btn-action-trailer", "select.js-switch-season", "select.js-sort-items"],
+      "focusable": [
+        "a.custom-btn-action-trailer",
+        "select.js-switch-season",
+        "select.js-sort-items"
+      ],
       "tile": ".browse-item-card",
       "target": "a.browse-item-link",
-      "selectStep": ["select.js-switch-season", "select.js-sort-items"],
       "loadMore": "a.js-load-more-link, [data-load-more]",
       "episodeLinks": ".episode-container .browse-item-card a.browse-item-link",
       "initialFocus": ".episode-container a.browse-item-link"
@@ -50,24 +82,119 @@
       "playerFrame": "#watch-player iframe[src*='embed.vhx.tv']",
       "unauthorized": "#watch-unauthorized",
       "seriesLink": ".series-title a.context-link",
-      "focusable": ["#watch-info a[href]", "[data-similar-items-site] a[href]"],
+      "focusable": [
+        "#watch-info a[href]",
+        "a[data-similar-items-site]"
+      ],
       "tile": ".browse-item-card",
       "target": "a.browse-item-link",
-      "theaterHide": [".site-header", ".promo-banner"]
+      "theaterHide": [
+        ".site-header",
+        ".promo-banner"
+      ],
+      "upNextOverlay": ".vp-outro-wrapper, [class*='Outro_module_outroWrapper'], .ott-up-next"
     },
     "search": {
-      "focusable": ["input[type='search'], input[type='text']"],
+      "focusable": [
+        ".SearchForm-module__search-input",
+        ".custom-css-search-input",
+        "input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button'])",
+        "textarea",
+        "[contenteditable='true']",
+        ".Filters-module__filters-toggle",
+        ".Filter-module__filter",
+        ".Filter-module__subfilter"
+      ],
       "tile": ".browse-item-card",
       "target": "a.browse-item-link",
-      "initialFocus": "input[type='search'], input[type='text']"
+      "loadMore": ".Filter-module__load-more, a.js-load-more-link",
+      "initialFocus": [
+        ".SearchForm-module__search-input",
+        ".custom-css-search-input",
+        "input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button'])",
+        "textarea",
+        "[contenteditable='true']"
+      ],
+      "noResults": ".BlankSearchResults-module__no-results"
     },
     "other": {
-      "focusable": ["a[href]", "button", "input", "select", "textarea"]
+      "focusable": [
+        "a[href]",
+        "button",
+        "input",
+        "select",
+        "textarea"
+      ]
     }
   },
   "player": {
     "video": "video",
-    "captionsButton": "button[aria-label*='aption'], button[aria-label*='ubtitle'], .vp-cc-button, [data-cc-button]",
-    "upNextOverlay": "[class*='up-next'], [class*='upnext'], [data-testid*='up-next']"
+    "captionsButton": "#cc-control-bar-button, [data-cc-button], button.cc, button[aria-label*='aption'], button[aria-label*='ubtitle'], .vp-cc-button",
+    "transport": ".vp-controls",
+    "transportItems": [
+      "button",
+      "[role='button']",
+      "[role='menuitem']"
+    ],
+    "transportSkip": [
+      ".vp-progress",
+      "[aria-label='Progress Bar']",
+      "[role='slider']",
+      "[class*='ProgressBar_module_']"
+    ],
+    "transportHide": [
+      "[class*='VolumeControl_module_']",
+      "[aria-label='Mute']",
+      "[aria-label='Unmute']",
+      "[aria-label*='olume']",
+      "#pip-control-bar-button",
+      "button.pip",
+      "[class*='PictureInPicture']",
+      "[aria-label*='icture']",
+      "#transcript-control-bar-button",
+      "[class*='transcript']",
+      "[aria-label*='ranscript']",
+      "[aria-label*='Vimeo AI']",
+      "[class*='AIWidget_module_']"
+    ],
+    "upNextOverlay": ".vp-outro-wrapper, [class*='Outro_module_outroWrapper'], .ott-up-next",
+    "upNextButton": "a[href], button",
+    "transportKeep": [
+      "[class*='PlayButton_module_']",
+      "#cc-control-bar-button",
+      "[data-cc-button]",
+      "button.cc",
+      "[class*='CaptionsButton_module_']",
+      "[aria-label*='aption']",
+      "[aria-label*='ubtitle']",
+      "#prefs-control-bar-button",
+      "[class*='PrefsButton_module_']",
+      ".vp-prefs",
+      "[aria-label='Settings']",
+      "#fullscreen-control-bar-button",
+      "button.fullscreen",
+      "[class*='FullscreenButton_module_']"
+    ],
+    "transportMenu": [
+      ".vp-menu",
+      "[class*='PopoverMenu_module_']",
+      "[role='menu']"
+    ],
+    "chrome": [
+      ".vp-controls",
+      "[class*='PlayButton_module_playButtonWrapper']",
+      "[class*='PlayButton_module_playButton__']",
+      ".vp-sidedock",
+      ".vp-title",
+      "[class*='AIWidget_module_']"
+    ],
+    "ccButton": "#cc-control-bar-button, [data-cc-button], button.cc",
+    "prefsButton": "#prefs-control-bar-button, .vp-prefs, [class*='PrefsButton_module_']",
+    "fullscreenButton": "#fullscreen-control-bar-button, button.fullscreen, [class*='FullscreenButton_module_']",
+    "menu": ".vp-menu, [class*='PopoverMenu_module_menu__']",
+    "menuPanel": "[class*='PopoverMenu_module_menuPanel'], [role='menu']",
+    "menuItem": "[data-menu-item='true'], [data-menu-option='true'], [role='menuitem']",
+    "menuText": "[class*='Text_module_text']",
+    "captionsRenderer": "[class*='CaptionsRenderer_module_'], [class*='Captions_module_']"
   }
 }

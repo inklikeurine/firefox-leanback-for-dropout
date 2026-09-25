@@ -1,6 +1,6 @@
 # Architecture
 
-TV Mode for Dropout is a Manifest V2 WebExtension with no build step. The one
+Leanback for Dropout is a Manifest V2 WebExtension with no build step. The one
 fact that shapes it: **the Dropout player is a cross-origin iframe**
 (`embed.vhx.tv`) inside the page (`watch.dropout.tv`). Keys pressed while the
 player has focus arrive in the frame's document, not the page's; the page can
@@ -12,11 +12,11 @@ scripts, and the background script relays between them.
 ```
                         watch.dropout.tv tab
 ┌────────────────────────────────────────────────────────────────────┐
-│ top frame — content/page.js (+ nav/spatial.js, nav/focus-ring.js)  │
+│ top frame — content/page.js (+ nav/spatial, focus-ring, menu)      │
 │   page kind · spatial nav · focus ring · hint bar · theater · back │
 │                                                                    │
 │   ┌──────────────────────────────────────────────────────────┐     │
-│   │ iframe embed.vhx.tv — content/player.js                  │     │
+│   │ iframe embed.vhx.tv — content/player.js + transport.js   │     │
 │   │   <video> control · key handling while focused · state   │     │
 │   └──────────────────────────────────────────────────────────┘     │
 └──────────────┬──────────────────────────────────▲──────────────────┘
@@ -33,13 +33,18 @@ scripts, and the background script relays between them.
 
 | File | Runs in | Owns |
 | --- | --- | --- |
-| `background.js` | Event page (`persistent: false`) | Settings defaults + persistence; per-tab registry of the player frame id; message relay page ⇄ player; toolbar button toggle and badge; `commands` handler; exit hook (`tabs.remove(sender.tab.id)`). |
+| `lib/settings.js` | Every context (first script of each list) | The settings object: defaults, validation on read, `load`/`save`/`watch`. Shared rather than broadcast, so no context waits for another to start. |
+| `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); per-tab registry of the player frame id in **`storage.session`** (an event page loses a plain variable when it unloads; a `Map` is the fallback if the API is missing); message relay page ⇄ player; toolbar button toggle and badge; `commands` handler; exit hook (`tabs.remove(sender.tab.id)`). |
 | `content/page.js` | Top frame of `watch.dropout.tv` | Loads `sites/dropout.json`; classifies the URL into a page kind; wires keys → actions; drives spatial navigation, focus ring, hint bar, theater layout, structural Back, load-more, season switching, next/previous episode. |
-| `content/player.js` | Every frame on `embed.vhx.tv` (`all_frames: true`) | Registers with the background (`player:hello`); finds the `<video>`; handles keys while the frame has focus; executes `player:command`; reports `player:state` and `player:ended`; exposes `OTTData` facts (title, duration, up-next). |
+| `content/player.js` | Every frame on `embed.vhx.tv` (`all_frames: true`) | Registers with the background (`player:hello`); finds the `<video>`; handles keys while the frame has focus; executes `player:command`; reports `player:state` and `player:ended`; exposes `OTTData` facts. Owns **when** the transport bar is open and what Back means while it is, and applies the `startMuted` preference once per video. It loads `nav/site-rules.js`, `nav/spatial.js`, `nav/focus-ring.js` and `content/transport.js`, plus `content/player.css`. |
+| `content/transport.js` | Every frame on `embed.vhx.tv` | Draws the transport bar (**play/pause · position · settings · fullscreen**) and drives the `<video>` directly. Also draws the full-height settings panel, which holds the player's settings and Leanback's in one list: the player's are **proxied** — its menu is opened out of sight, read, redrawn as our list, and the original clicked when an entry is taken — while Leanback's are read from and written to `storage.local` through `content/player.js`. Captions are toggled by pressing the player's own captions button and read back off the video's `TextTrack` list. Site-agnostic apart from the `player` block of the rules it is handed. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | If the path is `/` and *skip marketing site* is on, `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Site-agnostic directional focus search over a candidate list; row-aware moves; focus memory. Knows nothing about Dropout. |
+| `nav/menu.js` | Top frame | The options panel the menu button opens: a list of `<button>`s the ring moves through like anything else. Site-agnostic; `content/page.js` supplies the entries and says what they do. |
 | `nav/focus-ring.js` | Top frame | The overlay ring element and its positioning; hint bar element. Site-agnostic. |
-| `sites/dropout.json` | Loaded by `page.js` via `fetch(browser.runtime.getURL(...))` | All Dropout knowledge: routes → page kinds, selectors per page kind, modal selectors, player selectors, key overrides. |
+| `nav/keymap.js` | Both content scripts | Keys → action names, per context (page / player / typing). Pure and site-agnostic. |
+| `nav/site-rules.js` | Both content scripts | Helpers over the rules object: URL → page kind, selector lists. Pure. |
+| `sites/dropout.json` | Fetched by `background.js`, handed to the content scripts on `rules:get` | All Dropout knowledge: routes → page kinds, selectors per page kind, modal selectors, player selectors. |
 | `options/options.html/.js/.css` | Options page (`open_in_tab`) | Settings form. |
 
 `nav/*` and the message protocol are site-agnostic on purpose: a second site
@@ -47,7 +52,7 @@ scripts, and the background script relays between them.
 engine. The extension itself stays standalone
 ([htpc-integration.md](./htpc-integration.md), [targets.md](./targets.md)).
 
-## Page kinds and what TV Mode does on each
+## Page kinds and what the extension does on each
 
 | Page kind | URL (see [site-notes.md](./site-notes.md#routes)) | Behaviour |
 | --- | --- | --- |
@@ -84,8 +89,8 @@ engine. The extension itself stays standalone
   theater / closes the dialog — so the browser's own back and the
   extension's back behave identically. The user-visible behaviour in
   [keymap.md](./keymap.md) is the same under both plans.
-- **Pointer.** `mouseover`/`mousemove` never change focus. While TV Mode is
-  on, the page CSS suppresses the site's hover tooltips (`.tooltip`) so a
+- **Pointer.** `mouseover`/`mousemove` never change focus. While the
+  extension is on, an injected style rule suppresses the site's hover tooltips (`.tooltip`) so a
   drifting air-mouse pointer doesn't litter the screen. Clicks are left to
   the site.
 
@@ -111,9 +116,17 @@ to the topmost open **modal** when one is open (`modal` selectors).
    distance). Lowest score wins. Nothing qualifies → no move (no wrap).
 3. **Keep on screen**: `target.focus({preventScroll:true})` then
    `scrollIntoView({block:"center", inline:"center", behavior})` where
-   behaviour is `smooth` unless `prefers-reduced-motion`. If the target is
-   still clipped by a row container after one frame, click the row's
-   `scrollNext`/`scrollPrev` control (U2 in the site notes).
+   behaviour is `smooth` unless `prefers-reduced-motion`. This happens on
+   the **first** focus of a page too, not only on later moves — U2 turned out
+   to be real: Dropout's desktop rows slide by transform rather than scroll,
+   so `scrollIntoView` moves nothing inside them and the focused tile would
+   sit off screen with the page apparently frozen. `nudgeRow()` therefore
+   clicks the row's own `scrollNext`/`scrollPrev` control, looking for it
+   inside the row and then up to three ancestors outwards (a carousel usually
+   puts its arrows beside the row, not in it), once per page of tiles, up to
+   eight times — and stops as soon as a click moves the tile's rect by
+   nothing, which is how a disabled arrow or the end of a row announces
+   itself.
 4. **Load more**: Down with no candidate below, on a page kind with a
    `loadMore` selector → click it, then wait for the `MutationObserver` to
    report new tiles and move Down once more.
@@ -136,18 +149,81 @@ on `document.body` and recomputed lazily on the next key.
   for the current context, ≥ 24 px text, scrim background, shown on any
   handled key, hidden 3 s later. Toggle by `info` or setting.
 
+## The transport row
+
+Subtitles and volume belong to the player, so the extension borrows the
+player's own control bar rather than building one. `▼` on a playing video:
+
+1. wakes the bar (Vimeo hides it when the pointer is idle) by dispatching a
+   `mousemove` on the player root — a pointer event, never a synthetic key;
+2. collects `player.transportItems` inside `player.transport`, filtered to
+   what is visible and enabled, in DOM order;
+3. focuses the first and draws the ring over it.
+
+While the row is open, `left`/`right` walk it instead of seeking, `select`
+clicks the focused control (and the bar is re-read afterwards, since taking a
+control can rebuild it), `back` closes it and returns `left`/`right` to
+seeking, and `down` closes it and hands focus to the page.
+
+The hide and skip lists are **substring** selectors, so both are applied only
+*inside* the control bar and can never stamp the bar itself or an ancestor —
+doing so hid every control at once, which made `down` look like a dead key and
+fall through to the page. If the filters ever leave nothing, the unfiltered
+controls are used instead.
+
+Two things keep it usable. `transportSkip` drops the scrubber from the walk
+(seeking is `left`/`right`), and `transportHide` stamps volume,
+picture-in-picture and transcript with `data-tenfoot-hide` so the stylesheet
+removes them. And the bar is **pinned open** for as long as the row is in use:
+`html.tenfoot-transport` plus a `data-tenfoot-transport` stamp on the
+container, with a 1.5 s keepalive that wakes the player and takes the focus
+back if it rebuilds the bar. Without that the player hides its own chrome, the
+ring points at nothing, focus falls out of the frame and `back` reaches the
+page — which reads as "back left the video". **When no control
+bar is found, `down` does what it always did and moves to the page**, so a
+wrong selector degrades to the old behaviour rather than to a dead key.
+
+The selectors are unverified (site-notes U4). They are the only part of this
+that is site knowledge, and they live in `sites/dropout.json`.
+
+## Sound and the autoplay policy
+
+Firefox blocks autoplay with sound, so Dropout starts its videos muted — that
+is *how* it autoplays. Turning the sound on therefore cannot be done naively:
+an unmute without user activation makes Firefox stop the video, and insisting
+trades "starts muted" for "does not play".
+
+`applyMutePreference()` tries once. If playback stops within 250 ms, the video
+goes back to muted and is restarted, `autoplayBlocked` is set so nothing keeps
+retrying, and the next handled key — a real user gesture — turns the sound on
+for good. A profile that allows autoplay with sound (the kiosk case in
+[targets.md](./targets.md)) never hits the revert at all.
+
+Separately, the site restores a remembered mute for a video you have already
+watched, sometimes after `loadedmetadata`, so the preference is re-applied on
+`volumechange` for 15 s after the video appears. Any explicit choice — the
+`mute` command, or taking anything on the transport row — ends that
+immediately: the user's last word wins.
+
 ## Theater layout
 
 CSS, not the Fullscreen API: the Fullscreen API needs a fresh user gesture,
 exits on Escape before the extension sees it, and offers nothing extra in a
 kiosk window that is already fullscreen.
 
+`content/page.css` holds **no site selectors**. `page.js` stamps the elements
+the rules file names with attributes and the stylesheet targets those, so
+following a site change never means editing CSS:
+
 ```css
-html.dtv-theater #watch-player { position: fixed; inset: 0; z-index: 2147483000; background: #000; }
-html.dtv-theater #watch-player .embed, html.dtv-theater #watch-player iframe { width: 100%; height: 100%; }
-html.dtv-theater body { overflow: hidden; }
-html.dtv-theater .site-header, html.dtv-theater .promo-banner { display: none; }
+html.tenfoot-theater [data-tenfoot-theater-root] { position: fixed; inset: 0; z-index: 2147483000; background: #000; }
+html.tenfoot-theater [data-tenfoot-theater-root] iframe { width: 100%; height: 100%; }
+html.tenfoot-theater body { overflow: hidden; }
+html.tenfoot-theater [data-tenfoot-hide] { display: none; }
 ```
+
+(`theaterRoot` → `data-tenfoot-theater-root`, `playerMount` →
+`data-tenfoot-player`, each `theaterHide` selector → `data-tenfoot-hide`.)
 
 Enter theater: on `video` page load when `theater = "auto"`, or `select` on the
 player when `manual`. Leave: `back` while the player has focus. Leaving also
@@ -190,141 +266,67 @@ and on `player:bye` (`pagehide`).
 | Type | From → To | Payload | Purpose |
 | --- | --- | --- | --- |
 | `settings:get` | any → bg | — | reply: full settings object |
-| `settings:changed` | bg → all frames of all Dropout tabs | settings | broadcast after `storage.onChanged` |
-| `player:hello` / `player:bye` | player → bg | `{videoId, title, duration}` | frame registry |
+| `settings:set` | any → bg | `{patch}` | reply: the saved settings object |
+| `rules:get` | content → bg | — | reply: `{ok, rules}` — the parsed `sites/dropout.json` |
+| `player:hello` / `player:bye` | player → bg | `{videoId, title, duration, hasVideo}` | frame registry |
+| `player:ready` | bg → page | `{frameId, videoId, title}` | the player frame has registered; the page retries a pending hand-off |
 | `player:command` | page → bg → player | `{cmd, by?}` | see table above |
 | `player:focus` | page → bg → player | — | give the player keyboard focus |
 | `player:state` | player → bg → page | state object | OSD, hint bar, autoplay-next |
 | `player:ended` | player → bg → page | `{upNext}` | autoplay next |
 | `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player |
-| `exit` | page → bg | — | exit hook (`close-tab`) |
-| `toggle` | bg → page | `{enabled}` | toolbar / command toggled TV Mode |
+| `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
+| `page:info` | player → bg → page | `{state}` | toggle the OSD from inside the player |
+| `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`home`, `search`, `menu`, …) |
+| `page:state` | harness → page | — | reply: a snapshot (page kind, theater, focused element, ring/hints). For the tests; the extension never sends it |
+| `exit` | page → bg | — | exit hook; the reply says whether the tab was closed |
+
+There is no `settings:changed` broadcast and no `toggle` message: every
+context watches `storage.onChanged` through `lib/settings.js` instead, so a
+frame that starts before the background has nothing to wait for.
 
 The page and the player never use `window.postMessage` with each other:
 page scripts could spoof it. The runtime relay is isolated from the site.
 
-## Draft manifest
+## The manifest
 
-Copied to `manifest.json` when implementation starts.
+The shipped `manifest.json` (MV2). Notes on the parts that are not obvious:
 
-```json
-{
-  "manifest_version": 2,
-  "name": "TV Mode for Dropout",
-  "version": "0.1.0",
-  "description": "Drive watch.dropout.tv with arrow keys, Enter and Escape: a big focus ring, a theater player layout and media-key control for the couch.",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "dropout-tv-mode@inklikeurine.dev",
-      "strict_min_version": "140.0",
-      "data_collection_permissions": { "required": ["none"] }
-    }
-  },
-  "permissions": [
-    "storage",
-    "*://watch.dropout.tv/*",
-    "*://embed.vhx.tv/*",
-    "*://www.dropout.tv/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": ["*://watch.dropout.tv/*"],
-      "js": ["nav/spatial.js", "nav/focus-ring.js", "content/page.js"],
-      "css": ["content/page.css"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["*://embed.vhx.tv/*"],
-      "js": ["content/player.js"],
-      "run_at": "document_idle",
-      "all_frames": true
-    },
-    {
-      "matches": ["*://www.dropout.tv/"],
-      "js": ["content/marketing.js"],
-      "run_at": "document_start"
-    }
-  ],
-  "background": { "scripts": ["background.js"], "persistent": false },
-  "options_ui": { "page": "options/options.html", "open_in_tab": true },
-  "browser_action": { "default_title": "TV Mode for Dropout — click to toggle" },
-  "commands": {
-    "toggle-tv-mode": { "description": "Toggle TV Mode on Dropout" }
-  },
-  "icons": { "48": "icons/icon.svg", "96": "icons/icon.svg" }
-}
-```
+- `"*://www.dropout.tv/"` and `"*://www.dropout.tv/?*"` as content-script
+  matches hit only the marketing site's root (a bare match pattern does not
+  cover a query string), so the rest of that site is untouched.
+- `embed.vhx.tv` needs `all_frames: true` or the player script never runs —
+  that host only ever appears as an iframe.
+- Each `js` list starts with `lib/settings.js`; the files in one list share a
+  global, which is how `nav/*` publishes `TenfootKeymap`, `TenfootSiteRules`,
+  `TenfootSpatial` and `TenfootFocusRing` to `content/page.js`.
+- `sites/dropout.json` is **not** in `web_accessible_resources`: the
+  background fetches it and hands it to the content scripts, and an extension
+  reading its own packaged file needs no declaration.
+- No default key for `commands.toggle-tv-mode` — the user sets one in
+  `about:addons` → Manage Extension Shortcuts. No popup: a popup cannot be
+  driven from a remote.
+- No `update_url`; distribution is AMO (unlisted) or a temporary load.
 
-Notes: `"*://www.dropout.tv/"` with no trailing wildcard matches only the site
-root (the marketing site's other pages are left alone); `embed.vhx.tv` must
-have `all_frames: true` or the script never runs, since that host only appears
-as an iframe; no default key for the command — the user sets one in
-`about:addons` → Manage Extension Shortcuts.
+## `sites/dropout.json`
 
-## Draft `sites/dropout.json`
+The only file that knows Dropout. `routes` are tried in order and the first
+match wins, so `video` comes before the `series` catch-all, which stays last;
+`other` lists the account and legal paths that would otherwise look like a
+series slug. Per page kind: `rows`/`rowItem` (row-wise navigation),
+`tile`/`target` (one focus target per tile), `focusable` (loose selectors),
+`loadMore`, and the `video` kind's player and theater selectors. Any
+`<select>` among the focusables is a two-step control; no rule marks them. `common` holds the header, the modal and hover-tooltip selectors;
+`player` holds the selectors used inside the frame.
 
-Shape only; selectors are those in [site-notes.md](./site-notes.md), with the
-unverified ones marked `"todo"` until checked. `routes` are tried in order and
-the first match wins — `series` is the catch-all and must stay last.
+Two rules the file has to keep:
 
-```json
-{
-  "site": "dropout",
-  "hosts": ["watch.dropout.tv"],
-  "routes": [
-    { "kind": "browse", "path": "^/browse/?$" },
-    { "kind": "grid",   "path": "^/(series|collections)(/|$)" },
-    { "kind": "video",  "path": "/videos/[^/]+/?$" },
-    { "kind": "search", "path": "^/search" },
-    { "kind": "series", "path": "^/[^/]+(/season:\\d+)?/?$" }
-  ],
-  "common": {
-    "header": ".site-header",
-    "modals": [".reveal-modal.open", "[id^='ketch-']"],
-    "modalClose": [".close-reveal-modal"],
-    "banner": ".promo-banner .js-banner-close"
-  },
-  "pages": {
-    "browse": {
-      "rows": ".horizontal-row-container, .carousel-layout-container",
-      "rowItem": ".horizontal-row-item, .featured-carousel-slide",
-      "target": "a[href]",
-      "scrollNext": ".carousel-arrow--right",
-      "scrollPrev": ".carousel-arrow--left",
-      "initialFocus": ".horizontal-row-container .horizontal-row-item a[href]"
-    },
-    "grid": {
-      "tile": ".browse-item-card",
-      "target": "a.browse-item-link",
-      "loadMore": ".js-load-more-items-container button, .js-load-more-items-container a",
-      "initialFocus": ".browse-item-card a.browse-item-link"
-    },
-    "series": {
-      "focusable": ["a.custom-btn-action-trailer", "select.js-switch-season", "select.js-sort-items"],
-      "tile": ".browse-item-card",
-      "target": "a.browse-item-link",
-      "selectStep": ["select.js-switch-season", "select.js-sort-items"],
-      "loadMore": ".js-load-more-items-container button, .js-load-more-items-container a",
-      "initialFocus": ".episode-container a.browse-item-link"
-    },
-    "video": {
-      "playerMount": "#watch-player .embed[data-sticky-player]",
-      "playerFrame": "#watch-player iframe[src*='embed.vhx.tv']",
-      "unauthorized": "#watch-unauthorized",
-      "seriesLink": ".series-title a.context-link",
-      "focusable": ["#watch-info a[href]", "[data-similar-items-site] a[href]"],
-      "theaterHide": [".site-header", ".promo-banner"]
-    },
-    "search": {
-      "focusable": ["input[type='search'], input[type='text']", "a.browse-item-link"],
-      "tile": ".browse-item-card",
-      "target": "a.browse-item-link"
-    }
-  },
-  "player": {
-    "video": "video",
-    "captionsButton": "todo",
-    "upNextOverlay": "todo"
-  }
-}
-```
+- `loadMore` must match the **control**, not the grid. `js-load-more-items-container`
+  is the `<ul>` that holds the tiles; the control is
+  `a.js-load-more-link[data-load-more]` in a sibling `.row.loadmore`.
+- `target` must be the outer link of a tile. A tile has two links to the same
+  place (image and title); `nav/spatial.js` keeps the first per tile, so the
+  ring never stops twice on one tile.
+
+Which selectors are verified and which are not:
+[site-notes.md](./site-notes.md).

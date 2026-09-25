@@ -1,5 +1,5 @@
 /* global browser, chrome */
-// 10-Foot Dropout — page script, top frame of watch.dropout.tv.
+// Leanback for Dropout — page script, top frame of watch.dropout.tv.
 // Classifies the URL into a page kind (sites/dropout.json → routes), then
 // wires keys → actions → spatial navigation, the focus ring, the hint bar,
 // the theater layout, layered Back, load-more, season switching and the
@@ -8,7 +8,7 @@
 
 (function () {
   const API = typeof browser !== "undefined" ? browser : chrome;
-  const LOG = "[10-foot-dropout]";
+  const LOG = "[leanback-for-dropout]";
   const MARK = "tenfoot";
   const THEATER_CLASS = "tenfoot-theater";
   const EPISODES_KEY = "tenfoot.episodes";
@@ -17,7 +17,12 @@
   const INITIAL_FOCUS_TIMEOUT_MS = 10000;
   const LOAD_MORE_TIMEOUT_MS = 6000;
   const AUTOPLAY_DELAY_MS = 1200;
-  const INFO_MS = 6000;
+  const HINT_PLAYBACK_MS = 3000;
+  const NUDGE_STEP_MS = 260;
+  const MAX_NUDGES = 8;
+  const ARROW_SCOPE_DEPTH = 3;
+  const MENU_REFOCUS_LIMIT = 4;
+  const BACK_DEDUPE_MS = 150; // Firefox's popstate follows its own keydown at once
 
   if (window.top !== window) return;
   const root = document.documentElement;
@@ -29,6 +34,7 @@
   const Rules = globalThis.TenfootSiteRules;
   const Spatial = globalThis.TenfootSpatial;
   const Ring = globalThis.TenfootFocusRing;
+  const Menu = globalThis.TenfootMenu;
 
   const state = {
     settings: Settings.normalize(null),
@@ -48,13 +54,27 @@
     pendingPlayerFocus: false,
     modal: null,
     modalReturn: null,
-    headerReturn: null,
+    menu: null,
+    menuReturn: null,
+    menuMode: "actions",
+    settingRow: null,
+    offerShowing: false,
+    settingBefore: null,
+    engaged: null,
+    engagedIndex: 0,
     pendingInitialFocus: 0,
+    initialFocusTimer: 0,
+    menuRefocus: 0,
+    settingsFromActions: false,
+    guard: false,
+    lastBack: 0,
     pendingLoadMore: null,
     href: location.href,
     lastNavigation: null,
+    leaving: false,
     observer: null,
-    mutationTimer: 0
+    mutationTimer: 0,
+    nudgeTimer: 0
   };
 
   // ---------------------------------------------------------------------------
@@ -83,16 +103,6 @@
     return qsa(sel, scope).find((el) => Spatial.isVisible(el, window)) || null;
   }
 
-  function matchesAny(el, sels) {
-    const s = Rules.selector(sels);
-    if (!s || !el || !el.matches) return false;
-    try {
-      return el.matches(s);
-    } catch (_err) {
-      return false;
-    }
-  }
-
   function click(el) {
     if (!el) return false;
     try {
@@ -112,6 +122,16 @@
       console.warn(LOG, "bad navigation target", url);
     }
     return true;
+  }
+
+  // The first path segment is the series: "/game-changer/season:3" and
+  // "/game-changer" are the same show.
+  function seriesSlug(url) {
+    try {
+      return new URL(url, location.href).pathname.split("/").filter(Boolean)[0] || null;
+    } catch (_err) {
+      return null;
+    }
   }
 
   function samePath(a, b) {
@@ -143,10 +163,11 @@
 
   function ringStyle() {
     const s = state.settings;
-    return { color: s.ringColor, width: s.ringWidth, scale: s.ringScale };
+    return { color: s.ringColor, width: s.ringWidth, zoom: s.focusZoom };
   }
 
   async function send(msg) {
+    if (state.leaving) return { ok: false, error: "Page is unloading" };
     try {
       const r = await API.runtime.sendMessage(msg);
       return r === undefined ? { ok: false, error: "No reply" } : r;
@@ -160,6 +181,9 @@
   // ---------------------------------------------------------------------------
 
   function classifyPage() {
+    state.engaged = null;
+    if (state.menu) state.menu.close();
+    state.menuReturn = null;
     state.kind = Rules.classify(state.rules, location.pathname);
     state.page = Rules.pageRules(state.rules, state.kind);
     state.href = location.href;
@@ -169,7 +193,6 @@
     state.playerState = null;
     state.pendingPlayerFocus = false;
     state.pendingLoadMore = null;
-    state.headerReturn = null;
   }
 
   function modalRules() {
@@ -225,15 +248,54 @@
       el.scrollIntoView();
     }
     if (!row) return;
-    // Carousels that move by transform rather than by scrolling: nudge the arrows.
-    setTimeout(() => {
-      if (!el.isConnected || state.lastFocus !== el) return;
-      const rr = row.getBoundingClientRect();
-      const er = el.getBoundingClientRect();
-      if (er.right > Math.min(rr.right, window.innerWidth) + 1) click(firstVisible(state.page.scrollNext, row));
-      else if (er.left < Math.max(rr.left, 0) - 1) click(firstVisible(state.page.scrollPrev, row));
+    // A row that moves by transform instead of scrolling ignores
+    // scrollIntoView entirely, so the focused tile would stay off screen and
+    // the page would look frozen. Click the row's own arrows instead, once
+    // per page of tiles, until the tile is inside the row's box.
+    nudgeRow(el, row, 0);
+  }
+
+  function nudgeRow(el, row, attempt) {
+    if (state.nudgeTimer) {
+      clearTimeout(state.nudgeTimer);
+      state.nudgeTimer = 0;
+    }
+    if (attempt > MAX_NUDGES || !el.isConnected || !row.isConnected || state.lastFocus !== el) return;
+    const rr = row.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    const left = Math.max(rr.left, 0);
+    const right = Math.min(rr.right, window.innerWidth);
+    let arrow = null;
+    if (er.right > right + 1) arrow = rowControl(row, state.page.scrollNext);
+    else if (er.left < left - 1) arrow = rowControl(row, state.page.scrollPrev);
+    if (!arrow) {
       state.ring.refresh();
-    }, smooth ? 400 : 50);
+      return;
+    }
+    const before = er.left;
+    click(arrow);
+    state.nudgeTimer = setTimeout(() => {
+      state.nudgeTimer = 0;
+      state.ring.refresh();
+      // The arrow did nothing (disabled, or the row is already at its end):
+      // stop rather than clicking forever.
+      if (!el.isConnected || el.getBoundingClientRect().left === before) return;
+      nudgeRow(el, row, attempt + 1);
+    }, NUDGE_STEP_MS);
+  }
+
+  // The scroll arrows may live inside the row or beside it in a wrapping
+  // carousel, so look outwards a few levels before giving up.
+  function rowControl(row, sel) {
+    const selector = Rules.selector(sel);
+    if (!selector) return null;
+    let scope = row;
+    for (let i = 0; i <= ARROW_SCOPE_DEPTH && scope; i++) {
+      const found = qsa(selector, scope).find((el) => Spatial.isVisible(el, window) && el.getAttribute("aria-disabled") !== "true");
+      if (found) return found;
+      scope = scope.parentElement;
+    }
+    return null;
   }
 
   function markVideoElements() {
@@ -247,6 +309,23 @@
     }
     for (const sel of Rules.selectorList(p.theaterHide)) for (const el of qsa(sel)) el.setAttribute("data-tenfoot-hide", "");
     return { theaterRoot, mount, frame: qs(p.playerFrame) };
+  }
+
+  // One deferred retry at the deadline, so a page that stops mutating still
+  // gets a focused element rather than none.
+  function clearInitialFocusTimer() {
+    if (!state.initialFocusTimer) return;
+    clearTimeout(state.initialFocusTimer);
+    state.initialFocusTimer = 0;
+  }
+
+  function armInitialFocusTimer() {
+    if (state.initialFocusTimer || !state.pendingInitialFocus) return;
+    const wait = Math.max(0, state.pendingInitialFocus - Date.now()) + 50;
+    state.initialFocusTimer = setTimeout(() => {
+      state.initialFocusTimer = 0;
+      tryInitialFocus();
+    }, wait);
   }
 
   function tryInitialFocus() {
@@ -273,6 +352,14 @@
       return;
     }
     let target = firstVisible(Rules.selector(state.page.initialFocus));
+    if (!target && Rules.selector(state.page.initialFocus) && Date.now() <= state.pendingInitialFocus) {
+      // The search field is rendered after the framework starts, and the
+      // fallback below would spend our one shot on whatever nav link happened
+      // to exist first. Wait for the real target; the observer calls us again
+      // when it appears, and the timer covers a page that then goes quiet.
+      armInitialFocusTimer();
+      return;
+    }
     if (!target) {
       const { candidates } = collect();
       const vp = viewport();
@@ -280,7 +367,7 @@
       target = onScreen ? onScreen.el : null;
     }
     if (!target) return giveUp();
-    focusEl(target, { scroll: false });
+    focusEl(target);
     state.pendingInitialFocus = 0;
   }
 
@@ -290,7 +377,13 @@
 
   function dispatch(action, ctx) {
     const c = ctx || {};
+    // Whichever layer ends up handling it, note that Back has just been dealt
+    // with: if Firefox also acts on the key, the popstate that follows must
+    // not run the same press a second time.
+    if (action === "back") state.lastBack = Date.now();
     if (c.editable) return action === "back" ? blurField() : false;
+    if (state.menu.isOpen) return dispatchInMenu(action);
+    if (state.engaged) return dispatchEngaged(action);
     if (state.modal) return dispatchInModal(action);
     switch (action) {
       case "up":
@@ -301,19 +394,11 @@
       case "select":
         return activate();
       case "back":
-        return goBack();
+        return askPlayerFirst();
       case "menu":
-        return toggleHeader();
-      case "info":
-        return info();
+        return openMenu();
       case "search":
-        return state.kind === "search" ? focusSearchField() : go(state.rules.searchUrl || "/search");
-      case "home":
-        return state.kind === "browse" ? move("up") : go(state.rules.browseUrl || "/browse");
-      case "channel_up":
-        return channel(-1);
-      case "channel_down":
-        return channel(1);
+        return state.kind === "search" ? leaveSearch() : go(state.rules.searchUrl || "/search");
       default:
         return Keymap.PLAYER_ACTIONS.has(action) ? playerAction(action) : false;
     }
@@ -322,9 +407,6 @@
   function move(dir) {
     state.lastMove = performance.now();
     const cur = currentEl();
-    if (cur && cur.tagName === "SELECT" && (dir === "left" || dir === "right") && matchesAny(cur, state.page.selectStep)) {
-      return stepSelect(cur, dir === "right" ? 1 : -1);
-    }
     const { candidates, rows } = collect();
     let target = null;
     if (cur) {
@@ -340,6 +422,23 @@
       const vp = viewport();
       target = candidates.find((c) => c.rect.top >= 0 && c.rect.top < vp.height) || candidates[0] || null;
     }
+    // On a video page the player is one huge target above everything else.
+    // Geometry alone lets ▲ skip past it to the header when the page is
+    // scrolled, so coming up from below the player always returns to it.
+    if (state.kind === "video" && dir === "up" && !state.modal) {
+      const mount = qs(state.page.playerMount);
+      if (mount && cur && cur !== mount) {
+        const m = mount.getBoundingClientRect();
+        const c = Ring.unscaledRect(cur);
+        const startedBelow = c.top >= m.top + Spatial.EDGE_TOLERANCE;
+        // Still somewhere in the content under the player? Ordinary move.
+        // Anything else means the next step up is the player itself — even
+        // when the page is scrolled and a sticky header is nearer.
+        const staysBelow = target && target.el !== mount
+          && target.rect.top >= m.bottom - Spatial.EDGE_TOLERANCE;
+        if (startedBelow && !staysBelow) return enterPlayer();
+      }
+    }
     if (!target) {
       if (dir === "down" && !state.modal) tryLoadMore();
       return true;
@@ -348,14 +447,68 @@
     return true;
   }
 
-  function stepSelect(sel, delta) {
+  // A <select> is a two-step control on a remote: Enter engages it, Left/Right
+  // then change the value, Enter commits and Escape puts the old value back.
+  // Arrows only step the options while it is engaged — otherwise Left/Right
+  // could never carry the ring past a dropdown to the control beside it. The
+  // change event fires once, on commit, because the site navigates on it.
+  function engageSelect(sel) {
+    state.engaged = sel;
+    state.engagedIndex = sel.selectedIndex;
+    state.ring.refresh();
+    return true;
+  }
+
+  function dispatchEngaged(action) {
+    switch (action) {
+      case "left":
+        return stepEngaged(-1);
+      case "right":
+        return stepEngaged(1);
+      case "select":
+        return commitEngaged();
+      case "back":
+        return cancelEngaged();
+      case "up":
+      case "down":
+        return true; // absorbed: leaving is a deliberate commit or cancel
+      default:
+        return false;
+    }
+  }
+
+  function stepEngaged(delta) {
+    const sel = state.engaged;
+    if (!sel || !sel.isConnected) return disengage();
     const n = sel.options ? sel.options.length : 0;
     if (!n) return true;
     const i = Math.min(n - 1, Math.max(0, sel.selectedIndex + delta));
-    if (i === sel.selectedIndex) return true;
-    sel.selectedIndex = i;
-    sel.dispatchEvent(new Event("input", { bubbles: true }));
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    if (i !== sel.selectedIndex) sel.selectedIndex = i;
+    state.ring.refresh();
+    return true;
+  }
+
+  function commitEngaged() {
+    const sel = state.engaged;
+    const changed = sel && sel.isConnected && sel.selectedIndex !== state.engagedIndex;
+    disengage();
+    if (changed) {
+      sel.dispatchEvent(new Event("input", { bubbles: true }));
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    return true;
+  }
+
+  function cancelEngaged() {
+    const sel = state.engaged;
+    if (sel && sel.isConnected && sel.selectedIndex !== state.engagedIndex) sel.selectedIndex = state.engagedIndex;
+    disengage();
+    return true;
+  }
+
+  function disengage() {
+    state.engaged = null;
+    state.ring.refresh();
     return true;
   }
 
@@ -363,8 +516,20 @@
     const cur = currentEl();
     if (!cur) return move("down");
     if (state.kind === "video" && cur.hasAttribute("data-tenfoot-player")) return enterPlayer();
-    if (cur.tagName === "SELECT") return false;
+    if (cur.tagName === "SELECT") return engageSelect(cur);
     click(cur);
+    return true;
+  }
+
+  // The transport bar and the settings panel live in the player frame, so when
+  // Back arrives here — because Firefox acted on the remote's key and our guard
+  // caught it — the frame gets first refusal. Only what it cannot close is a
+  // layer for this page to walk.
+  function askPlayerFirst() {
+    if (state.kind !== "video" || !qs(state.page.playerFrame)) return goBack();
+    send({ type: "player:back" }).then((r) => {
+      if (!r || !r.consumed) goBack();
+    });
     return true;
   }
 
@@ -380,17 +545,23 @@
       exit();
       return true;
     }
-    if (history.length > 1) {
-      history.back();
-      return true;
-    }
+    // Structural, never historical. history.back() returns you to whatever you
+    // happened to look at last, which is not what Back means on a remote: it
+    // means one layer up. Episode → the season you were in → Browse.
     return go(structuralParent());
   }
 
   function structuralParent() {
     if (state.kind === "video") {
       const a = qs(state.page.seriesLink);
-      if (a && a.href) return a.href;
+      if (a && a.href) {
+        // The series link drops the season, so prefer the season page we came
+        // from when it is the same show.
+        const stored = readEpisodeOrder();
+        const slug = seriesSlug(a.href);
+        if (stored && stored.href && slug && seriesSlug(stored.href) === slug) return stored.href;
+        return a.href;
+      }
     }
     return state.rules.browseUrl || "/browse";
   }
@@ -400,54 +571,273 @@
     if (!r || r.action !== "close-tab") state.hints.show([{ keys: "Back", label: "Nothing to go back to" }], 2000);
   }
 
-  function toggleHeader() {
-    const common = state.rules.common || {};
-    const header = qs(common.header);
-    if (!header) return false;
-    const cur = currentEl();
-    if (cur && header.contains(cur)) {
-      if (state.headerReturn && state.headerReturn.isConnected) focusEl(state.headerReturn);
-      else {
-        state.pendingInitialFocus = Date.now() + 1000;
-        tryInitialFocus();
-      }
-      return true;
-    }
-    const link = firstVisible(common.headerLinks || "a[href]", header);
-    if (!link) return false;
-    state.headerReturn = cur;
-    focusEl(link);
-    return true;
-  }
-
-  // Info: show the hints now (with title and time on a video page); again hides them.
-  function info() {
-    if (state.hints.visible) {
-      state.hints.hide();
-      return true;
-    }
+  // Everything that has no button of its own lives behind the menu button.
+  function menuItems() {
+    const items = [];
     if (state.kind === "video") {
-      send({ type: "player:command", cmd: "state" }).then((r) => {
-        showOsd(r && r.ok && r.state ? r.state : null);
-      });
-    } else {
-      state.hints.force(hintItems(), INFO_MS);
+      // Play/pause, subtitles and volume live on the player's own transport
+      // row (▼ during playback). Subtitles stay here as well until the
+      // transport row is confirmed against the real player chrome.
+      items.push({ id: "subtitle", label: "Subtitles", detail: "or ▼ on the video" });
+      if (episodeUrl(1)) items.push({ id: "next", label: "Next episode" });
+      if (episodeUrl(-1)) items.push({ id: "previous", label: "Previous episode" });
+      const series = firstVisible(Rules.selector(state.page.seriesLink));
+      if (series) items.push({ id: "series", label: "Go to the show" });
     }
+    items.push({ id: "browse", label: "Browse" });
+    items.push({ id: "search", label: "Search", detail: "needs a keyboard" });
+    items.push({ id: "settings", label: "Leanback settings" });
+    items.push({ id: "disable", label: "Turn Leanback off" });
+    return items;
+  }
+
+  // id → how a value is shown and stepped. Every one is a short list or a
+  // number with a step, so ◀ ▶ can walk it.
+  const SETTING_ROWS = [
+    { id: "theater", label: "Theater layout", values: ["auto", "manual", "off"], show: { auto: "every video", manual: "on OK", off: "never" } },
+    { id: "playerChrome", label: "Player controls", values: ["leanback", "site"], show: { leanback: "Leanback's", site: "the site's own" } },
+    { id: "seekStep", label: "Seek step", values: Settings.SEEK_STEPS, suffix: " s" },
+    { id: "autoplayNext", label: "Play next episode", bool: true },
+    { id: "startMuted", label: "Start videos muted", bool: true },
+    { id: "hintBar", label: "Button hints", bool: true },
+    { id: "ringWidth", label: "Ring width", min: 2, max: 12, step: 1, suffix: " px" },
+    { id: "ringColor", label: "Ring colour", values: ["#feea3b", "#ffffff", "#ff4081", "#41d6c3", "#ff8a3d"], show: { "#feea3b": "yellow", "#ffffff": "white", "#ff4081": "pink", "#41d6c3": "teal", "#ff8a3d": "orange" } },
+    { id: "focusZoom", label: "Enlarge selection", min: 0, max: 25, step: 5, suffix: "%" },
+    { id: "skipMarketingSite", label: "Skip dropout.tv home", bool: true },
+    { id: "exitHook", label: "Back on Browse", values: ["none", "close-tab"], show: { none: "does nothing", "close-tab": "closes the tab" } }
+  ];
+
+  function settingRow(id) {
+    return SETTING_ROWS.find((r) => r.id === id) || null;
+  }
+
+  function settingText(row) {
+    const v = state.settings[row.id];
+    if (row.bool) return v ? "on" : "off";
+    if (row.show) return row.show[v] || String(v);
+    if (row.id === "focusZoom" && v === 0) return "off";
+    return `${v}${row.suffix || ""}`;
+  }
+
+  // The options button opens this list directly now, so the few things that
+  // are not settings — where to go, and the way out — come along at the foot of
+  // it rather than living behind a list of their own.
+  function settingItems() {
+    const items = SETTING_ROWS.map((r) => ({ id: r.id, label: r.label, value: settingText(r) }));
+    items.push({ id: "browse", label: "Browse" });
+    items.push({ id: "search", label: "Search", detail: "needs a keyboard" });
+    items.push({ id: "disable", label: "Turn Leanback off" });
+    return items;
+  }
+
+  function stepSetting(row, delta) {
+    const cur = state.settings[row.id];
+    let next;
+    if (row.bool) next = !cur;
+    else if (row.values) {
+      const list = row.values;
+      const i = list.indexOf(cur);
+      const j = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + delta));
+      next = list[j];
+    } else {
+      next = Math.min(row.max, Math.max(row.min, Number(cur) + delta * row.step));
+    }
+    if (next === cur) return true;
+    state.settings = Object.assign({}, state.settings, { [row.id]: next });
+    state.menu.setValue(row.id, settingText(row));
+    send({ type: "settings:set", patch: { [row.id]: next } });
     return true;
   }
 
-  function focusSearchField() {
-    const field = firstVisible(Rules.selector(state.page.initialFocus));
-    if (!field) return false;
-    focusEl(field);
+  function openSettings(fromActions) {
+    // Back steps out to the action list only when that is where we came from.
+    // The options button opens this list directly, and there is nothing behind
+    // it to step out to.
+    state.settingsFromActions = Boolean(fromActions);
+    state.menuMode = "settings";
+    state.settingRow = null;
+    state.menu.open(settingItems(), { title: "Leanback settings" });
+    showHints();
     return true;
   }
 
-  function channel(delta) {
-    if (state.kind === "browse") return move(delta < 0 ? "up" : "down");
-    window.scrollBy({ top: delta * window.innerHeight * 0.8, behavior: reducedMotion() ? "auto" : "smooth" });
-    state.ring.refresh();
+  function openMenu() {
+    if (state.menu.isOpen) return closeMenu();
+    // On a video the options button belongs to the player's settings panel,
+    // which holds its settings and Leanback's together. Everywhere else it
+    // opens Leanback's settings directly — the list of actions in between was
+    // a stop nobody wanted.
+    // Remember where the ring was before any of the routes below, so closing
+    // whatever opens puts it back.
+    state.menuReturn = state.playerFocused ? null : currentEl();
+    if (state.kind === "video" && qs(state.page.playerFrame)) {
+      send({ type: "player:settings" }).then((r) => {
+        if (!r || !r.ok) openSettings();
+      });
+      return true;
+    }
+    if (state.kind !== "video") return openSettings();
+    state.menuMode = "actions";
+    state.settingRow = null;
+    if (!state.menu.open(menuItems())) return false;
+    state.hints.show(hintItems(), 0);
     return true;
+  }
+
+  function closeMenu() {
+    if (!state.menu.close()) return false;
+    state.menuMode = "actions";
+    state.settingRow = null;
+    if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
+    else if (state.playerFocused || state.theater) enterPlayer();
+    state.menuReturn = null;
+    showHints();
+    return true;
+  }
+
+  function dispatchInMenu(action) {
+    // A settings row being changed takes the arrows, exactly like an engaged
+    // dropdown on the page: OK starts, ◀ ▶ change, OK confirms, back undoes.
+    if (state.settingRow) {
+      switch (action) {
+        case "left":
+          return stepSetting(state.settingRow, -1);
+        case "right":
+          return stepSetting(state.settingRow, 1);
+        case "select":
+          return disengageSetting();
+        case "back":
+          return cancelSetting();
+        case "up":
+        case "down":
+          return true; // absorbed: leaving is a deliberate OK or back
+        default:
+          return false;
+      }
+    }
+    switch (action) {
+      case "up":
+        state.menu.move(-1);
+        return true;
+      case "down":
+        state.menu.move(1);
+        return true;
+      case "select":
+        state.menu.activate();
+        return true;
+      case "back":
+        return state.menuMode === "settings" && state.settingsFromActions ? backToActions() : closeMenu();
+      case "menu":
+        return closeMenu();
+      case "left":
+      case "right":
+        return true; // absorbed: the panel is a single column
+      default:
+        return false;
+    }
+  }
+
+  function backToActions() {
+    state.menuMode = "actions";
+    state.settingsFromActions = false;
+    state.menu.open(menuItems());
+    showHints();
+    return true;
+  }
+
+  function engageSetting(row) {
+    state.settingRow = row;
+    state.settingBefore = state.settings[row.id];
+    if (state.menu.current) state.menu.current.dataset.tenfootEngaged = "true";
+    showHints();
+    return true;
+  }
+
+  function disengageSetting() {
+    if (state.menu.current) delete state.menu.current.dataset.tenfootEngaged;
+    state.settingRow = null;
+    showHints();
+    return true;
+  }
+
+  function cancelSetting() {
+    const row = state.settingRow;
+    if (row && state.settings[row.id] !== state.settingBefore) {
+      state.settings = Object.assign({}, state.settings, { [row.id]: state.settingBefore });
+      state.menu.setValue(row.id, settingText(row));
+      send({ type: "settings:set", patch: { [row.id]: state.settingBefore } });
+    }
+    return disengageSetting();
+  }
+
+  function onMenuItem(id) {
+    if (state.menuMode === "settings") {
+      const row = settingRow(id);
+      if (row) {
+        engageSetting(row);
+        return;
+      }
+      // Not a setting: one of the actions at the foot of the list.
+    }
+    const player = { play_pause: "toggle", subtitle: "captions", mute: "mute" };
+    if (Object.prototype.hasOwnProperty.call(player, id)) {
+      send({ type: "player:command", cmd: player[id] }).then((r) => {
+        if (r && r.ok === false && r.error) state.hints.show([{ keys: "!", label: r.error }], 3000);
+      });
+      closeMenu();
+      return;
+    }
+    switch (id) {
+      case "next":
+        closeMenu();
+        goEpisode(1);
+        return;
+      case "previous":
+        closeMenu();
+        goEpisode(-1);
+        return;
+      case "series":
+        // structuralParent() prefers the season page this episode was opened
+        // from; the bare series link drops the season and lands on season 1.
+        closeMenu();
+        go(structuralParent());
+        return;
+      case "browse":
+        closeMenu();
+        go(state.rules.browseUrl || "/browse");
+        return;
+      case "search":
+        closeMenu();
+        go(state.rules.searchUrl || "/search");
+        return;
+      case "settings":
+        // Never navigate away: leaving the page tears the extension's state
+        // down and, in a kiosk, there is no way back.
+        openSettings(true);
+        return;
+      case "disable":
+        closeMenu();
+        send({ type: "settings:set", patch: { enabled: false } });
+        return;
+      default:
+        closeMenu();
+    }
+  }
+
+  // "/" is a toggle: it opens search, and on the search page it closes it and
+  // puts you back where you were.
+  // "/" is a toggle, so this one really does mean "back where I was" — unlike
+  // the Back button, which is structural. The guard entry sits on top of the
+  // history, so stepping over it takes two.
+  function leaveSearch() {
+    const steps = state.guard ? 2 : 1;
+    if (history.length > steps) {
+      state.guard = false;
+      state.lastBack = Date.now();
+      history.go(-steps);
+      return true;
+    }
+    return go(state.rules.browseUrl || "/browse");
   }
 
   function blurField() {
@@ -548,8 +938,6 @@
       }
       case "back":
         return closeModal();
-      case "info":
-        return info();
       default:
         return false;
     }
@@ -568,13 +956,21 @@
   // video page and player relay
   // ---------------------------------------------------------------------------
 
+  // The remote's back button is intercepted in the capture phase and runs the
+  // layered back (docs/keymap.md). Theater is NOT a history entry: pushing one
+  // made the browser's own history-back land on the wrong page when a season
+  // had been switched, and it was never needed — the key is ours.
   function setTheater(on) {
     const want = Boolean(on) && state.kind === "video";
     if (state.theater === want) return;
     state.theater = want;
     root.classList.toggle(THEATER_CLASS, want);
-    if (want) state.ring.hide();
-    else state.ring.refresh();
+    if (want) {
+      state.hints.hide();
+      state.ring.hide();
+    } else {
+      state.ring.refresh();
+    }
   }
 
   function enterPlayer() {
@@ -590,6 +986,7 @@
       v.frame.focus();
     } catch (_err) { /* the frame will still get keys once the user clicks it */ }
     state.playerFocused = true;
+    state.hints.hide();
     if (v.mount) state.lastFocus = v.mount;
     if (state.theater) state.ring.hide();
     else if (v.mount) state.ring.follow(v.mount);
@@ -604,6 +1001,14 @@
     if (hint === "back") return goBack();
     // "below": the page must be visible for the ring to mean anything.
     setTheater(false);
+    // The link back to the show is what someone leaving the player wants far
+    // more often than whatever markup sits closest under the video (the
+    // metadata tags do), so it wins over the geometric pick.
+    const series = firstVisible(Rules.selector(state.page.seriesLink));
+    if (series) {
+      focusEl(series);
+      return true;
+    }
     const mount = qs(state.page.playerMount);
     const { candidates } = collect();
     const others = candidates.filter((c) => c.el !== mount);
@@ -613,11 +1018,14 @@
     return true;
   }
 
+  // Remember the series page exactly as it was — season and sort included —
+  // so Back from an episode returns there rather than to the series' default
+  // season, and so next/previous know the running order.
   function captureEpisodeOrder() {
     const urls = qsa(Rules.selector(state.page.episodeLinks)).map((a) => a.href).filter(Boolean);
     if (!urls.length) return;
     try {
-      sessionStorage.setItem(EPISODES_KEY, JSON.stringify({ series: location.pathname, urls }));
+      sessionStorage.setItem(EPISODES_KEY, JSON.stringify({ series: location.pathname, href: location.href, urls }));
     } catch (_err) { /* storage disabled: next/previous falls back to up-next only */ }
   }
 
@@ -640,7 +1048,35 @@
     return list.urls[i + delta] || null;
   }
 
+  // The site's own "up next" card, when the page renders it rather than the
+  // player frame. Taking it is better than navigating: it keeps the site's
+  // own resume behaviour.
+  function pageUpNext() {
+    const sel = Rules.selector(state.page.upNextOverlay);
+    if (!sel) return null;
+    for (const el of qsa(sel)) {
+      if (Spatial.isVisible(el, window)) return el;
+    }
+    return null;
+  }
+
+  function takePageUpNext() {
+    const overlay = pageUpNext();
+    if (!overlay) return false;
+    const control = qsa("a[href], button, [role='button']", overlay).find((el) => Spatial.isVisible(el, window));
+    return click(control || overlay);
+  }
+
+  function syncUpNextOffer() {
+    if (state.kind !== "video") return;
+    const showing = Boolean(pageUpNext());
+    if (showing === state.offerShowing) return;
+    state.offerShowing = showing;
+    send({ type: "player:offer", showing });
+  }
+
   function goEpisode(delta) {
+    if (delta > 0 && takePageUpNext()) return true;
     const url = episodeUrl(delta);
     if (!url) {
       state.hints.show([{ keys: delta > 0 ? "▶▶" : "◀◀", label: delta > 0 ? "No next episode" : "No previous episode" }], 2500);
@@ -660,28 +1096,6 @@
     }, AUTOPLAY_DELAY_MS);
   }
 
-  function formatTime(s) {
-    const n = Math.max(0, Math.floor(Number(s) || 0));
-    const h = Math.floor(n / 3600);
-    const m = Math.floor((n % 3600) / 60);
-    const sec = n % 60;
-    const mm = h ? String(m).padStart(2, "0") : String(m);
-    return `${h ? `${h}:` : ""}${mm}:${String(sec).padStart(2, "0")}`;
-  }
-
-  function showOsd(st) {
-    if (!st) {
-      state.hints.force(hintItems(), INFO_MS);
-      return;
-    }
-    const parts = [];
-    if (st.title) parts.push(st.title);
-    if (typeof st.currentTime === "number" && typeof st.duration === "number" && st.duration > 0) parts.push(`${formatTime(st.currentTime)} / ${formatTime(st.duration)}`);
-    if (st.paused) parts.push("Paused");
-    state.hints.setOsd(parts.join(" · "));
-    state.hints.force(hintItems(), INFO_MS);
-  }
-
   // ---------------------------------------------------------------------------
   // hints
   // ---------------------------------------------------------------------------
@@ -691,10 +1105,12 @@
     if (state.modal) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Select" }, { keys: "Back", label: "Close" }];
     if (state.kind === "video") {
       if (state.playerFocused) {
+        const offering = state.playerState && state.playerState.upNextShowing;
         return [
-          { keys: "OK", label: "Play / pause" },
+          { keys: "OK", label: offering ? "Play next episode" : "Play / pause" },
           { keys: "◀ ▶", label: `−${step} s / +${step} s` },
-          { keys: "▼", label: "Page" },
+          { keys: "▼", label: "Player controls" },
+          { keys: "Menu", label: "Episodes, settings" },
           { keys: "Back", label: state.theater ? "Leave" : "Back" }
         ];
       }
@@ -704,16 +1120,30 @@
         { keys: "Back", label: state.theater ? "Leave" : "Back" }
       ];
     }
+    if (state.settingRow) return [{ keys: "◀ ▶", label: "Change" }, { keys: "OK", label: "Done" }, { keys: "Back", label: "Undo" }];
+    if (state.menu.isOpen) {
+      return [
+        { keys: "▲ ▼", label: "Move" },
+        { keys: "OK", label: state.menuMode === "settings" ? "Change" : "Select" },
+        { keys: "Back", label: state.menuMode === "settings" ? "Options" : "Close" }
+      ];
+    }
+    if (state.engaged) return [{ keys: "◀ ▶", label: "Change" }, { keys: "OK", label: "Confirm" }, { keys: "Back", label: "Cancel" }];
     const cur = currentEl();
-    if (cur && cur.tagName === "SELECT") return [{ keys: "◀ ▶", label: "Change" }, { keys: "▲ ▼", label: "Move" }, { keys: "Back", label: "Back" }];
+    if (cur && cur.tagName === "SELECT") return [{ keys: "OK", label: "Change this" }, { keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "Back", label: "Back" }];
     const items = [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Open" }];
     if (state.kind !== "browse") items.push({ keys: "Back", label: "Back" });
     else if (state.settings.exitHook === "close-tab") items.push({ keys: "Back", label: "Exit" });
+    items.push({ keys: "Menu", label: "Options" });
     return items;
   }
 
+  // The hint bar stays on screen so the keys are always readable from the
+  // sofa. Playback is the exception: nothing covers the picture, so there it
+  // appears on a keypress and goes away again.
   function showHints() {
-    state.hints.show(hintItems());
+    const playing = state.theater || state.playerFocused;
+    state.hints.show(hintItems(), playing ? HINT_PLAYBACK_MS : 0);
   }
 
   // ---------------------------------------------------------------------------
@@ -737,7 +1167,7 @@
     if (!consumed) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    if (action !== "info") showHints();
+    showHints();
   }
 
   function onContextMenu(e) {
@@ -758,12 +1188,56 @@
       return;
     }
     if (state.playerFocused) state.playerFocused = false;
+    if (state.engaged && t !== state.engaged) cancelEngaged();
+    if (state.menu.isOpen) {
+      // Keys are read at window capture, so the panel does not need the focus
+      // to work — it only needs it to look selected, and it stamps that
+      // itself. Dropout moves the focus on its own (React re-renders, focus
+      // traps), and closing the panel on that made "Leanback settings" shut
+      // itself the instant it opened. Take the focus back, and stop trying
+      // rather than fight a focus trap for ever.
+      if (state.menu.contains(t)) state.menuRefocus = 0;
+      else {
+        if (state.menuRefocus < MENU_REFOCUS_LIMIT) {
+          state.menuRefocus += 1;
+          state.menu.refocus();
+        }
+        return;
+      }
+    }
     if (t !== state.lastFocus) {
       state.lastFocus = t;
       const row = rowOf(t);
       if (row) state.memory.set(row, t);
     }
     if (!state.theater) state.ring.follow(t);
+    if (!state.theater && !state.playerFocused) showHints();
+  }
+
+  // The remote's back button reaches Firefox as a browser-level key, and
+  // Firefox navigates on it before this document can cancel the event. One
+  // same-document entry of ours sits on top of the history, so that navigation
+  // lands here instead of leaving the page; we put it straight back and do
+  // what Back actually means.
+  function pushGuard() {
+    if (state.guard || !state.enabled) return;
+    try {
+      history.pushState({ tenfoot: "guard" }, "");
+      state.guard = true;
+    } catch (_err) { /* the layering still works from the key itself */ }
+  }
+
+  function onPopState() {
+    if (state.leaving || !state.enabled) return;
+    if (location.href !== state.href) {
+      onNavigate();
+      return;
+    }
+    state.guard = false;
+    pushGuard();
+    // The key handler may have run for the same press; do not act twice.
+    if (Date.now() - state.lastBack < BACK_DEDUPE_MS) return;
+    dispatch("back", {});
   }
 
   function onNavigate() {
@@ -785,6 +1259,7 @@
     if (state.pendingLoadMore) continueLoadMore();
     if (state.kind === "video") {
       markVideoElements();
+      syncUpNextOffer();
       if (state.pendingPlayerFocus && qs(state.page.playerFrame)) enterPlayer();
     }
     if (state.lastFocus && !state.lastFocus.isConnected && !state.playerFocused) {
@@ -809,6 +1284,15 @@
     });
   }
 
+  function computedTransform(el) {
+    try {
+      const t = window.getComputedStyle(el).transform;
+      return t && t !== "none" ? t : null;
+    } catch (_err) {
+      return null;
+    }
+  }
+
   function snapshot() {
     const cur = state.playerFocused ? null : currentEl();
     const describe = (el) => ({
@@ -826,8 +1310,14 @@
       playerFocused: state.playerFocused,
       playerReady: state.playerReady,
       modal: Boolean(state.modal),
+      menu: state.menu.isOpen ? Array.from(state.menu.element.querySelectorAll("[data-tenfoot-item]")).map((b) => b.dataset.tenfootItem) : null,
+      menuItem: state.menu.isOpen && state.menu.current ? state.menu.current.dataset.tenfootItem : null,
+      engaged: state.engaged ? (state.engaged.id || state.engaged.className || "select") : null,
       focused: cur ? describe(cur) : null,
       navigation: state.lastNavigation,
+      // Whether the selection is actually drawn bigger, measured rather than
+      // assumed: this is the third attempt at making the zoom real.
+      zoomed: cur ? computedTransform(cur) : null,
       ring: Boolean(state.ring) && !state.ring.element.hidden,
       hints: Boolean(state.hints) && state.hints.visible
     };
@@ -849,10 +1339,14 @@
         if (state.enabled && state.pendingPlayerFocus) enterPlayer();
         reply({ ok: true });
         return false;
-      case "player:state":
+      case "player:state": {
+        const was = state.playerState && state.playerState.upNextShowing;
         state.playerState = msg.state && typeof msg.state === "object" ? msg.state : null;
+        // The site is offering the next episode: say which key takes it.
+        if (state.enabled && state.playerState && state.playerState.upNextShowing && !was) showHints();
         reply({ ok: true });
         return false;
+      }
       case "player:ended":
         onPlayerEnded(msg);
         reply({ ok: true });
@@ -864,19 +1358,12 @@
       case "page:episode":
         reply({ ok: true, done: state.enabled ? goEpisode(Number(msg.delta) < 0 ? -1 : 1) : false });
         return false;
-      case "page:info":
-        if (state.enabled) {
-          if (state.hints.visible) state.hints.hide();
-          else showOsd(msg.state);
-        }
-        reply({ ok: true });
-        return false;
       case "page:state":
         reply(snapshot());
         return false;
       case "page:action": {
         const consumed = state.enabled ? dispatch(String(msg.action || ""), {}) : false;
-        if (consumed && msg.action !== "info") showHints();
+        if (consumed) showHints();
         reply(Object.assign(snapshot(), { consumed }));
         return false;
       }
@@ -891,6 +1378,10 @@
   // ---------------------------------------------------------------------------
 
   function setupPage() {
+    clearInitialFocusTimer();
+    state.href = location.href;
+    state.guard = false;
+    pushGuard();
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     if (state.kind === "series") captureEpisodeOrder();
     if (state.kind === "video") {
@@ -899,12 +1390,15 @@
     }
     syncModal();
     tryInitialFocus();
+    if (!state.theater && !state.playerFocused) showHints();
   }
 
   function applyEnabled(on) {
     state.enabled = Boolean(on);
     root.dataset[MARK] = state.enabled ? "on" : "off";
     if (!state.enabled) {
+      clearInitialFocusTimer();
+      state.menu.close();
       state.ring.hide();
       state.hints.hide();
       setTheater(false);
@@ -943,11 +1437,13 @@
     }
     state.ring = Ring.createRing(document, ringStyle());
     state.hints = Ring.createHintBar(document, { enabled: settings.hintBar });
+    state.menu = Menu.createMenu(document, { onActivate: onMenuItem });
     installSiteStyle();
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
-    window.addEventListener("popstate", onNavigate);
+    window.addEventListener("popstate", onPopState);
+    window.addEventListener("pagehide", () => { state.leaving = true; });
     API.runtime.onMessage.addListener(onMessage);
     Settings.watch(API, onSettingsChanged);
     startObserver();

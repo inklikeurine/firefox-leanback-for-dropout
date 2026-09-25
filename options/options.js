@@ -1,5 +1,5 @@
 /* global browser, chrome */
-// 10-Foot Dropout — options page. Reads settings through the shared
+// Leanback for Dropout — options page. Reads settings through the shared
 // TenfootSettings module, saves on every change, follows storage changes
 // made elsewhere (toolbar toggle) so the form never goes stale.
 
@@ -10,14 +10,16 @@
   const status = $("status");
   let statusTimer = 0;
 
-  const CHECKBOXES = ["enabled", "skipMarketingSite", "hintBar", "ringScale", "autoplayNext"];
-  const NUMBERS = ["ringWidth", "seekStep"];
-  const SELECTS = ["theater", "exitHook"];
+  const CHECKBOXES = ["enabled", "skipMarketingSite", "hintBar", "autoplayNext", "startMuted"];
+  const NUMBERS = ["ringWidth", "focusZoom"];
+  const SELECTS = ["theater", "exitHook", "playerChrome"];
+  const NUMERIC_SELECTS = ["seekStep"];
 
   function render(s) {
     for (const id of CHECKBOXES) $(id).checked = s[id];
     for (const id of NUMBERS) $(id).value = String(s[id]);
     for (const id of SELECTS) $(id).value = s[id];
+    for (const id of NUMERIC_SELECTS) $(id).value = String(s[id]);
     $("ringColor").value = s.ringColor;
     $("ringColorText").value = s.ringColor;
   }
@@ -32,6 +34,7 @@
     if (CHECKBOXES.includes(id)) return { [id]: $(id).checked };
     if (NUMBERS.includes(id)) return { [id]: Number($(id).value) };
     if (SELECTS.includes(id)) return { [id]: $(id).value };
+    if (NUMERIC_SELECTS.includes(id)) return { [id]: Number($(id).value) };
     if (id === "ringColor" || id === "ringColorText") return { ringColor: $(id).value };
     return null;
   }

@@ -1,12 +1,12 @@
 /* global browser, chrome */
-// 10-Foot Dropout — background (event page, persistent: false).
+// Leanback for Dropout — background (event page, persistent: false).
 // Serves the site rules file, keeps a per-tab registry of the player frame
 // (in storage.session, so it survives the event page unloading), relays
 // messages page ⇄ player, owns the toolbar toggle and its badge, the
 // keyboard command and the exit hook. Every message gets a reply.
 
 const API = typeof browser !== "undefined" ? browser : chrome;
-const LOG = "[10-foot-dropout]";
+const LOG = "[leanback-for-dropout]";
 const RULES_URL = "sites/dropout.json";
 const REGISTRY_KEY = "players";
 const Settings = globalThis.TenfootSettings;
@@ -110,7 +110,7 @@ async function updateBadge(settings) {
   try {
     await API.browserAction.setBadgeText({ text: s.enabled ? "" : "OFF" });
     await API.browserAction.setBadgeBackgroundColor({ color: "#5a5a5a" });
-    await API.browserAction.setTitle({ title: s.enabled ? "10-Foot Dropout is on (click to turn off)" : "10-Foot Dropout is off (click to turn on)" });
+    await API.browserAction.setTitle({ title: s.enabled ? "Leanback for Dropout is on (click to turn off)" : "Leanback for Dropout is off (click to turn on)" });
   } catch (err) {
     console.warn(LOG, "badge update failed:", err && err.message);
   }
@@ -152,6 +152,9 @@ async function handleMessage(message, sender) {
       return { ok: true };
     case "player:command":
     case "player:focus":
+    case "player:offer":
+    case "player:back":
+    case "player:settings":
       return fromTab() || relayToPlayer(tabId, message);
     case "player:state":
     case "player:ended":

@@ -1,4 +1,4 @@
-// 10-Foot Dropout — spatial navigation. Site-agnostic: it sees a rules object
+// Leanback for Dropout — spatial navigation. Site-agnostic: it sees a rules object
 // (selectors) and rectangles, never a site. Two halves:
 //   * pure geometry — pick() and rowPick() work on {rect} objects and are
 //     unit-tested without a DOM;

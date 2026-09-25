@@ -55,7 +55,7 @@ which one is smoother to navigate and to watch.
 | volume ± | `KEY_VOLUMEUP` / `KEY_VOLUMEDOWN` | `AudioVolumeUp` / `AudioVolumeDown` | **not intercepted** — Plasma's system volume |
 | power | nothing reaches the OS (IR only) | — | — |
 | mouse-mode toggle | nothing reaches the OS (dongle-internal) | — | pointer drift must never move the ring |
-| QWERTY pad | letters, digits, Backspace, … | as typed | search and login are typeable; `i` `/` `c` `m` shortcuts reachable; Backspace = `back` outside fields |
+| QWERTY pad | letters, digits, Backspace, … | as typed | needed only to type a search query or log in; `/` opens the search field. No feature is behind a letter key |
 
 ### Constraints the box imposes
 
@@ -75,11 +75,52 @@ which one is smoother to navigate and to watch.
   rule), Back doing the wrong thing in some context (OS-02 → layered Back),
   Escape not leaving playback (→ Back leaves the player first).
 
+### Sound without a button press is a profile setting, not extension code
+
+Firefox blocks audible autoplay by default (`media.autoplay.default = 1`,
+"block audio"). Nothing an extension can do lifts that:
+
+- Firefox exposes no WebExtension API for the autoplay permission.
+  `contentSettings` is a Chrome API and is not implemented here, and
+  `browserSettings` does not cover autoplay.
+- Events a content script synthesises are `isTrusted: false` and therefore
+  create no user activation.
+
+So in a default profile, setting `video.muted = false` before the viewer has
+pressed anything makes Firefox stop the video — the "plays, then pauses after
+0.01s" behaviour. `content/player.js` reads
+`navigator.getAutoplayPolicy("mediaelement")` (Firefox 120+) and unmutes
+immediately only when it answers `"allowed"`; otherwise it waits for the first
+press, because unmuting earlier costs the playback.
+
+Three ways to make it answer `"allowed"`:
+
+| Where | What | Scope |
+|---|---|---|
+| `user.js` in the kiosk profile | `user_pref("media.autoplay.default", 0);` | that profile, every site |
+| `policies.json` | `Permissions` → `Autoplay` → `"Default": "allow-audio-video"`, or `"Allow": ["https://watch.dropout.tv"]` to keep it to the one site | system-wide |
+| Settings → Privacy & Security → Autoplay → Settings… | add `watch.dropout.tv`, "Allow Audio and Video" | that profile, that site, set by hand once |
+
+`media.autoplay.default`: `0` allow audio and video, `1` block audio (the
+default), `5` block audio and video. Leave `media.autoplay.blocking_policy` at
+its default of `0`. The `Autoplay` policy's `Default` takes exactly
+`allow-audio-video`, `block-audio` or `block-audio-video` (verified against
+`policies-schema.json`, 2026-09-23).
+
+**There is no command-line flag for this.** Release Firefox accepts no
+`--pref`; the setting has to live in the profile or in a policy file. The
+launch command is unchanged — `--profile <dir>` is what points at the profile
+holding it.
+
+Check it on the box: open an episode, and in the console on the player frame
+`navigator.getAutoplayPolicy("mediaelement")` should return `"allowed"`.
+
 ### Launch recipe (sketch — verify on the box, item T1–T8)
 
 1. **Profile**: `firefox --no-remote -CreateProfile "dropout /home/Media/.mozilla/firefox/dropout"`,
    then a `user.js` in it with the kiosk-relevant preferences — hardware decode
-   (`media.ffmpeg.vaapi.enabled = true`), autoplay allowed for the site, no
+   (`media.ffmpeg.vaapi.enabled = true`), `media.autoplay.default = 0` (see
+   above — this is what makes episodes start with sound), no
    session restore and no first-run pages, `browser.startup.homepage =
    https://watch.dropout.tv/browse` (so a stray `BrowserHome` is harmless).
    Same keys the HTPC shell's profile generator uses; copy them from there once S08
