@@ -160,7 +160,6 @@ async function handleMessage(message, sender) {
     case "player:ended":
     case "page:focus":
     case "page:episode":
-    case "page:info":
     case "page:action":
       return fromTab() || relayToPage(tabId, message);
     case "exit":

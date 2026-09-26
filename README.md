@@ -10,7 +10,7 @@ Unofficial. Not affiliated with Dropout or Vimeo. You need a Dropout
 subscription exactly as on the website — the extension changes how you
 navigate, not what you can watch.
 
-**Version:** 0.7.0 · **Manifest:** v2 · **Minimum Firefox:** 140 (desktop)
+**Manifest:** v2 · **Minimum Firefox:** 140 (desktop)
 
 ## What it does
 
@@ -20,13 +20,15 @@ navigate, not what you can watch.
   configurable.
 - **Theater layout** on video pages: the player fills the window; Escape brings
   the page back.
-- **Player control** without a mouse: Enter/Space play–pause, Left/Right seek,
-  media keys (play/pause, stop, next, previous) from anywhere on the page,
-  captions and mute shortcuts.
+- **Player control** without a mouse: OK plays and pauses, ◀ ▶ seek, ▼ opens
+  Leanback's own control bar, and media keys (play/pause, stop, next,
+  previous) work from anywhere on the page.
+- **The player's settings as a TV list**: quality, speed and captions —
+  caption style included — in a panel you walk with the arrows.
 - **Next episode** by key, and autoplay-next when an episode ends.
 - **Season switching** with Left/Right on the season control.
-- **A hint bar** that shows the keys that matter right now and gets out of
-  the way.
+- **Button hints**, if you want them: a bar showing the keys that matter right
+  now. Off unless turned on.
 - **Skips the marketing site**: opening `dropout.tv` lands you on Browse.
 - Toggle it off with one click when you're at a desk.
 
@@ -131,7 +133,7 @@ TV remote actually has are mapped, so nothing is hidden behind a letter key.
 | ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. Nothing else, ever. In the player, ◀ ▶ move the playhead and ▼ opens the transport bar (▼ again continues to the page) |
 | OK | `Enter` | Open, play, pause; start a dropdown changing; take the "up next" offer when the site shows it |
 | back | `BrowserBack` (also `Escape`) | Cancel a dropdown → close the options panel or a dialog → leave the player → back one page |
-| menu | `ContextMenu` | Open the **options panel**: next and previous episode, the link to the show, Browse, Search, settings (which open in the page, not another tab), and turning the extension off |
+| menu | `ContextMenu` | During playback, the **settings panel**; anywhere else, **Leanback's settings** as a panel on the page, with Browse, Search and *Turn Leanback off* at the foot |
 | home | `BrowserHome` | **Reserved for your TV shell — never intercepted** |
 | volume | `AudioVolume*` | Your desktop's, never intercepted |
 | media keys | `Media*` | Play/pause, stop, seek, next/previous episode, for remotes that have them |
@@ -147,23 +149,26 @@ The position is shown but never selected: seeking is ◀ ▶ whenever the bar is
 not holding a button.
 
 **Settings** opens a full-height panel from the right and pauses the picture.
-It holds the player's settings and Leanback's in one list: Quality, Speed, Seek
-Step, Play Next Episode, Button Hints, Closed Captions, and **Leanback
-Settings** as a submenu. Quality, Speed and Closed Captions are the player's own
-— opening one shows what it offers, caption font, background and window
-included. ▲ ▼
-move, **▶ opens a submenu and ◀ leaves one**, OK toggles or steps a value, back
-closes. Closing it starts the picture again, unless it was already paused.
+It holds the player's settings and Leanback's in one list: Quality, Speed, Play
+Next Episode, Closed Captions, and **Leanback Settings** as a submenu. Quality,
+Speed and Closed Captions are the player's own, and opening one shows what it
+offers, as many levels deep as it goes: Closed Captions → Customize → Font,
+Background, Window, each with its options grouped under headings (Color, Size,
+Opacity). ▲ ▼ move; **▶ or OK opens a submenu, ◀ or back goes up one level**;
+OK picks an option, flips a switch, or steps a value round its list (▶ steps it
+on). Back at the top closes the panel, which starts the picture again unless it
+was already paused.
 
 **The options button** opens that panel during playback. Anywhere else it opens
 Leanback's settings directly, with Browse, Search and *Turn Leanback off* at the
 foot of the list.
 
-**Player controls** can be handed back to the site. *Player controls → the
-site's own* leaves the player's own bar alone and draws nothing over the video —
-useful for reaching something the player offers that Leanback has no equivalent
-for, and as a fallback if our bar ever breaks. Arrow navigation everywhere else
-is unaffected.
+**Player controls** can be handed back to the site, for troubleshooting: on
+the options page (`about:addons` → Leanback for Dropout → Preferences),
+*Player controls → The site's own player controls* leaves the player's own bar
+alone and draws nothing over the video. Use it to reach something the player
+offers that Leanback has no equivalent for, or if Leanback's bar ever breaks.
+Arrow navigation everywhere else is unaffected.
 
 **Back** goes one layer up, never "back to the previous page": the settings
 panel to the transport bar, the bar to playback, an episode to the season you
@@ -171,14 +176,15 @@ were watching, a season to Browse.
 
 Full table: [docs/keymap.md](./docs/keymap.md).
 
-**Settings** — on the menu button, under "Leanback settings", where they open
-as a panel on the page (the extension never navigates your tab away). The same
-settings are at `about:addons` → Leanback for Dropout → Preferences: ring colour
-and width · hint bar · theater layout (auto / manual / off) · seek step ·
-autoplay next · start videos muted · skip marketing site · what back does on
-the Browse page
-(nothing / close this tab — for kiosk setups). The toolbar button turns the
-extension on and off; a keyboard shortcut for that can be set under
+**Settings** — the menu button opens them as a panel on the page (the
+extension never navigates your tab away), and so does *Leanback Settings* in the
+playback panel. The same settings are at `about:addons` → Leanback for Dropout →
+Preferences: ring colour and width · selection zoom · button hints (off unless
+turned on) · theater layout (auto / manual / off) · seek step · autoplay next ·
+start videos muted · skip marketing site · what back does on the Browse page
+(nothing / close this tab — for kiosk setups). The options page also has
+*Player controls*, the troubleshooting switch above. The toolbar button turns
+the extension on and off; a keyboard shortcut for that can be set under
 *Manage Extension Shortcuts*.
 
 ## Permissions
@@ -207,9 +213,7 @@ network requests of its own. The manifest declares
   the markup, navigation can break until the site rules
   (`sites/dropout.json`) are updated —
   [docs/site-notes.md](./docs/site-notes.md) records what the extension
-  depends on and how to re-check it. The rows on the Browse page and the
-  inside of the player frame were written from the site's script bundles,
-  not from a logged-in session; they may need a first correction.
+  depends on and how to re-check it.
 - Login and search need a keyboard (or a phone with the HTPC shell's companion);
   `/` opens the search field, and from there you are typing.
 - Only remote buttons are mapped, by design. If you are at a desk, the ones

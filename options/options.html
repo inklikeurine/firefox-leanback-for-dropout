@@ -24,7 +24,7 @@
           </label>
           <label class="row">
             <input type="checkbox" id="hintBar">
-            <span>Show the hint bar (the <kbd>i</kbd> key toggles it while browsing)</span>
+            <span>Show button hints along the bottom of the screen</span>
           </label>
         </fieldset>
 
@@ -42,7 +42,7 @@
           <div class="row">
             <label for="focusZoom">Enlarge selection (%)</label>
             <input type="number" id="focusZoom" min="0" max="25" step="5">
-            <span class="hint">0 turns it off; ignored when the system asks for reduced motion</span>
+            <span class="hint">0 turns it off; with reduced motion it changes without animating</span>
           </div>
         </fieldset>
 
@@ -56,6 +56,7 @@
                 <option value="site">The site's own player controls</option>
               </select>
             </label>
+            <span class="hint">For troubleshooting: the site's own controls if Leanback's ever fail</span>
             <label for="theater">Theater layout</label>
             <select id="theater">
               <option value="auto">On every video page</option>

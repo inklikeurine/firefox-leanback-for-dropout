@@ -1,22 +1,20 @@
 // Leanback for Dropout — the transport bar.
 //
-// Drawn by the extension, not borrowed from the player. Every round of fighting
-// Vimeo's own control bar came from the same place: hashed class names, its
-// idle-hide timer, its popover living *inside* the bar while its overlay play
-// button lives outside it, and a keep-list that had to be re-derived whenever
-// Vimeo shipped. This draws the row instead, and drives the <video> directly.
+// Drawn by the extension, not borrowed from the player, and it drives the
+// <video> directly. The player's own bar has hashed class names, an idle-hide
+// timer and a popover inside it, none of which suit a remote.
 //
-//   [ play/pause | position (display only) | CC | settings | fullscreen ]
+//   [ play/pause | position (display only) | settings | fullscreen ]
 //
-// Position is deliberately not a stop on the row: ◀ ▶ seek whenever the row is
-// not holding a button, which is the rule the rest of the extension follows.
+// Position is not a stop on the row: ◀ ▶ seek whenever the row is not holding
+// a button, which is the rule the rest of the extension follows.
 //
-// The two panels are the one place the player is still asked anything. Captions
-// and quality are the player's to know, so the panels *proxy* its menus: open
-// the real menu out of sight, read its entries, draw them in our own UI, and
-// click the original when one is taken. Nothing about how Vimeo lays its menu
-// out reaches the screen. Captions fall back to the video's own TextTracks when
-// the menu cannot be read.
+// The settings panel is the one place the player is still asked anything.
+// Quality, speed and captions are the player's to know, so the panel proxies
+// its menu: it reads the real menu out of sight, draws the entries in
+// Leanback's own list, and clicks the original when one is taken — as many
+// levels deep as the player's menu goes. Nothing about how the player lays its
+// menu out reaches the screen.
 (function () {
   "use strict";
 
@@ -111,14 +109,7 @@
       b.className = "tenfoot-tc";
       b.dataset.tenfootTc = id;
       b.setAttribute("aria-label", label);
-      if (icon === "CC") {
-        const t = doc.createElement("span");
-        t.className = "tenfoot-tc-cc";
-        t.textContent = "CC";
-        b.appendChild(t);
-      } else {
-        b.appendChild(svgIcon(doc, icon));
-      }
+      b.appendChild(svgIcon(doc, icon));
       buttons[id] = b;
       return b;
     }
@@ -144,9 +135,7 @@
     scrub.append(track, time);
     row.appendChild(scrub);
 
-    // Captions live in the settings panel: one button, one panel. A separate
-    // CC button opened the same list, which is one control too many on a row
-    // walked with arrows.
+    // Captions live in the settings panel, so the row has no CC button.
     row.appendChild(makeButton("settings", "Settings", "gear"));
     row.appendChild(makeButton("fullscreen", "Full screen", "fullscreen"));
 
@@ -154,8 +143,7 @@
 
     // -- the settings panel -------------------------------------------------
     // Full height, flown in from the right, and its own element rather than a
-    // sheet under the row: a menu that opened below the bar was the thing to
-    // read last and the thing you were pointing at first.
+    // sheet under the row.
     const panelEl = doc.createElement("aside");
     panelEl.className = "tenfoot-settings";
     panelEl.hidden = true;
@@ -249,40 +237,117 @@
 
     // -- the player's own menu ----------------------------------------------
     // Opened out of sight, read, and drawn as ours. Nothing of its markup is
-    // ever on screen.
+    // ever on screen. The popover shows one panel at a time: the root, which
+    // has no header, or a submenu, whose header holds its title and a Back
+    // button. Collapsed accordions keep their options in the DOM marked
+    // `hidden`, and group headings ("Color", "Size") sit outside the options,
+    // named by each radio group's aria-labelledby.
+
+    function textOf(node) {
+      return (node && node.textContent ? node.textContent : "").replace(/\s+/g, " ").trim();
+    }
+
+    function isShown(node, menu) {
+      for (let n = node; n && n !== menu; n = n.parentElement) {
+        if (n.hidden) return false;
+      }
+      return true;
+    }
+
+    function groupOf(node) {
+      const g = node.closest ? node.closest("[role='radiogroup'][aria-labelledby]") : null;
+      if (!g) return "";
+      return (g.getAttribute("aria-labelledby") || "").split(/\s+/)
+        .map((id) => (id ? textOf(doc.getElementById(id)) : ""))
+        .filter(Boolean)
+        .join(" ")
+        .slice(0, 40);
+    }
+
+    // drill: opens a submenu. expand: opens an accordion in place. option: one
+    // of a set (a track, a colour, a size). action: anything else ("Reset all").
+    function kindOf(node) {
+      const role = node.getAttribute("role");
+      if (role === "button" && node.hasAttribute("aria-expanded")) return "expand";
+      if (node.getAttribute("aria-haspopup") === "true" || node.getAttribute("data-menu-item") === "true") return "drill";
+      if (role === "menuitemradio" || role === "radio") return "option";
+      return "action";
+    }
+
     function readVendorMenu() {
       const menu = qs(rules.menu);
       if (!menu) return null;
       const body = qs(rules.menuPanel, menu) || menu;
-      const nodes = qsa(rules.menuItem, body);
-      if (!nodes.length) return null;
-      return nodes.map((node) => {
-        const texts = qsa(rules.menuText, node)
-          .map((t) => (t.textContent || "").trim())
-          .filter(Boolean);
-        const label = texts[0] || (node.getAttribute("aria-label") || "").trim() || (node.textContent || "").trim();
-        return {
+      const seen = new Set();
+      const items = [];
+      for (const node of qsa(rules.menuItem, body)) {
+        if (seen.has(node) || !isShown(node, menu)) continue;
+        seen.add(node);
+        const kind = kindOf(node);
+        const texts = qsa(rules.menuText, node).map(textOf).filter(Boolean);
+        const label = textOf(qs(rules.menuLabel, node)) || (node.getAttribute("aria-label") || "").trim() || texts[0] || textOf(node);
+        if (!label) continue;
+        const value = kind === "option" || kind === "action" ? "" : (textOf(qs(rules.menuValue, node)) || texts[1] || "");
+        items.push({
+          kind,
           label: label.slice(0, 60),
-          value: (texts[1] || "").slice(0, 30),
+          value: value.slice(0, 30),
           checked: node.getAttribute("aria-checked") === "true",
+          group: groupOf(node),
           node
-        };
-      }).filter((it) => it.label);
+        });
+      }
+      if (!items.length) return null;
+      return { title: textOf(qs(rules.menuTitle, menu)) || null, items };
     }
+
+    const signature = (read) => (read
+      ? `${read.title}|${read.items.map((i) => `${i.label}:${i.checked}:${i.value}`).join(",")}`
+      : "");
 
     function wait(ms) {
       return new Promise((r) => setTimeout(r, ms));
     }
 
+    // The player redraws its menu a moment after a click: wait for a read
+    // that differs from the one before, or take what is there at the deadline.
+    async function readAfter(before) {
+      const deadline = Date.now() + VENDOR_MENU_TIMEOUT_MS;
+      const was = signature(before);
+      await wait(VENDOR_MENU_POLL_MS * 2);
+      for (;;) {
+        const now = readVendorMenu();
+        if (now && signature(now) !== was) return now;
+        if (Date.now() > deadline) return now;
+        await wait(VENDOR_MENU_POLL_MS);
+      }
+    }
+
+    function pressVendorBack() {
+      const menu = qs(rules.menu);
+      const back = menu ? qs(rules.menuBack, menu) : null;
+      if (!back) return false;
+      try {
+        back.click();
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    }
+
+    // The root's entries. The popover is always in the DOM, so it can be read
+    // without opening it; if it was left on a submenu, it is walked back first.
+    // The gear is a toggle, so it is only pressed when there is nothing to read.
     async function openVendorRoot() {
       if (typeof o.wake === "function") o.wake();
-      // The button is a toggle. Pressing it while the menu is already open
-      // shut it, the read came back empty, and the Quality row disappeared
-      // until the panel was opened again.
-      const already = readVendorMenu();
-      if (already) return already;
+      let read = readVendorMenu();
+      for (let i = 0; read && read.title && i < 4; i += 1) {
+        if (!pressVendorBack()) break;
+        read = await readAfter(read);
+      }
+      if (read && !read.title) return read.items;
       const button = qs(rules.prefsButton);
-      if (!button) return null;
+      if (!button) return read ? read.items : null;
       try {
         button.click();
       } catch (_err) {
@@ -290,8 +355,8 @@
       }
       const deadline = Date.now() + VENDOR_MENU_TIMEOUT_MS;
       for (;;) {
-        const items = readVendorMenu();
-        if (items) return items;
+        read = readVendorMenu();
+        if (read) return read.items;
         if (Date.now() > deadline) return null;
         await wait(VENDOR_MENU_POLL_MS);
       }
@@ -316,37 +381,26 @@
     }
 
     // -- the rows -----------------------------------------------------------
-    // Fixed order, as asked for. Vendor rows take their value and their
-    // submenu from the player; the rest are Leanback's own.
+    // Vendor rows take their value and their submenus from the player; the
+    // rest are Leanback's own. The player's popover holds three entries —
+    // Quality, Speed and CC/subtitles — and the caption appearance (font,
+    // background, window) lives inside CC/subtitles.
     const ROWS = [
-      // Verified against the live player, 2026-09-24: the settings popover holds
-      // exactly three entries — Quality, Speed and CC/subtitles — and each opens
-      // a submenu. Caption font, background and window live *inside*
-      // CC/subtitles, not beside it, so they are reached by opening that row
-      // rather than by rows of their own.
       { id: "quality", label: "Quality", kind: "vendor", match: /quality|resolution/i },
       { id: "speed", label: "Speed", kind: "vendor", match: /speed|rate/i },
-      { id: "seekStep", label: "Seek Step", kind: "choice", setting: "seekStep",
-        values: () => (Settings && Settings.SEEK_STEPS) || [10], show: (v) => `${v}s` },
       // Not a toggle: it takes you to the next episode. Whether one plays by
       // itself at the end is a Leanback setting, and lives in that submenu.
       { id: "next", label: "Play Next Episode", kind: "action" },
-      { id: "hintBar", label: "Button Hints", kind: "toggle", setting: "hintBar" },
-      // The player's own captions entry. Turning captions on by setting a
-      // TextTrack's mode drew nothing — the player keeps its own state — so this
-      // opens its menu instead, which is also where the caption appearance
-      // options are.
+      // Captions are the player's: setting a TextTrack's mode draws nothing,
+      // because the player keeps its own state.
       { id: "captions", label: "Closed Captions", kind: "vendor", match: /cc|subtitle|caption/i },
       { id: "leanback", label: "Leanback Settings", kind: "leanback" }
     ];
 
-    // Leanback's own settings, as a submenu of the panel. The options button
-    // reaches these from anywhere; during playback they sit under the player's.
+    // Leanback's own settings, as a submenu of the panel.
     const LEANBACK_ROWS = [
       { id: "theater", label: "Theater Layout", kind: "choice", setting: "theater",
         values: () => ["auto", "manual", "off"], show: (v) => ({ auto: "Automatic", manual: "Manual", off: "Off" })[v] || String(v) },
-      { id: "playerChrome", label: "Player Controls", kind: "choice", setting: "playerChrome",
-        values: () => ["leanback", "site"], show: (v) => (v === "site" ? "The Site's Own" : "Leanback's") },
       { id: "autoplayNext", label: "Autoplay Next Episode", kind: "toggle", setting: "autoplayNext" },
       { id: "startMuted", label: "Start Videos Muted", kind: "toggle", setting: "startMuted" },
       { id: "hintBar", label: "Button Hints", kind: "toggle", setting: "hintBar" },
@@ -383,7 +437,6 @@
         const n = nextEpisode();
         return n && n.title ? n.title : "";
       }
-      if (r.kind === "leanback") return "";
       if (r.kind === "vendor") {
         const hit = panel && panel.vendor ? panel.vendor[r.id] : null;
         return hit ? hit.value : "";
@@ -401,24 +454,58 @@
       return found;
     }
 
+    // ▶ steps one value on and stops at the last; OK goes round, so every
+    // value is reachable with OK alone.
+    function nextValue(r, delta) {
+      const values = r.values();
+      const at = Math.max(0, values.indexOf(settings()[r.setting]));
+      if (delta === 0) return values[(at + 1) % values.length];
+      return values[Math.min(values.length - 1, Math.max(0, at + delta))];
+    }
+
     // -- panel rendering ----------------------------------------------------
-    function renderPanel() {
-      while (panelList.firstChild) panelList.removeChild(panelList.firstChild);
-      if (!panel) return;
-      const sub = panel.sub;
-      panelTitle.textContent = sub ? sub.title : "Settings";
-      const entries = sub
-        ? (sub.kind === "leanback"
-          ? sub.items.map((r) => ({ label: r.label, value: settingText(r), checked: false, arrow: false }))
-          : sub.items.map((it) => ({ label: it.label, value: "", checked: it.checked, arrow: false })))
-        : panel.rows.map((r) => ({
+    // The panel is the top-level rows plus a stack of submenus: Leanback's own
+    // settings, or as many levels of the player's menu as it has.
+    let itemButtons = [];
+    const level = () => (panel && panel.stack.length ? panel.stack[panel.stack.length - 1] : null);
+    const firstChecked = (items) => Math.max(0, items.findIndex((i) => i.checked));
+
+    function entriesOf(lvl) {
+      if (!lvl) {
+        return panel.rows.map((r) => ({
           label: r.label,
           value: rowValue(r),
-          checked: false,
           arrow: r.kind === "vendor" || r.kind === "leanback"
         }));
-      const index = sub ? sub.index : panel.index;
-      entries.forEach((entry, i) => {
+      }
+      if (lvl.kind === "leanback") return lvl.items.map((r) => ({ label: r.label, value: settingText(r) }));
+      return lvl.items.map((it) => ({
+        label: it.label,
+        value: it.value,
+        checked: it.kind === "option" && it.checked,
+        arrow: it.kind === "drill" || it.kind === "expand",
+        group: it.group
+      }));
+    }
+
+    function renderPanel() {
+      while (panelList.firstChild) panelList.removeChild(panelList.firstChild);
+      itemButtons = [];
+      if (!panel) return;
+      const lvl = level();
+      panelTitle.textContent = lvl ? lvl.title : "Settings";
+      const index = lvl ? lvl.index : panel.index;
+      let group = "";
+      entriesOf(lvl).forEach((entry, i) => {
+        // A heading wherever a new group of options starts, so a run of
+        // colours, sizes and opacities says which is which.
+        if (entry.group && entry.group !== group) {
+          const h = doc.createElement("p");
+          h.className = "tenfoot-settings-group";
+          h.textContent = entry.group;
+          panelList.appendChild(h);
+        }
+        group = entry.group || "";
         const b = doc.createElement("button");
         b.type = "button";
         b.className = "tenfoot-settings-item";
@@ -431,7 +518,7 @@
         b.appendChild(label);
         const val = doc.createElement("span");
         val.className = "tenfoot-settings-value";
-        val.textContent = entry.value;
+        val.textContent = entry.value || "";
         b.appendChild(val);
         const mark = doc.createElement("span");
         mark.className = "tenfoot-settings-mark";
@@ -439,8 +526,9 @@
         else if (entry.arrow) mark.appendChild(svgIcon(doc, "chevron"));
         b.appendChild(mark);
         panelList.appendChild(b);
+        itemButtons.push(b);
       });
-      const cur = panelList.children[index];
+      const cur = itemButtons[index];
       if (cur) {
         try {
           cur.focus({ preventScroll: true });
@@ -456,16 +544,15 @@
         if (typeof o.onPlayback === "function") o.onPlayback(true);
         v.pause();
       }
-      // One retry: the player's menu can be busy at the moment the panel opens —
-      // something else driving it, a re-render mid-click — and a read that came
-      // back empty used to drop Quality, Speed and Closed Captions for the whole
-      // life of the panel, leaving only Leanback's own rows behind.
+      // One retry: the player's menu can be busy at the moment the panel opens
+      // (something else driving it, a re-render mid-click), and an empty read
+      // would drop Quality, Speed and Closed Captions for the life of the panel.
       let items = await openVendorRoot();
       if (!items || !items.length) {
         await wait(220);
         items = await openVendorRoot();
       }
-      panel = { vendor: mapVendor(items), rows: [], index: 0, sub: null, resume: wasPlaying };
+      panel = { vendor: mapVendor(items), rows: [], index: 0, stack: [], resume: wasPlaying };
       panel.rows = visibleRows();
       panelEl.hidden = false;
       // Commit the off-screen start state before asking for the end state, or
@@ -510,88 +597,121 @@
       renderPanel();
     }
 
-    // ▶ enters a submenu, ◀ leaves it.
+    // Show whichever panel the player's menu is on now: after a pick it may
+    // stay (a caption colour), go back up (a quality), or return to the root.
+    function follow(read, taken) {
+      if (!panel) return false;
+      if (!read || !read.title) {
+        panel.stack = panel.stack.filter((l) => l.kind !== "vendor");
+        if (read) panel.vendor = mapVendor(read.items);
+        refreshRows();
+        return true;
+      }
+      for (let i = panel.stack.length - 1; i >= 0; i -= 1) {
+        const l = panel.stack[i];
+        if (l.kind !== "vendor" || l.vendorTitle !== read.title) continue;
+        panel.stack.length = i + 1;
+        l.items = read.items;
+        const keep = taken ? l.items.findIndex((x) => x.label === taken.label && x.group === taken.group) : -1;
+        l.index = keep >= 0 ? keep : Math.min(l.index, l.items.length - 1);
+        renderPanel();
+        return true;
+      }
+      panel.stack.push({ title: read.title, vendorTitle: read.title, kind: "vendor", items: read.items, index: firstChecked(read.items) });
+      renderPanel();
+      return true;
+    }
+
+    async function drillInto(item, title) {
+      const before = readVendorMenu();
+      try {
+        item.node.click();
+      } catch (_err) {
+        return false;
+      }
+      const read = await readAfter(before);
+      if (!panel || !read) return false;
+      panel.stack.push({ title, vendorTitle: read.title, kind: "vendor", items: read.items, index: firstChecked(read.items) });
+      renderPanel();
+      return true;
+    }
+
+    // ▶ or OK on a row with a submenu.
     async function enterRow() {
       if (!panel) return false;
       const row = panel.rows[panel.index];
       if (!row) return false;
       if (row.kind === "leanback") {
-        panel.sub = { title: row.label, kind: "leanback", items: LEANBACK_ROWS.slice(), index: 0, row };
+        panel.stack.push({ title: row.label, kind: "leanback", items: LEANBACK_ROWS.slice(), index: 0 });
         renderPanel();
         return true;
       }
       if (row.kind !== "vendor") return false;
       const hit = panel.vendor[row.id];
-      if (!hit) return false;
-      try {
-        hit.node.click();
-      } catch (_err) {
-        return false;
-      }
-      await wait(160);
-      const items = readVendorMenu();
-      if (!items || !items.length) return false;
-      panel.sub = { title: row.label, kind: "vendor", items, index: Math.max(0, items.findIndex((i) => i.checked)), row };
-      renderPanel();
-      return true;
+      return hit ? drillInto(hit, row.label) : false;
     }
 
+    // ◀ or Back: one level up. In the player's menu that is its own Back
+    // button; without one, the menu is started over at its root.
     async function leaveSub() {
-      if (!panel || !panel.sub) return false;
-      const wasVendor = panel.sub.kind === "vendor";
-      panel.sub = null;
-      if (!wasVendor) {
+      const lvl = level();
+      if (!lvl) return false;
+      if (lvl.kind === "leanback") {
+        panel.stack.pop();
         refreshRows();
         return true;
       }
-      // Re-open the player's menu at its root, so the values shown are current.
+      const before = readVendorMenu();
+      if (pressVendorBack()) {
+        const read = await readAfter(before);
+        if (!panel) return false;
+        panel.stack.pop();
+        return follow(read, null);
+      }
+      panel.stack = panel.stack.filter((l) => l.kind !== "vendor");
       closeVendorMenu();
       await wait(80);
+      if (!panel) return false;
       panel.vendor = mapVendor(await openVendorRoot());
       refreshRows();
       return true;
     }
 
     function stepSub(delta) {
-      if (!panel || !panel.sub || panel.sub.kind !== "leanback") return false;
-      const r = panel.sub.items[panel.sub.index];
+      const lvl = level();
+      if (!lvl || lvl.kind !== "leanback") return false;
+      const r = lvl.items[lvl.index];
       if (!r) return false;
       if (r.kind === "toggle") {
-        if (delta === 0) saveSetting(r.setting, !settings()[r.setting]);
-        else return false;
+        if (delta !== 0) return false;
+        saveSetting(r.setting, !settings()[r.setting]);
       } else if (r.kind === "choice") {
-        const values = r.values();
-        const at = values.indexOf(settings()[r.setting]);
-        const step = delta === 0 ? 1 : delta;
-        const next = values[Math.min(values.length - 1, Math.max(0, (at < 0 ? 0 : at) + step))];
-        if (next === undefined) return true;
-        saveSetting(r.setting, next);
+        saveSetting(r.setting, nextValue(r, delta));
       }
       renderPanel();
       return true;
     }
 
+    // OK inside a submenu.
     async function takeSubItem() {
-      if (!panel || !panel.sub) return false;
-      if (panel.sub.kind === "leanback") return stepSub(0);
-      const it = panel.sub.items[panel.sub.index];
+      const lvl = level();
+      if (!lvl) return false;
+      if (lvl.kind === "leanback") return stepSub(0);
+      const it = lvl.items[lvl.index];
       if (!it) return false;
+      if (it.kind === "drill") return drillInto(it, it.label);
+      const before = readVendorMenu();
       try {
         it.node.click();
-      } catch (_err) { /* fall through and re-read anyway */ }
-      await wait(200);
-      return leaveSub();
+      } catch (_err) { /* re-read anyway */ }
+      return follow(await readAfter(before), it);
     }
 
     function stepRow(delta) {
       if (!panel) return false;
       const row = panel.rows[panel.index];
       if (!row || row.kind !== "choice") return false;
-      const values = row.values();
-      const at = values.indexOf(settings()[row.setting]);
-      const next = values[Math.min(values.length - 1, Math.max(0, (at < 0 ? 0 : at) + delta))];
-      if (next === undefined) return true;
-      saveSetting(row.setting, next);
+      saveSetting(row.setting, nextValue(row, delta));
       renderPanel();
       return true;
     }
@@ -605,7 +725,7 @@
         renderPanel();
         return true;
       }
-      if (row.kind === "choice") return stepRow(1);
+      if (row.kind === "choice") return stepRow(0);
       if (row.kind === "action") {
         if (typeof o.onNext === "function") o.onNext();
         return true;
@@ -619,12 +739,11 @@
 
     function movePanel(delta) {
       if (!panel) return false;
-      if (panel.sub) {
-        const n = panel.sub.items.length;
-        panel.sub.index = Math.min(n - 1, Math.max(0, panel.sub.index + delta));
+      const lvl = level();
+      if (lvl) {
+        lvl.index = Math.min(lvl.items.length - 1, Math.max(0, lvl.index + delta));
       } else {
-        const n = panel.rows.length;
-        panel.index = Math.min(n - 1, Math.max(0, panel.index + delta));
+        panel.index = Math.min(panel.rows.length - 1, Math.max(0, panel.index + delta));
       }
       renderPanel();
       return true;
@@ -749,15 +868,21 @@
         // pressed twice and close the whole row.
         if (echoing) return true;
         if (panel) {
+          const lvl = level();
           switch (action) {
             case "up": return movePanel(-1);
             case "down": return movePanel(1);
-            case "select": return panel.sub ? (takeSubItem(), true) : takeRow();
+            case "select": return lvl ? (takeSubItem(), true) : takeRow();
             case "right": {
-              // ▶ enters a submenu. A row that has no submenu steps its value
-              // instead — there is nothing below it to go into.
-              if (panel.sub) {
+              // ▶ goes into whatever has something below it; on a Leanback
+              // value it steps the value on.
+              if (lvl && lvl.kind === "leanback") {
                 stepSub(1);
+                return true;
+              }
+              if (lvl) {
+                const it = lvl.items[lvl.index];
+                if (it && (it.kind === "drill" || it.kind === "expand")) takeSubItem();
                 return true;
               }
               const row = panel.rows[panel.index];
@@ -769,19 +894,14 @@
               return true;
             }
             case "left":
-              // ◀ always means "leave this submenu" — one rule, whichever kind
-              // of submenu it is. Values are stepped with ▶ and with OK.
-              if (panel.sub) {
-                leaveSub();
-                return true;
-              }
-              return stepRow(-1) || true;
             case "back":
-              if (panel.sub) {
+              // ◀ and Back leave the submenu, one level at a time; at the top,
+              // Back closes the panel.
+              if (lvl) {
                 leaveSub();
                 return true;
               }
-              return closePanel();
+              return action === "back" ? closePanel() : true;
             default: return false;
           }
         }

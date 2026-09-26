@@ -1,8 +1,5 @@
 {
   "site": "dropout",
-  "hosts": [
-    "watch.dropout.tv"
-  ],
   "browseUrl": "https://watch.dropout.tv/browse",
   "searchUrl": "https://watch.dropout.tv/search",
   "routes": [
@@ -33,7 +30,6 @@
   ],
   "common": {
     "header": ".site-header",
-    "headerLinks": ".site-header a[href]",
     "focusable": [
       ".site-header a[href]"
     ],
@@ -80,7 +76,6 @@
       "theaterRoot": "#watch-player",
       "playerMount": "#watch-player .embed",
       "playerFrame": "#watch-player iframe[src*='embed.vhx.tv']",
-      "unauthorized": "#watch-unauthorized",
       "seriesLink": ".series-title a.context-link",
       "focusable": [
         "#watch-info a[href]",
@@ -114,8 +109,7 @@
         "input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button'])",
         "textarea",
         "[contenteditable='true']"
-      ],
-      "noResults": ".BlankSearchResults-module__no-results"
+      ]
     },
     "other": {
       "focusable": [
@@ -135,12 +129,6 @@
       "button",
       "[role='button']",
       "[role='menuitem']"
-    ],
-    "transportSkip": [
-      ".vp-progress",
-      "[aria-label='Progress Bar']",
-      "[role='slider']",
-      "[class*='ProgressBar_module_']"
     ],
     "transportHide": [
       "[class*='VolumeControl_module_']",
@@ -188,13 +176,15 @@
       ".vp-title",
       "[class*='AIWidget_module_']"
     ],
-    "ccButton": "#cc-control-bar-button, [data-cc-button], button.cc",
     "prefsButton": "#prefs-control-bar-button, .vp-prefs, [class*='PrefsButton_module_']",
     "fullscreenButton": "#fullscreen-control-bar-button, button.fullscreen, [class*='FullscreenButton_module_']",
     "menu": ".vp-menu, [class*='PopoverMenu_module_menu__']",
     "menuPanel": "[class*='PopoverMenu_module_menuPanel'], [role='menu']",
-    "menuItem": "[data-menu-item='true'], [data-menu-option='true'], [role='menuitem']",
+    "menuItem": "[data-menu-option='true'], [role='menuitem'], [role='menuitemradio'], li[role='radio'], [class*='Accordion_module'] [role='button'][aria-expanded]",
     "menuText": "[class*='Text_module_text']",
-    "captionsRenderer": "[class*='CaptionsRenderer_module_'], [class*='Captions_module_']"
+    "menuTitle": "[class*='MenuHeader_module_title']",
+    "menuBack": "button[aria-label='Back']",
+    "menuLabel": "[class*='MenuItem_module_label'], [class*='MenuOptionListItem_module_text'], [class*='ButtonRow_module_label']",
+    "menuValue": "[class*='MenuItem_module_value']"
   }
 }

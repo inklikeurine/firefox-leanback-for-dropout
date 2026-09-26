@@ -41,14 +41,14 @@ this folder.
 | Background (relay, settings, frame registry) | `about:debugging` → this extension → **Inspect** |
 | Page script | The page's devtools console (top frame) |
 | Player script | Same console, frame picker → `embed.vhx.tv` |
-| Rules file as loaded | Page console: `browser` is not exposed to the page; log from `page.js` under the `[dtv]` prefix instead |
+| Rules file as loaded | Page console: `browser` is not exposed to the page; log from `page.js` under the `[leanback-for-dropout]` prefix instead |
 | Storage | Background inspector → Storage → Extension Storage |
 
 Handy checks in the **player frame** console:
 
 ```js
 OTTData.video, OTTData.up_next            // what the site knows about this video
-document.querySelector("video")           // is the media element reachable (U4)?
+document.querySelector("video")           // the media element the extension drives
 ```
 
 ## Selector drift check
@@ -77,17 +77,17 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | --- | --- | --- |
 | 1 | Open `https://www.dropout.tv/` | Lands on `watch.dropout.tv/browse` (setting on) |
 | 2 | `/browse`: press Right ×3, Down, Left | Ring moves along the row, then to the next row (same column or remembered tile), then back; the row scrolls so the tile stays visible |
-| 3 | `/browse`: Escape | Nothing happens (exit hook `none`); hint bar shows the hint |
+| 3 | `/browse`: Escape | Nothing happens (exit hook `none`); a notice says "Nothing to go back to" |
 | 4 | Enter on a series tile | Series page opens; ring on the first episode |
 | 5 | Up to the season select, Right, Left | Season changes each time, no dropdown opens |
 | 6 | Down repeatedly past the last episode | "Load More" fires, new episodes appear, ring continues |
 | 7 | Enter on an episode | Video page, theater layout, playback starts or Enter starts it |
 | 8 | In the player: Enter, Enter, Right, Left | Pause, play, +10 s, −10 s |
-| 9 | Down | Ring lands on the series link under the player; theater stays |
+| 9 | Down, then Down again | Leanback's transport bar opens over the video; then the ring lands on the series link under the player, theater staying |
 | 10 | Up | Back in the player |
 | 11 | Escape, Escape | Theater off with the page visible; then back to the series page with the ring on the episode you came from |
 | 12 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
-| 13 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on); hint bar names it |
+| 13 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on) |
 | 14 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
 | 15 | Fresh profile, first visit | Cookie dialog is reachable by arrows and closable by Enter |
 | 16 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox; click again restores it |
@@ -95,8 +95,11 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 18 | Set exit hook to *close this tab*, go to `/browse`, Escape | Tab closes (in kiosk: Firefox exits) |
 | 19 | `/search`: type a query | Letters reach the input; Escape leaves the field |
 | 20 | Wiggle the mouse over tiles on `/browse` | The ring does not move; no hover tooltips appear |
-| 21 | Press the keyboard's *Menu* key (`ContextMenu`) on `/browse` | Header gets focus; no context menu |
-| 22 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
+| 21 | Press the keyboard's *Menu* key (`ContextMenu`) on `/browse` | Leanback's settings open as a panel; no context menu |
+| 22 | On an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
+| 23 | In the panel: Closed Captions → OK → Customize → OK → Font | Font's options, under Color, Size and Opacity headings; ◀ goes back up one level at a time |
+| 24 | Leanback Settings → Seek Step, OK repeatedly | The value goes round from 300 s back to 5 s |
+| 25 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Verification hand-off
 
@@ -168,10 +171,12 @@ Time: ~10 minutes.
 
 ## Coding conventions
 
-- Plain ES2020, no modules that need bundling; content scripts share a global
-  only through `window.__dtv` (one namespace, frozen after init).
-- Log with a `[dtv]` prefix, `console.debug` by default; a `debug` setting
-  turns on `console.info` for actions and moves.
+- Plain ES2020, no modules that need bundling. The scripts in one manifest
+  entry share a global, and each file publishes one frozen object on it
+  (`TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
+  `TenfootMenu`, `TenfootTransport`, `TenfootSettings`).
+- Log with the `[leanback-for-dropout]` prefix, `console.warn` / `console.error`
+  only, for warnings, errors and one-off state changes.
 - All site selectors in `sites/dropout.json` — never inline in `content/*.js`.
 - Every message type is listed in [architecture.md](./architecture.md#messages)
   before it is used.

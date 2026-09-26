@@ -37,7 +37,7 @@ scripts, and the background script relays between them.
 | `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); per-tab registry of the player frame id in **`storage.session`** (an event page loses a plain variable when it unloads; a `Map` is the fallback if the API is missing); message relay page ⇄ player; toolbar button toggle and badge; `commands` handler; exit hook (`tabs.remove(sender.tab.id)`). |
 | `content/page.js` | Top frame of `watch.dropout.tv` | Loads `sites/dropout.json`; classifies the URL into a page kind; wires keys → actions; drives spatial navigation, focus ring, hint bar, theater layout, structural Back, load-more, season switching, next/previous episode. |
 | `content/player.js` | Every frame on `embed.vhx.tv` (`all_frames: true`) | Registers with the background (`player:hello`); finds the `<video>`; handles keys while the frame has focus; executes `player:command`; reports `player:state` and `player:ended`; exposes `OTTData` facts. Owns **when** the transport bar is open and what Back means while it is, and applies the `startMuted` preference once per video. It loads `nav/site-rules.js`, `nav/spatial.js`, `nav/focus-ring.js` and `content/transport.js`, plus `content/player.css`. |
-| `content/transport.js` | Every frame on `embed.vhx.tv` | Draws the transport bar (**play/pause · position · settings · fullscreen**) and drives the `<video>` directly. Also draws the full-height settings panel, which holds the player's settings and Leanback's in one list: the player's are **proxied** — its menu is opened out of sight, read, redrawn as our list, and the original clicked when an entry is taken — while Leanback's are read from and written to `storage.local` through `content/player.js`. Captions are toggled by pressing the player's own captions button and read back off the video's `TextTrack` list. Site-agnostic apart from the `player` block of the rules it is handed. |
+| `content/transport.js` | Every frame on `embed.vhx.tv` | Draws the transport bar (**play/pause · position · settings · fullscreen**) and drives the `<video>` directly. Also draws the full-height settings panel, which holds the player's settings (Quality, Speed, Closed Captions) and Leanback's in one list. The player's are **proxied** — see [The transport bar and the settings panel](#the-transport-bar-and-the-settings-panel). Leanback's are read from and written to `storage.local` through `content/player.js`. Site-agnostic apart from the `player` block of the rules it is handed. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | If the path is `/` and *skip marketing site* is on, `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Site-agnostic directional focus search over a candidate list; row-aware moves; focus memory. Knows nothing about Dropout. |
 | `nav/menu.js` | Top frame | The options panel the menu button opens: a list of `<button>`s the ring moves through like anything else. Site-agnostic; `content/page.js` supplies the entries and says what they do. |
@@ -56,7 +56,7 @@ engine. The extension itself stays standalone
 
 | Page kind | URL (see [site-notes.md](./site-notes.md#routes)) | Behaviour |
 | --- | --- | --- |
-| `browse` | `/browse` | Row-aware navigation over `.horizontal-row-container`s; hero carousel is one row. Initial focus: first tile of the first row (Continue Watching when present). Back → exit hook. |
+| `browse` | `/browse` | Row-aware navigation over `.horizontal-row-container`s; hero carousel is one row. Initial focus: first tile of the first row. Back → exit hook. |
 | `grid` | `/series`, `/collections/...` | Geometric navigation over tiles; Down past the last row clicks Load More. Back → history / `/browse`. |
 | `series` | `/<slug>[/season:N]` | Focusables: trailer button, season select, sort select, episode tiles. Left/Right on a focused select changes its value and dispatches `change`. Initial focus: first episode tile. Back → history / `/browse`. |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>` | Theater layout (setting `auto`), focus the player frame. Down from the player → first focusable under it (series link, related items). Back: theater on → leave theater; else history / series page. Media keys always reach the player. |
@@ -66,11 +66,11 @@ engine. The extension itself stays standalone
 ## Key handling
 
 - One `keydown` listener on `window`, **capture phase**, in each content
-  script. It maps `event.key`/`event.code` to an **action** (`up`, `down`,
-  `left`, `right`, `select`, `back`, `menu`, `info`, `play_pause`, `stop`,
-  `next`, `previous`, `fast_forward`, `rewind`, `subtitle`, `search`) — the
-  same vocabulary as the HTPC shell's Appendix A — then dispatches the action to the
-  current context. Full table: [keymap.md](./keymap.md).
+  script. It maps `event.key` to an **action** (`up`, `down`, `left`,
+  `right`, `select`, `back`, `menu`, `search`, `play_pause`, `stop`, `next`,
+  `previous`, `fast_forward`, `rewind`) — the same vocabulary as the HTPC shell's
+  Appendix A — then dispatches the action to the current context. Full table:
+  [keymap.md](./keymap.md).
 - If the event target is editable (`input`, `textarea`, `[contenteditable]`,
   or an open `<select>`), only `back` is handled.
 - `preventDefault()`/`stopPropagation()` only when the action was consumed.
@@ -81,14 +81,16 @@ engine. The extension itself stays standalone
   Out of the player: `player.js` sends `page:focus` with a hint (`below` |
   `back`) and `page.js` picks the target.
 - **Browser-owned keys.** Remotes send `BrowserBack`/`BrowserHome`
-  (`KEY_BACK`/`KEY_HOMEPAGE`) rather than Escape. Plan A: the capture-phase
-  handler calls `preventDefault()` and runs the layered `back`. If Firefox
-  still navigates history on `BrowserBack` (targets.md T2), plan B: entering
-  theater and opening a dialog push a history entry
-  (`history.pushState({dtv: "theater"})`), and a `popstate` handler leaves
-  theater / closes the dialog — so the browser's own back and the
-  extension's back behave identically. The user-visible behaviour in
-  [keymap.md](./keymap.md) is the same under both plans.
+  (`KEY_BACK`/`KEY_HOMEPAGE`) rather than Escape. The page sees
+  `BrowserBack`, but cancelling it does not stop Firefox's own history-back
+  ([targets.md](./targets.md) T2). So `content/page.js` keeps **one**
+  same-document history entry on top (`history.pushState({tenfoot: "guard"})`).
+  Firefox's navigation lands on it; `onPopState` puts it straight back, asks
+  the player frame first (`player:back`, which closes the settings panel or the
+  transport bar if one is open), and otherwise runs the layered `back`. The
+  capture-phase handler runs the same `back` for `Escape` and for any Back the
+  page receives, and a press is never acted on twice. `BrowserHome` is never
+  mapped.
 - **Pointer.** `mouseover`/`mousemove` never change focus. While the
   extension is on, an injected style rule suppresses the site's hover tooltips (`.tooltip`) so a
   drifting air-mouse pointer doesn't litter the screen. Clicks are left to
@@ -117,10 +119,10 @@ to the topmost open **modal** when one is open (`modal` selectors).
 3. **Keep on screen**: `target.focus({preventScroll:true})` then
    `scrollIntoView({block:"center", inline:"center", behavior})` where
    behaviour is `smooth` unless `prefers-reduced-motion`. This happens on
-   the **first** focus of a page too, not only on later moves — U2 turned out
-   to be real: Dropout's desktop rows slide by transform rather than scroll,
-   so `scrollIntoView` moves nothing inside them and the focused tile would
-   sit off screen with the page apparently frozen. `nudgeRow()` therefore
+   the **first** focus of a page too, not only on later moves. Dropout's
+   desktop rows slide by transform rather than scroll, so `scrollIntoView`
+   moves nothing inside them and the focused tile would sit off screen with
+   the page apparently frozen. `nudgeRow()` therefore
    clicks the row's own `scrollNext`/`scrollPrev` control, looking for it
    inside the row and then up to three ancestors outwards (a carousel usually
    puts its arrows beside the row, not in it), once per page of tiles, up to
@@ -141,50 +143,68 @@ on `document.body` and recomputed lazily on the next key.
   target's `getBoundingClientRect()` with `pointer-events: none` and a very
   high `z-index`. Repositioned on `focusin`, `scroll` (capture) and `resize`,
   throttled to one `requestAnimationFrame`.
-- Style tokens (settings): `--dtv-ring-color` (`#feea3b`), `--dtv-ring-width`
-  (`4px`), 2 px dark outer edge (`#0B0C10` at 0.9) for contrast on light
-  images, `border-radius: 8px`, transition 150 ms in / 100 ms out, none under
-  reduced motion. Optional `transform: scale(1.04)` on the target via a class.
-- The hint bar is a second fixed element at the bottom: key glyphs + labels
-  for the current context, ≥ 24 px text, scrim background, shown on any
-  handled key, hidden 3 s later. Toggle by `info` or setting.
+- Style tokens (settings): `--tenfoot-ring-color` (`#feea3b`),
+  `--tenfoot-ring-width` (`4px`), a dark outer edge for contrast on light
+  images, and no transition under reduced motion. The focused element itself
+  is enlarged by *Selected Item Zoom* (`--tenfoot-zoom`, class
+  `tenfoot-scaled`); an inline target is made `inline-block` first, because a
+  transform does nothing to an inline box.
+- The hint bar is a second fixed element at the bottom: key glyphs and labels
+  for the current context, on a scrim. **Off by default** (`hintBar`). When on,
+  it stays up on pages and, during playback, appears on a keypress and hides
+  3 s later. Short notices ("No next episode", "Nothing to go back to") use the
+  same bar and appear even with hints off.
 
-## The transport row
+## The transport bar and the settings panel
 
-Subtitles and volume belong to the player, so the extension borrows the
-player's own control bar rather than building one. `▼` on a playing video:
+The bar is Leanback's own (`content/transport.js`), drawn in the player frame
+and driving the `<video>` directly. The player's own chrome — the control bar,
+the overlay play button, side dock and title (rule `player.chrome`) — is
+stamped `data-tenfoot-bar` and kept invisible with `opacity: 0`, not
+`display: none`, because the settings panel still reads the player's menu and
+a `display: none` subtree may never mount. Inside the player's control bar,
+everything not on `player.transportKeep` (and everything on
+`player.transportHide`) is stamped `data-tenfoot-hide`; the gear's popover
+entries are never stamped.
 
-1. wakes the bar (Vimeo hides it when the pointer is idle) by dispatching a
-   `mousemove` on the player root — a pointer event, never a synthetic key;
-2. collects `player.transportItems` inside `player.transport`, filtered to
-   what is visible and enabled, in DOM order;
-3. focuses the first and draws the ring over it.
+`▼` on a playing video opens the bar: **play/pause · position · settings ·
+fullscreen**. While it is open, `left`/`right` walk it instead of seeking,
+`select` takes the control, `up` and `back` close it and give `left`/`right`
+back to seeking, and `down` closes it and hands focus to the page. With no
+video to drive, `down` goes straight to the page.
 
-While the row is open, `left`/`right` walk it instead of seeking, `select`
-clicks the focused control (and the bar is re-read afterwards, since taking a
-control can rebuild it), `back` closes it and returns `left`/`right` to
-seeking, and `down` closes it and hands focus to the page.
+**The settings panel** opens from the bar's gear or from the options button
+during playback. It pauses the picture and holds a stack of levels: the top
+rows (Quality, Speed, Play Next Episode, Closed Captions, Leanback Settings),
+then Leanback's own settings or as many levels of the player's menu as it has.
+The player's menu (`player.menu`) is always in the DOM, so it is read without
+being shown. On each level:
 
-The hide and skip lists are **substring** selectors, so both are applied only
-*inside* the control bar and can never stamp the bar itself or an ancestor —
-doing so hid every control at once, which made `down` look like a dead key and
-fall through to the page. If the filters ever leave nothing, the unfiltered
-controls are used instead.
+- entries are the shown elements matching `player.menuItem`, skipping anything
+  inside a `hidden` ancestor (a collapsed accordion keeps its options in the
+  DOM, marked `hidden`);
+- each is a *drill* (opens a submenu: `aria-haspopup`/`data-menu-item`), an
+  *expand* (an accordion header, `role="button"` with `aria-expanded`), an
+  *option* (`menuitemradio` / `radio`, ticked from `aria-checked`) or an
+  *action* ("Reset all");
+- labels come from `player.menuLabel`, the `aria-label` (colour swatches) or
+  the text; values from `player.menuValue`; each option carries the heading of
+  its `[role="radiogroup"]`, found through `aria-labelledby`, and the panel
+  draws that heading above the group;
+- the level's title is the player's own header (`player.menuTitle`), absent at
+  the root.
 
-Two things keep it usable. `transportSkip` drops the scrubber from the walk
-(seeking is `left`/`right`), and `transportHide` stamps volume,
-picture-in-picture and transcript with `data-tenfoot-hide` so the stylesheet
-removes them. And the bar is **pinned open** for as long as the row is in use:
-`html.tenfoot-transport` plus a `data-tenfoot-transport` stamp on the
-container, with a 1.5 s keepalive that wakes the player and takes the focus
-back if it rebuilds the bar. Without that the player hides its own chrome, the
-ring points at nothing, focus falls out of the frame and `back` reaches the
-page — which reads as "back left the video". **When no control
-bar is found, `down` does what it always did and moves to the page**, so a
-wrong selector degrades to the old behaviour rather than to a dead key.
+Taking an entry clicks the original and re-reads the menu once it has changed.
+A drill pushes a level. Anything else follows the player: if its menu stays on
+the same titled panel, that level is re-read in place (a caption colour); if
+it goes back up or to the root, the panel pops to match (a caption track).
+◀ and Back press the player's own Back button (`player.menuBack`) and pop one
+level; without one, the menu is started over at its root. In Leanback's own
+submenu, OK steps a value round its list and ▶ steps it on to the last.
 
-The selectors are unverified (site-notes U4). They are the only part of this
-that is site knowledge, and they live in `sites/dropout.json`.
+With **Player controls → the site's own** (`playerChrome: "site"`, on the
+options page only), nothing of the player is stamped and no bar is drawn: ▼
+goes to the page and the options button to the page's settings.
 
 ## Sound and the autoplay policy
 
@@ -227,7 +247,7 @@ html.tenfoot-theater [data-tenfoot-hide] { display: none; }
 
 Enter theater: on `video` page load when `theater = "auto"`, or `select` on the
 player when `manual`. Leave: `back` while the player has focus. Leaving also
-neutralises the site's sticky mini-player if it engages (U8).
+neutralises the site's sticky mini-player if it engages.
 
 ## Player control (`content/player.js`)
 
@@ -243,8 +263,6 @@ Primary path — direct `<video>` control inside the frame:
 
 The `<video>` is located by rule `player.video` (default `video`), waited for
 with a `MutationObserver` because Vimeo's runtime creates it after load.
-Secondary path if U4 shows the video is not reachable: the Player.js
-postMessage protocol behind `?api=1` (U13).
 
 State reporting: `player:state {paused, currentTime, duration, ended, title,
 upNext}` on `play`/`pause`/`ended`/`durationchange` and at most every 250 ms
@@ -253,7 +271,7 @@ from `timeupdate`. `upNext` is taken from `OTTData.up_next` when present.
 Next/previous episode: `page.js` prefers `upNext.url` from the player; if
 absent, it navigates using the episode order it captured from the series page
 (stored in `sessionStorage` when the user came from there) — otherwise the
-action is unavailable and the hint bar says so.
+action is unavailable and a short notice says so.
 
 ## Messages
 
@@ -272,11 +290,13 @@ and on `player:bye` (`pagehide`).
 | `player:ready` | bg → page | `{frameId, videoId, title}` | the player frame has registered; the page retries a pending hand-off |
 | `player:command` | page → bg → player | `{cmd, by?}` | see table above |
 | `player:focus` | page → bg → player | — | give the player keyboard focus |
-| `player:state` | player → bg → page | state object | OSD, hint bar, autoplay-next |
+| `player:settings` | page → bg → player | — | open the settings panel (the options button during playback); reply `{ok}` — the page opens its own settings when `ok` is false |
+| `player:back` | page → bg → player | — | the page's guard caught Back: the frame closes what it can; reply `{consumed}` — the page walks its own layers when `consumed` is false |
+| `player:offer` | page → bg → player | `{showing}` | the site's up-next overlay is on the page, so OK in the player takes it |
+| `player:state` | player → bg → page | state object | hint bar, autoplay-next, up-next offer |
 | `player:ended` | player → bg → page | `{upNext}` | autoplay next |
 | `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player |
 | `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
-| `page:info` | player → bg → page | `{state}` | toggle the OSD from inside the player |
 | `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`home`, `search`, `menu`, …) |
 | `page:state` | harness → page | — | reply: a snapshot (page kind, theater, focused element, ring/hints). For the tests; the extension never sends it |
 | `exit` | page → bg | — | exit hook; the reply says whether the tab was closed |

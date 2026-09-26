@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.14.0] — 2026-09-26
+
+A cleanup release, before the TV shell work starts.
+
+### Changed
+
+- **Button hints are off by default.** The bar along the bottom listing the keys
+  can be turned on in *Leanback Settings* or on the options page. This reaches
+  new installs only: an existing install keeps the setting it has. Short
+  notices ("No next episode", "Nothing to go back to") still appear with hints
+  off.
+- **The playback panel has no duplicate rows.** Button Hints and Seek Step are
+  in *Leanback Settings* only. The panel's top level is Quality, Speed, Play
+  Next Episode, Closed Captions and Leanback Settings.
+- **"Player controls: the site's own" is on the options page only**, as a
+  troubleshooting switch. It is no longer in the options panel or in
+  *Leanback Settings*.
+- The options button on an episode page whose player cannot be reached opens
+  Leanback's settings, like everywhere else. The old list of actions (Subtitles,
+  Next and Previous Episode, Go To The Show) is gone; those are on the remote's
+  keys and in the playback panel.
+- Every document describes Leanback as it is now; history is in this file only.
+
+### Fixed
+
+- **In *Leanback Settings*, values could only go up.** OK now goes round the
+  list (from the last value back to the first), so every value is reachable
+  with OK alone. ▶ still steps on and stops at the last; ◀ leaves.
+- **The player's menus could only be entered one level deep.** Closed Captions
+  → Customize bounced back to the top, so caption style was out of reach. The
+  panel now follows the player's menu as deep as it goes: CC/subtitles →
+  Customize → Font, Background, Window.
+- **Reading the player's menu:** options inside a collapsed section are no
+  longer listed as if they were on screen; groups of options keep their
+  headings (Color, Size, Opacity); leaving a submenu uses the player's own Back
+  button, one level at a time; picking an option shows what the player shows
+  next — a caption colour stays on its panel with the tick moved, a caption
+  track goes back up with the new value.
+
+### Removed
+
+- Code and styles nothing used: an on-screen display and its styles, the
+  captions button styles, an unused message (`page:info`), and site selectors
+  that matched nothing in the code (`hosts`, `headerLinks`, `unauthorized`,
+  `noResults`, `transportSkip`, `ccButton`, `captionsRenderer`).
+
 ## [0.13.1] — 2026-09-24
 
 ### Fixed

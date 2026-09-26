@@ -198,9 +198,9 @@
   // the stylesheet needing to know a single site selector. Scoped to inside
   // the control bar, and never the bar itself: a broad selector that matched
   // an ancestor would hide every control and make ▼ look like a dead key.
-  // Everything in the bar that is not on the keep list goes. A blacklist was
-  // not enough: the transcript button could not be identified by class at all,
-  // and an unknown button is exactly what a blacklist misses.
+  // Everything in the bar that is not on the keep list goes. A list of things
+  // to hide would miss any button it does not know, and the transcript button
+  // has no class to know it by.
   function hideUnwantedControls(container) {
     const itemSel = Rules.selector(state.rules.transportItems) || "button";
     let items;
@@ -212,8 +212,8 @@
     const keep = Rules.selector(state.rules.transportKeep);
     const menu = Rules.selector(state.rules.transportMenu);
     // The gear's popover lives *inside* the control bar, so its entries look
-    // like control-bar buttons to a keep list — hiding them is what left the
-    // Settings menu empty.
+    // like control-bar buttons to a keep list. They are never hidden, or the
+    // settings panel would read the menu empty.
     const inMenu = (el) => {
       if (el.getAttribute("role") === "menuitem") return true;
       if (!menu) return false;
@@ -228,7 +228,7 @@
       if (el === container || el.contains(container) || inMenu(el)) continue;
       // Vimeo's gear button carries no label of its own — the label is on a
       // child — so a button counts as wanted if it or anything inside it
-      // matches. Missing this is what took the Settings button away.
+      // matches; otherwise the gear itself would be hidden.
       const wanted = keep ? (matchesSafe(el, keep) || Boolean(safeQuery(el, keep))) : true;
       if (wanted) kept.push(el);
     }
@@ -270,9 +270,8 @@
     }
   }
 
-  // The controls must be tidy the moment the bar first appears, not only once
-  // ▼ has been pressed — the owner saw volume and picture-in-picture sitting
-  // there until the row was opened.
+  // The controls are tidied the moment the bar first appears, not only once ▼
+  // has been pressed, so volume and picture-in-picture never show.
   // "site" hands the player its own controls back: nothing of ours is drawn and
   // nothing of theirs is hidden. It is how you reach a part of the player's UI
   // that Leanback has no equivalent for — and the way out if our bar ever
@@ -284,8 +283,8 @@
   function tidyControls() {
     if (!state.settings.enabled || !ownChrome()) return;
     // Every piece of player chrome that should only show while the row is in
-    // use — the control bar, and the overlay play button, which sits OUTSIDE
-    // the bar and so stayed on screen when only the bar was hidden.
+    // use — the control bar, and the overlay play button, which sits outside
+    // the bar and would stay on screen if only the bar were hidden.
     for (const sel of Rules.selectorList(state.rules.chrome)) {
       let els;
       try {
@@ -357,27 +356,22 @@
     const live = state.video && state.video.isConnected ? state.video : findVideo();
     const b = live && ownChrome() ? bar() : null;
     if (!b) {
-      // Nothing to drive: ▼ does what it used to and hands off to the page.
+      // Nothing to drive: ▼ hands off to the page.
       send({ type: "page:focus", hint: "below" });
       return true;
     }
     state.transport = true;
     document.documentElement.classList.add(TRANSPORT_CLASS);
-    // The remote's back button reaches the browser before this frame can
-    // cancel it, so give the browser something of ours to go back to: one
-    // history entry in *this frame*, popped when the row closes. Firefox's own
-    // Back then closes the row instead of leaving the episode, and the page's
-    // history is untouched.
+    // Back reaches the browser before this frame can cancel it. The page's
+    // guard entry absorbs that, and the page asks this frame first what Back
+    // means (player:command "back"), which closes the row.
     b.open();
     report();
     return true;
   }
 
-  // The frame used to keep a history entry of its own so the browser's Back
-  // would close the row. With the page holding a guard entry as well, one press
-  // popped both — which is why Back from the row also dropped the video out of
-  // its full-window layout. There is one guard now, in the page, and the page
-  // asks this frame first (player:command "back") before acting on it itself.
+  // This frame keeps no history entry of its own: the page holds the one
+  // guard, and a second here would let one press pop both.
   function openSettingsPanel() {
     const live = state.video && state.video.isConnected ? state.video : findVideo();
     const b = live && ownChrome() ? bar() : null;
@@ -575,7 +569,7 @@
       case "menu":
         // The options button is the way into the settings panel during
         // playback. With the site's own controls in use there is no panel of
-        // ours to open, so it goes back to the page as it used to.
+        // ours to open, so it goes to the page.
         if (openSettingsPanel()) return true;
         send({ type: "page:action", action });
         return true;
@@ -668,7 +662,7 @@
     if (v) {
       state.enforceMuteUntil = Date.now() + MUTE_ENFORCE_MS;
       // Only re-asserts a mute, or arms the unmute; it will not unmute a video
-      // that has not started, which is what broke autoplay in 0.5.x.
+      // that has not started, which would stop the autoplay.
       applyMutePreference(v, true);
     }
     report();
@@ -705,8 +699,7 @@
     // **Never unmute without a user gesture.** The site sets muted precisely
     // so Firefox will autoplay; turning the sound on before the page has been
     // interacted with makes Firefox stop the video, and no amount of play()
-    // gets it back. Two attempts at being clever about this both cost the
-    // autoplay, so the rule is now simply: wait for a keypress. On a remote
+    // gets it back. So the rule is simple: wait for a keypress. On a remote
     // that is the first button press, and in a profile that allows autoplay
     // with sound (docs/targets.md) hasBeenActive is irrelevant anyway.
     if (!hasUserGesture()) {
@@ -912,8 +905,8 @@
     });
     API.runtime.onMessage.addListener(onMessage);
     window.addEventListener("keydown", onKeyDown, true);
-    // The remote's menu button arrives as a ContextMenu key here too, and this
-    // frame had no suppression, so Firefox's own menu opened over the video.
+    // The remote's menu button arrives as a ContextMenu key here too; without
+    // this, Firefox's own menu would open over the video.
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("pointerdown", onPointerDown, true);
     // No message on pagehide: a query from a context that is being destroyed

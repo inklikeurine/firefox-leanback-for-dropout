@@ -80,16 +80,6 @@
   text-align: center;
   text-shadow: none;
 }
-.tenfoot-osd {
-  font-size: 28px;
-  font-weight: 600;
-  padding: 6px 18px;
-  border-radius: 10px;
-  background: var(--tenfoot-scrim);
-}
-.tenfoot-osd[hidden] {
-  display: none;
-}
 
 /* Theater layout: the player container fills the viewport; header hidden. */
 html.tenfoot-theater [data-tenfoot-theater-root] {
@@ -181,7 +171,7 @@ html.tenfoot-theater [data-tenfoot-hide] {
 }
 /* The selection is drawn from the stamp nav/menu.js sets, not from :focus.
    During playback the ring is parked on the video and cannot mark the panel,
-   and any page that steals the focus used to leave the panel looking dead. */
+   and a page that steals the focus would otherwise leave it looking dead. */
 .tenfoot-menu-item[data-tenfoot-current="true"] {
   background: rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 0 0 var(--tenfoot-ring-width, 4px) var(--tenfoot-ring-color, #feea3b);

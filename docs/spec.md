@@ -1,12 +1,10 @@
 # Leanback for Dropout — product spec
 
-**Status: implemented in 0.1.1** (2026-09-22). This is the product spec; how
-the code realises it, and where it departed from the original design, is in
-[architecture.md](./architecture.md). Everything below described as v0.1
-functionality is built. What has *not* been confirmed is the site knowledge it
-rests on: the Browse-row and player-frame selectors come from Vimeo OTT's
-script bundles, not from a logged-in session
-([site-notes.md](./site-notes.md), U1–U14).
+This is the product spec. How the code realises it is in
+[architecture.md](./architecture.md); the site knowledge it rests on, checked
+against captures of the logged-in site, is in [site-notes.md](./site-notes.md).
+The TV-shell redesign that comes next is planned separately; the
+[milestones](#milestones) below are what 1.0 needs.
 
 ## About
 
@@ -70,7 +68,7 @@ Both TV setups share the rules that shape this spec: one tab opened straight
 on `/browse`, fullscreen or kiosk, no pointer in normal use, and "leaving"
 means Back at the top level closes Firefox.
 
-## Core functionality (v0.1)
+## Core functionality
 
 - **Scope.** Runs on `watch.dropout.tv` (page script) and `embed.vhx.tv`
   (player-frame script). On `https://www.dropout.tv/` (marketing site, root
@@ -83,60 +81,63 @@ means Back at the top level closes Firefox.
   (focus memory). Open dialogs (trailer modal, cookie banner) trap focus until
   closed. Details: [docs/architecture.md](./docs/architecture.md).
 - **Focus ring.** One overlay element drawn over the focused target: 4 px ring
-  in Dropout yellow (`#feea3b`) with a 2 px dark edge, 8 px radius, optional
-  1.04× scale of the target. Follows scroll and resize. Colour and width are
-  settings. Honours `prefers-reduced-motion`.
+  in Dropout yellow (`#feea3b`) with a dark edge, and the target itself
+  enlarged by *Selected Item Zoom* (5 % by default). Follows scroll and resize.
+  Colour, width and zoom are settings. Under `prefers-reduced-motion` nothing
+  animates.
 - **Select / Back.** OK activates the focused element (native activation for
-  links and buttons, synthetic click otherwise). The back button goes back:
-  `history.back()` when there is history, otherwise the structural parent
-  (video → series page → `/browse`). At `/browse` with nothing to go back to,
-  Back runs the **exit hook** (setting: *nothing* (default) or *close this tab*
-  — the HTPC shell kiosk hand-off).
+  links and buttons, synthetic click otherwise). The back button goes one layer
+  up the site, never "back to the last page": an open panel or dialog first,
+  then video → the season page you came from → `/browse`. At `/browse`, Back
+  runs the **exit hook** (setting: *nothing* (default) or *close this tab* —
+  the HTPC shell kiosk hand-off).
 - **Season and sort controls.** The series page's native `<select>` elements
   are focusable, and are **two-step controls**: Enter engages one, Left/Right
   then step its options without opening the native dropdown and without firing
   `change`, Enter commits (the site navigates on the change) and Escape
   restores the value it had. Arrows only reach the options while the control is
   engaged — otherwise Left/Right could never carry the ring past a dropdown to
-  the control beside it, which is exactly how the season dropdown became
-  unreachable in 0.1.1.
+  the control beside it.
 - **Load more.** Moving Down past the last row of a grid triggers the site's
   "Load More" control and continues once new tiles arrive.
 - **Video pages.** On load: enter theater layout, focus the player. Inside the
-  player: Enter/Space/Play-Pause toggles playback, Left/Right seeks ±10 s
-  (setting), Down leaves the player to the page below (up-next, series link),
-  Escape leaves theater layout, Escape again goes back. Media keys
-  (Play/Pause, Stop, Next, Previous) work from anywhere on a video page.
-  Full table: [docs/keymap.md](./docs/keymap.md).
+  player: OK and Play-Pause toggle playback, Left/Right seek by the seek step
+  (10 s by default), Down opens the transport bar and Down again goes to the
+  page below (up-next, series link); back leaves theater layout, and again goes
+  up a layer. Media keys (Play/Pause, Stop, Next, Previous) work from anywhere
+  on a video page. Full table: [docs/keymap.md](./docs/keymap.md).
 - **Next / previous episode.** Uses the site's own up-next data when present;
   otherwise the episode order from the series page. **Autoplay next** on
   `ended` is a setting (default on).
-- **Transport row.** ▼ on a playing video opens the player's own control bar;
-  ◀ ▶ walk it (and stop seeking while it is open), OK takes a control, back
-  closes it. This is the intended way to reach subtitles and volume — they are
-  the player's controls, so the extension borrows them rather than
-  reimplementing them. ▼ again continues to the page below.
-- **Options panel.** The menu button opens it: episode skip, the link to the
-  show, Browse, Search, settings, turning the extension off. ▲ ▼ move, OK
-  takes an entry, back closes. Without it those features would need letter
+- **Transport bar.** ▼ on a playing video opens Leanback's own bar: play/pause
+  · position · settings · fullscreen. ◀ ▶ walk it (and stop seeking while it is
+  open), OK takes a control, back closes it. ▼ again continues to the page
+  below. The player's own chrome stays hidden.
+- **Settings panel (playback).** The bar's settings, or the menu button during
+  playback, opens a full-height panel: Quality, Speed and Closed Captions — the
+  player's own menus, as many levels deep as they go, caption style included —
+  plus Play Next Episode and Leanback Settings. It pauses the picture while
+  open.
+- **Options (everywhere else).** The menu button opens Leanback's settings as a
+  panel on the page, with Browse, Search and *Turn Leanback off* at the foot.
+  ▲ ▼ move, OK takes an entry, back closes. Without it those would need letter
   keys, which on a remote means the QWERTY pad on the back.
 - **Settings in the page.** "Leanback settings" fills the same panel rather
   than opening a tab: any navigation away from the site would tear the
   extension's state down, and in a kiosk there is no way back. Each row is the
   same two-step control as a season dropdown.
-- **Hint bar.** A bottom strip showing the buttons that matter in the current
-  context, ≥ 24 px text. It stays on screen and follows the selection, so the
-  controls are always readable from the sofa; during playback it keeps out of
-  the way and appears briefly on a press.
+- **Button hints.** Off by default. When on, a bottom strip shows the buttons
+  that matter in the current context: it stays on screen on pages, and during
+  playback appears briefly on a press. Short notices ("No next episode") use
+  the same strip and appear with hints off too.
 - **Toggle.** Clicking the toolbar button, the options panel's "Turn Leanback
   off", or a user-assigned keyboard shortcut (`commands` API, no default
   binding) turns the extension off/on for the site; state persists.
 
 ## Optional / future functionality
 
-- OSD with title and time. Removed in 0.3.0 along with the `i` key that was
-  its only trigger; it needs a trigger that is not a letter — an options-panel
-  entry, or showing it automatically on pause.
+- The title and time over the video, shown on pause — never behind a letter
+  key.
 - Native-messaging exit hook and OSK text bridge (the HTPC shell only — stays in
   The HTPC shell's own extension; this extension keeps the seam, not the feature).
 - Gamepad support via the Gamepad API (today: map the pad to keys outside the
@@ -187,9 +188,10 @@ corrupt value falls back to the default rather than throwing) by
 | `enabled` | `true` | TV navigation on for Dropout hosts |
 | `ringColor` | `"#feea3b"` | ring colour, `#rrggbb` |
 | `ringWidth` | `4` | px, clamped to 2–12 |
-| `focusZoom` | `5` | how much bigger the selected item gets, in percent; 0 turns it off, as does a system reduced-motion preference |
-| `hintBar` | `true` | show the hint bar |
+| `focusZoom` | `5` | how much bigger the selected item gets, in percent; 0 turns it off. Under reduced motion it changes without animating |
+| `hintBar` | `false` | show button hints |
 | `theater` | `"auto"` | `auto` on every video page, `manual` (OK on the player), `off` |
+| `playerChrome` | `"leanback"` | `leanback` or `site`: the site's own player controls, for troubleshooting. On the options page only |
 | `seekStep` | `10` | seconds per ◀ ▶ press in the player; one of 5, 10, 15, 30, 60, 120, 300 |
 | `autoplayNext` | `true` | play the next episode when one ends |
 | `startMuted` | `false` | start videos muted. Off by default: Dropout starts them muted to satisfy Firefox's autoplay policy, and the extension turns the sound back on once per video |
@@ -239,8 +241,11 @@ Manual checklist (full version with expected results in
   opens a series or episode; Escape at `/browse` does nothing (exit hook off).
 - `/series` grid: Down past the last row loads more; focus continues.
 - Series page: season switch by Left/Right; Enter on an episode plays it.
-- Video page: theater layout appears; Enter/Space toggles; Left/Right seeks;
-  Down reaches the page; Escape ×2 returns to the series page.
+- Video page: theater layout appears; OK toggles; Left/Right seeks; Down opens
+  the transport bar, Down again reaches the page; back ×2 returns to the season
+  page.
+- Settings panel: Closed Captions → Customize → Font is reachable, each group
+  of options headed; ◀ goes up one level; OK on a Leanback value goes round.
 - Media keys work on a video page from anywhere on the page.
 - Autoplay next: the next episode starts when one ends.
 - Trailer modal and cookie banner: Escape closes; focus returns.
@@ -253,10 +258,6 @@ Manual checklist (full version with expected results in
 
 - Depends on Dropout's markup; class names can change without notice.
   `sites/dropout.json` and the drift check are the mitigation.
-- Rows on `/browse` and the player frame's internals were **not inspectable
-  logged-out** — see the *unverified* list in
-  [docs/site-notes.md](./docs/site-notes.md). Verify in a logged-in session
-  before relying on them.
 - Login and search need a keyboard or the HTPC shell OSK bridge; login also loads
   reCAPTCHA Enterprise, which may block a kiosk login flow.
 - Firefox's autoplay policy may block autoplay-with-sound until the site has
@@ -266,6 +267,16 @@ Manual checklist (full version with expected results in
   extensions installed.** Until the first unlisted signing, the extension can
   only be loaded temporarily — fine for development, useless on an appliance.
   Signing is therefore an early milestone, not a release-day step.
+
+## Milestones
+
+### 1.0
+
+- **Watch history syncs between devices.** Leanback's own watch history
+  (resume points and watched marks, planned with the TV shell) stays in this
+  Firefox until then. It will not sync through a Firefox account. The approach
+  — for example writing into Dropout's own history, so the Roku and Android
+  apps see what was watched here — is decided when the work starts.
 
 ## Release checklist
 

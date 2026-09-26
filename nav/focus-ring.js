@@ -65,9 +65,8 @@
     }
 
     // The zoom goes on the focused element itself. A transform does nothing to
-    // a non-replaced inline box — which is why the old setting appeared to do
-    // nothing on the browse rows — so an inline target is made inline-block
-    // first. It deliberately does NOT scale the tile around it: a transform
+    // a non-replaced inline box, so an inline target (the browse rows' links)
+    // is made inline-block first. It deliberately does NOT scale the tile around it: a transform
     // makes its element the containing block for positioned descendants, which
     // moves the very thing we are trying to highlight.
     function scaleTarget(el, on) {
@@ -148,12 +147,8 @@
       el.hidden = true;
       doc.documentElement.appendChild(el);
     }
-    const osd = doc.createElement("div");
-    osd.className = "tenfoot-osd";
-    osd.hidden = true;
     const list = doc.createElement("div");
     list.className = "tenfoot-hint-list";
-    el.appendChild(osd);
     el.appendChild(list);
     let enabled = o.enabled !== false;
     let autoHideMs = typeof o.autoHideMs === "number" ? o.autoHideMs : 0; // 0 = stay up
@@ -183,9 +178,11 @@
       timer = autoHideMs > 0 ? win.setTimeout(hide, autoHideMs) : 0;
     }
 
-    function show(items, ms, force) {
+    // `notice` shows it even with button hints off: for short messages ("No
+    // next episode") rather than the hints themselves.
+    function show(items, ms, notice) {
       if (Array.isArray(items)) lastItems = items;
-      if (!enabled && !force) return;
+      if (!enabled && !notice) return;
       render(lastItems);
       el.hidden = false;
       if (typeof ms === "number") {
@@ -200,27 +197,11 @@
       if (timer) win.clearTimeout(timer);
       timer = 0;
       el.hidden = true;
-      osd.hidden = true;
-    }
-
-    function setOsd(text) {
-      if (typeof text === "string" && text) {
-        osd.textContent = text;
-        osd.hidden = false;
-      } else {
-        osd.textContent = "";
-        osd.hidden = true;
-      }
     }
 
     function setEnabled(v) {
       enabled = Boolean(v);
       if (!enabled) hide();
-    }
-
-    // Show regardless of the setting (the Info key), for `ms` milliseconds.
-    function force(items, ms) {
-      show(items, ms, true);
     }
 
     function destroy() {
@@ -229,7 +210,7 @@
     }
 
     return Object.freeze({
-      show, hide, setOsd, setEnabled, force, destroy, element: el,
+      show, hide, setEnabled, destroy, element: el,
       get enabled() { return enabled; },
       get visible() { return !el.hidden; }
     });

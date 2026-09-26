@@ -54,9 +54,9 @@
           b.appendChild(d);
         }
         b.addEventListener("click", (e) => {
-          // The site never sees this. A synthetic click that bubbled out of
-          // the panel woke Dropout's own handlers, which moved the focus, and
-          // the panel used to close itself on that.
+          // The site never sees this. A click that bubbled out of the panel
+          // would wake Dropout's own handlers, which move the focus and would
+          // close the panel.
           e.preventDefault();
           e.stopPropagation();
           if (typeof h.onActivate === "function") h.onActivate(it.id);
@@ -100,8 +100,8 @@
     }
 
     // The selection is stamped on the element, not read from :focus. Pages
-    // move the focus whenever they re-render, and a menu whose highlight went
-    // with it was a menu you could not see yourself using.
+    // move the focus whenever they re-render, and a highlight that followed
+    // :focus would vanish with it.
     function focusCurrent() {
       const el = items[index];
       for (const b of items) {

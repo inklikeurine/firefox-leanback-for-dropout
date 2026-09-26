@@ -8,8 +8,7 @@ thing this extension exists to avoid.
 
 **Arrow keys navigate and do nothing else.** Not captions, not skipping an
 episode, not anything that could be mistaken for a command. A control that
-swallows an arrow key makes everything beyond it unreachable, which is how the
-season dropdown became unreachable in 0.1.1.
+swallows an arrow key makes everything beyond it unreachable.
 
 Keys map to **actions** first (the vocabulary is the HTPC shell's Appendix A, so a
 remote, a gamepad-to-key mapper and a keyboard all look the same), then each
@@ -22,7 +21,7 @@ context decides what an action does.
 | ▲ ▼ ◀ ▶ | `ArrowUp` `ArrowDown` `ArrowLeft` `ArrowRight` | `up` `down` `left` `right` |
 | OK | `Enter` | `select` |
 | back | `BrowserBack`, or `Escape` on remotes that send it | `back` |
-| menu | `ContextMenu` | `menu` — opens the options panel |
+| menu | `ContextMenu` | `menu` — opens the settings |
 | home | `BrowserHome` | **reserved**: never mapped, the TV shell owns it |
 | volume ± | `AudioVolumeUp` / `AudioVolumeDown` / `AudioVolumeMute` | never intercepted; the desktop owns it |
 
@@ -54,21 +53,20 @@ While the focus is in a text field, **only the back button is ours** — even
 | `back` | cancel an engaged `<select>` → close a dialog → **one layer up the site** → at `/browse` the exit hook | undo a settings row → close | leave theater; else one layer up | submenu → settings panel → transport bar → playback → one layer up |
 | `menu` | **opens Leanback's settings** | closes it | opens Leanback's settings | opens the **settings panel** in the player frame |
 | `search` | go to `/search` | — | same | same |
-| `play_pause` `stop` `next` `previous` `fast_forward` `rewind` `subtitle` `mute` | ignored (no player) | — | forwarded to the player | handled in the player |
+| `play_pause` `stop` `next` `previous` `fast_forward` `rewind` | ignored (no player) | — | forwarded to the player | handled in the player |
 
 **Back is structural, never historical.** It walks one layer up the site —
 episode → the season page you came from → `/browse` — rather than returning to
-whatever page you happened to look at last. `history.back()` was what made it
-feel wrong, and it is gone.
+whatever page you happened to look at last.
 
 ## The options button
 
 It opens the settings, and which settings depends on where you are.
 
 **During playback** it opens the **settings panel** in the player frame (below).
-**Everywhere else** it opens Leanback's own settings directly — there is no list
-of actions in between any more. The few entries that are not settings sit at the
-foot of that list:
+**Everywhere else** — including an episode page whose player cannot be reached —
+it opens Leanback's own settings as a panel on the page. The few entries that
+are not settings sit at the foot of that list:
 
 | Entry | Does |
 | --- | --- |
@@ -93,8 +91,8 @@ No wrapping, like the rest of the navigation.
   and the frame directly, so none of it depends on the player's markup.
 - **▲ or back** closes the bar and ◀ ▶ go back to seeking. ▼ closes it and
   carries on to the page below.
-- If there is no video to drive, ▼ does what it used to and moves to the page,
-  so it is never a dead key.
+- If there is no video to drive, ▼ moves to the page, so it is never a dead
+  key.
 
 There are no seek-preview thumbnails: this player carries no storyboard or frame
 index, only a single poster image ([site-notes.md](./site-notes.md)).
@@ -108,44 +106,47 @@ already paused.
 | Row | Comes from |
 | --- | --- |
 | Quality | the player's own menu |
-| Seek Step | Leanback |
+| Speed | the player's own menu |
 | Play Next Episode | goes to the next episode — it is a link, not a toggle |
-| Button Hints | Leanback |
-| Closed Captions | presses the player's captions button |
-| Closed Caption Font / Background / Window | the player's own menu — **only while captions are on** |
-| Leanback Settings | everything else Leanback has, as a submenu |
+| Closed Captions | the player's CC/subtitles menu: the tracks, and Customize → Font, Background, Window |
+| Leanback Settings | Leanback's own, as a submenu: Theater Layout, Autoplay Next Episode, Start Videos Muted, Button Hints, Seek Step, Selected Item Zoom, Selection Outline, Skip Marketing Site, Back On Browse |
 
-- ▲ ▼ move. **▶ opens a submenu, ◀ leaves one** — one rule, whichever kind of
-  submenu it is.
-- OK toggles a switch, steps a value, or opens a submenu.
-- back leaves a submenu, then closes the panel, then closes the bar.
+- ▲ ▼ move. **▶ or OK opens a submenu; ◀ or back goes up one level.**
+- OK picks one of the player's options, flips a switch, or steps a value round
+  its list (from the last value back to the first). ▶ steps a value on and
+  stops at the last.
+- back at the top closes the panel; again, the bar.
 
 The rows that come from the player are **proxied**: its menu is opened out of
 sight, read, and drawn in our own list, and the original is clicked when an
-entry is taken. None of its markup is ever on screen.
+entry is taken. The panel follows it as many levels deep as it goes, lists only
+the options it is showing (a collapsed section's are listed once it is
+opened), heads each group of options with its name (Color, Size, Opacity), and
+leaves a submenu with the player's own Back. After a pick it shows whatever the
+player shows next: a caption colour stays on its panel with the tick moved; a
+caption track goes back up with the new value. None of its markup is ever on
+screen.
 
 ## Keys the browser or the desktop own
 
 | Key | Who else acts on it | How it is handled |
 | --- | --- | --- |
-| `BrowserBack` (`KEY_BACK`) | Firefox: history back | Intercepted, and designed around: **one** same-document history entry is kept on top, in the page, for Firefox's own navigation to land on. The page then asks the player frame what Back means before acting on it itself. Whether the interception alone would do is [targets.md](./targets.md) **T2**, still open — see below. |
+| `BrowserBack` (`KEY_BACK`) | Firefox: history back | Intercepted, and designed around: **one** same-document history entry is kept on top, in the page, for Firefox's own navigation to land on. The page then asks the player frame what Back means before acting on it itself. The interception alone would not do: see T2 below. |
 | `BrowserHome` (`KEY_HOMEPAGE`) | Firefox: home page; Plasma Bigscreen: global "home" | **Reserved.** Never mapped. Point the kiosk profile's home page at `/browse` so a stray press is harmless. |
 | `ContextMenu` (`KEY_COMPOSE`, the W1's *menu*) | Firefox: opens the context menu | `menu`; the keyboard-originated `contextmenu` event is cancelled, a real right-click is not. |
 | `AudioVolumeUp/Down/Mute` | The desktop's volume control | Never intercepted. |
 | `Escape` | Firefox: leaves DOM fullscreen | Theater layout is CSS, not DOM fullscreen, so it stays ours. |
 
-### T2 — the one thing about Back that is still unverified
+### T2 — why Back needs the history guard
 
-Which key the W1's back button sends is **known**: `KEY_BACK` (Consumer
-Control) → `event.key === "BrowserBack"`. What has never been checked on the
-box is whether `preventDefault()` on that key stops Firefox navigating anyway.
-Everything in `content/page.js` around `pushGuard` / `onPopState` exists only
-for the case where it does not.
-
-[Leanback Dev Probe](../../leanback-dev-probe/) answers it: load it, press back,
-read the line. `cancelled=true` with **no** navigation means the interception is
-enough and the guard should come out. A `popstate` or `pagehide` after it means
-the guard stays.
+The W1's back button sends `KEY_BACK` (Consumer Control), which arrives as
+`event.key === "BrowserBack"` (`trusted`, seen at capture and bubble). Cancelling
+it with `preventDefault()` does **not** stop Firefox's own history-back — on the
+page or with the player focused ([targets.md](./targets.md) T2, checked with
+[Leanback Dev Probe](../../leanback-dev-probe/)'s Block Back). So the guard in
+`content/page.js` (`pushGuard` / `onPopState`) is what keeps Back on the page:
+Firefox's navigation lands on the guard entry, Leanback puts it straight back
+and does what Back means.
 
 ## Remote example: WeChip W1 air mouse
 

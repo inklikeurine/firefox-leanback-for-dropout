@@ -28,7 +28,7 @@ for text. Everything about this target is in
 
 ## Target 2 — Bedroom HTPC (KDE Plasma Bigscreen + WeChip W1)
 
-Facts from that machine's own notes (verified there 2026-09-06 to 2026-09-11):
+Facts from that machine's own notes:
 
 | | |
 | --- | --- |
@@ -104,8 +104,8 @@ Three ways to make it answer `"allowed"`:
 `media.autoplay.default`: `0` allow audio and video, `1` block audio (the
 default), `5` block audio and video. Leave `media.autoplay.blocking_policy` at
 its default of `0`. The `Autoplay` policy's `Default` takes exactly
-`allow-audio-video`, `block-audio` or `block-audio-video` (verified against
-`policies-schema.json`, 2026-09-23).
+`allow-audio-video`, `block-audio` or `block-audio-video` (Firefox's
+`policies-schema.json`).
 
 **There is no command-line flag for this.** Release Firefox accepts no
 `--pref`; the setting has to live in the profile or in a policy file. The
@@ -143,7 +143,7 @@ Check it on the box: open an episode, and in the console on the player frame
 | # | Question | How | Affects |
 | --- | --- | --- | --- |
 | T1 | Does Bigscreen take `KEY_HOMEPAGE` globally while Firefox is in front? Does Firefox stay running behind? | Launch the kiosk, press home, `pgrep firefox` over SSH | exit paths, memory |
-| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? | Temporary add-on with a logging content script, press back | Back design: plan A (intercept) vs plan B (history states), see [architecture.md](./architecture.md#key-handling) |
+| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? **Answered: the page sees it (`trusted=true`, capture and bubble), and `preventDefault()` does not stop the history-back — on the page and with the player focused.** | Leanback Dev Probe's Block Back, press back | Back design: plan B (history states), see [architecture.md](./architecture.md#key-handling) |
 | T3 | Does `ContextMenu` open a context menu in `--kiosk`? Does cancelling the `contextmenu` event suppress it outside kiosk? | Press menu on `/browse` | `menu` action |
 | T4 | Does `close-tab` in `--kiosk` end the Firefox process and drop back to Bigscreen cleanly, no restore prompt next time? | Set the exit hook, press back at `/browse` | exit hook |
 | T5 | Hardware decode active (`about:support` → Media → "Hardware decoding"), and 1080p playback smooth at TV distance? | Play an episode; compare with the Waydroid app | whether the switch is worth it |

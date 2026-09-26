@@ -11,8 +11,8 @@
 //                               playhead, ▼ leaves the player for the page)
 //   OK        Enter             select
 //   back      BrowserBack       back   (Escape too: many remotes send it)
-//   menu      ContextMenu       menu   — opens the options panel, which is
-//                               where captions, mute and the rest live
+//   menu      ContextMenu       menu   — opens the settings: the playback
+//                               panel during playback, Leanback's elsewhere
 //   home      BrowserHome       RESERVED — never mapped; the shell owns it
 //   volume    AudioVolume*      never intercepted; the desktop owns it
 //

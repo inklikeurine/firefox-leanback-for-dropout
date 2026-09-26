@@ -56,7 +56,6 @@
     modalReturn: null,
     menu: null,
     menuReturn: null,
-    menuMode: "actions",
     settingRow: null,
     offerShowing: false,
     settingBefore: null,
@@ -65,7 +64,6 @@
     pendingInitialFocus: 0,
     initialFocusTimer: 0,
     menuRefocus: 0,
-    settingsFromActions: false,
     guard: false,
     lastBack: 0,
     pendingLoadMore: null,
@@ -568,34 +566,13 @@
 
   async function exit() {
     const r = await send({ type: "exit" });
-    if (!r || r.action !== "close-tab") state.hints.show([{ keys: "Back", label: "Nothing to go back to" }], 2000);
-  }
-
-  // Everything that has no button of its own lives behind the menu button.
-  function menuItems() {
-    const items = [];
-    if (state.kind === "video") {
-      // Play/pause, subtitles and volume live on the player's own transport
-      // row (▼ during playback). Subtitles stay here as well until the
-      // transport row is confirmed against the real player chrome.
-      items.push({ id: "subtitle", label: "Subtitles", detail: "or ▼ on the video" });
-      if (episodeUrl(1)) items.push({ id: "next", label: "Next episode" });
-      if (episodeUrl(-1)) items.push({ id: "previous", label: "Previous episode" });
-      const series = firstVisible(Rules.selector(state.page.seriesLink));
-      if (series) items.push({ id: "series", label: "Go to the show" });
-    }
-    items.push({ id: "browse", label: "Browse" });
-    items.push({ id: "search", label: "Search", detail: "needs a keyboard" });
-    items.push({ id: "settings", label: "Leanback settings" });
-    items.push({ id: "disable", label: "Turn Leanback off" });
-    return items;
+    if (!r || r.action !== "close-tab") state.hints.show([{ keys: "Back", label: "Nothing to go back to" }], 2000, true);
   }
 
   // id → how a value is shown and stepped. Every one is a short list or a
   // number with a step, so ◀ ▶ can walk it.
   const SETTING_ROWS = [
     { id: "theater", label: "Theater layout", values: ["auto", "manual", "off"], show: { auto: "every video", manual: "on OK", off: "never" } },
-    { id: "playerChrome", label: "Player controls", values: ["leanback", "site"], show: { leanback: "Leanback's", site: "the site's own" } },
     { id: "seekStep", label: "Seek step", values: Settings.SEEK_STEPS, suffix: " s" },
     { id: "autoplayNext", label: "Play next episode", bool: true },
     { id: "startMuted", label: "Start videos muted", bool: true },
@@ -619,9 +596,8 @@
     return `${v}${row.suffix || ""}`;
   }
 
-  // The options button opens this list directly now, so the few things that
-  // are not settings — where to go, and the way out — come along at the foot of
-  // it rather than living behind a list of their own.
+  // The few things that are not settings — where to go, and the way out — come
+  // along at the foot of the list.
   function settingItems() {
     const items = SETTING_ROWS.map((r) => ({ id: r.id, label: r.label, value: settingText(r) }));
     items.push({ id: "browse", label: "Browse" });
@@ -649,12 +625,7 @@
     return true;
   }
 
-  function openSettings(fromActions) {
-    // Back steps out to the action list only when that is where we came from.
-    // The options button opens this list directly, and there is nothing behind
-    // it to step out to.
-    state.settingsFromActions = Boolean(fromActions);
-    state.menuMode = "settings";
+  function openSettings() {
     state.settingRow = null;
     state.menu.open(settingItems(), { title: "Leanback settings" });
     showHints();
@@ -664,11 +635,9 @@
   function openMenu() {
     if (state.menu.isOpen) return closeMenu();
     // On a video the options button belongs to the player's settings panel,
-    // which holds its settings and Leanback's together. Everywhere else it
-    // opens Leanback's settings directly — the list of actions in between was
-    // a stop nobody wanted.
-    // Remember where the ring was before any of the routes below, so closing
-    // whatever opens puts it back.
+    // which holds its settings and Leanback's together. Everywhere else, and
+    // when the player does not answer, it opens Leanback's settings here.
+    // Remember where the ring was, so closing whatever opens puts it back.
     state.menuReturn = state.playerFocused ? null : currentEl();
     if (state.kind === "video" && qs(state.page.playerFrame)) {
       send({ type: "player:settings" }).then((r) => {
@@ -676,17 +645,11 @@
       });
       return true;
     }
-    if (state.kind !== "video") return openSettings();
-    state.menuMode = "actions";
-    state.settingRow = null;
-    if (!state.menu.open(menuItems())) return false;
-    state.hints.show(hintItems(), 0);
-    return true;
+    return openSettings();
   }
 
   function closeMenu() {
     if (!state.menu.close()) return false;
-    state.menuMode = "actions";
     state.settingRow = null;
     if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
     else if (state.playerFocused || state.theater) enterPlayer();
@@ -726,7 +689,7 @@
         state.menu.activate();
         return true;
       case "back":
-        return state.menuMode === "settings" && state.settingsFromActions ? backToActions() : closeMenu();
+        return closeMenu();
       case "menu":
         return closeMenu();
       case "left":
@@ -735,14 +698,6 @@
       default:
         return false;
     }
-  }
-
-  function backToActions() {
-    state.menuMode = "actions";
-    state.settingsFromActions = false;
-    state.menu.open(menuItems());
-    showHints();
-    return true;
   }
 
   function engageSetting(row) {
@@ -771,37 +726,13 @@
   }
 
   function onMenuItem(id) {
-    if (state.menuMode === "settings") {
-      const row = settingRow(id);
-      if (row) {
-        engageSetting(row);
-        return;
-      }
-      // Not a setting: one of the actions at the foot of the list.
-    }
-    const player = { play_pause: "toggle", subtitle: "captions", mute: "mute" };
-    if (Object.prototype.hasOwnProperty.call(player, id)) {
-      send({ type: "player:command", cmd: player[id] }).then((r) => {
-        if (r && r.ok === false && r.error) state.hints.show([{ keys: "!", label: r.error }], 3000);
-      });
-      closeMenu();
+    const row = settingRow(id);
+    if (row) {
+      engageSetting(row);
       return;
     }
+    // Not a setting: one of the actions at the foot of the list.
     switch (id) {
-      case "next":
-        closeMenu();
-        goEpisode(1);
-        return;
-      case "previous":
-        closeMenu();
-        goEpisode(-1);
-        return;
-      case "series":
-        // structuralParent() prefers the season page this episode was opened
-        // from; the bare series link drops the season and lands on season 1.
-        closeMenu();
-        go(structuralParent());
-        return;
       case "browse":
         closeMenu();
         go(state.rules.browseUrl || "/browse");
@@ -809,11 +740,6 @@
       case "search":
         closeMenu();
         go(state.rules.searchUrl || "/search");
-        return;
-      case "settings":
-        // Never navigate away: leaving the page tears the extension's state
-        // down and, in a kiosk, there is no way back.
-        openSettings(true);
         return;
       case "disable":
         closeMenu();
@@ -957,9 +883,9 @@
   // ---------------------------------------------------------------------------
 
   // The remote's back button is intercepted in the capture phase and runs the
-  // layered back (docs/keymap.md). Theater is NOT a history entry: pushing one
-  // made the browser's own history-back land on the wrong page when a season
-  // had been switched, and it was never needed — the key is ours.
+  // layered back (docs/keymap.md). Theater is not a history entry of its own:
+  // one would make the browser's history-back land on the wrong page after a
+  // season switch. The single guard entry (pushGuard) is all Leanback keeps.
   function setTheater(on) {
     const want = Boolean(on) && state.kind === "video";
     if (state.theater === want) return;
@@ -1079,7 +1005,7 @@
     if (delta > 0 && takePageUpNext()) return true;
     const url = episodeUrl(delta);
     if (!url) {
-      state.hints.show([{ keys: delta > 0 ? "▶▶" : "◀◀", label: delta > 0 ? "No next episode" : "No previous episode" }], 2500);
+      state.hints.show([{ keys: delta > 0 ? "▶▶" : "◀◀", label: delta > 0 ? "No next episode" : "No previous episode" }], 2500, true);
       return true;
     }
     return go(url);
@@ -1110,7 +1036,7 @@
           { keys: "OK", label: offering ? "Play next episode" : "Play / pause" },
           { keys: "◀ ▶", label: `−${step} s / +${step} s` },
           { keys: "▼", label: "Player controls" },
-          { keys: "Menu", label: "Episodes, settings" },
+          { keys: "Menu", label: "Settings" },
           { keys: "Back", label: state.theater ? "Leave" : "Back" }
         ];
       }
@@ -1124,8 +1050,8 @@
     if (state.menu.isOpen) {
       return [
         { keys: "▲ ▼", label: "Move" },
-        { keys: "OK", label: state.menuMode === "settings" ? "Change" : "Select" },
-        { keys: "Back", label: state.menuMode === "settings" ? "Options" : "Close" }
+        { keys: "OK", label: "Change" },
+        { keys: "Back", label: "Close" }
       ];
     }
     if (state.engaged) return [{ keys: "◀ ▶", label: "Change" }, { keys: "OK", label: "Confirm" }, { keys: "Back", label: "Cancel" }];
@@ -1315,8 +1241,8 @@
       engaged: state.engaged ? (state.engaged.id || state.engaged.className || "select") : null,
       focused: cur ? describe(cur) : null,
       navigation: state.lastNavigation,
-      // Whether the selection is actually drawn bigger, measured rather than
-      // assumed: this is the third attempt at making the zoom real.
+      // Whether the selection is actually drawn bigger: measured from the
+      // computed transform, not assumed.
       zoomed: cur ? computedTransform(cur) : null,
       ring: Boolean(state.ring) && !state.ring.element.hidden,
       hints: Boolean(state.hints) && state.hints.visible
