@@ -75,31 +75,39 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 
 | # | Step | Expected |
 | --- | --- | --- |
-| 1 | Open `https://www.dropout.tv/` | Lands on `watch.dropout.tv/browse` (setting on) |
-| 2 | `/browse`: press Right ×3, Down, Left | Ring moves along the row, then to the next row (same column or remembered tile), then back; the row scrolls so the tile stays visible |
-| 3 | `/browse`: Escape | Nothing happens (exit hook `none`); a notice says "Nothing to go back to" |
-| 4 | Enter on a series tile | Series page opens; ring on the first episode |
-| 5 | Up to the season select, Right, Left | Season changes each time, no dropdown opens |
-| 6 | Down repeatedly past the last episode | "Load More" fires, new episodes appear, ring continues |
-| 7 | Enter on an episode | Video page, theater layout, playback starts or Enter starts it |
-| 8 | In the player: Enter, Enter, Right, Left | Pause, play, +10 s, −10 s |
-| 9 | Down, then Down again | Leanback's transport bar opens over the video; then the ring lands on the series link under the player, theater staying |
-| 10 | Up | Back in the player |
-| 11 | Escape, Escape | Theater off with the page visible; then back to the series page with the ring on the episode you came from |
-| 12 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
-| 13 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on) |
-| 14 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
-| 15 | Fresh profile, first visit | Cookie dialog is reachable by arrows and closable by Enter |
-| 16 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox; click again restores it |
-| 17 | Change ring colour in options, reload | New colour |
-| 18 | Set exit hook to *close this tab*, go to `/browse`, Escape | Tab closes (in kiosk: Firefox exits) |
-| 19 | `/search`: type a query | Letters reach the input; Escape leaves the field |
-| 20 | Wiggle the mouse over tiles on `/browse` | The ring does not move; no hover tooltips appear |
-| 21 | Press the keyboard's *Menu* key (`ContextMenu`) on `/browse` | Leanback's settings open as a panel; no context menu |
-| 22 | On an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
-| 23 | In the panel: Closed Captions → OK → Customize → OK → Font | Font's options, under Color, Size and Opacity headings; ◀ goes back up one level at a time |
-| 24 | Leanback Settings → Seek Step, OK repeatedly | The value goes round from 300 s back to 5 s |
-| 25 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
+| 1 | Open `https://www.dropout.tv/` | Lands on `watch.dropout.tv/browse`, which shows Leanback's Home (setting on): the rail on the left, the featured banner, the ring on *Watch now* |
+| 2 | Home: Down, Right ×3, Down, Up | The ring goes into the first row and along it, the row sliding so the selected card keeps its place; each Down brings the next row to the same height; Up returns to the card you left in that row |
+| 3 | Home: keep pressing Down | New rows arrive before you reach the last one; a row of 12 ends with *View all*, which opens the whole collection with the ring on its first tile |
+| 4 | Home: on the banner, Right once to **›**, Enter ×2; then Right to *My list*, Enter | **›** sits right after *Watch now*; the next featured show, then the one after; *My list* adds the show to Dropout's My List (a tick shows) and Enter again removes it. *Watch now* is black on yellow, *Trailer* white |
+| 5 | Home: Left from the first card of a row, Down, Down, Right | The rail, on Home; then Browse; then Dropout 24/7; Right returns to the card. OK on Dropout 24/7 opens it with its entry lit; the gear opens Leanback's settings on the spot |
+| 6 | Home: Escape | Nothing happens (exit hook `none`); a notice says "Nothing to go back to" |
+| 7 | Watch an episode for two minutes, go back to Home | It is first in Continue Watching with its progress bar and "N min left" in the corner of its picture; an episode in progress on the Roku is in the row too |
+| 8 | Open that episode again | It starts where you stopped; "Resumed at …" shows for a moment; in the settings panel, *Start Over* goes back to 0:00 |
+| 9 | Enter on a series tile | Series page opens; ring on the first episode; no rail |
+| 10 | Up to the season select, Right, Left | Season changes each time, no dropdown opens |
+| 11 | Down repeatedly past the last episode | "Load More" fires, new episodes appear, ring continues |
+| 12 | Enter on an episode | Video page, theater layout, playback starts or Enter starts it |
+| 13 | In the player: Enter, Enter, Right, Left | Pause, play, +10 s, −10 s |
+| 14 | Down, then Down again | Leanback's transport bar opens over the video; then the ring lands on the series link under the player, theater staying |
+| 15 | Up | Back in the player |
+| 16 | Escape, Escape | Theater off with the page visible; then back to the series page |
+| 17 | From Home, open a show, an episode, let it play into the next (or press Next); then the remote's Back, twice | Back goes to the season page (not the previous episode), then Home |
+| 18 | On the season page, switch season with the select, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
+| 19 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
+| 20 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on) |
+| 21 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
+| 22 | Fresh profile, first visit | Cookie dialog is reachable by arrows and closable by Enter, above Home |
+| 23 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox (Dropout's own Home is back); click again restores it |
+| 24 | Change ring colour in options, reload | New colour |
+| 25 | Set exit hook to *close this tab*, go to Home, Escape | Tab closes (in kiosk: Firefox exits) |
+| 26 | `/search`: type a query | Letters reach the input; Escape leaves the field; the results are four across, large, and reachable with the arrows; Left from the first result reaches the rail |
+| 27 | Wiggle the mouse over cards on Home and tiles on `/series` | The ring does not move; no hover tooltips appear |
+| 28 | Press the keyboard's *Menu* key (`ContextMenu`) on Home | Leanback's settings open as a panel over Home; no context menu |
+| 29 | In that panel: *Forget watch history*, Enter, Enter | The first Enter asks; the second forgets, and Continue Watching disappears (Roku items included) until something is watched again; Dropout's bars still show on cards |
+| 30 | On an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
+| 31 | In the panel: Closed Captions → OK → Customize → OK → Font | Font's options, under Color, Size and Opacity headings; ◀ goes back up one level at a time |
+| 32 | Leanback Settings → Seek Step, OK repeatedly | The value goes round from 300 s back to 5 s |
+| 33 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Verification hand-off
 
@@ -133,10 +141,12 @@ Firefox profile on the box, logged in once (by hand), and added a Bigscreen
 icon ([targets.md](./targets.md#launch-recipe-sketch--verify-on-the-box-item-t1t8)).
 Remote only; mouse mode off.
 
-1. From Bigscreen, open the new Dropout icon → expected: Browse fills the
-   screen with a yellow ring on the first tile within ~5 s.
-2. Press ▶ three times, ▼, then *back* → expected: ring moves along, then
-   down a row; *back* on Browse does nothing (or a hint appears).
+1. From Bigscreen, open the new Dropout icon → expected: Leanback's Home
+   fills the screen, with a yellow ring on the featured banner's *Watch now*,
+   within ~5 s.
+2. Press ▼, ▶ three times, ▼, then *back* → expected: the ring goes into the
+   first row and along it, then down a row, the rows sliding into place;
+   *back* on Home does nothing (or a notice appears).
 3. OK on a series, OK on an episode → expected: the video fills the screen
    and plays; if not, one more OK.
 4. Press *menu* once → expected: nothing pops up over the video (if a

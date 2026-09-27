@@ -386,6 +386,8 @@
     // Quality, Speed and CC/subtitles — and the caption appearance (font,
     // background, window) lives inside CC/subtitles.
     const ROWS = [
+      // Only after the video picked up where it was left: back to 0:00.
+      { id: "restart", label: "Start Over", kind: "restart" },
       { id: "quality", label: "Quality", kind: "vendor", match: /quality|resolution/i },
       { id: "speed", label: "Speed", kind: "vendor", match: /speed|rate/i },
       // Not a toggle: it takes you to the next episode. Whether one plays by
@@ -411,7 +413,7 @@
       { id: "ringWidth", label: "Selection Outline", kind: "choice", setting: "ringWidth",
         values: () => [2, 3, 4, 6, 8, 10, 12], show: (v) => `${v}px` },
       { id: "skipMarketingSite", label: "Skip Marketing Site", kind: "toggle", setting: "skipMarketingSite" },
-      { id: "exitHook", label: "Back On Browse", kind: "choice", setting: "exitHook",
+      { id: "exitHook", label: "Back On Home", kind: "choice", setting: "exitHook",
         values: () => ["none", "close-tab"], show: (v) => (v === "close-tab" ? "Closes The Tab" : "Does Nothing") }
     ];
 
@@ -421,6 +423,7 @@
         // it, so a menu that changes shape cannot leave a dead row behind.
         if (r.kind === "vendor") return Boolean(panel && panel.vendor && panel.vendor[r.id]);
         if (r.kind === "action") return Boolean(nextEpisode());
+        if (r.kind === "restart") return typeof o.resumed === "function" && Boolean(o.resumed());
         return true;
       });
     }
@@ -728,6 +731,10 @@
       if (row.kind === "choice") return stepRow(0);
       if (row.kind === "action") {
         if (typeof o.onNext === "function") o.onNext();
+        return true;
+      }
+      if (row.kind === "restart") {
+        if (typeof o.onRestart === "function") o.onRestart();
         return true;
       }
       if (row.kind === "vendor" || row.kind === "leanback") {

@@ -16,6 +16,8 @@
   const UNMUTE_CHECK_MS = 250;
   const UNMUTE_SETTLE_MS = 100; // let the autoplay establish itself first
   const TRANSPORT_CLASS = "tenfoot-transport";
+  const SAVE_EVERY_MS = 15000; // how often the watch history hears from a playing video
+  const RESUME_SLACK_S = 5; // already this close to the saved point: leave it
   const DEFAULT_RULES = { video: "video", captionsButton: "button[aria-label*='aption'], button[aria-label*='ubtitle']" };
   const VISIBLE = (el) => Boolean(el) && Boolean(el.getClientRects && el.getClientRects().length);
 
@@ -43,6 +45,7 @@
   const Spatial = globalThis.TenfootSpatial;
   const Ring = globalThis.TenfootFocusRing;
   const Transport = globalThis.TenfootTransport;
+  const History = globalThis.TenfootHistory;
 
   const state = {
     settings: Settings.normalize(null),
@@ -65,7 +68,11 @@
     autoplayBlocked: false,
     gesture: false,
     unmuteWhenPlaying: false,
-    offerFromPage: false
+    offerFromPage: false,
+    lastSave: 0,
+    // Picking up where the viewer left off: the point, whether it is still to
+    // be applied, and whether it was (which is what offers Start Over).
+    resume: { video: null, at: null, pending: false, resumed: false, told: false }
   };
 
   function qs(sel, scope) {
@@ -99,7 +106,9 @@
           id: v.id == null ? null : String(v.id),
           title: typeof v.title === "string" ? v.title : "",
           duration: typeof v.duration === "number" ? v.duration : 0,
-          url: typeof v.url === "string" ? v.url : null
+          url: typeof v.url === "string" ? v.url : null,
+          trailer: v.is_trailer === true || v.is_trailer === "true",
+          live: Boolean(v.is_live_video)
         } : null,
         upNext: normalizeUpNext(d.up_next)
       };
@@ -328,6 +337,8 @@
         return u && u.url ? u : null;
       },
       onNext: () => playNext(),
+      resumed: () => state.resume.resumed,
+      onRestart: () => startOver(),
       onSetting: (patch) => {
         // Optimistic, so the panel redraws at once; the background broadcast
         // that follows is what makes it stick.
@@ -426,6 +437,7 @@
       upNextShowing: offerShowing(),
       transport: state.transport,
       transportControls: state.transport ? state.controls.length : 0,
+      resumed: state.resume.resumed,
       focused: typeof document.hasFocus === "function" ? document.hasFocus() : false
     };
   }
@@ -591,6 +603,12 @@
     if (!action) return;
     state.gesture = true;
     unmuteOnGesture();
+    // Firefox goes back on the remote's BrowserBack whatever this frame does
+    // with it (T2). The page decides whether that needs any help.
+    if (action === "back" && e.key === "BrowserBack") {
+      send({ type: "page:action", action: "browser-back" });
+      return;
+    }
     if (!dispatch(action)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
@@ -635,6 +653,113 @@
     if (state.ring) state.ring.hide();
   }
 
+  // ---------------------------------------------------------------------------
+  // watch history
+  //
+  // The background keeps it (lib/history.js); this frame reports where the
+  // video is, and on the way in asks where it was left.
+  // ---------------------------------------------------------------------------
+
+  // The video's history key and the details kept with it, or null for what is
+  // not worth remembering: a trailer, a live stream.
+  function watchTarget() {
+    const d = ottData();
+    const v = d && d.video;
+    if (!v || v.trailer || v.live || !History) return null;
+    const key = History.keyOf(v.url);
+    return key ? { key, url: v.url, title: v.title } : null;
+  }
+
+  function saveProgress(ended) {
+    const v = state.video;
+    if (!v || state.leaving || !state.settings.enabled) return;
+    const t = watchTarget();
+    const duration = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+    if (!t || !duration) return;
+    state.lastSave = Date.now();
+    send({
+      type: "history:progress",
+      key: t.key,
+      url: t.url,
+      title: t.title,
+      position: Number(v.currentTime) || 0,
+      duration,
+      ended: Boolean(ended)
+    });
+  }
+
+  function onTimeUpdate() {
+    const v = state.video;
+    if (!v || v.paused || Date.now() - state.lastSave < SAVE_EVERY_MS) return;
+    saveProgress(false);
+  }
+
+  function onPause() {
+    report();
+    saveProgress(false);
+  }
+
+  function onSeeked() {
+    saveProgress(false);
+  }
+
+  // Look up where this video was left, then go there once the player can seek.
+  async function prepareResume(v) {
+    state.resume = { video: v, at: null, pending: false, resumed: false, told: false };
+    const t = watchTarget();
+    if (!t || !History) return;
+    const store = await History.load(API);
+    if (state.video !== v || state.resume.video !== v) return;
+    const at = History.resumePoint(store, t.key);
+    if (!at) return;
+    state.resume.at = at;
+    state.resume.pending = true;
+    applyResume();
+  }
+
+  // Runs on the metadata and once more when playback starts: the player may
+  // put the video back to its own start point in between. It never touches
+  // paused or muted, so the autoplay and the sound are left as they were.
+  function applyResume() {
+    const r = state.resume;
+    const v = state.video;
+    if (!r.pending || !v || r.video !== v || !state.settings.enabled) return;
+    const duration = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+    if (!duration) return; // not seekable yet; the metadata will call again
+    if (r.at >= duration - RESUME_SLACK_S) {
+      r.pending = false;
+      return;
+    }
+    if ((Number(v.currentTime) || 0) < r.at - RESUME_SLACK_S) {
+      try {
+        v.currentTime = r.at;
+      } catch (_err) {
+        return;
+      }
+      r.resumed = true;
+      if (!r.told) {
+        r.told = true;
+        send({ type: "player:resumed", at: r.at });
+      }
+    }
+    if (!v.paused) r.pending = false;
+  }
+
+  // "Start Over" in the playback panel.
+  function startOver() {
+    const v = state.video;
+    state.resume.pending = false;
+    state.resume.resumed = false;
+    if (v) {
+      try {
+        v.currentTime = 0;
+      } catch (_err) { /* nothing to rewind */ }
+    }
+    leaveTransport();
+    report();
+    return true;
+  }
+
   function report() {
     if (state.leaving) return;
     send({ type: "player:state", state: currentState() });
@@ -645,6 +770,7 @@
   // Playback has started, which is the first moment turning the sound on can
   // work without costing the autoplay that just succeeded.
   function onPlay() {
+    applyResume();
     const v = state.video;
     if (v && state.unmuteWhenPlaying && !state.volumeTouched && !state.autoplayBlocked) {
       // A beat after playback starts, so the autoplay is established before we
@@ -658,6 +784,7 @@
   }
 
   function onLoadedMetadata() {
+    applyResume();
     const v = state.video;
     if (v) {
       state.enforceMuteUntil = Date.now() + MUTE_ENFORCE_MS;
@@ -669,6 +796,7 @@
   }
 
   function onEnded() {
+    saveProgress(true);
     const d = ottData();
     send({ type: "player:ended", upNext: d ? d.upNext : null });
     report();
@@ -803,22 +931,28 @@
     applyMutePreference(v);
     v.addEventListener("play", onPlay);
     v.addEventListener("playing", onPlay);
-    v.addEventListener("pause", report);
+    v.addEventListener("pause", onPause);
     v.addEventListener("loadedmetadata", onLoadedMetadata);
     v.addEventListener("volumechange", onVolumeChange);
     v.addEventListener("durationchange", report);
     v.addEventListener("ended", onEnded);
+    v.addEventListener("timeupdate", onTimeUpdate);
+    v.addEventListener("seeked", onSeeked);
+    state.lastSave = Date.now();
+    prepareResume(v);
     report();
   }
 
   function detach(v) {
     v.removeEventListener("play", onPlay);
     v.removeEventListener("playing", onPlay);
-    v.removeEventListener("pause", report);
+    v.removeEventListener("pause", onPause);
     v.removeEventListener("loadedmetadata", onLoadedMetadata);
     v.removeEventListener("volumechange", onVolumeChange);
     v.removeEventListener("durationchange", report);
     v.removeEventListener("ended", onEnded);
+    v.removeEventListener("timeupdate", onTimeUpdate);
+    v.removeEventListener("seeked", onSeeked);
     if (state.video === v) state.video = null;
   }
 
@@ -918,9 +1052,22 @@
       state.leaving = true;
       leaveTransport();
     });
+    // Back to a page Firefox kept in memory: this frame is live again.
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) state.leaving = false;
+    });
     // If focus leaves this frame for any reason the row is no longer being
     // driven, and the player's bar must be allowed to hide itself again.
-    window.addEventListener("blur", () => { if (state.transport) leaveTransport(); });
+    // Losing the focus is also the moment to note where the video is: the
+    // first Back on a video takes the focus to the page, and nothing can be
+    // sent once the page is going away.
+    window.addEventListener("blur", () => {
+      if (state.transport) leaveTransport();
+      saveProgress(false);
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") saveProgress(false);
+    });
     applyEnabled(settings.enabled);
     state.observer = new MutationObserver(() => {
       if (state.mutationTimer) return;

@@ -2,8 +2,10 @@
 // Leanback for Dropout — page script, top frame of watch.dropout.tv.
 // Classifies the URL into a page kind (sites/dropout.json → routes), then
 // wires keys → actions → spatial navigation, the focus ring, the hint bar,
-// the theater layout, layered Back, load-more, season switching and the
-// player relay (the player is a cross-origin iframe; see content/player.js).
+// the Home screen (content/home.js), the icon rail, the theater layout,
+// layered Back, load-more, season switching, the episode details the watch
+// history keeps, and the player relay (the player is a cross-origin iframe;
+// see content/player.js).
 // Idempotent: html[data-tenfoot] marks a document that is already wired.
 
 (function () {
@@ -22,7 +24,9 @@
   const MAX_NUDGES = 8;
   const ARROW_SCOPE_DEPTH = 3;
   const MENU_REFOCUS_LIMIT = 4;
-  const BACK_DEDUPE_MS = 150; // Firefox's popstate follows its own keydown at once
+  const HOME_REFOCUS_LIMIT = 4;
+  const NOTICE_MS = 3000;
+  const BACK_FALLBACK_MS = 800; // how long Firefox gets to act on BrowserBack before Leanback does
 
   if (window.top !== window) return;
   const root = document.documentElement;
@@ -35,6 +39,19 @@
   const Spatial = globalThis.TenfootSpatial;
   const Ring = globalThis.TenfootFocusRing;
   const Menu = globalThis.TenfootMenu;
+  const Rail = globalThis.TenfootRail;
+  const Home = globalThis.TenfootHome;
+  const History = globalThis.TenfootHistory;
+  const Trail = globalThis.TenfootTrail;
+
+  // The rail's own entries, top to bottom. The site's links (rules →
+  // rail.links) come after Browse, and the gear sits at the foot.
+  const RAIL_ITEMS = [
+    { id: "search", label: "Search", icon: "search" },
+    { id: "home", label: "Home", icon: "home" },
+    { id: "browse", label: "Browse", icon: "grid" }
+  ];
+  const RAIL_SETTINGS = { id: "settings", label: "Leanback settings", icon: "gear", end: true };
 
   const state = {
     settings: Settings.normalize(null),
@@ -61,11 +78,20 @@
     settingBefore: null,
     engaged: null,
     engagedIndex: 0,
+    home: null,
+    homeRefocus: 0,
+    rail: null,
+    railActive: false,
+    railReturn: null,
+    history: { entries: {} },
+    metaSent: null,
+    forgetArmed: false,
     pendingInitialFocus: 0,
     initialFocusTimer: 0,
     menuRefocus: 0,
-    guard: false,
-    lastBack: 0,
+    trail: [],
+    backFallback: 0,
+    unloading: false,
     pendingLoadMore: null,
     href: location.href,
     lastNavigation: null,
@@ -111,15 +137,68 @@
     }
   }
 
-  function go(url) {
+  function sessionStore() {
     try {
-      const target = new URL(url, location.href).href;
-      state.lastNavigation = target;
-      location.assign(target);
+      return window.sessionStorage;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  // Every page Leanback opens goes through here, and says how: "push" (one
+  // level down), "replace" (sideways). The next page reads that to keep the
+  // trail — and so the browser's history — in the shape Back should follow.
+  function navigate(url, how) {
+    let target;
+    try {
+      target = new URL(url, location.href).href;
     } catch (_err) {
       console.warn(LOG, "bad navigation target", url);
+      return true;
     }
+    state.lastNavigation = target;
+    if (Trail) Trail.setIntent(sessionStore(), how, target);
+    if (how === "replace") location.replace(target);
+    else location.assign(target);
     return true;
+  }
+
+  function go(url) {
+    return navigate(url, "push");
+  }
+
+  // Sideways: another episode, another season, another top-level page. It
+  // replaces this page in the history, so Back skips it.
+  function goSideways(url) {
+    return navigate(url, "replace");
+  }
+
+  // Back to an earlier page of the trail through the history itself, so the
+  // pages above it are left behind rather than piled on. `delta` < 0.
+  function goBackTo(delta, url) {
+    state.lastNavigation = `history:${delta}`;
+    if (Trail) Trail.setIntent(sessionStore(), "back", new URL(url, location.href).href);
+    history.go(delta);
+    return true;
+  }
+
+  function homeUrl() {
+    return new URL((state.rules && state.rules.browseUrl) || "/browse", location.href).href;
+  }
+
+  // Home: back down the history to it when it is behind this page, else open it.
+  function goHome() {
+    const j = Trail ? Trail.indexBelow(state.trail, homeUrl()) : -1;
+    if (j >= 0) return goBackTo(j - (state.trail.length - 1), homeUrl());
+    return go(homeUrl());
+  }
+
+  // A top-level page (Browse, Search, Dropout 24/7): one level down from
+  // Home, sideways from another top-level page, so Back from any of them is
+  // Home.
+  function goTop(url) {
+    if (state.kind !== "browse" && railShown()) return goSideways(url);
+    return go(url);
   }
 
   // The first path segment is the series: "/game-changer/season:3" and
@@ -164,6 +243,28 @@
     return { color: s.ringColor, width: s.ringWidth, zoom: s.focusZoom };
   }
 
+  function homeRules() {
+    return (state.rules && state.rules.home) || {};
+  }
+
+  // Leanback's own elements: the Home screen, the rail, the options panel.
+  function ownUi(el) {
+    if (!el) return false;
+    return Boolean((state.home && state.home.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)));
+  }
+
+  function clockText(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const ss = String(s % 60).padStart(2, "0");
+    return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+  }
+
+  function notice(label) {
+    state.hints.show([{ keys: "", label }], NOTICE_MS, true);
+  }
+
   async function send(msg) {
     if (state.leaving) return { ok: false, error: "Page is unloading" };
     try {
@@ -183,7 +284,10 @@
     if (state.menu) state.menu.close();
     state.menuReturn = null;
     state.kind = Rules.classify(state.rules, location.pathname);
-    state.page = Rules.pageRules(state.rules, state.kind);
+    // A hub (/dimension-20) has a one-segment address like a show, but it is
+    // drawn by the same component as Home, and gets the same screen.
+    if (state.kind === "series" && qs(homeRules().root)) state.kind = "hub";
+    state.page = Rules.pageRules(state.rules, state.kind === "hub" ? "browse" : state.kind);
     state.href = location.href;
     state.memory = new Map();
     state.playerFocused = false;
@@ -233,7 +337,9 @@
     state.lastFocus = el;
     const row = rowOf(el);
     if (row) state.memory.set(row, el);
-    if (o.scroll !== false) keepOnScreen(el, row);
+    // Leanback's own screens place themselves; scrolling the page under them
+    // would only move the site.
+    if (o.scroll !== false && !ownUi(el)) keepOnScreen(el, row);
     state.ring.follow(el);
     return true;
   }
@@ -309,6 +415,26 @@
     return { theaterRoot, mount, frame: qs(p.playerFrame) };
   }
 
+  // A page whose results the site lays out for a desktop (search: a narrow
+  // centred column of small pictures) is marked so content/home.css can
+  // spread it across a television: rules → pages.<kind>.tvGrid.
+  const TV_GRID_PARTS = {
+    container: "data-tenfoot-grid-container",
+    wrap: "data-tenfoot-grid-wrap",
+    grid: "data-tenfoot-grid",
+    item: "data-tenfoot-grid-item",
+    title: "data-tenfoot-grid-title",
+    subtitle: "data-tenfoot-grid-sub"
+  };
+
+  function stampTvGrid() {
+    const g = state.page && state.page.tvGrid;
+    if (!g || typeof g !== "object") return;
+    for (const [part, attr] of Object.entries(TV_GRID_PARTS)) {
+      for (const el of qsa(Rules.selector(g[part]))) if (!el.hasAttribute(attr)) el.setAttribute(attr, "");
+    }
+  }
+
   // One deferred retry at the deadline, so a page that stops mutating still
   // gets a focused element rather than none.
   function clearInitialFocusTimer() {
@@ -343,6 +469,23 @@
       state.pendingInitialFocus = 0;
       return;
     }
+    if (state.home) {
+      const target = state.home.initialTarget();
+      if (target) {
+        state.pendingInitialFocus = 0;
+        focusEl(target, { scroll: false });
+        return;
+      }
+      if (Date.now() <= state.pendingInitialFocus) {
+        armInitialFocusTimer();
+        return;
+      }
+      // Nothing to draw Home from: leave Dropout's page as it is, driven the
+      // ordinary way.
+      console.warn(LOG, "Home found nothing to draw; showing the site's own page");
+      stopHome();
+      state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
+    }
     if (state.kind === "other") {
       state.pendingInitialFocus = 0;
       const a = document.activeElement;
@@ -375,14 +518,11 @@
 
   function dispatch(action, ctx) {
     const c = ctx || {};
-    // Whichever layer ends up handling it, note that Back has just been dealt
-    // with: if Firefox also acts on the key, the popstate that follows must
-    // not run the same press a second time.
-    if (action === "back") state.lastBack = Date.now();
     if (c.editable) return action === "back" ? blurField() : false;
     if (state.menu.isOpen) return dispatchInMenu(action);
     if (state.engaged) return dispatchEngaged(action);
     if (state.modal) return dispatchInModal(action);
+    if (state.railActive) return dispatchInRail(action);
     switch (action) {
       case "up":
       case "down":
@@ -396,7 +536,7 @@
       case "menu":
         return openMenu();
       case "search":
-        return state.kind === "search" ? leaveSearch() : go(state.rules.searchUrl || "/search");
+        return state.kind === "search" ? leaveSearch() : goTop(state.rules.searchUrl || "/search");
       default:
         return Keymap.PLAYER_ACTIONS.has(action) ? playerAction(action) : false;
     }
@@ -404,6 +544,7 @@
 
   function move(dir) {
     state.lastMove = performance.now();
+    if (state.home && !state.modal) return moveHome(dir);
     const cur = currentEl();
     const { candidates, rows } = collect();
     let target = null;
@@ -411,10 +552,17 @@
       const curCand = candidates.find((c) => c.el === cur);
       if (curCand && curCand.row) {
         target = Spatial.rowPick(dir, curCand, rows, state.memory, viewport());
+        if (!target && dir === "left" && enterRail()) return true;
         if (!target && (dir === "left" || dir === "right")) return true; // row ends: no wrap
       }
       if (!target) {
         target = Spatial.pick(dir, Ring.unscaledRect(cur), candidates.filter((c) => c.el !== cur));
+      }
+      // ◀ stays on the line it started on. Anything not level with the
+      // selection (a header link up and to the left) means the edge, and the
+      // rail beyond it.
+      if (dir === "left" && !state.modal && railShown() && (!target || !level(Ring.unscaledRect(cur), target.rect))) {
+        return enterRail() || true;
       }
     } else {
       const vp = viewport();
@@ -443,6 +591,212 @@
     }
     focusEl(target.el);
     return true;
+  }
+
+  function level(a, b) {
+    return Boolean(a && b) && b.top < a.bottom - Spatial.EDGE_TOLERANCE && b.bottom > a.top + Spatial.EDGE_TOLERANCE;
+  }
+
+  function moveHome(dir) {
+    const r = state.home.move(dir);
+    if (r && r.el) focusEl(r.el, { scroll: false });
+    else if (r && r.edge === "left") enterRail();
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Home and the rail
+  // ---------------------------------------------------------------------------
+
+  function isHomeKind() {
+    return state.kind === "browse" || state.kind === "hub";
+  }
+
+  function startHome() {
+    if (state.home || !Home || !qs(homeRules().root)) return;
+    state.home = Home.createHome(document, {
+      rules: homeRules(),
+      history: () => state.history,
+      continueWatching: state.kind === "browse",
+      onObserve: (items) => send({ type: "history:observe", items })
+    });
+    root.dataset.tenfootHome = "on";
+    state.homeRefocus = 0;
+    state.home.refresh();
+  }
+
+  function stopHome() {
+    if (!state.home) return;
+    state.home.destroy();
+    state.home = null;
+    delete root.dataset.tenfootHome;
+  }
+
+  function refreshHome() {
+    if (!state.home) return;
+    const before = currentEl();
+    const target = state.home.refresh();
+    if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || !target) return;
+    // The card the selection was on went away, or the site took the focus:
+    // put it on the card Home now has selected.
+    if (!before || !before.isConnected || before !== target) focusEl(target, { scroll: false });
+  }
+
+  function railShown() {
+    return Boolean(state.rail) && state.rail.visible;
+  }
+
+  function railLinks() {
+    const links = state.rules && state.rules.rail && Array.isArray(state.rules.rail.links) ? state.rules.rail.links : [];
+    return links.filter((l) => l && typeof l.id === "string" && typeof l.url === "string" && typeof l.label === "string");
+  }
+
+  // The rail entry for the page on screen. A hub looks like Home but is not
+  // it, so nothing is lit there unless the rail links to it.
+  function railPage() {
+    const link = railLinks().find((l) => samePath(l.url, location.href));
+    if (link) return link.id;
+    if (state.kind === "browse") return "home";
+    if (state.kind === "grid") return "browse";
+    if (state.kind === "search") return "search";
+    return null;
+  }
+
+  function setupRail() {
+    const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
+    const on = state.enabled && kinds.includes(state.kind);
+    if (!state.rail && on && Rail) {
+      const links = railLinks().map((l) => ({ id: l.id, label: l.label, icon: l.icon || "tv" }));
+      state.rail = Rail.createRail(document, [...RAIL_ITEMS, ...links, RAIL_SETTINGS], { onActivate: onRailItem });
+    }
+    if (!state.rail) return;
+    state.rail.setCurrent(railPage());
+    // With nothing lit, entering the rail lands on Home.
+    if (!railPage()) state.rail.select(state.rail.item("home"));
+    state.rail.show(on);
+    if (on) root.dataset.tenfootRail = "on";
+    else delete root.dataset.tenfootRail;
+    if (!on) state.railActive = false;
+  }
+
+  function enterRail() {
+    if (!railShown()) return false;
+    state.railReturn = currentEl();
+    state.railActive = true;
+    const el = state.rail.current;
+    if (el) focusEl(el, { scroll: false });
+    return true;
+  }
+
+  // Back to exactly where the selection came from (H3).
+  function leaveRail() {
+    state.railActive = false;
+    const r = state.railReturn;
+    state.railReturn = null;
+    if (r && r.isConnected) {
+      if (state.home) state.home.select(r);
+      focusEl(r, { scroll: !state.home });
+      return true;
+    }
+    const target = state.home ? state.home.current || state.home.initialTarget() : null;
+    if (target) focusEl(target, { scroll: false });
+    else {
+      const { candidates } = collect();
+      if (candidates.length) focusEl(candidates[0].el);
+    }
+    return true;
+  }
+
+  function dispatchInRail(action) {
+    switch (action) {
+      case "up":
+      case "down": {
+        const el = state.rail.move(action === "up" ? -1 : 1);
+        if (el) focusEl(el, { scroll: false });
+        return true;
+      }
+      case "right":
+      case "back":
+        return leaveRail();
+      case "left":
+        return true; // the rail is the left edge
+      case "select": {
+        const id = state.rail.currentId;
+        if (id) onRailItem(id);
+        return true;
+      }
+      case "menu":
+        return openMenu();
+      case "search":
+        return goTop(state.rules.searchUrl || "/search");
+      default:
+        return false;
+    }
+  }
+
+  function onRailItem(id) {
+    const el = state.rail && state.rail.item(id);
+    if (el) state.rail.select(el);
+    const link = railLinks().find((l) => l.id === id);
+    if (link) {
+      if (samePath(link.url, location.href)) leaveRail();
+      else goTop(link.url);
+      return;
+    }
+    switch (id) {
+      case "home":
+        if (state.kind === "browse" && state.home) {
+          // Already Home: back to the top of it.
+          state.railActive = false;
+          state.railReturn = null;
+          const t = state.home.initialTarget();
+          if (t) focusEl(t, { scroll: false });
+          return;
+        }
+        goHome();
+        return;
+      case "browse":
+        if (state.kind === "grid") {
+          leaveRail();
+          return;
+        }
+        goTop(state.rules.gridUrl || "/series");
+        return;
+      case "search":
+        if (state.kind === "search") {
+          leaveRail();
+          return;
+        }
+        goTop(state.rules.searchUrl || "/search");
+        return;
+      case "settings":
+        state.menuReturn = el || currentEl();
+        openSettings();
+        return;
+      default:
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // watch history: what the episode page knows
+  // ---------------------------------------------------------------------------
+
+  function sendHistoryMeta() {
+    if (state.kind !== "video" || !History || state.metaSent === location.href) return;
+    const key = History.keyOf(location.href);
+    if (!key) return;
+    state.metaSent = location.href;
+    const p = state.page;
+    const text = (el) => (el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "");
+    const img = qs(p.videoImage);
+    send({
+      type: "history:meta",
+      key,
+      url: location.href,
+      title: text(qs(p.videoTitle)),
+      series: text(qs(p.seriesLink)),
+      image: img ? img.getAttribute("content") || "" : ""
+    });
   }
 
   // A <select> is a two-step control on a remote: Enter engages it, Left/Right
@@ -486,15 +840,29 @@
     return true;
   }
 
+  // A select whose options are addresses (the season and sort controls) is
+  // a way sideways: go there directly, replacing this page, rather than let
+  // the site add a page to the history for it.
   function commitEngaged() {
     const sel = state.engaged;
     const changed = sel && sel.isConnected && sel.selectedIndex !== state.engagedIndex;
     disengage();
-    if (changed) {
-      sel.dispatchEvent(new Event("input", { bubbles: true }));
-      sel.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    if (!changed) return true;
+    const url = optionUrl(sel.value);
+    if (url) return goSideways(url);
+    sel.dispatchEvent(new Event("input", { bubbles: true }));
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
     return true;
+  }
+
+  function optionUrl(value) {
+    if (typeof value !== "string" || !/^(https?:\/\/|\/|\?)/.test(value)) return null;
+    try {
+      const u = new URL(value, location.href);
+      return u.origin === location.origin ? u.href : null;
+    } catch (_err) {
+      return null;
+    }
   }
 
   function cancelEngaged() {
@@ -520,9 +888,8 @@
   }
 
   // The transport bar and the settings panel live in the player frame, so when
-  // Back arrives here — because Firefox acted on the remote's key and our guard
-  // caught it — the frame gets first refusal. Only what it cannot close is a
-  // layer for this page to walk.
+  // Back (Escape) arrives here the frame gets first refusal. Only what it
+  // cannot close is a layer for this page to walk.
   function askPlayerFirst() {
     if (state.kind !== "video" || !qs(state.page.playerFrame)) return goBack();
     send({ type: "player:back" }).then((r) => {
@@ -539,14 +906,44 @@
       if (mount) focusEl(mount);
       return true;
     }
+    return stepBack();
+  }
+
+  // Back past this page. With pages of the site behind it, that is the
+  // browser's own Back — the same as the remote's BrowserBack, which Firefox
+  // acts on whatever the page does. Leanback keeps the history in the shape
+  // Back should follow (sideways moves replace the page), and a landing on a
+  // sibling carries on by itself (arrive()). With nothing behind it — a tab
+  // opened straight on this page — Back walks up the site instead, replacing
+  // this page rather than adding one: episode → its season → Home → the exit
+  // hook.
+  function stepBack() {
+    if (Trail && Trail.depth(state.trail) > 0) return goBackTo(-1, state.trail[state.trail.length - 2].url);
     if (state.kind === "browse") {
       exit();
       return true;
     }
-    // Structural, never historical. history.back() returns you to whatever you
-    // happened to look at last, which is not what Back means on a remote: it
-    // means one layer up. Episode → the season you were in → Browse.
-    return go(structuralParent());
+    return goSideways(structuralParent());
+  }
+
+  // Firefox goes back on the remote's BrowserBack whatever the page does with
+  // the key (T2), so Leanback lets it. Only when there is no page of the site
+  // behind this one can Firefox have nowhere to go; then, if the page is still
+  // here a moment later, Leanback does what Back means itself.
+  function browserBack() {
+    if (Trail && Trail.depth(state.trail) > 0) return;
+    clearBackFallback();
+    state.backFallback = setTimeout(() => {
+      state.backFallback = 0;
+      if (state.leaving || state.unloading || !state.enabled) return;
+      if (dispatch("back", {})) showHints();
+    }, BACK_FALLBACK_MS);
+  }
+
+  function clearBackFallback() {
+    if (!state.backFallback) return;
+    clearTimeout(state.backFallback);
+    state.backFallback = 0;
   }
 
   function structuralParent() {
@@ -581,7 +978,7 @@
     { id: "ringColor", label: "Ring colour", values: ["#feea3b", "#ffffff", "#ff4081", "#41d6c3", "#ff8a3d"], show: { "#feea3b": "yellow", "#ffffff": "white", "#ff4081": "pink", "#41d6c3": "teal", "#ff8a3d": "orange" } },
     { id: "focusZoom", label: "Enlarge selection", min: 0, max: 25, step: 5, suffix: "%" },
     { id: "skipMarketingSite", label: "Skip dropout.tv home", bool: true },
-    { id: "exitHook", label: "Back on Browse", values: ["none", "close-tab"], show: { none: "does nothing", "close-tab": "closes the tab" } }
+    { id: "exitHook", label: "Back on Home", values: ["none", "close-tab"], show: { none: "does nothing", "close-tab": "closes the tab" } }
   ];
 
   function settingRow(id) {
@@ -600,8 +997,9 @@
   // along at the foot of the list.
   function settingItems() {
     const items = SETTING_ROWS.map((r) => ({ id: r.id, label: r.label, value: settingText(r) }));
-    items.push({ id: "browse", label: "Browse" });
+    items.push({ id: "browse", label: "Home" });
     items.push({ id: "search", label: "Search", detail: "needs a keyboard" });
+    items.push({ id: "forget", label: "Forget watch history" });
     items.push({ id: "disable", label: "Turn Leanback off" });
     return items;
   }
@@ -627,6 +1025,7 @@
 
   function openSettings() {
     state.settingRow = null;
+    state.forgetArmed = false;
     state.menu.open(settingItems(), { title: "Leanback settings" });
     showHints();
     return true;
@@ -680,10 +1079,9 @@
     }
     switch (action) {
       case "up":
-        state.menu.move(-1);
-        return true;
       case "down":
-        state.menu.move(1);
+        disarmForget();
+        state.menu.move(action === "up" ? -1 : 1);
         return true;
       case "select":
         state.menu.activate();
@@ -725,6 +1123,25 @@
     return disengageSetting();
   }
 
+  // Forgetting cannot be undone, so it takes OK twice.
+  function disarmForget() {
+    if (!state.forgetArmed) return;
+    state.forgetArmed = false;
+    state.menu.setValue("forget", "");
+  }
+
+  function forgetHistory() {
+    if (!state.forgetArmed) {
+      state.forgetArmed = true;
+      state.menu.setValue("forget", "OK again to confirm");
+      return;
+    }
+    state.forgetArmed = false;
+    state.menu.setValue("forget", "forgotten");
+    send({ type: "history:clear" });
+    notice("Watch history forgotten");
+  }
+
   function onMenuItem(id) {
     const row = settingRow(id);
     if (row) {
@@ -733,13 +1150,16 @@
     }
     // Not a setting: one of the actions at the foot of the list.
     switch (id) {
+      case "forget":
+        forgetHistory();
+        return;
       case "browse":
         closeMenu();
-        go(state.rules.browseUrl || "/browse");
+        goHome();
         return;
       case "search":
         closeMenu();
-        go(state.rules.searchUrl || "/search");
+        goTop(state.rules.searchUrl || "/search");
         return;
       case "disable":
         closeMenu();
@@ -752,18 +1172,9 @@
 
   // "/" is a toggle: it opens search, and on the search page it closes it and
   // puts you back where you were.
-  // "/" is a toggle, so this one really does mean "back where I was" — unlike
-  // the Back button, which is structural. The guard entry sits on top of the
-  // history, so stepping over it takes two.
   function leaveSearch() {
-    const steps = state.guard ? 2 : 1;
-    if (history.length > steps) {
-      state.guard = false;
-      state.lastBack = Date.now();
-      history.go(-steps);
-      return true;
-    }
-    return go(state.rules.browseUrl || "/browse");
+    if (Trail && Trail.depth(state.trail) > 0) return goBackTo(-1, state.trail[state.trail.length - 2].url);
+    return goHome();
   }
 
   function blurField() {
@@ -833,6 +1244,8 @@
     const m = findModal();
     if (m === state.modal) return;
     state.pendingLoadMore = null;
+    if (m) root.dataset.tenfootModal = "on";
+    else delete root.dataset.tenfootModal;
     if (m) {
       state.modalReturn = currentEl();
       state.modal = m;
@@ -882,10 +1295,8 @@
   // video page and player relay
   // ---------------------------------------------------------------------------
 
-  // The remote's back button is intercepted in the capture phase and runs the
-  // layered back (docs/keymap.md). Theater is not a history entry of its own:
-  // one would make the browser's history-back land on the wrong page after a
-  // season switch. The single guard entry (pushGuard) is all Leanback keeps.
+  // Theater is not a history entry of its own: Back from an episode is the
+  // browser's Back, and one more entry would make it take two presses.
   function setTheater(on) {
     const want = Boolean(on) && state.kind === "video";
     if (state.theater === want) return;
@@ -1008,7 +1419,7 @@
       state.hints.show([{ keys: delta > 0 ? "▶▶" : "◀◀", label: delta > 0 ? "No next episode" : "No previous episode" }], 2500, true);
       return true;
     }
-    return go(url);
+    return goSideways(url);
   }
 
   function onPlayerEnded(msg) {
@@ -1055,6 +1466,7 @@
       ];
     }
     if (state.engaged) return [{ keys: "◀ ▶", label: "Change" }, { keys: "OK", label: "Confirm" }, { keys: "Back", label: "Cancel" }];
+    if (state.railActive) return [{ keys: "▲ ▼", label: "Move" }, { keys: "OK", label: "Open" }, { keys: "▶", label: "Back" }];
     const cur = currentEl();
     if (cur && cur.tagName === "SELECT") return [{ keys: "OK", label: "Change this" }, { keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "Back", label: "Back" }];
     const items = [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Open" }];
@@ -1085,6 +1497,10 @@
     const editable = Keymap.isEditable(e.target);
     const action = Keymap.actionFor(e, { inPlayer: false, editable });
     if (!action) return;
+    if (action === "back" && e.key === "BrowserBack") {
+      browserBack();
+      return;
+    }
     if (e.repeat && isMove(action) && performance.now() - state.lastMove < MOVE_THROTTLE_MS) {
       e.preventDefault();
       return;
@@ -1115,6 +1531,22 @@
     }
     if (state.playerFocused) state.playerFocused = false;
     if (state.engaged && t !== state.engaged) cancelEngaged();
+    if (state.home && !state.modal && !state.menu.isOpen) {
+      if (state.home.contains(t)) {
+        // A click, or the focus coming back: the model follows.
+        state.home.select(t);
+        state.homeRefocus = 0;
+      } else if (!ownUi(t)) {
+        // Dropout's page is underneath and still moves the focus about.
+        // Take it back — a bounded number of times, never a tug of war.
+        if (state.homeRefocus < HOME_REFOCUS_LIMIT && state.home.current) {
+          state.homeRefocus += 1;
+          focusEl(state.home.current, { scroll: false });
+        }
+        return;
+      }
+    }
+    if (state.railActive && !state.rail.contains(t) && !state.menu.isOpen) state.railActive = false;
     if (state.menu.isOpen) {
       // Keys are read at window capture, so the panel does not need the focus
       // to work — it only needs it to look selected, and it stamps that
@@ -1140,30 +1572,59 @@
     if (!state.theater && !state.playerFocused) showHints();
   }
 
-  // The remote's back button reaches Firefox as a browser-level key, and
-  // Firefox navigates on it before this document can cancel the event. One
-  // same-document entry of ours sits on top of the history, so that navigation
-  // lands here instead of leaving the page; we put it straight back and do
-  // what Back actually means.
-  function pushGuard() {
-    if (state.guard || !state.enabled) return;
-    try {
-      history.pushState({ tenfoot: "guard" }, "");
-      state.guard = true;
-    } catch (_err) { /* the layering still works from the key itself */ }
-  }
-
+  // The site changing its address without a page load (the search app).
   function onPopState() {
     if (state.leaving || !state.enabled) return;
-    if (location.href !== state.href) {
-      onNavigate();
-      return;
+    clearBackFallback();
+    if (location.href !== state.href) onNavigate();
+  }
+
+  // ---------------------------------------------------------------------------
+  // the trail (nav/trail.js)
+  // ---------------------------------------------------------------------------
+
+  // Where this page sits in the tab's history. Returns true when it was
+  // reached by Back and is only a sibling of the page left — the previous
+  // episode, after Dropout went on to the next by itself — in which case Back
+  // carries on past it to the page before the siblings.
+  function arrive(persisted, allowSkip) {
+    if (!Trail) return false;
+    const store = sessionStore();
+    let type = persisted ? "back_forward" : "navigate";
+    if (!persisted) {
+      try {
+        const nav = performance.getEntriesByType("navigation")[0];
+        if (nav && nav.type) type = nav.type;
+      } catch (_err) { /* treated as a new page */ }
     }
-    state.guard = false;
-    pushGuard();
-    // The key handler may have run for the same press; do not act twice.
-    if (Date.now() - state.lastBack < BACK_DEDUPE_MS) return;
-    dispatch("back", {});
+    const r = Trail.arrive(Trail.load(store), location.href, type, Trail.takeIntent(store));
+    state.trail = r.trail;
+    Trail.save(store, r.trail);
+    const delta = allowSkip && r.left ? Trail.skipSiblings(r.trail, r.left) : null;
+    if (!delta) return false;
+    const to = r.trail[r.trail.length - 1 + delta];
+    Trail.setIntent(store, "back", to.url);
+    state.leaving = true;
+    history.go(delta);
+    return true;
+  }
+
+  // What this page is, kept on its trail entry: its kind, the show it
+  // belongs to (episodes and seasons of one show are siblings), and the page
+  // Back leads to when nothing is behind it.
+  function recordTrail() {
+    if (!Trail || !state.trail.length) return;
+    let group = null;
+    if (state.kind === "video") {
+      const a = qs(state.page.seriesLink);
+      group = a && a.href ? seriesSlug(a.href) : null;
+    } else if (state.kind === "series") group = seriesSlug(location.href);
+    state.trail = Trail.describe(state.trail, {
+      kind: state.kind,
+      group,
+      parent: state.kind === "browse" ? null : structuralParent()
+    });
+    Trail.save(sessionStore(), state.trail);
   }
 
   function onNavigate() {
@@ -1181,6 +1642,8 @@
       return;
     }
     syncModal();
+    refreshHome();
+    stampTvGrid();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
     if (state.kind === "video") {
@@ -1188,7 +1651,7 @@
       syncUpNextOffer();
       if (state.pendingPlayerFocus && qs(state.page.playerFrame)) enterPlayer();
     }
-    if (state.lastFocus && !state.lastFocus.isConnected && !state.playerFocused) {
+    if (state.lastFocus && !state.lastFocus.isConnected && !state.playerFocused && !state.home) {
       state.lastFocus = null;
       state.pendingInitialFocus = Date.now() + 2000;
       tryInitialFocus();
@@ -1197,8 +1660,18 @@
     }
   }
 
+  // Changes inside Leanback's own elements (the ring moving, a card redrawn)
+  // are not the site changing, and must not set off another redraw.
+  function ours(record) {
+    const t = record.target;
+    const el = t && t.nodeType === 1 ? t : t && t.parentElement;
+    if (!el) return false;
+    return ownUi(el) || el === state.ring.element || el === state.hints.element || state.hints.element.contains(el);
+  }
+
   function startObserver() {
-    state.observer = new MutationObserver(() => {
+    state.observer = new MutationObserver((records) => {
+      if (records.every(ours)) return;
       if (state.mutationTimer) return;
       state.mutationTimer = setTimeout(onMutations, MUTATION_DEBOUNCE_MS);
     });
@@ -1226,7 +1699,9 @@
       id: el.id || null,
       href: el.getAttribute("href") || null,
       value: "value" in el && (el.tagName === "SELECT" || el.tagName === "INPUT") ? String(el.value) : null,
-      text: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60)
+      text: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60),
+      rect: (({ left, top, width, height }) => ({ left: Math.round(left), top: Math.round(top), width: Math.round(width), height: Math.round(height) }))(Ring.unscaledRect(el)),
+      color: window.getComputedStyle(el).color
     });
     return {
       ok: true,
@@ -1245,7 +1720,9 @@
       // computed transform, not assumed.
       zoomed: cur ? computedTransform(cur) : null,
       ring: Boolean(state.ring) && !state.ring.element.hidden,
-      hints: Boolean(state.hints) && state.hints.visible
+      hints: Boolean(state.hints) && state.hints.visible,
+      home: state.home ? state.home.snapshot() : null,
+      rail: railShown() ? { active: state.railActive, item: state.rail.currentId, page: railPage() } : null
     };
   }
 
@@ -1277,6 +1754,10 @@
         onPlayerEnded(msg);
         reply({ ok: true });
         return false;
+      case "player:resumed":
+        if (state.enabled && Number(msg.at) > 0) notice(`Resumed at ${clockText(msg.at)}`);
+        reply({ ok: true });
+        return false;
       case "page:focus":
         reply({ ok: true, done: state.enabled ? leavePlayer(msg.hint === "back" ? "back" : "below") : false });
         if (state.enabled) showHints();
@@ -1288,6 +1769,13 @@
         reply(snapshot());
         return false;
       case "page:action": {
+        // BrowserBack pressed while the player had the keys: the same as on
+        // the page.
+        if (msg.action === "browser-back") {
+          if (state.enabled) browserBack();
+          reply(Object.assign(snapshot(), { consumed: false }));
+          return false;
+        }
         const consumed = state.enabled ? dispatch(String(msg.action || ""), {}) : false;
         if (consumed) showHints();
         reply(Object.assign(snapshot(), { consumed }));
@@ -1306,14 +1794,21 @@
   function setupPage() {
     clearInitialFocusTimer();
     state.href = location.href;
-    state.guard = false;
-    pushGuard();
+    clearBackFallback();
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     if (state.kind === "series") captureEpisodeOrder();
     if (state.kind === "video") {
       markVideoElements();
       if (state.settings.theater === "auto") setTheater(true);
+      sendHistoryMeta();
     }
+    state.railActive = false;
+    state.railReturn = null;
+    if (isHomeKind()) startHome();
+    else stopHome();
+    setupRail();
+    stampTvGrid();
+    recordTrail();
     syncModal();
     tryInitialFocus();
     if (!state.theater && !state.playerFocused) showHints();
@@ -1328,6 +1823,8 @@
       state.ring.hide();
       state.hints.hide();
       setTheater(false);
+      stopHome();
+      setupRail();
       state.pendingInitialFocus = 0;
       return;
     }
@@ -1355,6 +1852,7 @@
   async function init() {
     const [settings, rulesReply] = await Promise.all([Settings.load(API), send({ type: "rules:get" })]);
     state.settings = settings;
+    if (arrive(false, settings.enabled)) return;
     state.rules = rulesReply && rulesReply.ok && rulesReply.rules && typeof rulesReply.rules === "object" ? rulesReply.rules : null;
     if (!state.rules) {
       console.warn(LOG, "site rules unavailable; navigation is off on this page:", rulesReply && rulesReply.error);
@@ -1364,12 +1862,34 @@
     state.ring = Ring.createRing(document, ringStyle());
     state.hints = Ring.createHintBar(document, { enabled: settings.hintBar });
     state.menu = Menu.createMenu(document, { onActivate: onMenuItem });
+    if (History) {
+      state.history = await History.load(API);
+      History.watch(API, (store) => {
+        state.history = store;
+        refreshHome();
+      });
+    }
     installSiteStyle();
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
     window.addEventListener("popstate", onPopState);
+    window.addEventListener("beforeunload", () => {
+      state.unloading = true;
+      clearBackFallback();
+    });
     window.addEventListener("pagehide", () => { state.leaving = true; });
+    // Back to a page Firefox kept in memory: the scripts are still running,
+    // so pick up from where the history now is.
+    window.addEventListener("pageshow", (e) => {
+      if (!e.persisted) return;
+      state.leaving = false;
+      state.unloading = false;
+      if (arrive(true, state.enabled)) return;
+      state.href = location.href;
+      recordTrail();
+      if (state.ring) state.ring.refresh();
+    });
     API.runtime.onMessage.addListener(onMessage);
     Settings.watch(API, onSettingsChanged);
     startObserver();

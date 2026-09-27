@@ -20,7 +20,7 @@
           </label>
           <label class="row">
             <input type="checkbox" id="skipMarketingSite">
-            <span>Forward www.dropout.tv to the Browse page</span>
+            <span>Forward www.dropout.tv to Home</span>
           </label>
           <label class="row">
             <input type="checkbox" id="hintBar">
@@ -57,6 +57,8 @@
               </select>
             </label>
             <span class="hint">For troubleshooting: the site's own controls if Leanback's ever fail</span>
+          </div>
+          <div class="row">
             <label for="theater">Theater layout</label>
             <select id="theater">
               <option value="auto">On every video page</option>
@@ -89,11 +91,23 @@
         <fieldset>
           <legend>Leaving</legend>
           <div class="row">
-            <label for="exitHook">Back on the Browse page</label>
+            <label for="exitHook">Back on Home</label>
             <select id="exitHook">
               <option value="none">Does nothing</option>
               <option value="close-tab">Closes this tab (kiosk setups)</option>
             </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Watch history</legend>
+          <p class="hint">
+            Leanback remembers how far you got in each video, in this Firefox
+            only, for Continue Watching and for picking up where you left off.
+            It is never sent anywhere.
+          </p>
+          <div class="row">
+            <button type="button" id="forget">Forget watch history</button>
           </div>
         </fieldset>
 

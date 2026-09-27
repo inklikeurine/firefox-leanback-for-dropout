@@ -1,5 +1,97 @@
 # Changelog
 
+## [0.16.0] — 2026-09-26
+
+Fixes from the owner's review of 0.15.0.
+
+### Added
+
+- **Dropout 24/7 on the rail**, under Browse, with its own TV icon. It is lit
+  on the Dropout 24/7 page.
+
+### Changed
+
+- **Back is Firefox's own Back.** Firefox goes back on the remote's back button
+  whatever a page does with it, so Leanback no longer tries to hold it — the
+  history entry it kept for that did not work. Instead the history is kept in
+  the shape Back should follow: the next or previous episode, another season or
+  sort, and one rail section to another replace the page rather than adding
+  one; Home from the rail or the settings goes back down the history when Home
+  is behind; and a Back that lands on the previous episode, when Dropout's own
+  up-next card went on to the next, carries on to the season page. In a tab
+  opened straight on a page, with nothing behind it, Back walks up the site
+  itself. Escape closes what is open on the page first, then does the same.
+- **The featured banner's › button is right after *Watch now***, before
+  *Trailer* and *My list*.
+- **"N min left" is on the Continue Watching picture**, in the corner where
+  other cards show the running time; the line under the title is the show.
+- **Forget watch history empties Continue Watching**, Dropout's own progress
+  from the Roku included, until something is watched again here or on another
+  device. Dropout's progress bars still show on its cards.
+- **Search results are laid out for a TV**: four across the full width beside
+  the rail, with larger titles, instead of Dropout's desktop column of small
+  pictures.
+
+### Fixed
+
+- *Watch now* and *Trailer* on the banner were teal: Dropout's colour for
+  every link won over Leanback's. *Watch now* is black on yellow and *Trailer*
+  white again.
+- Search results could not be reached with the arrows: their link carries no
+  class, and the rules looked for one. The type filters (All / Videos /
+  Collections) and *Load More* are reachable too.
+- The selected search result shrank instead of growing.
+- Back to a page Firefox kept in memory left Leanback unable to reach the
+  background until the next page load.
+
+## [0.15.0] — 2026-09-26
+
+The Home screen: the first screen of the TV shell.
+
+### Added
+
+- **Home is Leanback's own screen.** `/browse` is drawn by Leanback from what
+  Dropout puts on the page — the featured banner and every row of shows, with
+  the same links — over Dropout's page, which stays underneath untouched.
+  Rows are cards with a picture, a title, the length, a "New" badge and a
+  progress bar. ▼ brings each row up to the same place near the top, and
+  along a row the selected card keeps its place while the row slides. More
+  rows arrive as the selection nears the bottom (Leanback presses Dropout's own
+  *Show more*). A row of 12 ends with a **View all** card. The banner shows
+  one featured show at a time with Dropout's own *Watch now*, *Trailer* and
+  *My list*, and a **›** button for the next one. Hubs such as `/dimension-20`
+  get the same screen.
+- **Continue Watching**, first on Home: what you started in Firefox and what
+  you started on Dropout's Roku or Android app, in one row, most recent first.
+- **Watch history.** Leanback remembers how far you got in each video, in this
+  Firefox only. A video counts as watched at 95 % or with under 90 seconds
+  left, and as started after a minute. It is never sent anywhere.
+- **Picking up where you left off.** An episode you stopped halfway starts
+  where you stopped, with "Resumed at 12:04" for a moment; **Start Over** at
+  the top of the playback settings goes back to the beginning.
+- **The rail**: Search, Home, Browse and Leanback's settings down the left of
+  Home, Browse (all shows) and Search. ◀ from the left edge enters it; ▶ or
+  Back return you exactly where you were.
+- **Forget watch history**, in Leanback's settings (OK twice) and on the
+  options page (click twice).
+
+### Changed
+
+- The page that Back reaches from a show and the page the *Back on Home*
+  setting (was *Back on Browse*) applies to are both called **Home** now, and
+  the settings panel's *Browse* entry is *Home*. **Browse** is the rail's
+  name for all shows (`/series`).
+- On a page with the rail, ◀ moves only to something level with the
+  selection; past that is the rail.
+
+### Fixed
+
+- A collection page — where a row's *View all* leads, such as
+  `/new-releases` — waited ten seconds before putting the ring anywhere. The
+  ring now starts on its first tile.
+- The options page's *Theater layout* control sat in the same row as *Player
+  controls*.
+
 ## [0.14.0] — 2026-09-26
 
 A cleanup release, before the TV shell work starts.

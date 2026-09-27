@@ -19,7 +19,7 @@ it is matched by the `Name_module_` prefix.
 | `watch.dropout.tv` | The app — a **Vimeo OTT** site (assets `cdn.vhx.tv`, config `window.VHX.config`) | Page content script |
 | `embed.vhx.tv` | The **player iframe**, injected by the page's JS at runtime | Player content script (`all_frames: true`) |
 | `cdn.vhx.tv`, `vhx.imgix.net` | JS bundles, images | none |
-| `api.vhx.tv`, `api.vhx.com`, `auth.vhx.com` | Site API (used by the page's own JS) | none — the extension makes no requests |
+| `api.vhx.tv`, `api.vhx.com`, `auth.vhx.com` | Site API (used by the page's own JS) | none — the extension makes no requests; pressing Home's *Show more* makes the page ask for more rows, as scrolling does |
 | `collector.vhx.tv` | The player's viewing reports | none |
 | `f.vimeocdn.com`, `player.vimeo.com` | Vimeo's player runtime and per-clip config, loaded inside the embed frame | none |
 | `www.google.com/recaptcha/enterprise.js` | reCAPTCHA Enterprise, loaded on the page shell (login) | risk for kiosk login |
@@ -29,16 +29,16 @@ it is matched by the `Name_module_` prefix.
 
 | URL pattern | What it is | Page kind in `sites/dropout.json` |
 | --- | --- | --- |
-| `/browse` | Home: a banner and rows (React) | `browse` |
+| `/browse` | Home: a banner and rows (React) | `browse` — Leanback draws its own Home from it |
 | `/series` | All series, a server-rendered grid with Show More | `grid` |
-| `/new-releases`, `/trending`, `/collections/…` | A collection: a server-rendered grid | `grid` for `/collections/…`; the others fall to `series` |
-| `/dimension-20`, `/dropout-24-7` | A hub: a small Home-style page with its own rows | `series` |
+| `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection: a server-rendered grid. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where the first tile gets the selection |
+| `/dimension-20`, `/dropout-24-7` | A hub: a small Home-style page with its own rows | `hub` — a one-segment address whose page holds `#browse-component`; drawn like Home |
 | `/<hub>/events/<slug>` | A live event, with the live player | `other` |
 | `/<series-slug>` | Series page: details, season and sort selects, episode grid | `series` |
 | `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` |
 | `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` |
 | `/<series-slug>/videos/<slug>`, `/videos/<slug>`, `/featured/videos/<slug>` | Trailer or standalone video | `video` |
-| `/search`, `/my-list` | One React app that changes the address without reloading; `document.title` is empty | `search`; `/my-list` falls to `series` |
+| `/search`, `/my-list` | One React app that changes the address without reloading; `document.title` is empty | `search` (with the rail, and its results laid out for a TV); `/my-list` falls to `series` |
 | `/login`, `/checkout/…`, `/contact/…`, `/privacy`, `/settings`, … | Account and legal pages | `other` — the extension stays passive |
 
 ## Pages
@@ -57,40 +57,59 @@ The header is server-rendered; everything below it is one React tree in
 `div#browse-component`.
 
 ```text
-#browse-component
+#browse-component[data-props]                            ← data-props: the first four rows' definitions (JSON)
   .carousel                                              ← the banner: ten slides
-    .slide › .featured-carousel-slide[data-testid="featured-carousel-slide"]
-      a.btn.slide-button[href="/<series>"]               ← "Watch now"
-      a.btn.slide-button.slide-button--alt[href="/videos/<trailer>"]   ← "Trailer", when there is one
-      button.slide-button.slide-button--my-list.icon-watchlist-add[aria-label="Add to my list"]
-    .coin, .coin.active                                   ← one dot per slide; no arrow buttons
-  .horizontal-row-container.row-head                     ← a row's title, a link: "<Title> View all"
-  .horizontal-row-container.horizontal-row               ← the row: a slick slider
-    .slick-track › .horizontal-row-item[data-testid="browse-card"]   ← ONE TILE
-      .browse-item-card.item-type-<series|video|movie|live_event>
-        .browse-item-title
-          div.inline-block[data-testid="browse-list-toggle"]
-            button.icon-only.icon-watchlist-add[aria-label="Add to my list"]     ← or -remove / "Remove from my list"
-          a[href]                                         ← FOCUS TARGET
-            .browse-image-container
-              img[src]                                    ← not lazy-loaded
-              .percentage-bar[data-testid="play-state-percentage-bar"][style="width: N%"]   ← Dropout's progress
-      .tooltip                                            ← hover tooltip: title and description
+    .slide
+      .slide-bg-img-wrapper a[href] > img.slide-bg-img   ← the slide's picture (srcset 1920w/3840w)
+      .featured-carousel-slide[data-testid="featured-carousel-slide"]   ← .hidden unless current
+        .slide-title, .slide-subtitle ("25 seasons"), .slide-description
+        .slide-buttons
+          a.btn.slide-button[href="/<series>"]           ← "Watch now"
+          a.btn.slide-button.slide-button--alt[href="/videos/<trailer>"]   ← "Trailer", when there is one
+          button.slide-button.slide-button--alt.slide-button--my-list.icon-watchlist-add[aria-label="Add to my list"]
+    .coin, .coin.active                                   ← one dot per slide
+  .browse-rows
+    .row.browse-row.<row-slug>
+      .horizontal-row-container.row-head
+        .horizontal-row-header a                          ← the row's title, a link to its collection
+        a.view-more-link                                  ← "View all", the same address
+      .horizontal-row-container.horizontal-row           ← the row: a slick slider
+        .slick-slide[.slick-cloned] › .horizontal-row-item[data-testid="browse-card"]   ← ONE TILE
+          .browse-item-card.item-type-<series|video|movie|playlist|live_event>
+            .browse-item-title
+              div.inline-block[data-testid="browse-list-toggle"]
+                button.icon-only.icon-watchlist-add[aria-label="Add to my list"]     ← or -remove / "Remove from my list"
+              a[href]                                     ← the tile's link
+                .browse-image-container
+                  img[src][alt]                           ← not lazy-loaded
+                  [data-testid="thumbnail-badge-0"]       ← "New", when there is one
+                  .duration-container                     ← "1:45:05"
+                  .percentage-bar[data-testid="play-state-percentage-bar"][style="width: N%"]   ← Dropout's progress
+                .subtext-container .truncate, .browse-item-subtext   ← title; "2 videos" / "9 seasons" / empty
+          .tooltip                                        ← hover tooltip: title and description
+  .see-more-row.see-more-row--show > button "Show more"  ← --hide once every row is drawn
 ```
 
-- **Rows arrive a few at a time.** The page asks the site's API for rows four
-  at a time as it scrolls: three rows are drawn at the top, and scrolling to
-  the bottom stops at about fifteen, although more are defined.
+- **Rows arrive four at a time**, from the site's API: three are drawn at
+  first, more as the page is scrolled or *Show more* is pressed. Pressed
+  enough, every row of the hub is drawn (37 in the captures) and the button
+  hides (`see-more-row--hide`). Leanback's Home presses it as the selection
+  nears the bottom.
 - **A row holds at most twelve items**, the first page of its collection. The
-  row's title links to the collection for the rest ("View all").
-- **Every item of a loaded row is in the DOM**, on screen or not, and each
-  appears three times: the slider copies its items for looping, and the copies
-  carry `.slick-cloned`.
+  row's title and *View all* link to the collection for the rest.
+- **Every item of a loaded row is in the DOM**, on screen or not. The slider
+  adds copies of its items at both ends for looping; the copies carry
+  `.slick-cloned` and are skipped.
 - **Rows move by transform, not native scroll**, so `scrollIntoView` does not
-  bring an off-screen tile into view; the extension clicks the row's own arrow
-  controls (`scrollNext` / `scrollPrev` in the rules).
+  bring an off-screen tile into view. Leanback's own Home does not need them;
+  when Home cannot be drawn, the extension clicks the row's own arrow controls
+  (`scrollNext` / `scrollPrev` in the rules).
+- `data-props` on the root lists only the first page of row definitions
+  (with `items_count` per row) and no progress dates; Leanback does not read
+  it.
 - **Progress** is drawn on a tile when Dropout has any for it; the width is
-  the fraction watched.
+  the fraction watched. It comes from the Roku and Android apps: playing in
+  Firefox does not update it. There is no date on it.
 - **My List** toggles in place, with no reload, and swaps
   `icon-watchlist-add` ↔ `icon-watchlist-remove` and its label.
 - **There is no Continue Watching row** on the website.
@@ -157,6 +176,7 @@ series art blurred (`?blur=180`).
 ### Video page (`/<series>/season:N/videos/<episode>`)
 
 ```text
+meta[property="og:image"][content]                   ← the episode's picture (1280×720) — kept in the watch history
 .videos-show
   #preview-notification.preview-notification        ← "Live stream preview" (live events only)
   #watch-player.top-container.background-black
@@ -176,7 +196,10 @@ series art blurred (`?blur=180`).
 ```
 
 `window.VHX.config.embed_url` holds the player URL; `window.COMMENTABLE_ID` is
-the video id. The player address carries the next episode as `up_next_url`,
+the video id. The history keeps the episode's `.video-title`, the
+`.series-title` text and `og:image`, keyed by the slug after `/videos/`, which
+is the same in this address, in Home's tile links and in the player's
+`OTTData.video.url`. The player address carries the next episode as `up_next_url`,
 `up_next_title`, `up_next_thumbnail_url`, `up_next_rating` and
 `up_next_offset_seconds`.
 
@@ -184,13 +207,33 @@ the video id. The player address carries the next episode as `up_next_url`,
 
 One React app (`#search-react-app`, present on every page as the search
 overlay) that changes the address without reloading, and can leave the
-previous results on screen after an address change. The search field is
-`.SearchForm-module__search-input` (also `.custom-css-search-input`) in
-`.SearchForm-module__search-form-container`; filters are
-`.Filters-module__filters-toggle` and `.Filter-module__filter`;
-`.Filter-module__load-more` loads more results;
-`.BlankSearchResults-module__no-results` is the empty state. Results and the
-My List page reuse the browse tile (`.browse-item-card` → `a[href]`).
+previous results on screen after an address change. On `/search` itself it is
+**not** the overlay (its props say `overlay: false`; no
+`Search-module__overlay`, so not `position: fixed`): it is part of the page.
+
+```text
+.Search-module__content-container.Search-module__show   ← padding 32px 200px from 1250 px wide
+  .Search-module__search-container
+    .SearchForm-module__search-form-container > input.SearchForm-module__search-input
+    .Search-module__results-content-container
+      .SearchResults-module__search-results-container
+        .TypeFilters-module__type-filters-container
+          button.TypeFilters-module__type-filter[data-filter-type="all|video|collection"]   ← "All (20)"
+        ul.SearchResults-module__search-results       ← flex, wrapping
+          li.SearchResults-module__search-result       ← width 20 % (25 % with filters) from 1250 px
+            .horizontal-row-item › .browse-item-card    ← the React tile, margin 0 3 %
+              a[href]                                   ← NO class: the tile's link
+                .subtext-container .truncate, .browse-item-subtext
+        button.SearchResults-module__load-more          ← "Load More"
+```
+
+So at 1280–1920 px a result picture is about 150–250 px wide in a centred
+column. Leanback marks these parts (`tvGrid` in the rules) and lays them out
+four across, the full width beside the rail. The React tile's link has no
+class, so the rules' `target` for search is `a.browse-item-link, a[href]`.
+`.BlankSearchResults-module__no-results` is the empty state; the older
+`.Filters-module__…` / `.Filter-module__…` names are kept in the rules in case
+a page still uses them. The My List page reuses the same results.
 
 ## The player frame (`embed.vhx.tv/videos/<id>`)
 

@@ -44,20 +44,41 @@ While the focus is in a text field, **only the back button is ours** — even
 
 ## Actions → behaviour by context
 
-| Action | Page (`browse` / `grid` / `series` / `search`) | Options panel (page) | `video`, focus on the page | `video`, focus in the player |
+| Action | Page (`grid` / `series` / `search` / `other`) | Options panel (page) | `video`, focus on the page | `video`, focus in the player |
 | --- | --- | --- | --- | --- |
 | `up` | spatial / row move | previous entry | spatial; from the topmost element → player | closes the transport bar |
 | `down` | spatial / row move; past the last row → Load More | next entry | spatial | opens the **transport bar**; from the bar, on to the page |
-| `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead) | nothing, unless a settings row is being changed | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead** |
+| `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | nothing, unless a settings row is being changed | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead** |
 | `select` | activate; on a `<select>` → engage or confirm; on the player → enter the player | take the entry, or start changing a settings row | activate | play / pause; take the control under the selection; take the "up next" offer |
-| `back` | cancel an engaged `<select>` → close a dialog → **one layer up the site** → at `/browse` the exit hook | undo a settings row → close | leave theater; else one layer up | submenu → settings panel → transport bar → playback → one layer up |
+| `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | undo a settings row → close | leave theater; else the page before | submenu → settings panel → transport bar → playback → the page before |
+| `back` (BrowserBack) | Firefox's own Back, everywhere; Leanback steps in only when nothing of the site is behind the page, and then does what Escape does | | | |
 | `menu` | **opens Leanback's settings** | closes it | opens Leanback's settings | opens the **settings panel** in the player frame |
 | `search` | go to `/search` | — | same | same |
 | `play_pause` `stop` `next` `previous` `fast_forward` `rewind` | ignored (no player) | — | forwarded to the player | handled in the player |
 
-**Back is structural, never historical.** It walks one layer up the site —
-episode → the season page you came from → `/browse` — rather than returning to
-whatever page you happened to look at last.
+**Back follows the history, and the history is kept structural.** The
+remote's Back is Firefox's own Back (T2 below), and Escape does the same after
+closing whatever is open on the page. Sideways moves never add a page to the
+history, and a Back that lands on the previous episode carries on, so Back
+walks up the site — episode → the season page you came from → Home — rather
+than through every episode you watched. In a tab opened straight on a page,
+with nothing behind it, Back walks up the site the same way on its own.
+
+## Home and the rail
+
+Home (`/browse`, and hubs such as `/dimension-20`) is Leanback's own screen:
+the featured banner's buttons, then one row per shelf.
+
+| Action | Home | The rail |
+| --- | --- | --- |
+| `up` / `down` | row to row; each row comes back to the card last selected in it. The selected row always lands at the same height. Two rows from the end, more rows are asked for | move along the rail, no wrap |
+| `left` / `right` | along the row or the banner's buttons, stopping at the ends; ◀ at the start enters the **rail** | ▶ returns to exactly where the selection came from; ◀ does nothing |
+| `select` | open the card (its own link: a show, an episode, *View all*); on the banner, its button — **›**, beside *Watch now*, shows the next featured show | open the entry: Search, Home (on Home: back to the banner), Browse (all shows), Dropout 24/7, the gear (Leanback's settings, in place) |
+| `back` | the page before (Firefox's Back); at Home with nothing behind, the exit hook | Escape: back to the show it came from. BrowserBack leaves the page |
+| `menu` | Leanback's settings | the same |
+
+The rail is also on Browse (`/series`) and Search, where ◀ reaches it from
+anything at the left edge. It is not on a show's page or during playback.
 
 ## The options button
 
@@ -70,8 +91,9 @@ are not settings sit at the foot of that list:
 
 | Entry | Does |
 | --- | --- |
-| Browse | `/browse` |
+| Home | `/browse` |
 | Search | `/search` (needs a keyboard from there) |
+| Forget watch history | deletes Leanback's watch history; the first OK asks, the second forgets |
 | Turn Leanback off | the site behaves as stock Firefox |
 
 ▲ ▼ move, OK starts changing a setting, ◀ ▶ change it, OK confirms, back undoes.
@@ -105,11 +127,12 @@ already paused.
 
 | Row | Comes from |
 | --- | --- |
+| Start Over | only after the video picked up where it was left: back to 0:00 |
 | Quality | the player's own menu |
 | Speed | the player's own menu |
 | Play Next Episode | goes to the next episode — it is a link, not a toggle |
 | Closed Captions | the player's CC/subtitles menu: the tracks, and Customize → Font, Background, Window |
-| Leanback Settings | Leanback's own, as a submenu: Theater Layout, Autoplay Next Episode, Start Videos Muted, Button Hints, Seek Step, Selected Item Zoom, Selection Outline, Skip Marketing Site, Back On Browse |
+| Leanback Settings | Leanback's own, as a submenu: Theater Layout, Autoplay Next Episode, Start Videos Muted, Button Hints, Seek Step, Selected Item Zoom, Selection Outline, Skip Marketing Site, Back On Home |
 
 - ▲ ▼ move. **▶ or OK opens a submenu; ◀ or back goes up one level.**
 - OK picks one of the player's options, flips a switch, or steps a value round
@@ -131,22 +154,30 @@ screen.
 
 | Key | Who else acts on it | How it is handled |
 | --- | --- | --- |
-| `BrowserBack` (`KEY_BACK`) | Firefox: history back | Intercepted, and designed around: **one** same-document history entry is kept on top, in the page, for Firefox's own navigation to land on. The page then asks the player frame what Back means before acting on it itself. The interception alone would not do: see T2 below. |
+| `BrowserBack` (`KEY_BACK`) | Firefox: history back | **Firefox's.** Not cancelled — it cannot be (T2 below). Leanback keeps the history in the shape Back should follow instead, and acts only when there is no page of the site behind this one. |
 | `BrowserHome` (`KEY_HOMEPAGE`) | Firefox: home page; Plasma Bigscreen: global "home" | **Reserved.** Never mapped. Point the kiosk profile's home page at `/browse` so a stray press is harmless. |
 | `ContextMenu` (`KEY_COMPOSE`, the W1's *menu*) | Firefox: opens the context menu | `menu`; the keyboard-originated `contextmenu` event is cancelled, a real right-click is not. |
 | `AudioVolumeUp/Down/Mute` | The desktop's volume control | Never intercepted. |
 | `Escape` | Firefox: leaves DOM fullscreen | Theater layout is CSS, not DOM fullscreen, so it stays ours. |
 
-### T2 — why Back needs the history guard
+### T2 — Back is Firefox's
 
 The W1's back button sends `KEY_BACK` (Consumer Control), which arrives as
-`event.key === "BrowserBack"` (`trusted`, seen at capture and bubble). Cancelling
-it with `preventDefault()` does **not** stop Firefox's own history-back — on the
-page or with the player focused ([targets.md](./targets.md) T2, checked with
-[Leanback Dev Probe](../../leanback-dev-probe/)'s Block Back). So the guard in
-`content/page.js` (`pushGuard` / `onPopState`) is what keeps Back on the page:
-Firefox's navigation lands on the guard entry, Leanback puts it straight back
-and does what Back means.
+`event.key === "BrowserBack"` (`trusted`, seen at capture and bubble).
+Cancelling it with `preventDefault()` does **not** stop Firefox's own
+history-back — on the page or with the player focused ([targets.md](./targets.md)
+T2, checked with [Leanback Dev Probe](../../leanback-dev-probe/)'s Block Back),
+and an extra history entry for it to land on does not hold it either. So
+Leanback follows Firefox's Back rather than fighting it
+([architecture.md](./architecture.md#back-contentpagejs--navtrailjs)):
+moving sideways (another episode, another season, another rail section)
+replaces the page instead of adding one; landing by Back on the previous
+episode — when Dropout itself went on to the next — carries on to the season
+page; and in a tab opened straight on a page, with nothing behind it, Leanback
+does the Back itself. What that means for layers: the remote's Back leaves the
+page, whatever is open on it. The options panel also closes with the menu
+button, the rail with ▶, the transport bar with ▲, and a settings submenu with
+◀.
 
 ## Remote example: WeChip W1 air mouse
 
@@ -154,11 +185,11 @@ The bedroom HTPC's only input device ([targets.md](./targets.md#target-2--bedroo
 Every button, and what it does — the QWERTY pad on the back is needed only to
 type a search query or log in:
 
-| Button | Arrives as | Browse / series pages | Video page |
+| Button | Arrives as | Home, Browse, series pages | Video page |
 | --- | --- | --- | --- |
 | ▲ ▼ ◀ ▶ | `Arrow*` | move the ring | ◀ ▶ seek; ▼ the transport bar, ▼ again the page |
 | OK | `Enter` | open / play | play – pause; take the control under the selection |
-| back | `BrowserBack` | cancel a dropdown → close a dialog → one layer up → at `/browse` the exit hook | submenu → settings panel → transport bar → playback → the season page |
+| back | `BrowserBack` | Firefox's Back: the page before — Home from a show, the show from a season you switched to | Firefox's Back: the season page (past any episodes Dropout went on to by itself) |
 | menu | `ContextMenu` | Leanback's settings | the settings panel |
 | home | `BrowserHome` | nothing (reserved for Bigscreen) | nothing |
 | volume ± | `AudioVolume*` | system volume | system volume |

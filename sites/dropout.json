@@ -1,6 +1,7 @@
 {
   "site": "dropout",
   "browseUrl": "https://watch.dropout.tv/browse",
+  "gridUrl": "https://watch.dropout.tv/series",
   "searchUrl": "https://watch.dropout.tv/search",
   "routes": [
     {
@@ -70,13 +71,18 @@
       "target": "a.browse-item-link",
       "loadMore": "a.js-load-more-link, [data-load-more]",
       "episodeLinks": ".episode-container .browse-item-card a.browse-item-link",
-      "initialFocus": ".episode-container a.browse-item-link"
+      "initialFocus": [
+        ".episode-container a.browse-item-link",
+        ".browse-item-card a.browse-item-link"
+      ]
     },
     "video": {
       "theaterRoot": "#watch-player",
       "playerMount": "#watch-player .embed",
       "playerFrame": "#watch-player iframe[src*='embed.vhx.tv']",
       "seriesLink": ".series-title a.context-link",
+      "videoTitle": "#watch-info .video-title",
+      "videoImage": "meta[property='og:image']",
       "focusable": [
         "#watch-info a[href]",
         "a[data-similar-items-site]"
@@ -98,18 +104,30 @@
         "[contenteditable='true']",
         ".Filters-module__filters-toggle",
         ".Filter-module__filter",
-        ".Filter-module__subfilter"
+        ".Filter-module__subfilter",
+        ".TypeFilters-module__type-filter"
       ],
       "tile": ".browse-item-card",
-      "target": "a.browse-item-link",
-      "loadMore": ".Filter-module__load-more, a.js-load-more-link",
+      "target": [
+        "a.browse-item-link",
+        "a[href]"
+      ],
+      "loadMore": ".SearchResults-module__load-more, .Filter-module__load-more, a.js-load-more-link",
       "initialFocus": [
         ".SearchForm-module__search-input",
         ".custom-css-search-input",
         "input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button'])",
         "textarea",
         "[contenteditable='true']"
-      ]
+      ],
+      "tvGrid": {
+        "container": ".Search-module__content-container",
+        "wrap": ".SearchResults-module__search-results-container",
+        "grid": "ul.SearchResults-module__search-results",
+        "item": "li.SearchResults-module__search-result",
+        "title": ".subtext-container .truncate",
+        "subtitle": ".browse-item-subtext"
+      }
     },
     "other": {
       "focusable": [
@@ -186,5 +204,45 @@
     "menuBack": "button[aria-label='Back']",
     "menuLabel": "[class*='MenuItem_module_label'], [class*='MenuOptionListItem_module_text'], [class*='ButtonRow_module_label']",
     "menuValue": "[class*='MenuItem_module_value']"
+  },
+  "rail": {
+    "kinds": [
+      "browse",
+      "hub",
+      "grid",
+      "search"
+    ],
+    "links": [
+      {
+        "id": "live",
+        "label": "Dropout 24/7",
+        "icon": "tv",
+        "url": "https://watch.dropout.tv/dropout-24-7"
+      }
+    ]
+  },
+  "home": {
+    "root": "#browse-component",
+    "slide": ".carousel .slide",
+    "slideLink": ".slide-bg-img-wrapper a[href]",
+    "slideImage": "img.slide-bg-img",
+    "slideTitle": ".slide-title",
+    "slideSubtitle": ".slide-subtitle",
+    "slideDescription": ".slide-description",
+    "slideButtons": ".slide-buttons a[href], .slide-buttons button",
+    "slideListed": ".icon-watchlist-remove",
+    "row": ".browse-row",
+    "rowTitle": ".horizontal-row-header a:not(.view-more-link)",
+    "rowViewAll": "a.view-more-link[href]",
+    "item": ".slick-slide:not(.slick-cloned) .horizontal-row-item",
+    "itemLink": ".browse-item-card a[href]",
+    "itemImage": ".browse-image-container img",
+    "itemTitle": ".subtext-container .truncate",
+    "itemSubtext": ".browse-item-subtext",
+    "itemDuration": ".duration-container",
+    "itemProgress": "[data-testid='play-state-percentage-bar']",
+    "itemBadge": "[data-testid^='thumbnail-badge-']",
+    "rowPageSize": 12,
+    "showMore": ".see-more-row--show button"
   }
 }

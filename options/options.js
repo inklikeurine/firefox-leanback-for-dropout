@@ -61,8 +61,35 @@
     }
   }
 
+  // Forgetting cannot be undone, so the button asks once more first.
+  let forgetArmed = false;
+  async function forget() {
+    const btn = $("forget");
+    if (!forgetArmed) {
+      forgetArmed = true;
+      btn.textContent = "Click again to forget";
+      return;
+    }
+    forgetArmed = false;
+    btn.textContent = "Forget watch history";
+    try {
+      const r = await API.runtime.sendMessage({ type: "history:clear" });
+      say(r && r.ok ? "Watch history forgotten" : "Could not forget: " + ((r && r.error) || "no reply"));
+    } catch (err) {
+      say("Could not forget: " + (err && err.message ? err.message : "unknown error"));
+    }
+  }
+
+  function disarmForget() {
+    if (!forgetArmed) return;
+    forgetArmed = false;
+    $("forget").textContent = "Forget watch history";
+  }
+
   $("form").addEventListener("change", onChange);
   $("reset").addEventListener("click", reset);
+  $("forget").addEventListener("click", forget);
+  $("forget").addEventListener("blur", disarmForget);
   Settings.watch(API, render);
   Settings.load(API).then(render).catch(() => render(Settings.normalize(null)));
 })();

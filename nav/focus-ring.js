@@ -161,13 +161,16 @@
         if (!it || !it.label) continue;
         const item = doc.createElement("span");
         item.className = "tenfoot-hint";
-        const k = doc.createElement("kbd");
-        k.className = "tenfoot-key";
-        k.textContent = it.keys || "";
+        // A notice ("Resumed at 12:04") has no key to show.
+        if (it.keys) {
+          const k = doc.createElement("kbd");
+          k.className = "tenfoot-key";
+          k.textContent = it.keys;
+          item.appendChild(k);
+        }
         const l = doc.createElement("span");
         l.className = "tenfoot-label";
         l.textContent = it.label;
-        item.appendChild(k);
         item.appendChild(l);
         list.appendChild(item);
       }

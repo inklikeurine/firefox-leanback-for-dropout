@@ -1,7 +1,7 @@
 /* global browser, chrome */
 // Leanback for Dropout — www.dropout.tv, site root only, at document_start.
 // The marketing home page is useless on a TV; with the "skip marketing site"
-// setting on (default) it forwards straight to the app's Browse page.
+// setting on (default) it forwards straight to Home (/browse).
 
 (function () {
   const API = typeof browser !== "undefined" ? browser : chrome;

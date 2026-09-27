@@ -3,16 +3,35 @@
 // Serves the site rules file, keeps a per-tab registry of the player frame
 // (in storage.session, so it survives the event page unloading), relays
 // messages page ⇄ player, owns the toolbar toggle and its badge, the
-// keyboard command and the exit hook. Every message gets a reply.
+// keyboard command and the exit hook, and is the only writer of the watch
+// history (lib/history.js). Every message gets a reply.
 
 const API = typeof browser !== "undefined" ? browser : chrome;
 const LOG = "[leanback-for-dropout]";
 const RULES_URL = "sites/dropout.json";
 const REGISTRY_KEY = "players";
 const Settings = globalThis.TenfootSettings;
+const History = globalThis.TenfootHistory;
 
 let rulesCache = null;
 const memoryRegistry = new Map(); // fallback when storage.session is unavailable
+
+// --- watch history: one writer, one write at a time ------------------------
+// The page and the player frame both report; each change is read, applied and
+// saved before the next starts, so two reports can never overwrite each other.
+let historyQueue = Promise.resolve();
+
+function updateHistory(change) {
+  const run = historyQueue.then(async () => {
+    const before = await History.load(API);
+    const after = change(before);
+    if (after !== before) await History.save(API, after);
+    return after;
+  });
+  historyQueue = run.catch((err) => console.warn(LOG, "watch history write failed:", err && err.message));
+  return run;
+}
+
 
 async function loadRules() {
   if (rulesCache) return rulesCache;
@@ -156,8 +175,21 @@ async function handleMessage(message, sender) {
     case "player:back":
     case "player:settings":
       return fromTab() || relayToPlayer(tabId, message);
+    case "history:progress":
+      await updateHistory((s) => History.applyProgress(s, message, Date.now()));
+      return { ok: true };
+    case "history:meta":
+      await updateHistory((s) => History.applyMeta(s, message));
+      return { ok: true };
+    case "history:observe":
+      await updateHistory((s) => History.applyObservations(s, message.items, Date.now()));
+      return { ok: true };
+    case "history:clear":
+      await updateHistory((s) => History.forget(s, Date.now()));
+      return { ok: true };
     case "player:state":
     case "player:ended":
+    case "player:resumed":
     case "page:focus":
     case "page:episode":
     case "page:action":

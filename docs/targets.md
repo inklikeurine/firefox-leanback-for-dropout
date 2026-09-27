@@ -50,7 +50,7 @@ which one is smoother to navigate and to watch.
 | up / down / left / right | `KEY_UP` … `KEY_RIGHT` | `ArrowUp` … `ArrowRight` | `up` `down` `left` `right` |
 | OK | `KEY_ENTER` | `Enter` | `select` (play/pause in the player) |
 | back | `KEY_BACK` (Consumer Control) | `BrowserBack` | `back` — see T2 |
-| home | `KEY_HOMEPAGE` (Consumer Control) | `BrowserHome` — **if it gets that far**: Bigscreen acts on Home globally (its issue OS-01), so Firefox probably never sees it | `home` (→ `/browse`) when it does arrive |
+| home | `KEY_HOMEPAGE` (Consumer Control) | `BrowserHome` — **if it gets that far**: Bigscreen acts on Home globally (its issue OS-01), so Firefox probably never sees it | nothing — reserved for the shell, never mapped ([keymap.md](./keymap.md)) |
 | menu | `KEY_COMPOSE` | `ContextMenu` | `menu` (site header); the keyboard-originated `contextmenu` event is cancelled |
 | volume ± | `KEY_VOLUMEUP` / `KEY_VOLUMEDOWN` | `AudioVolumeUp` / `AudioVolumeDown` | **not intercepted** — Plasma's system volume |
 | power | nothing reaches the OS (IR only) | — | — |
@@ -143,7 +143,7 @@ Check it on the box: open an episode, and in the console on the player frame
 | # | Question | How | Affects |
 | --- | --- | --- | --- |
 | T1 | Does Bigscreen take `KEY_HOMEPAGE` globally while Firefox is in front? Does Firefox stay running behind? | Launch the kiosk, press home, `pgrep firefox` over SSH | exit paths, memory |
-| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? **Answered: the page sees it (`trusted=true`, capture and bubble), and `preventDefault()` does not stop the history-back — on the page and with the player focused.** | Leanback Dev Probe's Block Back, press back | Back design: plan B (history states), see [architecture.md](./architecture.md#key-handling) |
+| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? **Answered: the page sees it (`trusted=true`, capture and bubble), and `preventDefault()` does not stop the history-back — on the page and with the player focused.** | Leanback Dev Probe's Block Back, press back | Back is Firefox's: Leanback keeps the history structural instead, see [architecture.md](./architecture.md#back-contentpagejs--navtrailjs). A history entry for Firefox to land on (plan B) did not hold it on the box either |
 | T3 | Does `ContextMenu` open a context menu in `--kiosk`? Does cancelling the `contextmenu` event suppress it outside kiosk? | Press menu on `/browse` | `menu` action |
 | T4 | Does `close-tab` in `--kiosk` end the Firefox process and drop back to Bigscreen cleanly, no restore prompt next time? | Set the exit hook, press back at `/browse` | exit hook |
 | T5 | Hardware decode active (`about:support` → Media → "Hardware decoding"), and 1080p playback smooth at TV distance? | Play an episode; compare with the Waydroid app | whether the switch is worth it |

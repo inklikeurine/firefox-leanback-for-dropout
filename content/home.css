@@ -1,0 +1,497 @@
+/* Leanback for Dropout — the Home screen and the icon rail. Both are Leanback's
+   own elements, children of <html> outside the site's tree, and show only
+   while Leanback is on (html[data-tenfoot="on"]). Sizes are in --tf-u, one
+   1920th of the viewport width, so the screen looks the same on a 1080p and
+   a 4K television; text never goes below 13 px. */
+
+:root {
+  --tf-u: calc(100vw / 1920);
+  --tf-bg: #0b0c10;
+  --tf-surface: #15171c;
+  --tf-raised: #1e2128;
+  --tf-text: #f5f6f7;
+  --tf-dim: #9aa0ac;
+  --tf-rail-bg: #101216;
+  --tf-rail-edge: #1d2027;
+  --tf-rail-icon: #8a909c;
+  --tf-rail-width: calc(var(--tf-u) * 112);
+  --tf-gutter: calc(var(--tf-u) * 64);
+  --tf-card-w: calc(var(--tf-u) * 352);
+  --tf-card-gap: calc(var(--tf-u) * 28);
+  --tf-font: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+}
+
+/* --- the rail ----------------------------------------------------------- */
+
+.tenfoot-rail {
+  display: none;
+}
+html[data-tenfoot="on"][data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfoot-rail:not([hidden]) {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2147482000;
+  box-sizing: border-box;
+  width: var(--tf-rail-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--tf-u) * 28);
+  margin: 0;
+  padding: calc(var(--tf-u) * 40) 0 calc(var(--tf-u) * 36);
+  background: var(--tf-rail-bg);
+  border-right: 1px solid var(--tf-rail-edge);
+}
+.tenfoot-rail-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: max(40px, calc(var(--tf-u) * 60));
+  height: max(40px, calc(var(--tf-u) * 60));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--tf-u) * 12);
+  background: transparent;
+  color: var(--tf-rail-icon);
+  cursor: pointer;
+}
+.tenfoot-rail-item:focus {
+  outline: none;
+}
+.tenfoot-rail-item svg {
+  width: 50%;
+  height: 50%;
+}
+.tenfoot-rail-item[data-tenfoot-end="true"] {
+  margin-top: auto;
+}
+/* The page on screen. */
+.tenfoot-rail-item[data-tenfoot-page="true"] {
+  background: #feea3b;
+  color: #15130a;
+}
+
+/* Pages Leanback does not replace make room for the rail. */
+html[data-tenfoot="on"][data-tenfoot-rail="on"]:not([data-tenfoot-home="on"]) body {
+  box-sizing: border-box !important;
+  padding-left: var(--tf-rail-width) !important;
+}
+
+/* --- Home ----------------------------------------------------------------- */
+
+.tenfoot-home {
+  display: none;
+}
+html[data-tenfoot="on"][data-tenfoot-home="on"]:not([data-tenfoot-modal]) .tenfoot-home:not([hidden]) {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 2147481000;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  background: var(--tf-bg);
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  text-align: left;
+}
+/* The page underneath does not scroll while Home is up. */
+html[data-tenfoot="on"][data-tenfoot-home="on"],
+html[data-tenfoot="on"][data-tenfoot-home="on"] body {
+  overflow: hidden !important;
+}
+
+.tenfoot-home-view {
+  position: absolute;
+  inset: 0 0 0 var(--tf-rail-width);
+  overflow: hidden;
+}
+/* What scrolls past the top and the left edge fades out rather than being
+   cut off mid-word. */
+.tenfoot-home-view::before,
+.tenfoot-home-view::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+.tenfoot-home-view::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--tf-gutter) * 0.75);
+  background: linear-gradient(to right, var(--tf-bg) 20%, rgba(11, 12, 16, 0));
+}
+.tenfoot-home-view::after {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--tf-u) * 44);
+  background: linear-gradient(to bottom, var(--tf-bg) 30%, rgba(11, 12, 16, 0));
+}
+.tenfoot-home-scroll {
+  padding: calc(var(--tf-u) * 36) 0 60vh var(--tf-gutter);
+  transition: transform 260ms ease-out;
+  will-change: transform;
+}
+
+/* The featured banner. */
+.tenfoot-hero {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(var(--tf-u) * 540);
+  margin: 0 var(--tf-gutter) calc(var(--tf-u) * 44) 0;
+  border-radius: calc(var(--tf-u) * 16);
+  overflow: hidden;
+  background: var(--tf-surface);
+}
+.tenfoot-hero[hidden] {
+  display: none;
+}
+.tenfoot-hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tenfoot-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, var(--tf-bg) 4%, rgba(11, 12, 16, 0.55) 45%, rgba(11, 12, 16, 0) 75%),
+    linear-gradient(to right, rgba(11, 12, 16, 0.85) 0%, rgba(11, 12, 16, 0) 60%);
+}
+.tenfoot-hero-body {
+  position: absolute;
+  left: calc(var(--tf-u) * 64);
+  bottom: calc(var(--tf-u) * 44);
+  max-width: calc(var(--tf-u) * 900);
+}
+.tenfoot-hero-label {
+  margin: 0 0 calc(var(--tf-u) * 12);
+  color: #feea3b;
+  font-weight: 800;
+  font-size: max(13px, calc(var(--tf-u) * 18));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.tenfoot-hero-title {
+  margin: 0 0 calc(var(--tf-u) * 12);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: max(24px, calc(var(--tf-u) * 72));
+  line-height: 1;
+  text-transform: uppercase;
+}
+.tenfoot-hero-meta {
+  margin: 0 0 calc(var(--tf-u) * 10);
+  color: var(--tf-dim);
+  font-weight: 700;
+  font-size: max(13px, calc(var(--tf-u) * 22));
+}
+.tenfoot-hero-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0 0 calc(var(--tf-u) * 24);
+  color: #d7dae0;
+  font-weight: 500;
+  font-size: max(14px, calc(var(--tf-u) * 24));
+  line-height: 1.4;
+}
+.tenfoot-hero-meta[hidden],
+.tenfoot-hero-text[hidden],
+.tenfoot-hero-dots[hidden] {
+  display: none;
+}
+.tenfoot-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--tf-u) * 18);
+}
+.tenfoot-hero-button {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: max(36px, calc(var(--tf-u) * 64));
+  margin: 0;
+  padding: 0 calc(var(--tf-u) * 34);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: calc(var(--tf-u) * 10);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-family: var(--tf-font);
+  font-weight: 700;
+  font-size: max(14px, calc(var(--tf-u) * 24));
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tenfoot-hero-button:focus {
+  outline: none;
+}
+.tenfoot-hero-primary {
+  border-color: #feea3b;
+  background: #feea3b;
+  color: #1a1a05;
+  font-weight: 800;
+}
+/* Dropout colours every link (a:link, a:visited: teal) and underlines some;
+   these are Leanback's links, so their colours are held against it. */
+.tenfoot-home a.tenfoot-hero-button,
+.tenfoot-home a.tenfoot-hero-button:link,
+.tenfoot-home a.tenfoot-hero-button:visited,
+.tenfoot-home a.tenfoot-hero-button:hover,
+.tenfoot-home a.tenfoot-hero-button:focus,
+.tenfoot-home a.tenfoot-hero-button:active {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+.tenfoot-home a.tenfoot-hero-primary,
+.tenfoot-home a.tenfoot-hero-primary:link,
+.tenfoot-home a.tenfoot-hero-primary:visited,
+.tenfoot-home a.tenfoot-hero-primary:hover,
+.tenfoot-home a.tenfoot-hero-primary:focus,
+.tenfoot-home a.tenfoot-hero-primary:active {
+  color: #1a1a05 !important;
+}
+.tenfoot-home a.tenfoot-card-link,
+.tenfoot-home a.tenfoot-card-link:link,
+.tenfoot-home a.tenfoot-card-link:visited {
+  color: var(--tf-text) !important;
+  text-decoration: none !important;
+}
+.tenfoot-hero-action[data-tenfoot-listed="true"]::before {
+  content: "✓ ";
+}
+.tenfoot-hero-next {
+  justify-content: center;
+  min-width: max(36px, calc(var(--tf-u) * 64));
+  padding: 0;
+  font-size: max(20px, calc(var(--tf-u) * 36));
+  line-height: 1;
+}
+.tenfoot-hero-dots {
+  display: flex;
+  gap: calc(var(--tf-u) * 10);
+  margin-top: calc(var(--tf-u) * 22);
+}
+.tenfoot-hero-dot {
+  width: calc(var(--tf-u) * 12);
+  height: calc(var(--tf-u) * 12);
+  min-width: 6px;
+  min-height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+.tenfoot-hero-dot--on {
+  background: #feea3b;
+}
+
+/* The rows. */
+.tenfoot-row {
+  margin: 0 0 calc(var(--tf-u) * 40);
+}
+.tenfoot-row-title {
+  margin: 0 0 calc(var(--tf-u) * 16);
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  font-weight: 800;
+  font-size: max(16px, calc(var(--tf-u) * 30));
+  line-height: 1.2;
+}
+.tenfoot-row-view {
+  overflow: visible;
+}
+.tenfoot-track {
+  display: flex;
+  gap: var(--tf-card-gap);
+  transition: transform 260ms ease-out;
+  will-change: transform;
+}
+.tenfoot-card {
+  flex: 0 0 var(--tf-card-w);
+  width: var(--tf-card-w);
+  min-width: 0;
+}
+.tenfoot-card-link {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: calc(var(--tf-u) * 10);
+  background: var(--tf-raised);
+  color: var(--tf-text);
+  text-decoration: none;
+}
+.tenfoot-card-link:focus {
+  outline: none;
+}
+.tenfoot-card-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tenfoot-card-art:not([src]) {
+  display: none;
+}
+.tenfoot-card-badge {
+  position: absolute;
+  top: calc(var(--tf-u) * 12);
+  left: calc(var(--tf-u) * 12);
+  padding: calc(var(--tf-u) * 5) calc(var(--tf-u) * 11);
+  border-radius: calc(var(--tf-u) * 6);
+  background: #feea3b;
+  color: #1a1a05;
+  font-family: var(--tf-font);
+  font-weight: 800;
+  font-size: max(11px, calc(var(--tf-u) * 16));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tenfoot-card-time {
+  position: absolute;
+  right: calc(var(--tf-u) * 10);
+  bottom: calc(var(--tf-u) * 16);
+  padding: calc(var(--tf-u) * 3) calc(var(--tf-u) * 8);
+  border-radius: calc(var(--tf-u) * 5);
+  background: rgba(11, 12, 16, 0.8);
+  color: #ffffff;
+  font-family: var(--tf-font);
+  font-weight: 700;
+  font-size: max(11px, calc(var(--tf-u) * 16));
+}
+.tenfoot-card-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: max(3px, calc(var(--tf-u) * 7));
+  background: rgba(255, 255, 255, 0.22);
+}
+.tenfoot-card-progress-fill {
+  display: block;
+  height: 100%;
+  background: #feea3b;
+}
+.tenfoot-card-badge[hidden],
+.tenfoot-card-time[hidden],
+.tenfoot-card-progress[hidden] {
+  display: none;
+}
+.tenfoot-card-viewall:empty {
+  display: none;
+}
+.tenfoot-card[data-tenfoot-viewall="true"] .tenfoot-card-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: var(--tf-surface);
+}
+.tenfoot-card-viewall {
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  font-weight: 800;
+  font-size: max(16px, calc(var(--tf-u) * 30));
+}
+.tenfoot-card-viewall::after {
+  content: " →";
+  color: #feea3b;
+}
+.tenfoot-card-title {
+  margin-top: calc(var(--tf-u) * 12);
+  overflow: hidden;
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  font-weight: 700;
+  font-size: max(13px, calc(var(--tf-u) * 24));
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tenfoot-card-sub {
+  margin-top: calc(var(--tf-u) * 4);
+  overflow: hidden;
+  color: var(--tf-dim);
+  font-family: var(--tf-font);
+  font-weight: 500;
+  font-size: max(13px, calc(var(--tf-u) * 19));
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tenfoot-card-sub:empty {
+  display: none;
+}
+.tenfoot-home-more {
+  margin: 0;
+  color: var(--tf-dim);
+  font-family: var(--tf-font);
+  font-weight: 600;
+  font-size: max(13px, calc(var(--tf-u) * 22));
+}
+.tenfoot-home-more[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenfoot-home-scroll,
+  .tenfoot-track {
+    transition: none !important;
+  }
+}
+
+/* --- search results, spread across a television --------------------------
+   page.js marks the parts named in rules → pages.search.tvGrid. The site lays
+   them out for a desktop: a column padded 200 px on each side, five small
+   pictures across. Here: the full width beside the rail, four across. */
+
+html[data-tenfoot="on"] [data-tenfoot-grid-container] {
+  box-sizing: border-box !important;
+  padding-left: var(--tf-gutter) !important;
+  padding-right: var(--tf-gutter) !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-grid-wrap] {
+  width: 100% !important;
+  max-width: none !important;
+}
+html[data-tenfoot="on"] ul[data-tenfoot-grid] {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-tenfoot="on"] li[data-tenfoot-grid-item] {
+  box-sizing: border-box !important;
+  width: 25% !important;
+  max-width: none !important;
+  padding: calc(var(--tf-u) * 14) !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-grid-item] > * {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+/* The result's link wraps the picture. As an inline box it shrinks to its
+   text the moment the selection enlarges it (the zoom makes inline boxes
+   inline-block), so it is a block. */
+html[data-tenfoot="on"] [data-tenfoot-grid-item] a[href] {
+  display: block !important;
+}
+html[data-tenfoot="on"] body [data-tenfoot-grid-item] [data-tenfoot-grid-title] {
+  font-size: max(14px, calc(var(--tf-u) * 24)) !important;
+  line-height: 1.25 !important;
+}
+html[data-tenfoot="on"] body [data-tenfoot-grid-item] [data-tenfoot-grid-sub] {
+  font-size: max(13px, calc(var(--tf-u) * 19)) !important;
+  line-height: 1.3 !important;
+}

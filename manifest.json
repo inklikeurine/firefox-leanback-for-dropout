@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Leanback for Dropout",
-  "version": "0.14.0",
-  "description": "Drive watch.dropout.tv with arrow keys, Enter and Escape: a big focus ring, a theater player layout and media-key control for the couch",
+  "version": "0.16.0",
+  "description": "Drive watch.dropout.tv with a TV remote: a TV-style Home screen with Continue Watching, a big focus ring, a theater player and media-key control",
   "browser_specific_settings": {
     "gecko": {
       "id": "leanback-for-dropout@inklikeurine.dev",
@@ -30,6 +30,7 @@
   "background": {
     "scripts": [
       "lib/settings.js",
+      "lib/history.js",
       "background.js"
     ],
     "persistent": false
@@ -41,15 +42,20 @@
       ],
       "js": [
         "lib/settings.js",
+        "lib/history.js",
         "nav/keymap.js",
         "nav/site-rules.js",
         "nav/spatial.js",
         "nav/focus-ring.js",
         "nav/menu.js",
+        "nav/rail.js",
+        "nav/trail.js",
+        "content/home.js",
         "content/page.js"
       ],
       "css": [
-        "content/page.css"
+        "content/page.css",
+        "content/home.css"
       ],
       "run_at": "document_idle"
     },
@@ -59,6 +65,7 @@
       ],
       "js": [
         "lib/settings.js",
+        "lib/history.js",
         "nav/keymap.js",
         "nav/site-rules.js",
         "nav/spatial.js",
