@@ -488,7 +488,11 @@ the bar, and alone for 4 s on a video's first `play` (`flashTitle`). A
 (`data-tenfoot-peek`, no button stamped): the keys stay playback's, `open()`
 takes over from it, and it ends on its timer or `endPeek(reason)`. A pause
 the viewer made (`userPaused`, not the panel's hold nor the unmute rescue)
-peeks for 4 s; the video playing again ends that peek.
+peeks for 4 s; the video playing again ends that peek. A skip
+(`player:command` `seek`, whoever sent it) calls `seekFeedback()`:
+`.tenfoot-seek` with ⏪ / ⏩ and the new time, and a `seek` peek, for 1 s from
+the last skip (4 s, as a `pause` peek, on a paused video). Each skip resets
+the timers, so nothing hides and shows again between presses.
 
 **The settings panel** opens from the bar's gear or from the options button
 during playback. It pauses the picture and holds a stack of levels: the top

@@ -13,7 +13,8 @@
 // "S9 · E3 · Whodunnit". It shows whenever the bar does, and on its own for a
 // moment when a video starts. The bar can also "peek": shown for a moment
 // without holding the selection, so the keys keep doing what they do in
-// playback (on pause, on a skip).
+// playback (on pause, on a skip). A skip also puts ⏪ / ⏩ and the new time
+// in the middle of the picture.
 //
 // The settings panel is the one place the player is still asked anything.
 // Quality, speed and captions are the player's to know, so the panel proxies
@@ -39,6 +40,8 @@
     fullscreen: { stroke: "M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5" },
     fullscreenExit: { stroke: "M9 4v5H4 M20 9h-5V4 M15 20v-5h5 M4 15h5v5" },
     check: { stroke: "M5 13l4 4L19 7" },
+    rewind: { fill: "M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" },
+    forward: { fill: "M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" },
     chevron: { stroke: "M9 6l6 6-6 6" }
   };
 
@@ -100,6 +103,7 @@
     let peekReason = "";
     let peekTimer = 0;
     let titleTimer = 0;
+    let seekTimer = 0;
 
     // -- the row ------------------------------------------------------------
     const el = doc.createElement("div");
@@ -169,6 +173,19 @@
     osdEpisode.className = "tenfoot-osd-episode";
     osd.append(osdShow, osdEpisode);
     doc.documentElement.appendChild(osd);
+
+    // -- the skip feedback ---------------------------------------------------
+    // ⏪ / ⏩ and the new time, in the middle of the picture.
+    const seekEl = doc.createElement("div");
+    seekEl.className = "tenfoot-seek";
+    seekEl.hidden = true;
+    seekEl.setAttribute("role", "status");
+    const seekIcon = doc.createElement("span");
+    seekIcon.className = "tenfoot-seek-icon";
+    const seekTime = doc.createElement("span");
+    seekTime.className = "tenfoot-seek-time";
+    seekEl.append(seekIcon, seekTime);
+    doc.documentElement.appendChild(seekEl);
 
     // {series, season, episode, title}: what the page knows about this video.
     function setInfo(info) {
@@ -927,10 +944,34 @@
       hideTitle();
     }
 
+    // A skip: the glyph and the time it landed on, and the bar for `ms`. Each
+    // skip restarts the clock rather than hiding and showing again, so quick
+    // presses hold everything steady instead of flickering.
+    function seekFeedback(delta, at, ms, reason) {
+      const dir = delta < 0 ? "rewind" : "forward";
+      if (seekEl.dataset.tenfootDir !== dir) {
+        seekEl.dataset.tenfootDir = dir;
+        while (seekIcon.firstChild) seekIcon.removeChild(seekIcon.firstChild);
+        seekIcon.appendChild(svgIcon(doc, dir));
+      }
+      seekTime.textContent = clock(at);
+      seekEl.hidden = false;
+      if (seekTimer) clearTimeout(seekTimer);
+      seekTimer = setTimeout(() => {
+        seekTimer = 0;
+        seekEl.hidden = true;
+      }, ms);
+      if (open) schedulePaint();
+      else peek(ms, true, reason);
+      return true;
+    }
+
     return Object.freeze({
       element: el,
       panel: panelEl,
       title: osd,
+      seekIndicator: seekEl,
+      seekFeedback,
       get isOpen() { return open; },
       get peeking() { return peeking; },
       get titleShown() { return titleShown(); },
@@ -1052,13 +1093,15 @@
       },
 
       destroy() {
-        for (const t of [hideTimer, peekTimer, titleTimer]) if (t) clearTimeout(t);
+        for (const t of [hideTimer, peekTimer, titleTimer, seekTimer]) if (t) clearTimeout(t);
         hideTimer = 0;
         peekTimer = 0;
         titleTimer = 0;
+        seekTimer = 0;
         unbind(getVideo());
         el.remove();
         osd.remove();
+        seekEl.remove();
         panelEl.remove();
         open = false;
         panel = null;

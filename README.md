@@ -232,7 +232,9 @@ beginning.
 "S9 · E3 · Whodunnit" show over the top left of the picture for four
 seconds. **Pausing** brings the title back with the control bar for four
 seconds; the buttons still do what they do while watching (◀ ▶ skip, OK
-plays), and ▼ takes you into the bar.
+plays), and ▼ takes you into the bar. **Skipping** with ◀ ▶ shows ⏪ or ⏩
+and the time you landed on in the middle of the picture, with the bar, until
+a second after the last skip.
 
 **The transport bar**: press ▼ while a video is playing. The bar is the
 extension's own — **play/pause · position · settings · fullscreen**, round

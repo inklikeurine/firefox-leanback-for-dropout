@@ -238,6 +238,10 @@ means Back at the top level closes Firefox.
   4 s, without the selection: ◀ ▶ still skip, OK plays (and the bar goes), ▼
   enters the bar. The settings panel's own pause, and Firefox stopping an
   unmute, show nothing.
+- **Skipping.** Each skip (◀ ▶, the media keys' rewind and fast-forward)
+  shows ⏪ / ⏩ with the new time in the middle of the picture, and peeks the
+  bar, until 1 s after the last skip; each skip restarts that second, so quick
+  presses never flicker. On a paused video the bar stays for the pause's 4 s.
 - **Transport bar.** ▼ on a playing video opens Leanback's own bar: play/pause
   · position · settings · fullscreen, as round buttons on a dark fade along
   the bottom of the picture, the play button larger with a yellow symbol; the
@@ -270,9 +274,6 @@ means Back at the top level closes Firefox.
 
 ## Optional / future functionality
 
-- Feedback on seeking: a ⏩ / ⏪ glyph with the new time, and the transport bar
-  shown for about 250 ms on each skip. Rapid repeated skips must not make it
-  flicker.
 - Native-messaging exit hook and OSK text bridge (the HTPC shell only — stays in
   The HTPC shell's own extension; this extension keeps the seam, not the feature).
 - Gamepad support via the Gamepad API (today: map the pad to keys outside the

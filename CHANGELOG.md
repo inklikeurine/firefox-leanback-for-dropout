@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.24.0] — 2026-10-02
+
+### Added
+
+- **Skipping shows where you landed**: ⏪ or ⏩ with the new time in the
+  middle of the picture, and the control bar, until a second after the last
+  skip. Pressing ◀ ▶ quickly keeps them steady rather than flickering. On a
+  paused video they stay as long as the pause's own showing.
+
 ## [0.23.0] — 2026-10-01
 
 ### Added

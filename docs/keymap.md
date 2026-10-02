@@ -138,7 +138,9 @@ up.
 
 A **pause** brings the bar and the title up for four seconds *without the
 selection*: no button is ringed, and the keys stay playback's — ◀ ▶ skip, OK
-plays (the bar goes), ▼ enters the bar on play/pause.
+plays (the bar goes), ▼ enters the bar on play/pause. A **skip** does the
+same until a second after the last press, with ⏪ / ⏩ and the new time in the
+middle of the picture.
 
 - ◀ ▶ walk it, no wrapping. The **position is shown but never selected** —
   seeking is what ◀ ▶ do whenever the bar is not holding a button.

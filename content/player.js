@@ -19,6 +19,7 @@
   const SAVE_EVERY_MS = 15000; // how often the watch history hears from a playing video
   const RESUME_SLACK_S = 5; // already this close to the saved point: leave it
   const TITLE_MS = 4000; // the title when a video starts, and the bar with it on a pause
+  const SEEK_SHOW_MS = 1000; // the skip feedback, counted from the last skip
   const DEFAULT_RULES = { video: "video", captionsButton: "button[aria-label*='aption'], button[aria-label*='ubtitle']" };
   const VISIBLE = (el) => Boolean(el) && Boolean(el.getClientRects && el.getClientRects().length);
 
@@ -488,6 +489,7 @@
         if (!Number.isFinite(by)) return { ok: false, error: "seek needs a number", state: currentState() };
         const max = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : Infinity;
         v.currentTime = Math.max(0, Math.min(max, (Number(v.currentTime) || 0) + by));
+        seekFeedback(by);
         break;
       }
       case "mute":
@@ -714,6 +716,18 @@
     const b = state.bar;
     const v = state.video;
     if (b && v && state.userPaused && !v.ended && !b.panelOpen && ownChrome() && state.settings.enabled) b.peek(TITLE_MS, true, "pause");
+  }
+
+  // A skip from the remote: ⏪ / ⏩ with the new time, and the bar, for a
+  // second after the last one. On a paused video the bar stays as long as the
+  // pause's own showing.
+  function seekFeedback(by) {
+    const v = state.video;
+    if (!v || !ownChrome() || !state.settings.enabled) return;
+    const b = bar();
+    if (!b || b.panelOpen) return;
+    const paused = v.paused && !v.ended;
+    b.seekFeedback(by, Number(v.currentTime) || 0, paused ? TITLE_MS : SEEK_SHOW_MS, paused ? "pause" : "seek");
   }
 
   // The show, season, episode and title, from the page (page:info). Without

@@ -87,7 +87,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 10 | Up to the seasons, Right, OK; then Back | Up lands on the yellow season; Right moves along (the row slides); OK opens that season, which turns yellow; Back leaves the show for Home |
 | 11 | Down repeatedly past the last episode | "Load More" fires, new episodes appear, ring continues |
 | 12 | Enter on an episode | Video page, theater layout, playback starts or Enter starts it |
-| 13 | In the player: Enter, Enter, Right, Left | Play: the show's name and "S… · E… · title" show top left for four seconds. Pause: the title and the control bar come up, no button ringed; Right, Left skip +10 s, −10 s with the bar still up; after four seconds both go |
+| 13 | In the player: Enter, Enter, Right, Left | Play: the show's name and "S… · E… · title" show top left for four seconds. Pause: the title and the control bar come up, no button ringed; Right, Left skip +10 s, −10 s with the bar still up; after four seconds both go. While playing, Right ×5 quickly: ⏩ and the new time in the middle, the bar up, steady, gone a second after the last press |
 | 14 | Down, then Down again | Leanback's transport bar opens over the video; then the ring lands on the series link under the player, theater staying |
 | 15 | Up | Back in the player |
 | 16 | Escape, Escape | Theater off with the page visible; then back to the series page |

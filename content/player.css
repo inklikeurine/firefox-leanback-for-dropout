@@ -211,6 +211,39 @@
   margin-top: 0;
 }
 
+/* A skip: ⏪ / ⏩ and the new time, in the middle of the picture. */
+.tenfoot-seek {
+  --tf-pu: calc(100vw / 1920);
+  position: fixed;
+  left: 50%;
+  top: 45%;
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--tf-pu) * 18);
+  padding: calc(var(--tf-pu) * 16) calc(var(--tf-pu) * 34);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #f5f6f7;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-size: max(20px, calc(var(--tf-pu) * 40));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.tenfoot-seek[hidden] {
+  display: none;
+}
+.tenfoot-seek-icon {
+  display: flex;
+  color: var(--tenfoot-ring-color);
+}
+.tenfoot-seek-icon svg {
+  width: max(24px, calc(var(--tf-pu) * 48));
+  height: max(24px, calc(var(--tf-pu) * 48));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-ring {
     transition: none;
