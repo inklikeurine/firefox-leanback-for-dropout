@@ -1552,10 +1552,11 @@
     return goSideways(url);
   }
 
+  // The viewer hid the up-next card (`dismissed`): nothing plays by itself.
   function onPlayerEnded(msg) {
     const upNext = msg && msg.upNext ? msg.upNext : state.playerState && state.playerState.upNext;
     state.playerState = Object.assign({}, state.playerState, { ended: true, paused: true, upNext: upNext || null });
-    if (!state.settings.autoplayNext) return;
+    if (!state.settings.autoplayNext || (msg && msg.dismissed === true)) return;
     const href = location.href;
     setTimeout(() => {
       // The site may advance on its own (up-next overlay); only act if it did not.

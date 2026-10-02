@@ -94,7 +94,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 17 | From Home, open a show, an episode, let it play into the next (or press Next); then the remote's Back, twice | Back goes to the season page (not the previous episode), then Home |
 | 18 | On the season page, switch season with the row, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
 | 19 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
-| 20 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on) |
+| 20 | Let an episode end (or seek near the end) | Eight seconds before the end, the "Up next" card over the bottom right: picture, ring counting down, "UP NEXT · 0:08", "S… · E…", the show, *OK Play now · ◀ Hide*. The next episode starts at the end (autoplay next on). Again, with OK on the card: it starts at once. Again, with ◀: the card goes and nothing plays by itself at the end |
 | 21 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
 | 21a | Series page: Up to *My list*, Enter, Enter | The show is added to Dropout's My List and removed again; the button shows no blue when selected |
 | 21b | A show you are partway through: open the season you are watching | Watched episodes carry a tick, the one in progress a bar, and the ring starts on the one to watch next |

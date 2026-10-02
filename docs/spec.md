@@ -230,6 +230,14 @@ means Back at the top level closes Firefox.
 - **Next / previous episode.** Uses the site's own up-next data when present;
   otherwise the episode order from the series page. **Autoplay next** on
   `ended` is a setting (default on).
+- **Up next.** From Dropout's lead time before the end (8 s) — or as soon as
+  Dropout's own card is up — a card over the bottom right: the next episode's
+  picture in a countdown ring, "UP NEXT · 0:08", "S9 · E4", the show, and
+  its keys. OK plays the next episode now (through Dropout's own card when it
+  is there). ◀, or Escape, hides it for this episode, and then nothing plays
+  by itself at the end. With *Play next episode* off it counts nothing down,
+  and Dropout's own card is told to stand down (its Hide). Dropout's card
+  stays in place, invisible.
 - **The title.** Over the top left of the picture: the show's name in yellow
   capitals, then "S9 · E3 · Whodunnit" (the page's season link and title;
   the player's own title when the page does not answer). It shows for 4 s

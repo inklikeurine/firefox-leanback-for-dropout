@@ -494,6 +494,23 @@ peeks for 4 s; the video playing again ends that peek. A skip
 the last skip (4 s, as a `pause` peek, on a paused video). Each skip resets
 the timers, so nothing hides and shows again between presses.
 
+**The up-next card** (`showUpNext()`, `.tenfoot-upnext`) is drawn by
+`transport.js` and driven by `player.js` `syncUpNext()` on every
+`timeupdate`, `seeked`, `ended` and mutation batch: shown while the time left
+is within `OTTData.up_next.offset_seconds` (8 s) or Dropout's own card
+(`player.upNextOverlay` → `.ott-up-next`) has its play link up, unless the
+viewer hid it. Its words come from Dropout's up-next title ("E2, S1 - Game
+Changer" → "S1 · E2", "Game Changer"), its picture from `thumbnail_url`, the
+countdown from the time left. Dropout's card is stamped with the chrome
+(`data-tenfoot-bar`: invisible, still working). OK while it is up is
+`playNext()`: Dropout's play link (`player.upNextButton`; never a button —
+Hide is the card's first), else `page:episode`. ◀ or Escape is
+`dismissUpNext()`: Dropout's Hide (`player.upNextHide`) is pressed, the card
+stays down for this video, and `player:ended` carries `dismissed: true`, which
+stops the page's autoplay. With `autoplayNext` off the card has no countdown
+and Dropout's Hide is pressed once when it appears. An empty end screen (Vimeo's
+outro, at the very end) is no offer.
+
 **The settings panel** opens from the bar's gear or from the options button
 during playback. It pauses the picture and holds a stack of levels: the top
 rows (Quality, Speed, Play Next Episode, Closed Captions, Leanback Settings),
@@ -615,7 +632,7 @@ and on `player:bye` (`pagehide`).
 | `player:back` | page → bg → player | — | Back (Escape) on the page during playback: the frame closes what it can; reply `{consumed}` — the page walks its own layers when `consumed` is false |
 | `player:offer` | page → bg → player | `{showing}` | the site's up-next overlay is on the page, so OK in the player takes it |
 | `player:state` | player → bg → page | state object | hint bar, autoplay-next, up-next offer |
-| `player:ended` | player → bg → page | `{upNext}` | autoplay next |
+| `player:ended` | player → bg → page | `{upNext, dismissed}` | autoplay next, unless the viewer hid the up-next card (`dismissed`) |
 | `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player |
 | `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
 | `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`search`, `menu`, …); `browser-back` is BrowserBack pressed in the player frame |

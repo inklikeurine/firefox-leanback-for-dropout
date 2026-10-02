@@ -154,7 +154,7 @@ TV remote actually has are mapped, so nothing is hidden behind a letter key.
 | Button | Arrives as | Does |
 | --- | --- | --- |
 | ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. Nothing else, ever. In the player, ◀ ▶ move the playhead and ▼ opens the transport bar (▼ again continues to the page) |
-| OK | `Enter` | Open, play, pause; open a season; start changing a setting; take the "up next" offer when the site shows it |
+| OK | `Enter` | Open, play, pause; open a season; start changing a setting; play the next episode while the "Up next" card is up |
 | back | `BrowserBack` (also `Escape`) | Back one page — Firefox's own Back. `Escape` first closes whatever is open (a dropdown, a dialog, the options panel, the rail, the player's bar) |
 | menu | `ContextMenu` | During playback, the **settings panel**; anywhere else, **Leanback's settings** as a panel on the page, with Home, Search, *Clear Continue Watching* and *Turn Leanback off* at the foot |
 | home | `BrowserHome` | **Reserved for your TV shell — never intercepted** |
@@ -235,6 +235,12 @@ seconds; the buttons still do what they do while watching (◀ ▶ skip, OK
 plays), and ▼ takes you into the bar. **Skipping** with ◀ ▶ shows ⏪ or ⏩
 and the time you landed on in the middle of the picture, with the bar, until
 a second after the last skip.
+
+**Up next**: eight seconds before an episode ends, a card comes up over the
+bottom right: the next episode's picture inside a ring that counts down,
+"UP NEXT · 0:08", "S9 · E4" and the show. **OK** plays it now. **◀** hides
+the card, and then nothing plays by itself when the episode ends. With *Play
+next episode* off, the card counts nothing down and waits for OK.
 
 **The transport bar**: press ▼ while a video is playing. The bar is the
 extension's own — **play/pause · position · settings · fullscreen**, round

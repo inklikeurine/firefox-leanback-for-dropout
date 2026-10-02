@@ -14,7 +14,9 @@
 // moment when a video starts. The bar can also "peek": shown for a moment
 // without holding the selection, so the keys keep doing what they do in
 // playback (on pause, on a skip). A skip also puts ⏪ / ⏩ and the new time
-// in the middle of the picture.
+// in the middle of the picture. Near the end of an episode, the "Up next"
+// card sits over the bottom right: the next episode's picture inside a
+// countdown ring, "UP NEXT · 0:08", "S9 · E4" and the show.
 //
 // The settings panel is the one place the player is still asked anything.
 // Quality, speed and captions are the player's to know, so the panel proxies
@@ -186,6 +188,84 @@
     seekTime.className = "tenfoot-seek-time";
     seekEl.append(seekIcon, seekTime);
     doc.documentElement.appendChild(seekEl);
+
+    // -- the up-next card -----------------------------------------------------
+    const RING_R = 15;
+    const RING_C = 2 * Math.PI * RING_R;
+    const upEl = doc.createElement("div");
+    upEl.className = "tenfoot-upnext";
+    upEl.hidden = true;
+    upEl.setAttribute("role", "status");
+    const upThumb = doc.createElement("div");
+    upThumb.className = "tenfoot-upnext-thumb";
+    const upImg = doc.createElement("img");
+    upImg.className = "tenfoot-upnext-img";
+    upImg.alt = "";
+    const ring = doc.createElementNS(SVG_NS, "svg");
+    ring.setAttribute("viewBox", "0 0 36 36");
+    ring.setAttribute("class", "tenfoot-upnext-ring");
+    ring.setAttribute("aria-hidden", "true");
+    const ringBack = doc.createElementNS(SVG_NS, "circle");
+    const ringFill = doc.createElementNS(SVG_NS, "circle");
+    for (const [c, cls] of [[ringBack, "tenfoot-upnext-ring-back"], [ringFill, "tenfoot-upnext-ring-fill"]]) {
+      c.setAttribute("cx", "18");
+      c.setAttribute("cy", "18");
+      c.setAttribute("r", String(RING_R));
+      c.setAttribute("class", cls);
+      ring.appendChild(c);
+    }
+    ringFill.setAttribute("stroke-dasharray", RING_C.toFixed(2));
+    const upPlay = doc.createElement("span");
+    upPlay.className = "tenfoot-upnext-play";
+    upPlay.appendChild(svgIcon(doc, "play"));
+    upThumb.append(upImg, ring, upPlay);
+    const upText = doc.createElement("div");
+    upText.className = "tenfoot-upnext-text";
+    const upLabel = doc.createElement("p");
+    upLabel.className = "tenfoot-upnext-label";
+    const upLine = doc.createElement("p");
+    upLine.className = "tenfoot-upnext-line";
+    const upShow = doc.createElement("p");
+    upShow.className = "tenfoot-upnext-show";
+    const upKeys = doc.createElement("p");
+    upKeys.className = "tenfoot-upnext-keys";
+    for (const [k, label] of [["OK", "Play now"], ["◀", "Hide"]]) {
+      const key = doc.createElement("kbd");
+      key.textContent = k;
+      const span = doc.createElement("span");
+      span.textContent = label;
+      upKeys.append(key, span);
+    }
+    upText.append(upLabel, upLine, upShow, upKeys);
+    upEl.append(upThumb, upText);
+    doc.documentElement.appendChild(upEl);
+
+    /**
+     * The card, or null to take it away.
+     * {image, line ("S9 · E4"), show, seconds (null: no countdown), fraction
+     *  (how much of the countdown is left, 0–1)}
+     */
+    function showUpNext(c) {
+      if (!c) {
+        upEl.hidden = true;
+        return;
+      }
+      const img = typeof c.image === "string" && /^https:\/\//.test(c.image) ? c.image : "";
+      if (upImg.getAttribute("src") !== (img || null)) {
+        if (img) upImg.setAttribute("src", img);
+        else upImg.removeAttribute("src");
+      }
+      const counting = typeof c.seconds === "number" && Number.isFinite(c.seconds);
+      const label = counting ? `Up next · ${clock(c.seconds)}` : "Up next";
+      if (upLabel.textContent !== label) upLabel.textContent = label;
+      if (upLine.textContent !== (c.line || "")) upLine.textContent = c.line || "";
+      if (upShow.textContent !== (c.show || "")) upShow.textContent = c.show || "";
+      upShow.hidden = !c.show;
+      const left = counting ? Math.min(1, Math.max(0, Number(c.fraction) || 0)) : 1;
+      ringFill.setAttribute("stroke-dashoffset", (RING_C * (1 - left)).toFixed(2));
+      upEl.dataset.tenfootCounting = counting ? "true" : "false";
+      upEl.hidden = false;
+    }
 
     // {series, season, episode, title}: what the page knows about this video.
     function setInfo(info) {
@@ -972,6 +1052,9 @@
       title: osd,
       seekIndicator: seekEl,
       seekFeedback,
+      upNext: upEl,
+      showUpNext,
+      get upNextShown() { return !upEl.hidden; },
       get isOpen() { return open; },
       get peeking() { return peeking; },
       get titleShown() { return titleShown(); },
@@ -1102,6 +1185,7 @@
         el.remove();
         osd.remove();
         seekEl.remove();
+        upEl.remove();
         panelEl.remove();
         open = false;
         panel = null;

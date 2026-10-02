@@ -20,6 +20,7 @@
   const RESUME_SLACK_S = 5; // already this close to the saved point: leave it
   const TITLE_MS = 4000; // the title when a video starts, and the bar with it on a pause
   const SEEK_SHOW_MS = 1000; // the skip feedback, counted from the last skip
+  const UP_NEXT_LEAD_S = 8; // Dropout's card comes this long before the end (OTTData.up_next.offset_seconds)
   const DEFAULT_RULES = { video: "video", captionsButton: "button[aria-label*='aption'], button[aria-label*='ubtitle']" };
   const VISIBLE = (el) => Boolean(el) && Boolean(el.getClientRects && el.getClientRects().length);
 
@@ -77,6 +78,9 @@
     info: null,
     infoLoad: null,
     titleShownFor: null,
+    // The up-next card: on screen, hidden for this episode by the viewer, and
+    // whether Dropout's own card has been told to stand down (autoplay off).
+    upNext: { shown: false, dismissed: false, siteHidden: false },
     // Picking up where the viewer left off: the point, whether it is still to
     // be applied, and whether it was (which is what offers Start Over).
     resume: { video: null, at: null, pending: false, resumed: false, told: false }
@@ -131,7 +135,11 @@
     const inner = u.video && typeof u.video === "object" ? u.video : null;
     const url = [u.url, u.href, inner && inner.url].find((x) => typeof x === "string" && x);
     const title = [u.title, inner && inner.title].find((x) => typeof x === "string" && x);
-    return url ? { url, title: title || null } : null;
+    if (!url) return null;
+    const out = { url, title: title || null };
+    if (typeof u.thumbnail_url === "string" && /^https:\/\//.test(u.thumbnail_url)) out.thumbnail = u.thumbnail_url;
+    if (typeof u.offset_seconds === "number" && u.offset_seconds > 0 && u.offset_seconds < 120) out.offset = u.offset_seconds;
+    return out;
   }
 
   // The site's own up-next overlay, if it is on screen. Its markup is not
@@ -153,10 +161,13 @@
   // The offer may be rendered by the page rather than inside this frame; the
   // page tells us when it sees it.
   function offerShowing() {
-    return Boolean(upNextOverlay()) || state.offerFromPage;
+    if (state.upNext.dismissed) return state.offerFromPage;
+    return state.upNext.shown || Boolean(upNextControl()) || state.offerFromPage;
   }
 
-  // Something inside the overlay that starts the next episode.
+  // Something inside the overlay that starts the next episode: Dropout's play
+  // link, else any link. Never a button: the first button on Dropout's card
+  // is Hide.
   function upNextControl() {
     const overlay = upNextOverlay();
     if (!overlay) return null;
@@ -164,9 +175,79 @@
       const b = qs(state.rules.upNextButton, overlay);
       if (VISIBLE(b)) return b;
     }
-    const candidates = overlay.querySelectorAll("button, a[href], [role='button']");
-    for (const c of candidates) if (VISIBLE(c)) return c;
-    return overlay;
+    for (const c of overlay.querySelectorAll("a[href]")) if (VISIBLE(c)) return c;
+    return null;
+  }
+
+  // Dropout's own Hide, on its card.
+  function pressSiteHide() {
+    const overlay = upNextOverlay();
+    const hide = overlay ? qs(state.rules.upNextHide, overlay) : null;
+    if (!hide) return false;
+    try {
+      hide.click();
+      return true;
+    } catch (_err) {
+      return false;
+    }
+  }
+
+  // "E4, S9 - Game Changer" → "S9 · E4" and "Game Changer". Anything else is
+  // shown as it is.
+  function upNextWords(title) {
+    const m = /^\s*E(\d+)\s*,\s*S(\d+)\s*(?:-\s*(.+))?$/i.exec(String(title || ""));
+    if (!m) return { line: title || "", show: "" };
+    return { line: `S${m[2]} · E${m[1]}`, show: (m[3] || "").trim() };
+  }
+
+  // The up-next card: from Dropout's lead time before the end (or as soon as
+  // Dropout's own card is up) until the episode is left, unless the viewer
+  // hid it. With "Play next episode" off it counts nothing down, and Dropout's
+  // own card is told to stand down (its Hide).
+  function syncUpNext() {
+    const v = state.video;
+    const d = ottData();
+    const u = d && d.upNext;
+    const ours = ownChrome() && state.settings.enabled;
+    let show = false;
+    let left = 0;
+    const lead = (u && u.offset) || UP_NEXT_LEAD_S;
+    if (ours && v && u && u.url && !state.upNext.dismissed) {
+      const dur = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+      left = dur ? Math.max(0, dur - (Number(v.currentTime) || 0)) : 0;
+      show = Boolean(dur) && (left <= lead || v.ended);
+      // Dropout's own card being up counts too, whatever the clock says.
+      if (!show && upNextControl()) show = true;
+    }
+    const card = show ? bar() : state.bar;
+    if (card) {
+      if (show) {
+        const words = upNextWords(u.title);
+        const autoplay = Boolean(state.settings.autoplayNext);
+        card.showUpNext({
+          image: u.thumbnail || "",
+          line: words.line,
+          show: words.show,
+          seconds: autoplay ? Math.ceil(left) : null,
+          fraction: autoplay ? left / lead : 1
+        });
+        if (!autoplay && !state.upNext.siteHidden && pressSiteHide()) state.upNext.siteHidden = true;
+      } else card.showUpNext(null);
+    }
+    if (show !== state.upNext.shown) {
+      state.upNext.shown = show;
+      reportOffer();
+    }
+  }
+
+  // ◀ (or Escape) on the card: gone for this episode, and nothing plays next
+  // by itself when it ends.
+  function dismissUpNext() {
+    state.upNext.dismissed = true;
+    pressSiteHide();
+    syncUpNext();
+    report();
+    return true;
   }
 
   // Start the next episode now: click the site's overlay when it is showing
@@ -541,6 +622,8 @@
           break; // media keys and the menu button still work
       }
     }
+    // The up-next card: ◀ (and Escape) hide it for this episode.
+    if (state.upNext.shown && (action === "left" || action === "back")) return dismissUpNext();
     switch (action) {
       case "select":
         // While the site is offering the next episode — or once the video has
@@ -702,6 +785,7 @@
   }
 
   function onTimeUpdate() {
+    syncUpNext();
     const v = state.video;
     if (!v || v.paused || Date.now() - state.lastSave < SAVE_EVERY_MS) return;
     saveProgress(false);
@@ -763,6 +847,7 @@
   }
 
   function onSeeked() {
+    syncUpNext();
     saveProgress(false);
   }
 
@@ -862,10 +947,12 @@
     report();
   }
 
+  // `dismissed`: the viewer hid the up-next card, so nothing plays next.
   function onEnded() {
     saveProgress(true);
+    syncUpNext();
     const d = ottData();
-    send({ type: "player:ended", upNext: d ? d.upNext : null });
+    send({ type: "player:ended", upNext: d ? d.upNext : null, dismissed: state.upNext.dismissed });
     report();
   }
 
@@ -1007,6 +1094,8 @@
     v.addEventListener("seeked", onSeeked);
     state.lastSave = Date.now();
     state.titleShownFor = null;
+    state.upNext = { shown: false, dismissed: false, siteHidden: false };
+    if (state.bar) state.bar.showUpNext(null);
     loadInfo(v);
     prepareResume(v);
     report();
@@ -1026,6 +1115,12 @@
   }
 
   function checkUpNext() {
+    syncUpNext();
+    reportOffer();
+  }
+
+  // Tell the page when the offer comes or goes (its hints say what OK does).
+  function reportOffer() {
     const showing = offerShowing();
     if (showing === state.upNextShowing) return;
     state.upNextShowing = showing;
@@ -1104,6 +1199,7 @@
         state.bar.setStyle(s);
         state.bar.refresh();
       }
+      syncUpNext();
       if (s.enabled !== was) applyEnabled(s.enabled);
     });
     API.runtime.onMessage.addListener(onMessage);

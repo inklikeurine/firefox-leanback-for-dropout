@@ -206,7 +206,8 @@
       "[class*='AIWidget_module_']"
     ],
     "upNextOverlay": ".vp-outro-wrapper, [class*='Outro_module_outroWrapper'], .ott-up-next",
-    "upNextButton": "a[href], button",
+    "upNextButton": "a.ott-up-next-thumb-link",
+    "upNextHide": "button.ott-up-next-hide",
     "transportKeep": [
       "[class*='PlayButton_module_']",
       "#cc-control-bar-button",
@@ -230,6 +231,7 @@
     ],
     "chrome": [
       ".vp-controls",
+      ".ott-up-next",
       "[class*='PlayButton_module_playButtonWrapper']",
       "[class*='PlayButton_module_playButton__']",
       ".vp-sidedock",

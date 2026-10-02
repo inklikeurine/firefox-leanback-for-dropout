@@ -244,7 +244,146 @@
   height: max(24px, calc(var(--tf-pu) * 48));
 }
 
+/* The up-next card, over the bottom right above the bar: the next episode's
+   picture with a countdown ring, then "UP NEXT · 0:08", "S9 · E4", the show,
+   and the two keys it answers to. */
+.tenfoot-upnext {
+  --tf-pu: calc(100vw / 1920);
+  position: fixed;
+  right: calc(var(--tf-pu) * 64);
+  bottom: calc(var(--tf-pu) * 230);
+  z-index: 2147483646;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--tf-pu) * 22);
+  width: max(320px, calc(var(--tf-pu) * 600));
+  padding: calc(var(--tf-pu) * 20);
+  border: 1px solid #2a2d34;
+  border-radius: calc(var(--tf-pu) * 16);
+  background: #15171c;
+  box-shadow: 0 calc(var(--tf-pu) * 16) calc(var(--tf-pu) * 40) rgba(0, 0, 0, 0.5);
+  color: #f5f6f7;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  pointer-events: none;
+}
+.tenfoot-upnext[hidden] {
+  display: none;
+}
+.tenfoot-upnext-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: max(128px, calc(var(--tf-pu) * 224));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: calc(var(--tf-pu) * 10);
+  background: linear-gradient(135deg, #5c4b0f, #1a1608);
+}
+.tenfoot-upnext-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tenfoot-upnext-img:not([src]) {
+  display: none;
+}
+.tenfoot-upnext-ring,
+.tenfoot-upnext-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.tenfoot-upnext-ring {
+  width: 46%;
+  height: auto;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+}
+.tenfoot-upnext-ring-back {
+  fill: rgba(0, 0, 0, 0.35);
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 3;
+}
+.tenfoot-upnext-ring-fill {
+  fill: none;
+  stroke: var(--tenfoot-ring-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 250ms linear;
+}
+.tenfoot-upnext-play {
+  display: flex;
+  color: #f5f6f7;
+}
+.tenfoot-upnext-play svg {
+  width: max(18px, calc(var(--tf-pu) * 34));
+  height: max(18px, calc(var(--tf-pu) * 34));
+}
+.tenfoot-upnext-text {
+  min-width: 0;
+}
+.tenfoot-upnext-text p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tenfoot-upnext-label {
+  font-size: max(13px, calc(var(--tf-pu) * 18));
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa0ac;
+  font-variant-numeric: tabular-nums;
+}
+.tenfoot-upnext-line {
+  margin-top: calc(var(--tf-pu) * 6) !important;
+  font-size: max(16px, calc(var(--tf-pu) * 28));
+  font-weight: 700;
+}
+.tenfoot-upnext-show {
+  font-size: max(14px, calc(var(--tf-pu) * 22));
+  font-weight: 600;
+  color: #cfd3da;
+}
+.tenfoot-upnext-show[hidden] {
+  display: none;
+}
+.tenfoot-upnext-keys {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--tf-pu) * 10);
+  margin-top: calc(var(--tf-pu) * 12) !important;
+  font-size: max(13px, calc(var(--tf-pu) * 18));
+  font-weight: 600;
+  color: #cfd3da;
+}
+.tenfoot-upnext-keys kbd {
+  padding: calc(var(--tf-pu) * 3) calc(var(--tf-pu) * 10);
+  border: 1px solid #2f3138;
+  border-radius: calc(var(--tf-pu) * 6);
+  background: #23262d;
+  font: inherit;
+  font-weight: 800;
+  color: #f5f6f7;
+}
+.tenfoot-upnext-keys kbd:first-child {
+  border-color: var(--tenfoot-ring-color);
+  background: var(--tenfoot-ring-color);
+  color: #1a1a05;
+}
+.tenfoot-upnext-keys span + kbd {
+  margin-left: calc(var(--tf-pu) * 14);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .tenfoot-upnext-ring-fill {
+    transition: none;
+  }
   .tenfoot-ring {
     transition: none;
   }

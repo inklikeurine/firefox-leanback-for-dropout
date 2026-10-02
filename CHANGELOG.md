@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.25.0] — 2026-10-02
+
+### Added
+
+- **An "Up next" card** over the bottom right of the picture, from eight
+  seconds before the end of an episode: the next episode's picture inside a
+  countdown ring, "UP NEXT · 0:08", "S9 · E4" and the show. **OK** plays it
+  now; **◀** hides the card, and then nothing plays by itself when the
+  episode ends. With *Play next episode* off, the card counts nothing down.
+
+### Fixed
+
+- OK on Dropout's own "Next Up" card pressed its *Hide* button, which comes
+  first on the card, rather than playing the next episode.
+
 ## [0.24.0] — 2026-10-02
 
 ### Added
