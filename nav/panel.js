@@ -55,9 +55,11 @@
     el.setAttribute("role", "menu");
     el.setAttribute("aria-label", o.label || "Settings");
 
-    const head = doc.createElement("header");
+    // Plain divs throughout: the site's own styles for header, footer and p
+    // would reach into the panel on a page.
+    const head = doc.createElement("div");
     head.className = "tenfoot-settings-head";
-    const title = doc.createElement("p");
+    const title = doc.createElement("div");
     title.className = "tenfoot-settings-title";
     const close = doc.createElement("span");
     close.className = "tenfoot-settings-close";
@@ -68,7 +70,7 @@
     const list = doc.createElement("div");
     list.className = "tenfoot-settings-list";
 
-    const keys = doc.createElement("footer");
+    const keys = doc.createElement("div");
     keys.className = "tenfoot-settings-keys";
     for (const [k, label, main] of [["◀", "Back"], ["▲ ▼", "Move"], ["OK", "Change", true]]) {
       const key = doc.createElement("kbd");
@@ -100,7 +102,7 @@
       let group = "";
       (v.entries || []).forEach((entry, i) => {
         if (entry.group && entry.group !== group) {
-          const h = doc.createElement("p");
+          const h = doc.createElement("div");
           h.className = "tenfoot-settings-group";
           h.textContent = entry.group;
           list.appendChild(h);
@@ -158,12 +160,18 @@
         try {
           cur.focus({ preventScroll: true });
         } catch (_err) { /* the stamp marks it either way */ }
-        // Keep it in view in a long list (caption colours).
-        try {
-          cur.scrollIntoView({ block: "nearest" });
-        } catch (_err) { /* not laid out */ }
+        keepInView(cur);
       }
       return cur;
+    }
+
+    // A long list (caption colours) scrolls to keep the selection in view.
+    // Only the list moves: scrollIntoView would scroll the page behind too.
+    function keepInView(cur) {
+      const top = cur.offsetTop - list.offsetTop;
+      const bottom = top + cur.offsetHeight;
+      if (top < list.scrollTop) list.scrollTop = top;
+      else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
     }
 
     function open() {

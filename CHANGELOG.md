@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.26.1] — 2026-10-02
+
+### Fixed
+
+- Moving through a long list in the settings panel could scroll the page
+  behind it. Only the list scrolls now.
+- The settings panel keeps its own typeface and spacing on every page,
+  whatever Dropout's own styles say.
+
 ## [0.26.0] — 2026-10-02
 
 ### Changed

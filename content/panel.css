@@ -34,6 +34,10 @@
 .tenfoot-settings[hidden] {
   display: none;
 }
+.tenfoot-settings * {
+  font-family: inherit !important;
+  letter-spacing: normal;
+}
 /* The fly-in: laid out first, then slid in on the next frame. */
 html:not(.tenfoot-settings-open) .tenfoot-settings {
   transform: translateX(100%);
@@ -86,7 +90,7 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   padding: 0 calc(var(--tf-su) * 40);
   font-size: max(13px, calc(var(--tf-su) * 19));
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.1em !important;
   text-transform: uppercase;
   color: var(--tenfoot-ring-color, #feea3b);
 }
