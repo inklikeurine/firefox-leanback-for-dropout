@@ -88,7 +88,7 @@ anything at the left edge. It is not on a show's page or during playback.
 
 The show's buttons (*Trailer*, *My list*), then the row of seasons, newest
 first, then the season's episodes, three across. A show opens on its newest
-season (setting: *Shows open on*), with the selection on the episode to watch
+season (setting: *Shows Open On*), with the selection on the episode to watch
 next.
 
 | Action | The show's buttons and episodes | The row of seasons |

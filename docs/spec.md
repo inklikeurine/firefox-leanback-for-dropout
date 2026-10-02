@@ -169,7 +169,7 @@ means Back at the top level closes Firefox.
     resume. Then *Trailer*, where the show has one, and *My list*.
   - **Opening a show.** Dropout opens every show on Season 1. At an address
     that names no season, Leanback goes on to the **newest** season (setting:
-    *Shows open on* newest / first), replacing the page; an address that
+    *Shows Open On* newest / first), replacing the page; an address that
     names its season is left alone. The page stays blank until that is
     decided (never more than 2 s), so Season 1 does not flash up.
   - **Where the selection starts:** the episode you are partway through; else
@@ -235,7 +235,7 @@ means Back at the top level closes Firefox.
   picture in a countdown ring, "UP NEXT · 0:08", "S9 · E4", the show, and
   its keys. OK plays the next episode now (through Dropout's own card when it
   is there). ◀, or Escape, hides it for this episode, and then nothing plays
-  by itself at the end. With *Play next episode* off it counts nothing down,
+  by itself at the end. With *Autoplay Next Episode* off it counts nothing down,
   and Dropout's own card is told to stand down (its Hide). Dropout's card
   stays in place, invisible.
 - **The title.** Over the top left of the picture: the show's name in yellow

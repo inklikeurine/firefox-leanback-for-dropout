@@ -46,8 +46,12 @@ navigate, not what you can watch.
 - **Player control** without a mouse: OK plays and pauses, ◀ ▶ seek, ▼ opens
   Leanback's own control bar, and media keys (play/pause, stop, next,
   previous) work from anywhere on the page.
-- **The player's settings as a TV list**: quality, speed and captions —
-  caption style included — in a panel you walk with the arrows.
+- **While you watch**: the show and episode over the picture as it starts
+  and when you pause, ⏪ / ⏩ and the time when you skip, and an *Up next*
+  card near the end that counts down to the next episode.
+- **Settings as a TV panel**, the same wherever it opens: quality, speed,
+  captions on or off and their style, and Leanback's own settings, walked
+  with the arrows.
 - **Next episode** by key, and autoplay-next when an episode ends.
 - **Button hints**, if you want them: a bar showing the keys that matter right
   now. Off unless turned on.
@@ -154,9 +158,9 @@ TV remote actually has are mapped, so nothing is hidden behind a letter key.
 | Button | Arrives as | Does |
 | --- | --- | --- |
 | ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. Nothing else, ever. In the player, ◀ ▶ move the playhead and ▼ opens the transport bar (▼ again continues to the page) |
-| OK | `Enter` | Open, play, pause; open a season; start changing a setting; play the next episode while the "Up next" card is up |
+| OK | `Enter` | Open, play, pause; open a season; flip a setting's switch or open its values; play the next episode while the "Up next" card is up |
 | back | `BrowserBack` (also `Escape`) | Back one page — Firefox's own Back. `Escape` first closes whatever is open (a dropdown, a dialog, the settings panel, the rail, the player's bar) |
-| menu | `ContextMenu` | During playback, the **settings panel**; anywhere else, **Leanback's settings** as a panel on the page, with Home, Search, *Clear Continue Watching* and *Turn Leanback off* at the foot |
+| menu | `ContextMenu` | During playback, the **settings panel**; anywhere else, **Leanback's settings** as a panel on the page, with *Clear Continue Watching* and *Turn Leanback Off* at the foot |
 | home | `BrowserHome` | **Reserved for your TV shell — never intercepted** |
 | volume | `AudioVolume*` | Your desktop's, never intercepted |
 | media keys | `Media*` | Play/pause, stop, seek, next/previous episode, for remotes that have them |
@@ -208,7 +212,7 @@ than one season has a row of seasons above its episodes, newest first: ◀ ▶
 move along it and OK opens that season in place of the one on screen, so Back
 still leaves the show. The season on screen is the yellow one, and its full
 name and episode count head the episodes, three across. A show opens on its
-newest season (*Shows open on* in the settings switches that to the first),
+newest season (*Shows Open On* in the settings switches that to the first),
 and the selection starts on the episode to watch next: Episode 1 of a season
 you have not started, otherwise the one you are partway through or the one
 after the last you finished. Watched episodes carry a tick; one in progress
@@ -218,8 +222,9 @@ and *My list*. The yellow button says **Resume S9 E3** for the episode you
 were most recently partway through, in any season; otherwise **Play S9 E4**
 for the one after the last you finished (following Dropout's own "up next"
 into the next season); otherwise **Play** the first episode on screen.
-Episodes watched on the Roku or the Android app count too. A special (a stand-up set, a film) has *Watch Movie* and
-*My list*, then the video and its extras. A list (Trending, a show's new
+Episodes watched on the Roku or the Android app count too. A special (a
+stand-up set, a film) has *Watch Movie* and *My list*, then the video and its
+extras. A list (Trending, a show's new
 episodes, the trailers) is just its videos or shows.
 
 **Picking up where you left off**: open an episode you stopped halfway and it
@@ -239,8 +244,8 @@ a second after the last skip.
 **Up next**: eight seconds before an episode ends, a card comes up over the
 bottom right: the next episode's picture inside a ring that counts down,
 "UP NEXT · 0:08", "S9 · E4" and the show. **OK** plays it now. **◀** hides
-the card, and then nothing plays by itself when the episode ends. With *Play
-next episode* off, the card counts nothing down and waits for OK.
+the card, and then nothing plays by itself when the episode ends. With
+*Autoplay Next Episode* off, the card counts nothing down and waits for OK.
 
 **The transport bar**: press ▼ while a video is playing. The bar is the
 extension's own — **play/pause · position · settings · fullscreen**, round
@@ -300,17 +305,16 @@ closes each of them first).
 
 Full table: [docs/keymap.md](./docs/keymap.md).
 
-**Settings** — the menu button opens them as a panel on the page (the
-extension never navigates your tab away), and so does *Leanback Settings* in the
-playback panel. The same settings are at `about:addons` → Leanback for Dropout →
-Preferences: ring colour and width · selection zoom · button hints (off unless
-turned on) · theater layout (auto / manual / off) · seek step · autoplay next ·
-start videos muted · skip marketing site · which season a show opens on
-(newest / first) · what back does on Home (nothing / close this tab — for kiosk
-setups). The options page also has *Player controls*, the troubleshooting
-switch above, and *Clear Continue Watching*. The toolbar button turns
-the extension on and off; a keyboard shortcut for that can be set under
-*Manage Extension Shortcuts*.
+**The settings** (the panel never navigates your tab away): Autoplay Next
+Episode · Shows Open On (newest / first season) · Seek Step · Theater Layout
+(every video / on OK / never) · Start Videos Muted · Button Hints (off unless
+turned on) · Enlarge Selection · Ring Width · Ring Colour · Skip dropout.tv
+Home · Back On Home (does nothing / closes the tab — for kiosk setups). The
+same settings, in the same words, are on the options page (`about:addons` →
+Leanback for Dropout → Preferences), with a colour of your own for the ring,
+*Player controls* (the troubleshooting switch above) and *Clear Continue
+Watching*. The toolbar button turns the extension on and off; a keyboard
+shortcut for that can be set under *Manage Extension Shortcuts*.
 
 ## Permissions
 
