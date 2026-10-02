@@ -10,7 +10,7 @@
     },
     {
       "kind": "grid",
-      "path": "^/(series|collections)(/|$)"
+      "path": "^/(series|collections|my-list)(/|$)"
     },
     {
       "kind": "video",
@@ -63,18 +63,54 @@
     },
     "series": {
       "focusable": [
+        "a.custom-btn-action-primary",
         "a.custom-btn-action-trailer",
+        "button.custom-btn-action-my-list",
         "select.js-switch-season",
         "select.js-sort-items"
       ],
+      "rows": "[data-tenfoot-seasons]",
+      "rowItem": "[data-tenfoot-season]",
       "tile": ".browse-item-card",
-      "target": "a.browse-item-link",
+      "target": [
+        "a.browse-item-link",
+        "[data-tenfoot-season]"
+      ],
       "loadMore": "a.js-load-more-link, [data-load-more]",
       "episodeLinks": ".episode-container .browse-item-card a.browse-item-link",
       "initialFocus": [
         ".episode-container a.browse-item-link",
         ".browse-item-card a.browse-item-link"
-      ]
+      ],
+      "show": {
+        "layouts": {
+          "show": "section.episode-container",
+          "special": "section.movie-container",
+          "list": "section.collection-container"
+        },
+        "seasonSelect": "select.js-switch-season",
+        "seasonControls": ".season-controls",
+        "episodeCount": ".season-controls .content-label",
+        "episodes": "section.episode-container",
+        "episode": "li.js-collection-item",
+        "episodeLink": "a.browse-item-link",
+        "episodeArt": ".browse-image-container",
+        "episodeProgress": ".percentage-bar",
+        "episodeText": ".padding-small",
+        "actions": ".collection-actions > .btn",
+        "primaryAction": ".custom-btn-action-primary",
+        "omit": {
+          "all": [
+            "a.custom-btn-action-share",
+            ".browse-item-card button.my-list"
+          ],
+          "show": [
+            ".season-controls",
+            ".browse-item-card .play-outer-circle",
+            ".browse-item-card .percentage-bar-container"
+          ]
+        }
+      }
     },
     "video": {
       "theaterRoot": "#watch-player",
@@ -214,6 +250,12 @@
     ],
     "links": [
       {
+        "id": "my-list",
+        "label": "My List",
+        "icon": "bookmark",
+        "url": "https://watch.dropout.tv/my-list"
+      },
+      {
         "id": "live",
         "label": "Dropout 24/7",
         "icon": "tv",
@@ -237,12 +279,18 @@
     "item": ".slick-slide:not(.slick-cloned) .horizontal-row-item",
     "itemLink": ".browse-item-card a[href]",
     "itemImage": ".browse-image-container img",
+    "itemPoster": ".browse-image-container.aspect_ratio_2_3",
+    "itemWideArt": "data.thumbnail.medium",
     "itemTitle": ".subtext-container .truncate",
     "itemSubtext": ".browse-item-subtext",
     "itemDuration": ".duration-container",
     "itemProgress": "[data-testid='play-state-percentage-bar']",
     "itemBadge": "[data-testid^='thumbnail-badge-']",
     "rowPageSize": 12,
+    "rowOverrides": {
+      "/my-list": { "hidden": true },
+      "/new-releases": { "badges": false }
+    },
     "showMore": ".see-more-row--show button"
   }
 }

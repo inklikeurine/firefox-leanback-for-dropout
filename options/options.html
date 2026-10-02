@@ -89,6 +89,17 @@
         </fieldset>
 
         <fieldset>
+          <legend>Shows</legend>
+          <div class="row">
+            <label for="seasonStart">Open a show on</label>
+            <select id="seasonStart">
+              <option value="latest">Its newest season</option>
+              <option value="first">Its first season</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>Leaving</legend>
           <div class="row">
             <label for="exitHook">Back on Home</label>
@@ -103,11 +114,12 @@
           <legend>Watch history</legend>
           <p class="hint">
             Leanback remembers how far you got in each video, in this Firefox
-            only, for Continue Watching and for picking up where you left off.
-            It is never sent anywhere.
+            only, for Continue Watching, for picking up where you left off and
+            for marking episodes watched. It is never sent anywhere.
           </p>
           <div class="row">
-            <button type="button" id="forget">Forget watch history</button>
+            <button type="button" id="forget">Clear Continue Watching</button>
+            <span class="hint">Forgets every video you have not finished; watched ones stay watched</span>
           </div>
         </fieldset>
 

@@ -18,7 +18,7 @@ it is matched by the `Name_module_` prefix.
 | `www.dropout.tv` | Marketing site. `/browse` there 302-redirects to `watch.dropout.tv/browse`. | Root-only forward to `/browse` (setting) |
 | `watch.dropout.tv` | The app — a **Vimeo OTT** site (assets `cdn.vhx.tv`, config `window.VHX.config`) | Page content script |
 | `embed.vhx.tv` | The **player iframe**, injected by the page's JS at runtime | Player content script (`all_frames: true`) |
-| `cdn.vhx.tv`, `vhx.imgix.net` | JS bundles, images | none |
+| `cdn.vhx.tv`, `vhx.imgix.net` | JS bundles, images | Home's cards show pictures from `vhx.imgix.net`: the ones the tiles show, and a show's wide picture from its tile's data |
 | `api.vhx.tv`, `api.vhx.com`, `auth.vhx.com` | Site API (used by the page's own JS) | none — the extension makes no requests; pressing Home's *Show more* makes the page ask for more rows, as scrolling does |
 | `collector.vhx.tv` | The player's viewing reports | none |
 | `f.vimeocdn.com`, `player.vimeo.com` | Vimeo's player runtime and per-clip config, loaded inside the embed frame | none |
@@ -31,14 +31,16 @@ it is matched by the `Name_module_` prefix.
 | --- | --- | --- |
 | `/browse` | Home: a banner and rows (React) | `browse` — Leanback draws its own Home from it |
 | `/series` | All series, a server-rendered grid with Show More | `grid` |
-| `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection: a server-rendered grid. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where the first tile gets the selection |
+| `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection (Dropout calls it a category): a server-rendered grid of episodes, of shows, or of both shows and specials. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where `content/show.js` sees a **list** and the first tile gets the selection |
 | `/dimension-20`, `/dropout-24-7` | A hub: a small Home-style page with its own rows | `hub` — a one-segment address whose page holds `#browse-component`; drawn like Home |
 | `/<hub>/events/<slug>` | A live event, with the live player | `other` |
-| `/<series-slug>` | Series page: details, season and sort selects, episode grid | `series` |
-| `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` |
+| `/<series-slug>` | A show: details, season and sort selects, episode grid, opened on Season 1 | `series` — a **show** to `content/show.js`; Leanback moves on to the newest season |
+| `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` — a **show** |
+| `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special** to `content/show.js` |
 | `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` |
 | `/<series-slug>/videos/<slug>`, `/videos/<slug>`, `/featured/videos/<slug>` | Trailer or standalone video | `video` |
-| `/search`, `/my-list` | One React app that changes the address without reloading; `document.title` is empty | `search` (with the rail, and its results laid out for a TV); `/my-list` falls to `series` |
+| `/search` | One React app that changes the address without reloading; `document.title` is empty | `search` (with the rail, and its results laid out for a TV) |
+| `/my-list` | Loaded fresh: a server-rendered collection grid (`li.js-collection-item › .browse-item-card a.browse-item-link`, Dropout's *Remove from my list* button inside the link). Reached from `/search` inside the React app, the address changes and the search results can stay on screen | `grid` (with the rail); the rail opens it with a fresh load |
 | `/login`, `/checkout/…`, `/contact/…`, `/privacy`, `/settings`, … | Account and legal pages | `other` — the extension stays passive |
 
 ## Pages
@@ -50,6 +52,20 @@ it is matched by the `Name_module_` prefix.
 (mobile). A `.promo-banner` with `.js-banner-close` may appear at the top. The
 footer (`footer.footer--site`) holds Contact Us, Data Preferences, Help, Terms,
 Privacy, Cookies, Manage Cookie Preferences, Log out and the language switch.
+
+### Site-wide CSS that reaches Leanback's elements
+
+Dropout's stylesheet (`sites-ottbundle-*.css`) styles every element of its
+kind, Leanback's included, since Leanback's elements live in the same page:
+
+- `a:link, a:visited { color: #22b9b0 }` — every link teal.
+- `button { background-color: #008cba; border-radius: 3px; transition:
+  background-color .3s }` and `button:hover, button:focus { background-color:
+  #007095 }` (Foundation's) — every button blue, darker on hover and focus.
+  The state rule outranks a single class selector.
+
+Leanback pins the colours that matter on its own links and buttons, in every
+state, with `!important`.
 
 ### Home (`/browse`)
 
@@ -80,10 +96,10 @@ The header is server-rendered; everything below it is one React tree in
               div.inline-block[data-testid="browse-list-toggle"]
                 button.icon-only.icon-watchlist-add[aria-label="Add to my list"]     ← or -remove / "Remove from my list"
               a[href]                                     ← the tile's link
-                .browse-image-container
-                  img[src][alt]                           ← not lazy-loaded
-                  [data-testid="thumbnail-badge-0"]       ← "New", when there is one
-                  .duration-container                     ← "1:45:05"
+                .browse-image-container                   ← + .aspect_ratio_2_3 on a show's tile
+                  img[src][alt]                           ← not lazy-loaded; a show's is a tall poster (?ar=2:3)
+                  [data-testid="thumbnail-badge-0"]       ← "New" / "New Episode", when there is one
+                  .duration-container                     ← "1:45:05", "06:03"
                   .percentage-bar[data-testid="play-state-percentage-bar"][style="width: N%"]   ← Dropout's progress
                 .subtext-container .truncate, .browse-item-subtext   ← title; "2 videos" / "9 seasons" / empty
           .tooltip                                        ← hover tooltip: title and description
@@ -110,9 +126,18 @@ The header is server-rendered; everything below it is one React tree in
 - **Progress** is drawn on a tile when Dropout has any for it; the width is
   the fraction watched. It comes from the Roku and Android apps: playing in
   Firefox does not update it. There is no date on it.
+- **A show's tile shows a tall poster** (`aspect_ratio_2_3`). The wide 16:9
+  picture its own page uses is not in the markup: it is in the data the tile
+  was drawn from, the props of the React component that renders
+  `.horizontal-row-item` (`data.thumbnail.medium`, 640×360; `data` also holds
+  `additional_images` for other shapes). An episode's tile is already wide.
+- **Row titles are Dropout's own wording**, "My list" included.
 - **My List** toggles in place, with no reload, and swaps
   `icon-watchlist-add` ↔ `icon-watchlist-remove` and its label.
-- **There is no Continue Watching row** on the website.
+- **Dropout's own Continue Watching row** appears on the website only for
+  videos started on its Roku or Android app: an ordinary row titled
+  "Continue Watching", with *View all*. When there is none in progress there,
+  the rows start with My list.
 - Below the last row there is only the footer.
 
 ### All series (`/series`)
@@ -147,31 +172,73 @@ selector inside the list matches tile links instead.
 `/dimension-20` and `/dropout-24-7` are hubs: a `#browse-component` page like
 Home, titled "Browse - Dropout", with their own rows and banner.
 
-### Series page (`/<series-slug>`)
+### Pages at a one-word address: shows, specials, lists
+
+The address says nothing about what the page is; the page does. Four kinds
+share it (2026-09-27 captures of 23 such pages):
+
+| Kind | Examples | What marks it | `body[data-track-event]` |
+| --- | --- | --- | --- |
+| Show | `/game-changer`, `/dimension-20-s-adventuring-party` | `section.episode-container`; `select.js-switch-season` | `site_series` |
+| Special | `/aparna-nancherla-hopeful-potato` | `section.movie-container` + `section.extras-container`; `a.custom-btn-action-primary` "Watch Movie" | `site_movie` |
+| List | `/trending`, `/new-releases`, `/game-changer-new`, `/trailers`, `/all-series` | `section.collection-container` | `site_category` |
+| Hub | `/dimension-20`, `/dropout-24-7` | `#browse-component` | empty |
+
+`sites/dropout.json → pages.series.show.layouts` keys on the sections.
+`data-track-event` is an analytics tag, a cross-check only. A hub can also be
+a show elsewhere: *All Series* lists "Dimension 20 · 31 seasons", but
+`/dimension-20` is a hub, so the hub test comes first. Shows with one season
+exist (Thousandaires, Nobody Asked, Toonout); none has been captured, so
+whether Dropout draws a one-option season control is not known — Leanback
+draws no row under two seasons either way.
+
+**A show** (`/<series-slug>`):
 
 ```text
-.collections-show
-  .collection-details-container .collection-details
-    .collection-title, .collection-description ([data-truncate] show more/less)
-    .collection-stats                                     ← "8 Seasons"
-    .collection-actions
-      a.custom-btn-action-trailer (.icon-play-inverse)    ← "Watch trailer" → opens #modal-trailer
-      button.my-list.custom-btn-action-my-list.icon-watchlist-add[data-series-id][title="Add <series> to my list"]
-  .season-controls
-    select.js-switch-season[data-switch-season]   ← options: value="https://watch.dropout.tv/<slug>/season:N", one [selected]
-    select.js-sort-items[data-sort-by]            ← options: ?sort=alphabetical | ?sort=release_date
-  .episode-container .item-grid
-    .js-load-more-items-container
-      li.js-collection-item[data-item-type][data-item-id] › .browse-item-card   ← same tile structure as above
-        a.browse-item-link[href="…/season:N/videos/<episode-slug>"]
-        .percentage-bar-container[style="width: N%"]      ← Dropout's progress, when there is any
-        button.my-list[data-video-id][data-text-add][data-text-remove]   ← per episode, opacity 0 until hover
+body.collections.collections-show
+  section.product-feature
+    .collection-details-container .collection-details
+      h1.collection-title, .collection-description ([data-truncate] show more/less)
+      h2.collection-stats                                   ← "25 Seasons"
+      .collection-actions
+        a.btn.custom-btn-action-trailer                     ← some shows only; opens #modal-trailer
+        button.my-list.btn.custom-btn-action-my-list.icon-watchlist-add[data-series-id]
+        a.btn.custom-btn-action-share + div.reveal-modal    ← Share and its dialog (its links are .btn too)
+  section.episode-container
+    .season-controls
+      select.js-switch-season   ← options oldest first: value="https://watch.dropout.tv/<slug>/season:N", one [selected]
+      select.js-sort-items      ← Sort by… | Alphabetical | Release date (?sort=)
+      h2.content-label          ← "18 Episodes"
+    .item-grid ul.js-load-more-items-container
+      li.js-collection-item[data-item-type="video"][data-item-id]
+        .browse-item-card .grid-item-padding
+          a.browse-item-link[href="…/season:N/videos/<episode-slug>"]
+            .browse-image-container.aspect_ratio_16_9
+              button.my-list[data-video-id]                  ← per episode, opacity 0 until hover
+              img, span.play-outer-circle
+              .browse-info-container
+                .duration-container                          ← "1:29:06"
+                .percentage-bar-container .percentage-bar[style="width: N%"]   ← Dropout's progress (Roku, Android), when there is any
+          .padding-small
+            .browse-item-title a strong                      ← the title
+            .browse-item-subtext .media-episode              ← "Episode 1"
 ```
 
-The site navigates when a select's value changes (`onchange` → the option's
-URL). Changing `select.value` and dispatching `change` is therefore enough for
-season switching — no dropdown needed. The series header's background is the
-series art blurred (`?blur=180`).
+Seasons are pages of their own. The bare address is Season 1 (its option
+`[selected]`). Names vary by show: "Season 1", or `Season 1: All About "A
+Crown Of Candy"` — only the text before the colon is shared. Episodes are in
+Dropout's order, Episode 1 first. The site navigates when a select's value
+changes (`onchange` → the option's URL). The show's header background is its
+art blurred (`?blur=180`).
+
+**A special**: `.collection-actions` holds `a.btn.custom-btn-action-primary`
+("Watch Movie", the video's address), `button.custom-btn-action-my-list`
+(`[data-movie-id]`) and Share; `section.movie-container` holds the one video
+and `section.extras-container` (heading "Extras") the rest.
+
+**A list**: `section.collection-container`, 24 tiles then
+`a.js-load-more-link`. Tiles are `li.js-collection-item[data-item-type]`:
+`video`, `series` or `movie`. No My List button, no trailer; only Share.
 
 ### Video page (`/<series>/season:N/videos/<episode>`)
 
@@ -185,6 +252,7 @@ meta[property="og:image"][content]                   ← the episode's picture (
       #watch-unauthorized.embed-content              ← logged-out placeholder ("Watch this video and more on Dropout")
   #watch-info
     .series-title a.context-link[href="/<series>"]   ← back to the series
+    a[href="…/<series>/season:N"] "Season N, Episode M"  ← the season, even at /videos/<slug>; og:url carries it too
     .video-title
     button.my-list.custom-btn-action-my-list[data-video-id]   ← toggles in place, like the series button
     .video-content-actions, .share-tools              ← share buttons — low priority targets
@@ -231,9 +299,9 @@ So at 1280–1920 px a result picture is about 150–250 px wide in a centred
 column. Leanback marks these parts (`tvGrid` in the rules) and lays them out
 four across, the full width beside the rail. The React tile's link has no
 class, so the rules' `target` for search is `a.browse-item-link, a[href]`.
-`.BlankSearchResults-module__no-results` is the empty state; the older
-`.Filters-module__…` / `.Filter-module__…` names are kept in the rules in case
-a page still uses them. The My List page reuses the same results.
+`.BlankSearchResults-module__no-results` is the empty state. The rules also
+list `.Filters-module__…` / `.Filter-module__…`, which the captured pages do
+not use, in case a page does. The My List page reuses the same results.
 
 ## The player frame (`embed.vhx.tv/videos/<id>`)
 
@@ -489,7 +557,9 @@ logged-in page is committed.
 |---|---|---|
 | `common.header` | `.site-header` | 1 |
 | `common.focusable` | `.site-header a[href]` | 16–17 |
-| `series.focusable` | `select.js-switch-season`, `select.js-sort-items`, `a.custom-btn-action-trailer` | 1 each |
+| `series.focusable` | `select.js-switch-season`, `select.js-sort-items`, `a.custom-btn-action-trailer`, `button.custom-btn-action-my-list`, `a.custom-btn-action-primary` | 1 each where the page has it (the selects on a show, *Watch Movie* on a special) |
+| `series.show.layouts` | `section.episode-container`, `section.movie-container`, `section.collection-container` | 1 on a show, a special, a list respectively |
+| `series.show.actions` | `.collection-actions > .btn` | the header's 2–3 buttons (not the share dialog's) |
 | `series.episodeLinks` | `.episode-container .browse-item-card a.browse-item-link` | one per episode |
 | `video.theaterRoot` / `playerMount` / `playerFrame` | `#watch-player…` | 1 each |
 | `video.seriesLink` | `.series-title a.context-link` | 1 |

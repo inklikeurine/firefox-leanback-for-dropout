@@ -1,5 +1,126 @@
 # Changelog
 
+## [0.19.0] — 2026-09-27
+
+The show page. It works the same way for every show, including ones Dropout
+adds later: Leanback reads each page as it loads rather than knowing any show
+by name.
+
+### Added
+
+- **A row of seasons at the top of a show's episodes, newest first.** ◀ ▶
+  move along it and OK opens that season. The season on screen is the yellow
+  one, and its full name and episode count head the episodes. A show with one
+  season has no row.
+- **Shows open on their newest season.** Dropout opens every show on Season
+  1. A new setting, *Shows open on*, switches back to the first season.
+  Leanback settings and the options page both have it.
+- **The selection starts on the episode to watch next**: Episode 1 of a
+  season you have not started, otherwise the episode you are partway
+  through, or the one after the last you finished.
+- **Watched episodes are marked** with a tick. An episode in progress has a
+  bar along the bottom showing how far you got.
+- **◀ is the way out of panels**: it closes Leanback settings and the top of
+  the playback settings, as Back does. With the text cursor at the start of
+  the search box, ◀ leaves it for the rail.
+- *My List* on a show's page, and *Watch Movie* on a special's, can now be
+  reached with the remote.
+
+### Changed
+
+- **Episodes are three across**, the size of Home's cards, with the title
+  and episode number under each.
+- **"Forget watch history" is now "Clear Continue Watching"**, and it only
+  forgets what you have not finished. Watched episodes stay watched.
+- The show's buttons keep their own colours when selected, instead of
+  Dropout's blue.
+
+### Removed
+
+- From a show's page: Dropout's season drop-down (the row replaces it), the
+  sort control and the Share button. Episode cards lose the My List button
+  that only a mouse could reach.
+
+## [0.18.3] — 2026-09-27
+
+### Added
+
+- **My List on the rail**, a bookmark between Browse and Dropout 24/7. Its
+  page, your saved shows and videos, has the rail too, with the bookmark lit,
+  and the selection starts on the first one.
+
+### Removed
+
+- **The My List row on Home.** It is on the rail instead. The banner's
+  *My list* button stays.
+
+## [0.18.2] — 2026-09-27
+
+### Fixed
+
+- **Home opened on the first Continue Watching card instead of the featured
+  banner's *Watch now*.** Continue Watching is ready before Dropout has drawn
+  the banner, and the selection stayed where it first landed. It now moves to
+  *Watch now* when the banner arrives, unless you have already moved.
+
+## [0.18.1] — 2026-09-27
+
+### Changed
+
+- **The rail is 20 % narrower.** Its icons and the selection box around them
+  are the same size as before; the pages beside it gain the width.
+
+## [0.18.0] — 2026-09-27
+
+From the owner's testing of 0.17.0.
+
+### Changed
+
+- **Shows on Home use their wide picture**, the one on the show's own page,
+  instead of Dropout's tall poster cropped to fit a wide card. Where the wide
+  picture cannot be found, the poster is used as before.
+- **The selection box's corners follow what it surrounds**: rounded like the
+  card, the banner button or the rail icon inside it, instead of one fixed
+  rounding everywhere.
+
+### Fixed
+
+- **The rail's icons turned into a blue square when selected or hovered**,
+  a second highlight inside the yellow selection box and a different size
+  from it. It was Dropout's own colour for every button on the site. The
+  rail's icons, the banner's **›** and *My list*, and the rows of Leanback's
+  settings panel now keep their own background, so the yellow box is the only
+  highlight.
+
+## [0.17.0] — 2026-09-27
+
+Home polish, from the owner's review of 0.16.0.
+
+### Changed
+
+- **Home and the rail are 20 % smaller** — the banner, the rows, the cards and
+  the rail, on every page the rail is on. More of each row fits on screen.
+  Search results keep their size.
+- **The rail shows the page you are on with a yellow icon** instead of a
+  yellow square, so the only yellow box on the rail is the selection. The
+  square was a different size from the selection box around it.
+- **The time left on a Continue Watching card is exact**: *2:48 left*,
+  *1:12:05 left*, instead of whole minutes rounded down.
+- **No "New" badge on the New Releases row**, which says so already. Other
+  rows keep Dropout's badges ("New Episode" on Trending, say).
+- **Running times read *6:03*** rather than Dropout's *06:03*.
+- **Dropout's "My list" row is headed *My List***, like the other rows.
+
+### Fixed
+
+- The selected card crowded the text around it: enlarged, with the ring
+  round it, it touched the row's heading above and its own title below, and
+  covered them at larger *Enlarge selection* settings or in a small window.
+  There is now room under each heading, and the selected card's title steps
+  down out of the way.
+- With a row selected, the bottom line of the row above peeked in at the top
+  of the screen; it now fades out.
+
 ## [0.16.0] — 2026-09-26
 
 Fixes from the owner's review of 0.15.0.

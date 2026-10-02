@@ -46,7 +46,8 @@
 
   /**
    * @param {KeyboardEvent|{key:string,ctrlKey?:boolean,altKey?:boolean,metaKey?:boolean}} event
-   * @param {{editable?: boolean}} ctx
+   * @param {{editable?: boolean, atStart?: boolean}} ctx — atStart: the text
+   *   cursor sits at the very start of the field, with nothing selected
    * @returns {string|null} action name, or null when the key is not ours
    */
   function actionFor(event, ctx) {
@@ -54,9 +55,11 @@
     if (event.ctrlKey || event.altKey || event.metaKey) return null;
     const key = event.key;
     if (ctx && ctx.editable) {
-      // Typing: only the back button leaves the field. Everything else is the
-      // field's, including "/".
-      return key === "Escape" || key === "BrowserBack" ? "back" : null;
+      // Typing: the back button leaves the field, and so does ◀ when the
+      // cursor cannot go further left. Everything else is the field's,
+      // including "/".
+      if (key === "Escape" || key === "BrowserBack") return "back";
+      return key === "ArrowLeft" && ctx.atStart ? "left" : null;
     }
     if (Object.prototype.hasOwnProperty.call(REMOTE, key)) return REMOTE[key];
     if (Object.prototype.hasOwnProperty.call(KEYBOARD_EXCEPTIONS, key)) return KEYBOARD_EXCEPTIONS[key];
@@ -81,5 +84,15 @@
     return false;
   }
 
-  globalThis.TenfootKeymap = Object.freeze({ actionFor, isEditable, PLAYER_ACTIONS, REMOTE, KEYBOARD_EXCEPTIONS });
+  // True when the text cursor is at the very start of a field and nothing is
+  // selected: the one place ◀ has nothing left to do inside it.
+  function caretAtStart(el) {
+    try {
+      return Boolean(el) && el.selectionStart === 0 && el.selectionEnd === 0;
+    } catch (_err) {
+      return false; // a field type without a text cursor
+    }
+  }
+
+  globalThis.TenfootKeymap = Object.freeze({ actionFor, isEditable, caretAtStart, PLAYER_ACTIONS, REMOTE, KEYBOARD_EXCEPTIONS });
 })();

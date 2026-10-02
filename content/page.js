@@ -2,10 +2,10 @@
 // Leanback for Dropout — page script, top frame of watch.dropout.tv.
 // Classifies the URL into a page kind (sites/dropout.json → routes), then
 // wires keys → actions → spatial navigation, the focus ring, the hint bar,
-// the Home screen (content/home.js), the icon rail, the theater layout,
-// layered Back, load-more, season switching, the episode details the watch
-// history keeps, and the player relay (the player is a cross-origin iframe;
-// see content/player.js).
+// the Home screen (content/home.js), a show's page (content/show.js), the
+// icon rail, the theater layout, layered Back, load-more, the season a show
+// opens on, the episode details the watch history keeps, and the player relay
+// (the player is a cross-origin iframe; see content/player.js).
 // Idempotent: html[data-tenfoot] marks a document that is already wired.
 
 (function () {
@@ -43,6 +43,7 @@
   const Home = globalThis.TenfootHome;
   const History = globalThis.TenfootHistory;
   const Trail = globalThis.TenfootTrail;
+  const Show = globalThis.TenfootShow;
 
   // The rail's own entries, top to bottom. The site's links (rules →
   // rail.links) come after Browse, and the gear sits at the foot.
@@ -80,6 +81,7 @@
     engagedIndex: 0,
     home: null,
     homeRefocus: 0,
+    show: null,
     rail: null,
     railActive: false,
     railReturn: null,
@@ -492,7 +494,9 @@
       if (a && a !== document.body && a !== root) state.ring.follow(a);
       return;
     }
-    let target = firstVisible(Rules.selector(state.page.initialFocus));
+    // A show starts on the episode to watch next (content/show.js).
+    let target = state.show ? state.show.startEpisode() : null;
+    if (!target) target = firstVisible(Rules.selector(state.page.initialFocus));
     if (!target && Rules.selector(state.page.initialFocus) && Date.now() <= state.pendingInitialFocus) {
       // The search field is rendered after the framework starts, and the
       // fallback below would spend our one shot on whatever nav link happened
@@ -518,7 +522,10 @@
 
   function dispatch(action, ctx) {
     const c = ctx || {};
-    if (c.editable) return action === "back" ? blurField() : false;
+    if (c.editable) {
+      if (action === "back") return blurField();
+      return action === "left" ? leaveField() : false;
+    }
     if (state.menu.isOpen) return dispatchInMenu(action);
     if (state.engaged) return dispatchEngaged(action);
     if (state.modal) return dispatchInModal(action);
@@ -557,6 +564,13 @@
       }
       if (!target) {
         target = Spatial.pick(dir, Ring.unscaledRect(cur), candidates.filter((c) => c.el !== cur));
+        // Coming into a row from outside it lands where that row was left —
+        // on a show's seasons, the season on screen until another is picked.
+        if (target && target.row && !(curCand && curCand.row === target.row)) {
+          const remembered = state.memory.get(target.row);
+          const hit = remembered && candidates.find((c) => c.el === remembered);
+          if (hit) target = hit;
+        }
       }
       // ◀ stays on the line it started on. Anything not level with the
       // selection (a header link up and to the left) means the edge, and the
@@ -756,7 +770,8 @@
         goHome();
         return;
       case "browse":
-        if (state.kind === "grid") {
+        // My List is a grid page too, but not Browse.
+        if (railPage() === "browse") {
           leaveRail();
           return;
         }
@@ -775,6 +790,61 @@
         return;
       default:
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // a show's page (content/show.js)
+  // ---------------------------------------------------------------------------
+
+  // A show opens on the season the settings ask for, newest or first; Dropout
+  // opens every show on Season 1. Only an address that names no season is
+  // moved: one that does was chosen (a season picked, Back from an episode).
+  // Replacing the page keeps Back where it was.
+  function openSeason() {
+    if (!Show || state.kind !== "series" || Show.namesSeason(location.pathname)) return false;
+    const rules = state.page.show;
+    if (Show.layoutOf(document, rules) !== "show") return false;
+    const url = Show.seasonTarget(Show.readSeasons(document, rules, location.href), state.settings.seasonStart);
+    if (!url) return false;
+    goSideways(url);
+    return true;
+  }
+
+  function startShow() {
+    if (!Show || state.kind !== "series" || state.show) return;
+    state.show = Show.createShow(document, {
+      rules: state.page.show,
+      history: () => state.history,
+      onSeason: onSeasonChosen
+    });
+    // Coming up into the seasons lands on the one on screen.
+    const row = state.show.row;
+    const cur = state.show.currentSeason;
+    if (row && cur) state.memory.set(row, cur);
+  }
+
+  function stopShow() {
+    if (!state.show) return;
+    state.show.destroy();
+    state.show = null;
+  }
+
+  // OK on a season: its page, replacing this one, so Back leaves the show
+  // rather than stepping back through the seasons. The season already on
+  // screen takes the selection down to its episodes instead.
+  function onSeasonChosen(url, current) {
+    if (!current) {
+      goSideways(url);
+      return;
+    }
+    const t = state.show && state.show.startEpisode();
+    if (t) focusEl(t);
+  }
+
+  // content/early.css keeps a show's page blank until this is set, so Season 1
+  // never flashes up before openSeason() moves on from it.
+  function markReady() {
+    root.setAttribute("data-tenfoot-ready", "");
   }
 
   // ---------------------------------------------------------------------------
@@ -972,6 +1042,7 @@
     { id: "theater", label: "Theater layout", values: ["auto", "manual", "off"], show: { auto: "every video", manual: "on OK", off: "never" } },
     { id: "seekStep", label: "Seek step", values: Settings.SEEK_STEPS, suffix: " s" },
     { id: "autoplayNext", label: "Play next episode", bool: true },
+    { id: "seasonStart", label: "Shows open on", values: Settings.SEASON_START, show: { latest: "newest season", first: "first season" } },
     { id: "startMuted", label: "Start videos muted", bool: true },
     { id: "hintBar", label: "Button hints", bool: true },
     { id: "ringWidth", label: "Ring width", min: 2, max: 12, step: 1, suffix: " px" },
@@ -999,7 +1070,7 @@
     const items = SETTING_ROWS.map((r) => ({ id: r.id, label: r.label, value: settingText(r) }));
     items.push({ id: "browse", label: "Home" });
     items.push({ id: "search", label: "Search", detail: "needs a keyboard" });
-    items.push({ id: "forget", label: "Forget watch history" });
+    items.push({ id: "forget", label: "Clear Continue Watching" });
     items.push({ id: "disable", label: "Turn Leanback off" });
     return items;
   }
@@ -1087,10 +1158,10 @@
         state.menu.activate();
         return true;
       case "back":
-        return closeMenu();
+      case "left":
+        return closeMenu(); // ◀ is the way out of a panel, as Back is
       case "menu":
         return closeMenu();
-      case "left":
       case "right":
         return true; // absorbed: the panel is a single column
       default:
@@ -1123,7 +1194,7 @@
     return disengageSetting();
   }
 
-  // Forgetting cannot be undone, so it takes OK twice.
+  // Clearing cannot be undone, so it takes OK twice.
   function disarmForget() {
     if (!state.forgetArmed) return;
     state.forgetArmed = false;
@@ -1137,9 +1208,9 @@
       return;
     }
     state.forgetArmed = false;
-    state.menu.setValue("forget", "forgotten");
+    state.menu.setValue("forget", "cleared");
     send({ type: "history:clear" });
-    notice("Watch history forgotten");
+    notice("Continue Watching cleared");
   }
 
   function onMenuItem(id) {
@@ -1175,6 +1246,19 @@
   function leaveSearch() {
     if (Trail && Trail.depth(state.trail) > 0) return goBackTo(-1, state.trail[state.trail.length - 2].url);
     return goHome();
+  }
+
+  // ◀ with the text cursor at the start of a field: out of it, to whatever is
+  // on its left. On the search page that is the rail.
+  function leaveField() {
+    if (railShown()) return enterRail();
+    const el = document.activeElement;
+    if (!el || el === document.body) return false;
+    const { candidates } = collect();
+    const t = Spatial.pick("left", Ring.unscaledRect(el), candidates.filter((c) => c.el !== el));
+    if (!t) return false;
+    focusEl(t.el);
+    return true;
   }
 
   function blurField() {
@@ -1495,7 +1579,8 @@
   function onKeyDown(e) {
     if (!state.enabled) return;
     const editable = Keymap.isEditable(e.target);
-    const action = Keymap.actionFor(e, { inPlayer: false, editable });
+    const atStart = editable && Keymap.caretAtStart(e.target);
+    const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
       browserBack();
@@ -1643,6 +1728,7 @@
     }
     syncModal();
     refreshHome();
+    if (state.show) state.show.refresh();
     stampTvGrid();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
@@ -1722,6 +1808,7 @@
       ring: Boolean(state.ring) && !state.ring.element.hidden,
       hints: Boolean(state.hints) && state.hints.visible,
       home: state.home ? state.home.snapshot() : null,
+      show: state.show ? state.show.snapshot() : null,
       rail: railShown() ? { active: state.railActive, item: state.rail.currentId, page: railPage() } : null
     };
   }
@@ -1795,8 +1882,13 @@
     clearInitialFocusTimer();
     state.href = location.href;
     clearBackFallback();
+    stopShow();
+    if (openSeason()) return;
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
-    if (state.kind === "series") captureEpisodeOrder();
+    if (state.kind === "series") {
+      startShow();
+      captureEpisodeOrder();
+    }
     if (state.kind === "video") {
       markVideoElements();
       if (state.settings.theater === "auto") setTheater(true);
@@ -1812,6 +1904,7 @@
     syncModal();
     tryInitialFocus();
     if (!state.theater && !state.playerFocused) showHints();
+    markReady();
   }
 
   function applyEnabled(on) {
@@ -1824,8 +1917,10 @@
       state.hints.hide();
       setTheater(false);
       stopHome();
+      stopShow();
       setupRail();
       state.pendingInitialFocus = 0;
+      markReady();
       return;
     }
     classifyPage();
@@ -1857,6 +1952,7 @@
     if (!state.rules) {
       console.warn(LOG, "site rules unavailable; navigation is off on this page:", rulesReply && rulesReply.error);
       root.dataset[MARK] = "off";
+      markReady();
       return;
     }
     state.ring = Ring.createRing(document, ringStyle());
@@ -1867,6 +1963,7 @@
       History.watch(API, (store) => {
         state.history = store;
         refreshHome();
+        if (state.show) state.show.refresh();
       });
     }
     installSiteStyle();
@@ -1899,5 +1996,6 @@
   init().catch((err) => {
     console.error(LOG, "page script failed to start:", err);
     root.dataset[MARK] = "off";
+    markReady();
   });
 })();

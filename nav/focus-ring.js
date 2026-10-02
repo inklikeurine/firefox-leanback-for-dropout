@@ -55,8 +55,28 @@
       el.style.top = `${r.top - pad}px`;
       el.style.width = `${r.width + pad * 2}px`;
       el.style.height = `${r.height + pad * 2}px`;
+      el.style.borderRadius = `${Math.round((cornerOf(r) + pad) * 10) / 10}px`;
       el.hidden = false;
       if (win.performance && win.performance.now() < settleUntil) schedule();
+    }
+
+    // The target's corner radius as drawn (after the zoom). The ring sits one
+    // offset outside the target and adds that offset to the radius, so the
+    // two curves run parallel: a rounded card gets a ring rounded the same
+    // way, a square target a nearly square one.
+    function cornerOf(r) {
+      let v = "";
+      try {
+        v = String(win.getComputedStyle(target).borderTopLeftRadius || "");
+      } catch (_err) {
+        return 0;
+      }
+      const n = parseFloat(v);
+      if (!Number.isFinite(n) || n <= 0) return 0;
+      // r is the drawn rect, so a percentage of it is already zoomed.
+      if (v.includes("%")) return (n / 100) * Math.min(r.width, r.height);
+      const scaled = zoom > 0 && target.classList && target.classList.contains(SCALED_CLASS);
+      return n * (scaled ? 1 + zoom / 100 : 1);
     }
 
     function schedule() {

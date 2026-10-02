@@ -12,7 +12,7 @@
 
   const CHECKBOXES = ["enabled", "skipMarketingSite", "hintBar", "autoplayNext", "startMuted"];
   const NUMBERS = ["ringWidth", "focusZoom"];
-  const SELECTS = ["theater", "exitHook", "playerChrome"];
+  const SELECTS = ["theater", "exitHook", "playerChrome", "seasonStart"];
   const NUMERIC_SELECTS = ["seekStep"];
 
   function render(s) {
@@ -61,29 +61,29 @@
     }
   }
 
-  // Forgetting cannot be undone, so the button asks once more first.
+  // Clearing cannot be undone, so the button asks once more first.
   let forgetArmed = false;
   async function forget() {
     const btn = $("forget");
     if (!forgetArmed) {
       forgetArmed = true;
-      btn.textContent = "Click again to forget";
+      btn.textContent = "Click again to clear";
       return;
     }
     forgetArmed = false;
-    btn.textContent = "Forget watch history";
+    btn.textContent = "Clear Continue Watching";
     try {
       const r = await API.runtime.sendMessage({ type: "history:clear" });
-      say(r && r.ok ? "Watch history forgotten" : "Could not forget: " + ((r && r.error) || "no reply"));
+      say(r && r.ok ? "Continue Watching cleared" : "Could not clear: " + ((r && r.error) || "no reply"));
     } catch (err) {
-      say("Could not forget: " + (err && err.message ? err.message : "unknown error"));
+      say("Could not clear: " + (err && err.message ? err.message : "unknown error"));
     }
   }
 
   function disarmForget() {
     if (!forgetArmed) return;
     forgetArmed = false;
-    $("forget").textContent = "Forget watch history";
+    $("forget").textContent = "Clear Continue Watching";
   }
 
   $("form").addEventListener("change", onChange);

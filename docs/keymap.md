@@ -40,7 +40,9 @@ reaching it with a keyboard costs nothing. Everything else a keyboard could
 do is reachable from the remote.
 
 While the focus is in a text field, **only the back button is ours** — even
-`/` belongs to the field.
+`/` belongs to the field — and ◀ when the text cursor is at the very start
+with nothing selected: then it leaves the field, for the rail on the search
+page.
 
 ## Actions → behaviour by context
 
@@ -48,8 +50,8 @@ While the focus is in a text field, **only the back button is ours** — even
 | --- | --- | --- | --- | --- |
 | `up` | spatial / row move | previous entry | spatial; from the topmost element → player | closes the transport bar |
 | `down` | spatial / row move; past the last row → Load More | next entry | spatial | opens the **transport bar**; from the bar, on to the page |
-| `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | nothing, unless a settings row is being changed | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead** |
-| `select` | activate; on a `<select>` → engage or confirm; on the player → enter the player | take the entry, or start changing a settings row | activate | play / pause; take the control under the selection; take the "up next" offer |
+| `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | ◀ **closes the panel**, ▶ nothing — unless a settings row is being changed, when both change it | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead** |
+| `select` | activate; on a season, open it; on a `<select>` → engage or confirm; on the player → enter the player | take the entry, or start changing a settings row | activate | play / pause; take the control under the selection; take the "up next" offer |
 | `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | undo a settings row → close | leave theater; else the page before | submenu → settings panel → transport bar → playback → the page before |
 | `back` (BrowserBack) | Firefox's own Back, everywhere; Leanback steps in only when nothing of the site is behind the page, and then does what Escape does | | | |
 | `menu` | **opens Leanback's settings** | closes it | opens Leanback's settings | opens the **settings panel** in the player frame |
@@ -77,8 +79,25 @@ the featured banner's buttons, then one row per shelf.
 | `back` | the page before (Firefox's Back); at Home with nothing behind, the exit hook | Escape: back to the show it came from. BrowserBack leaves the page |
 | `menu` | Leanback's settings | the same |
 
-The rail is also on Browse (`/series`) and Search, where ◀ reaches it from
+The rail is also on Browse (`/series`), My List and Search, where ◀ reaches it from
 anything at the left edge. It is not on a show's page or during playback.
+
+## A show's page
+
+The show's buttons (*Trailer*, *My list*), then the row of seasons, newest
+first, then the season's episodes, three across. A show opens on its newest
+season (setting: *Shows open on*), with the selection on the episode to watch
+next.
+
+| Action | The show's buttons and episodes | The row of seasons |
+| --- | --- | --- |
+| `up` / `down` | spatial; ▲ from the episodes into the row lands on the season on screen, or where the row was left | spatial: ▲ the show's buttons, ▼ the episodes |
+| `left` / `right` | spatial | along the row, which slides to keep the selection in view; stops at its ends (there is no rail here) |
+| `select` | open the episode, or take the button | open that season, in place of this one; on the season already on screen, down to its episodes |
+| `back` | the page before (Firefox's Back): switching seasons never adds a page, so Back leaves the show | the same |
+
+A special (*Watch Movie*, *My list*, the movie and its extras) and a list
+(Trending, a show's new episodes) are driven the same way, without a row.
 
 ## The options button
 
@@ -93,11 +112,12 @@ are not settings sit at the foot of that list:
 | --- | --- |
 | Home | `/browse` |
 | Search | `/search` (needs a keyboard from there) |
-| Forget watch history | deletes Leanback's watch history; the first OK asks, the second forgets |
+| Clear Continue Watching | forgets every video not finished, and empties Continue Watching; watched ones stay watched. The first OK asks, the second clears |
 | Turn Leanback off | the site behaves as stock Firefox |
 
 ▲ ▼ move, OK starts changing a setting, ◀ ▶ change it, OK confirms, back undoes.
-No wrapping, like the rest of the navigation.
+◀ or back on the list itself closes it. No wrapping, like the rest of the
+navigation.
 
 ## The transport bar
 
@@ -138,7 +158,7 @@ already paused.
 - OK picks one of the player's options, flips a switch, or steps a value round
   its list (from the last value back to the first). ▶ steps a value on and
   stops at the last.
-- back at the top closes the panel; again, the bar.
+- ◀ or back at the top closes the panel; back again, the bar.
 
 The rows that come from the player are **proxied**: its menu is opened out of
 sight, read, and drawn in our own list, and the original is clicked when an
@@ -175,9 +195,10 @@ replaces the page instead of adding one; landing by Back on the previous
 episode — when Dropout itself went on to the next — carries on to the season
 page; and in a tab opened straight on a page, with nothing behind it, Leanback
 does the Back itself. What that means for layers: the remote's Back leaves the
-page, whatever is open on it. The options panel also closes with the menu
-button, the rail with ▶, the transport bar with ▲, and a settings submenu with
-◀.
+page, whatever is open on it, so ◀ is the way out of what is open: it closes
+the options panel (as the menu button does) and the playback settings, one
+submenu at a time, and leaves the search box from the start of its text. The
+rail closes with ▶, the transport bar with ▲.
 
 ## Remote example: WeChip W1 air mouse
 
@@ -189,7 +210,7 @@ type a search query or log in:
 | --- | --- | --- | --- |
 | ▲ ▼ ◀ ▶ | `Arrow*` | move the ring | ◀ ▶ seek; ▼ the transport bar, ▼ again the page |
 | OK | `Enter` | open / play | play – pause; take the control under the selection |
-| back | `BrowserBack` | Firefox's Back: the page before — Home from a show, the show from a season you switched to | Firefox's Back: the season page (past any episodes Dropout went on to by itself) |
+| back | `BrowserBack` | Firefox's Back: the page before — Home from a show, whichever season it is on | Firefox's Back: the season page (past any episodes Dropout went on to by itself) |
 | menu | `ContextMenu` | Leanback's settings | the settings panel |
 | home | `BrowserHome` | nothing (reserved for Bigscreen) | nothing |
 | volume ± | `AudioVolume*` | system volume | system volume |

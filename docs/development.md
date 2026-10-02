@@ -76,15 +76,15 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | # | Step | Expected |
 | --- | --- | --- |
 | 1 | Open `https://www.dropout.tv/` | Lands on `watch.dropout.tv/browse`, which shows Leanback's Home (setting on): the rail on the left, the featured banner, the ring on *Watch now* |
-| 2 | Home: Down, Right ×3, Down, Up | The ring goes into the first row and along it, the row sliding so the selected card keeps its place; each Down brings the next row to the same height; Up returns to the card you left in that row |
-| 3 | Home: keep pressing Down | New rows arrive before you reach the last one; a row of 12 ends with *View all*, which opens the whole collection with the ring on its first tile |
-| 4 | Home: on the banner, Right once to **›**, Enter ×2; then Right to *My list*, Enter | **›** sits right after *Watch now*; the next featured show, then the one after; *My list* adds the show to Dropout's My List (a tick shows) and Enter again removes it. *Watch now* is black on yellow, *Trailer* white |
-| 5 | Home: Left from the first card of a row, Down, Down, Right | The rail, on Home; then Browse; then Dropout 24/7; Right returns to the card. OK on Dropout 24/7 opens it with its entry lit; the gear opens Leanback's settings on the spot |
+| 2 | Home: Down, Right ×3, Down, Up | The ring goes into the first row and along it, the row sliding so the selected card keeps its place; each Down brings the next row to the same height, with nothing of the row above showing; Up returns to the card you left in that row. The selected card grows inside the ring, its title steps down, and neither touches the heading; the ring's corners follow the card's |
+| 3 | Home: keep pressing Down | New rows arrive before you reach the last one; a row of 12 ends with *View all*, which opens the whole collection with the ring on its first tile. Shows have wide pictures (as on their own page), running times read *6:03*, New Releases has no "NEW" badges, and there is no My List row |
+| 4 | Home: on the banner, Right once to **›**, Enter ×2; then Right to *My list*, Enter | **›** sits right after *Watch now*; the next featured show, then the one after; *My list* adds the show to Dropout's My List (a tick shows) and Enter again removes it. *Watch now* is black on yellow, *Trailer* white; **›** and *My list* turn no colour when selected |
+| 5 | Home: Left from the first card of a row, Down, Down, Down, Right | The rail, on Home; then Browse; then My List (a bookmark); then Dropout 24/7; Right returns to the card. The current page's icon is yellow; the selected icon has the yellow box round it, with corners like the icon's, and no coloured square behind it (hovering with the mouse shows none either). OK on My List opens your saved shows as a grid, the bookmark yellow and the ring on the first; OK on Dropout 24/7 opens it with its icon yellow; the gear opens Leanback's settings on the spot |
 | 6 | Home: Escape | Nothing happens (exit hook `none`); a notice says "Nothing to go back to" |
-| 7 | Watch an episode for two minutes, go back to Home | It is first in Continue Watching with its progress bar and "N min left" in the corner of its picture; an episode in progress on the Roku is in the row too |
+| 7 | Watch an episode for two minutes, go back to Home | It is first in Continue Watching with its progress bar and the time left to the second ("2:48 left") in the corner of its picture; an episode in progress on the Roku is in the row too |
 | 8 | Open that episode again | It starts where you stopped; "Resumed at …" shows for a moment; in the settings panel, *Start Over* goes back to 0:00 |
-| 9 | Enter on a series tile | Series page opens; ring on the first episode; no rail |
-| 10 | Up to the season select, Right, Left | Season changes each time, no dropdown opens |
+| 9 | Enter on a show with several seasons that you have not watched | Its page opens on the **newest** season, with no flash of Season 1; the seasons run newest first with that one yellow; its name and episode count head the episodes, three across; ring on Episode 1; no rail, no Share, no dropdowns |
+| 10 | Up to the seasons, Right, OK; then Back | Up lands on the yellow season; Right moves along (the row slides); OK opens that season, which turns yellow; Back leaves the show for Home |
 | 11 | Down repeatedly past the last episode | "Load More" fires, new episodes appear, ring continues |
 | 12 | Enter on an episode | Video page, theater layout, playback starts or Enter starts it |
 | 13 | In the player: Enter, Enter, Right, Left | Pause, play, +10 s, −10 s |
@@ -92,20 +92,25 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 15 | Up | Back in the player |
 | 16 | Escape, Escape | Theater off with the page visible; then back to the series page |
 | 17 | From Home, open a show, an episode, let it play into the next (or press Next); then the remote's Back, twice | Back goes to the season page (not the previous episode), then Home |
-| 18 | On the season page, switch season with the select, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
+| 18 | On the season page, switch season with the row, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
 | 19 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
 | 20 | Let an episode end (or seek near the end) | Next episode starts (autoplay next on) |
 | 21 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
+| 21a | Series page: Up to *My list*, Enter, Enter | The show is added to Dropout's My List and removed again; the button shows no blue when selected |
+| 21b | A show you are partway through: open the season you are watching | Watched episodes carry a tick, the one in progress a bar, and the ring starts on the one to watch next |
+| 21c | Leanback settings: *Shows open on* → first season; open a show | Season 1 |
+| 21d | A special (e.g. a stand-up set from *All Series*) | *Watch Movie* and *My list* reachable; the video and its extras below |
 | 22 | Fresh profile, first visit | Cookie dialog is reachable by arrows and closable by Enter, above Home |
 | 23 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox (Dropout's own Home is back); click again restores it |
 | 24 | Change ring colour in options, reload | New colour |
 | 25 | Set exit hook to *close this tab*, go to Home, Escape | Tab closes (in kiosk: Firefox exits) |
-| 26 | `/search`: type a query | Letters reach the input; Escape leaves the field; the results are four across, large, and reachable with the arrows; Left from the first result reaches the rail |
+| 26 | `/search`: type a query | Letters reach the input; Escape leaves the field; the results are four across, large, and reachable with the arrows; Left from the first result reaches the rail. In the field, Left moves the text cursor, and at the start of the text reaches the rail; Right returns to the field |
 | 27 | Wiggle the mouse over cards on Home and tiles on `/series` | The ring does not move; no hover tooltips appear |
-| 28 | Press the keyboard's *Menu* key (`ContextMenu`) on Home | Leanback's settings open as a panel over Home; no context menu |
-| 29 | In that panel: *Forget watch history*, Enter, Enter | The first Enter asks; the second forgets, and Continue Watching disappears (Roku items included) until something is watched again; Dropout's bars still show on cards |
+| 28 | Press the keyboard's *Menu* key (`ContextMenu`) on Home | Leanback's settings open as a panel over Home; no context menu. Hovering its rows with the mouse turns none of them blue |
+| 28a | In that panel, Left | The panel closes and the ring is back where it was |
+| 29 | In that panel: *Clear Continue Watching*, Enter, Enter | The first Enter asks; the second clears, and Continue Watching disappears (Roku items included) until something is watched again; Dropout's bars still show on cards; episodes you had finished still carry their tick on the show's page |
 | 30 | On an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
-| 31 | In the panel: Closed Captions → OK → Customize → OK → Font | Font's options, under Color, Size and Opacity headings; ◀ goes back up one level at a time |
+| 31 | In the panel: Closed Captions → OK → Customize → OK → Font | Font's options, under Color, Size and Opacity headings; ◀ goes back up one level at a time, and at the top closes the panel |
 | 32 | Leanback Settings → Seek Step, OK repeatedly | The value goes round from 300 s back to 5 s |
 | 33 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 

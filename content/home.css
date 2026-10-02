@@ -1,11 +1,14 @@
 /* Leanback for Dropout — the Home screen and the icon rail. Both are Leanback's
    own elements, children of <html> outside the site's tree, and show only
-   while Leanback is on (html[data-tenfoot="on"]). Sizes are in --tf-u, one
-   1920th of the viewport width, so the screen looks the same on a 1080p and
-   a 4K television; text never goes below 13 px. */
+   while Leanback is on (html[data-tenfoot="on"]). Sizes are in --tf-u, a
+   fraction of the viewport width, so the screen looks the same on a 1080p and
+   a 4K television; text never goes below 13 px. Home and the rail are drawn
+   at 80 % of a 1920-wide layout; the search results use --tf-grid-u, the
+   full-size unit. */
 
 :root {
-  --tf-u: calc(100vw / 1920);
+  --tf-u: calc(100vw / 1920 * 0.8);
+  --tf-grid-u: calc(100vw / 1920);
   --tf-bg: #0b0c10;
   --tf-surface: #15171c;
   --tf-raised: #1e2128;
@@ -14,10 +17,14 @@
   --tf-rail-bg: #101216;
   --tf-rail-edge: #1d2027;
   --tf-rail-icon: #8a909c;
-  --tf-rail-width: calc(var(--tf-u) * 112);
+  --tf-rail-width: calc(var(--tf-u) * 89.6);
   --tf-gutter: calc(var(--tf-u) * 64);
   --tf-card-w: calc(var(--tf-u) * 352);
   --tf-card-gap: calc(var(--tf-u) * 28);
+  /* How far the selected card reaches past its picture's edges: the zoom
+     (page.css: --tenfoot-zoom percent, half on each side of the 16:9 picture)
+     and the ring drawn around it (focus-ring.js: ring width + 2 px out). */
+  --tf-reach: calc(var(--tf-card-w) * 9 / 16 * var(--tenfoot-zoom, 5) / 200 + var(--tenfoot-ring-width, 4px) + 2px);
   --tf-font: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
 }
 
@@ -61,6 +68,16 @@ html[data-tenfoot="on"][data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfo
 .tenfoot-rail-item:focus {
   outline: none;
 }
+/* Dropout gives every button a background on hover and focus (button:hover,
+   button:focus: #007095), which outranks the rule above. The rail draws no
+   background in any state: the ring is the only mark of the selection. */
+.tenfoot-rail-item:hover,
+.tenfoot-rail-item:focus,
+.tenfoot-rail-item:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
 .tenfoot-rail-item svg {
   width: 50%;
   height: 50%;
@@ -68,10 +85,10 @@ html[data-tenfoot="on"][data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfo
 .tenfoot-rail-item[data-tenfoot-end="true"] {
   margin-top: auto;
 }
-/* The page on screen. */
+/* The page on screen: its icon in yellow. A yellow box on the rail is only
+   ever the selection. */
 .tenfoot-rail-item[data-tenfoot-page="true"] {
-  background: #feea3b;
-  color: #15130a;
+  color: #feea3b;
 }
 
 /* Pages Leanback does not replace make room for the rail. */
@@ -131,6 +148,12 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   top: 0;
   height: calc(var(--tf-u) * 44);
   background: linear-gradient(to bottom, var(--tf-bg) 30%, rgba(11, 12, 16, 0));
+}
+/* With a row selected, the fade reaches down to its heading (home.js
+   ROW_ANCHOR: 7 % of the height), so the row above it does not peek in. */
+.tenfoot-home[data-tenfoot-scrolled="true"] .tenfoot-home-view::after {
+  height: 7vh;
+  background: linear-gradient(to bottom, var(--tf-bg) 65%, rgba(11, 12, 16, 0));
 }
 .tenfoot-home-scroll {
   padding: calc(var(--tf-u) * 36) 0 60vh var(--tf-gutter);
@@ -241,6 +264,19 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   color: #1a1a05;
   font-weight: 800;
 }
+/* The › and a proxied My list are buttons, which Dropout colours on hover and
+   focus (see the rail); they keep their own background whatever the state. */
+.tenfoot-home button.tenfoot-hero-button:hover,
+.tenfoot-home button.tenfoot-hero-button:focus,
+.tenfoot-home button.tenfoot-hero-button:active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  transition: none !important;
+}
+.tenfoot-home button.tenfoot-hero-primary:hover,
+.tenfoot-home button.tenfoot-hero-primary:focus,
+.tenfoot-home button.tenfoot-hero-primary:active {
+  background: #feea3b !important;
+}
 /* Dropout colours every link (a:link, a:visited: teal) and underlines some;
    these are Leanback's links, so their colours are held against it. */
 .tenfoot-home a.tenfoot-hero-button,
@@ -297,8 +333,9 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-row {
   margin: 0 0 calc(var(--tf-u) * 40);
 }
+/* Room under the heading for the selected card to grow into, ring and all. */
 .tenfoot-row-title {
-  margin: 0 0 calc(var(--tf-u) * 16);
+  margin: 0 0 calc(var(--tf-u) * 12 + var(--tf-reach));
   color: var(--tf-text);
   font-family: var(--tf-font);
   font-weight: 800;
@@ -433,6 +470,16 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-card-sub:empty {
   display: none;
 }
+/* The selected card's title and subtitle step down out of the way of its
+   enlarged picture and the ring. */
+.tenfoot-card-title,
+.tenfoot-card-sub {
+  transition: transform 150ms ease-out;
+}
+.tenfoot-card-link.tenfoot-scaled ~ .tenfoot-card-title,
+.tenfoot-card-link.tenfoot-scaled ~ .tenfoot-card-sub {
+  transform: translateY(var(--tf-reach));
+}
 .tenfoot-home-more {
   margin: 0;
   color: var(--tf-dim);
@@ -446,7 +493,9 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-home-scroll,
-  .tenfoot-track {
+  .tenfoot-track,
+  .tenfoot-card-title,
+  .tenfoot-card-sub {
     transition: none !important;
   }
 }
@@ -454,12 +503,13 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 /* --- search results, spread across a television --------------------------
    page.js marks the parts named in rules → pages.search.tvGrid. The site lays
    them out for a desktop: a column padded 200 px on each side, five small
-   pictures across. Here: the full width beside the rail, four across. */
+   pictures across. Here: the full width beside the rail, four across, in
+   the full-size unit (--tf-grid-u). */
 
 html[data-tenfoot="on"] [data-tenfoot-grid-container] {
   box-sizing: border-box !important;
-  padding-left: var(--tf-gutter) !important;
-  padding-right: var(--tf-gutter) !important;
+  padding-left: calc(var(--tf-grid-u) * 64) !important;
+  padding-right: calc(var(--tf-grid-u) * 64) !important;
 }
 html[data-tenfoot="on"] [data-tenfoot-grid-wrap] {
   width: 100% !important;
@@ -475,7 +525,7 @@ html[data-tenfoot="on"] li[data-tenfoot-grid-item] {
   box-sizing: border-box !important;
   width: 25% !important;
   max-width: none !important;
-  padding: calc(var(--tf-u) * 14) !important;
+  padding: calc(var(--tf-grid-u) * 14) !important;
 }
 html[data-tenfoot="on"] [data-tenfoot-grid-item] > * {
   margin-left: 0 !important;
@@ -488,10 +538,10 @@ html[data-tenfoot="on"] [data-tenfoot-grid-item] a[href] {
   display: block !important;
 }
 html[data-tenfoot="on"] body [data-tenfoot-grid-item] [data-tenfoot-grid-title] {
-  font-size: max(14px, calc(var(--tf-u) * 24)) !important;
+  font-size: max(14px, calc(var(--tf-grid-u) * 24)) !important;
   line-height: 1.25 !important;
 }
 html[data-tenfoot="on"] body [data-tenfoot-grid-item] [data-tenfoot-grid-sub] {
-  font-size: max(13px, calc(var(--tf-u) * 19)) !important;
+  font-size: max(13px, calc(var(--tf-grid-u) * 19)) !important;
   line-height: 1.3 !important;
 }

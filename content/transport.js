@@ -903,12 +903,12 @@
             case "left":
             case "back":
               // ◀ and Back leave the submenu, one level at a time; at the top,
-              // Back closes the panel.
+              // either one closes the panel.
               if (lvl) {
                 leaveSub();
                 return true;
               }
-              return action === "back" ? closePanel() : true;
+              return closePanel();
             default: return false;
           }
         }

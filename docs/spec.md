@@ -21,8 +21,8 @@ The [milestones](#milestones) below are what 1.0 needs.
   `sites/dropout.json`, so a site change is a data fix. The navigation engine
   (`nav/*`) knows nothing about Dropout, so the same approach can serve another
   site later (Twitch is the obvious candidate) and other projects can borrow it.
-- **Standalone by decision (2026-09-20).** It is not a part of the HTPC shell's
-  `tv-nav`; the HTPC shell installs it as-is in its Dropout kiosk profile
+- **Standalone.** It is not a part of the HTPC shell's `tv-nav`; the HTPC shell
+  installs it as-is in its Dropout kiosk profile
   ([htpc-integration.md](./htpc-integration.md)).
 
 ## Goals
@@ -85,8 +85,17 @@ means Back at the top level closes Firefox.
     change row and restore the card last selected in that row; ◀ ▶ move along
     a row and stop at its ends.
   - **TV-style scrolling.** The selected row always sits at the same height
-    near the top; the rows move under it. Along a row, the selected card keeps
-    its place and the row slides, until the row's end comes into view.
+    near the top; the rows move under it, and what is above the selected row
+    fades out. Along a row, the selected card keeps its place and the row
+    slides, until the row's end comes into view.
+  - **Cards** show the picture (for a show, its wide picture, the one its own
+    page uses, rather than the tall poster Dropout's Home draws), the title,
+    the running time (`6:03`, without Dropout's leading zero), Dropout's badge
+    ("New", "New Episode") and the progress bar. The New Releases row shows
+    no "New" badge, since the row says so already. Dropout's "My list" row is
+    not drawn: My List is a page of its own, on the rail. The selected card
+    grows by the selection zoom and its
+    title steps down, so neither the card nor the ring touches any text.
   - **Rows arrive as the selection goes down.** Dropout draws a few rows at a
     time. Two rows from the end, Leanback presses Dropout's own *Show more*
     (and scrolls the page underneath if that does nothing). A row of 12 shows
@@ -102,7 +111,8 @@ means Back at the top level closes Firefox.
 - **Continue Watching** is Home's first row: the videos in progress, from
   Leanback's own watch history and from Dropout's progress bars (which come
   from its Roku and Android apps), merged into one row, most recent first.
-  Each card shows the time left on its picture.
+  Each card shows the time left on its picture, to the second (`2:48 left`,
+  `1:12:05 left`).
   Every card on Home draws the same merged progress.
 - **Watch history.** Leanback records how far each video has got while it plays
   here — on pause, seek, the end, the player losing focus, and every 15 s of
@@ -111,20 +121,58 @@ means Back at the top level closes Firefox.
   more than a minute has played. Trailers and live streams are not recorded.
   Dropout's bars carry no date, so a bar is dated when Leanback first sees its
   value; a first sighting never outranks Leanback's own reading of the same
-  video. *Forget watch history* deletes Leanback's readings and empties
-  Continue Watching — Dropout's bars included — until something is watched
-  again, here or elsewhere; Dropout's bars still show on its cards.
+  video. *Clear Continue Watching* forgets every video not finished: it
+  deletes Leanback's readings of them and empties Continue Watching —
+  Dropout's bars included — until something is watched again, here or
+  elsewhere. Watched videos are kept whole, so they stay watched; Dropout's
+  bars still show on its cards.
 - **Picking up where you left off.** A video in progress starts where it was
   left, with "Resumed at 12:04" for a moment. *Start Over* heads the playback
   panel after a resume and goes back to 0:00. Resuming never changes whether
   the video is playing or muted.
-- **The rail.** On Home, Browse (`/series`, all shows), Search and Dropout
-  24/7, an icon rail runs down the left: Search, Home, Browse, Dropout 24/7
-  (`/dropout-24-7`), and a gear for Leanback's settings in place. ◀ from the
-  first card of a row (or anything at the left edge) enters it on the current
-  page's entry, or on the one last used; ▲ ▼ move, OK opens, ▶ (and Escape)
-  return to exactly where the selection came from. Not on a show's page, not
-  during playback.
+- **The rail.** On Home, Browse (`/series`, all shows), My List, Search and
+  Dropout 24/7, an icon rail runs down the left: Search, Home, Browse, My List
+  (a bookmark, `/my-list`), Dropout 24/7 (`/dropout-24-7`), and a gear for
+  Leanback's settings in place. My List is a grid of tiles like Browse, the
+  selection starting on the first. The current
+  page's icon is yellow; the icons have no background of their own, hovered
+  or selected, so the ring is the only mark of the selection.
+  ◀ from the first card of a row (or anything at the left edge) enters it on
+  the current page's entry, or on the one last used; ▲ ▼ move, OK opens, ▶
+  (and Escape) return to exactly where the selection came from. Not on a
+  show's page, not during playback.
+- **A show's page, one for every show.** Pages at a one-word address are
+  sorted by what the page holds, never by address or name, so every show
+  works the same way, including ones Dropout adds later
+  (`sites/dropout.json` → `pages.series.show.layouts`):
+  - **a show** (an episode grid): if it has more than one season, a **row of
+    seasons, newest first**, built from Dropout's own season list, above the
+    selected season's episodes. Each season button says "Season N"; the whole
+    name ("Season 1: All About …") and Dropout's episode count head the
+    episodes. The season on screen is filled yellow. ◀ ▶ move along the row,
+    which slides to keep the selection in view and stops at its ends; ▲ into
+    the row lands on the season on screen, or where the row was left. OK
+    opens that season's page in place of this one (seasons are sideways, so
+    Back leaves the show); OK on the season already on screen goes down to its
+    episodes. Episodes are three across, in Dropout's order, the size of
+    Home's cards; a watched one is dimmed with a tick, one in progress has a
+    bar. Above the seasons: the show's *Trailer*, where it has one, and *My
+    list*.
+  - **Opening a show.** Dropout opens every show on Season 1. At an address
+    that names no season, Leanback goes on to the **newest** season (setting:
+    *Shows open on* newest / first), replacing the page; an address that
+    names its season is left alone. The page stays blank until that is
+    decided (never more than 2 s), so Season 1 does not flash up.
+  - **Where the selection starts:** the episode you are partway through; else
+    the first one after the last you finished; else, for a season not started
+    or finished all the way through, Episode 1. Watched and in progress come
+    from the watch history and from Dropout's own bars on the tiles.
+  - **a special** (a movie and its extras): *Watch Movie* and *My list*, then
+    the movie and its Extras. **A list** (Trending, New Releases, a show's
+    new episodes, trailers): its tiles, of episodes or of shows, with load
+    more. **A hub** (Dimension 20) gets Home's screen.
+  - Hidden: Share, the season drop-down and sort control (S2), and the My
+    List button Dropout puts on each episode for a mouse (M7).
 - **Search results** are spread across the screen for a TV: four across, the
   full width beside the rail, larger titles. Dropout lays them out for a
   desktop, five small pictures in a centred column.
@@ -135,15 +183,17 @@ means Back at the top level closes Firefox.
   modal, cookie banner) trap focus until closed, and hide Home and the rail
   while they are open. Details: [architecture.md](./architecture.md).
 - **Focus ring.** One overlay element drawn over the focused target: 4 px ring
-  in Dropout yellow (`#feea3b`) with a dark edge, and the target itself
-  enlarged by *Selected Item Zoom* (5 % by default). Follows scroll and resize.
+  in Dropout yellow (`#feea3b`) with a dark edge, its corners rounded like the
+  target's, and the target itself enlarged by the selection zoom (5 % by
+  default; *Enlarge selection* on the options page and the options panel,
+  *Selected Item Zoom* in the playback panel). Follows scroll and resize.
   Colour, width and zoom are settings. Under `prefers-reduced-motion` nothing
   animates.
 - **Select / Back.** OK activates the focused element (native activation for
   links and buttons, synthetic click otherwise). **Back is Firefox's own
   Back**: Firefox acts on the remote's BrowserBack whatever the page does, so
   Leanback keeps the history in the shape Back should follow instead. Moving
-  sideways — another episode, another season or sort, one rail section to
+  sideways — another episode, another season, one rail section to
   another — replaces the page rather than adding one; a Back that lands on a
   sibling (the previous episode, when Dropout's own up-next card went on to
   the next) carries on past it. So Back walks video → the season page you
@@ -152,14 +202,14 @@ means Back at the top level closes Firefox.
   a tab opened straight on a page, with nothing of the site behind it, Back
   walks up the site itself, and at Home runs the **exit hook** (setting:
   *nothing* (default) or *close this tab* — the HTPC shell kiosk hand-off).
-- **Season and sort controls.** The series page's native `<select>` elements
-  are focusable, and are **two-step controls**: Enter engages one, Left/Right
-  then step its options without opening the native dropdown and without firing
-  `change`, Enter commits (going to the option's page, in place of this one)
-  and Escape
-  restores the value it had. Arrows only reach the options while the control is
-  engaged — otherwise Left/Right could never carry the ring past a dropdown to
-  the control beside it.
+- **Drop-downs.** A native `<select>` Leanback has not replaced (the season
+  and sort controls on a page whose layout is not recognised) is a
+  **two-step control**: Enter engages it, Left/Right then step its options
+  without opening the native dropdown and without firing `change`, Enter
+  commits (going to the option's page, in place of this one) and Escape
+  restores the value it had. Arrows only reach the options while the control
+  is engaged — otherwise Left/Right could never carry the ring past a dropdown
+  to the control beside it.
 - **Load more.** Moving Down past the last row of a grid triggers the site's
   "Load More" control and continues once new tiles arrive.
 - **Video pages.** On load: enter theater layout, focus the player. Inside the
@@ -179,16 +229,18 @@ means Back at the top level closes Firefox.
   playback, opens a full-height panel: Quality, Speed and Closed Captions — the
   player's own menus, as many levels deep as they go, caption style included —
   plus Play Next Episode and Leanback Settings, headed by *Start Over* after a
-  resume. It pauses the picture while open.
+  resume. It pauses the picture while open. ◀ or back at its top level closes
+  it.
 - **Options (everywhere else).** The menu button (or the rail's gear) opens
-  Leanback's settings as a panel on the page, with Home, Search, *Forget
-  watch history* (OK twice) and *Turn Leanback off* at the foot.
-  ▲ ▼ move, OK takes an entry, back closes. Without it those would need letter
+  Leanback's settings as a panel on the page, with Home, Search, *Clear
+  Continue Watching* (OK twice) and *Turn Leanback off* at the foot.
+  ▲ ▼ move, OK takes an entry, ◀ or back closes. Without it those would need letter
   keys, which on a remote means the QWERTY pad on the back.
 - **Settings in the page.** "Leanback settings" fills the same panel rather
   than opening a tab: any navigation away from the site would tear the
   extension's state down, and in a kiosk there is no way back. Each row is the
-  same two-step control as a season dropdown.
+  same two-step control as a drop-down: OK starts changing it, ◀ ▶ change
+  it, OK confirms, back undoes.
 - **Button hints.** Off by default. When on, a bottom strip shows the buttons
   that matter in the current context: it stays on screen on pages, and during
   playback appears briefly on a press. Short notices ("No next episode") use
@@ -218,8 +270,10 @@ means Back at the top level closes Firefox.
   as an iframe) and `*://www.dropout.tv/*` (root redirect only).
 - `data_collection_permissions: { required: ["none"] }` — nothing leaves the
   browser. The watch history stays in this Firefox's extension storage. The
-  extension makes no requests of its own; pressing Dropout's *Show more* loads
-  rows the way scrolling does.
+  only requests the extension causes are for pictures: Home's cards load
+  Dropout's own pictures from Dropout's image server (`vhx.imgix.net`),
+  including a show's wide picture, which Dropout's own Home does not show.
+  Pressing Dropout's *Show more* loads rows the way scrolling does.
 - **Not** requested: `tabs` (the background can message the sending tab and
   close it via `sender.tab.id` without it), `webRequest`, `nativeMessaging`,
   `<all_urls>`. If a permission is added, explain it here, in the README, and
@@ -236,7 +290,14 @@ means Back at the top level closes Firefox.
   navigation, focus ring, hint bar, the rail, theater layout, back logic,
   load-more, and starts the Home screen on Home and hubs.
 - `content/home.js`: the Home screen — reads the banner and rows off
-  Dropout's page and draws Leanback's own layer from them.
+  Dropout's page (and a show's wide picture from the data its tile was drawn
+  from) and draws Leanback's own layer from them.
+- `content/show.js`: a show's page (and specials and lists) — tells which it
+  is from the page, draws the row of seasons from Dropout's season list,
+  marks what is hidden and what is watched, and picks the episode to start
+  on. `content/show.css` restyles it; `content/early.css`, the one stylesheet
+  loaded before the page is drawn, keeps a show blank until its season is
+  decided.
 - `content/player.js` (every `embed.vhx.tv` frame): finds the `<video>`,
   handles keys while the frame has focus, executes player commands, reports
   state (`paused`, `currentTime`, `duration`, `ended`, up-next) to the page,
@@ -274,14 +335,15 @@ corrupt value falls back to the default rather than throwing) by
 | `startMuted` | `false` | start videos muted. Off by default: Dropout starts them muted to satisfy Firefox's autoplay policy, and the extension turns the sound back on once per video |
 | `skipMarketingSite` | `true` | forward `www.dropout.tv/` to `watch.dropout.tv/browse` |
 | `exitHook` | `"none"` | `none` or `close-tab` — what Back does at the top level (Home) |
+| `seasonStart` | `"latest"` | `latest` or `first` — the season a show opens on when its address names none |
 
 The watch history is a separate key, `progress`, so a settings save never
 rewrites it: `{ entries: { <video slug>: { url, title, series, image,
 duration, local: { position, at }, dropout: { percent, at } } } }`, normalised
 on every read by `lib/history.js` and capped at 500 videos (the least recently
-touched go first). *Forget watch history* keeps only Dropout's own readings
-and sets `clearedAt`; nothing read before it counts for Continue Watching or
-resuming. The tab's trail for Back is in `sessionStorage` (`tenfoot.trail`,
+touched go first). *Clear Continue Watching* keeps every watched video whole;
+of the rest it keeps only Dropout's own readings, and it sets `clearedAt`:
+nothing unfinished read before it counts for Continue Watching or resuming. The tab's trail for Back is in `sessionStorage` (`tenfoot.trail`,
 `tenfoot.intent`), not `storage.local`.
 
 ## UI requirements
@@ -289,11 +351,15 @@ resuming. The tab's trail for Back is in `sessionStorage` (`tenfoot.trail`,
 - Leanback's own UI on a page: the focus ring, the hint bar, the options
   panel, the rail, and on Home the whole screen. The ring and hint bar must
   stay legible over light and dark thumbnails and must never cover the focused
-  element's text.
+  element's text. The ring's corners follow the rounding of what it
+  surrounds, and it is the only highlight: Leanback's buttons draw no
+  background of their own when hovered or selected.
 - Home follows Dropout's look: its typeface (Helvetica Neue, Helvetica,
   Roboto, Arial), a near-black ground (`#0b0c10`), yellow (`#feea3b`) for the
   ring, badges and progress. Sizes scale with the screen width, so it reads
   the same on a 1080p and a 4K television; no text is smaller than 13 px.
+  Home and the rail are drawn at 80 % of a 1920-wide layout; search results
+  at full size.
 - Options page: plain form, ≥ 16 px text, fully operable by Tab/arrows/Enter,
   light/dark via `prefers-color-scheme`.
 - No browser-action popup — a popup cannot be driven from a remote.
@@ -341,17 +407,36 @@ Manual checklist (full version with expected results in
   rows, each row keeps its place, the selected row sits at the same height;
   more rows arrive near the bottom; View all ends a full row; Enter opens a
   series or episode; Escape at Home does nothing (exit hook off).
+- Home's cards: shows have wide pictures; running times read `6:03`; no
+  "New" on New Releases; the selected card and its ring touch no text; the
+  ring's corners follow the card's.
+- Highlights: the rail's icons, the banner's buttons and the options panel's
+  rows show no coloured background when selected or hovered; the ring is the
+  only highlight.
 - Continue Watching: an episode watched a few minutes in Firefox appears first
   on Home; one in progress on the Roku appears too.
 - Resume: reopening that episode starts where it stopped, says so, and
   *Start Over* goes back to 0:00.
-- Rail: ◀ from the first card enters it; ▶ returns to that card; Dropout 24/7
-  opens; the gear opens settings in place; not on a show's page.
+- Rail: ◀ from the first card enters it; ▶ returns to that card; My List and
+  Dropout 24/7 open; the gear opens settings in place; not on a show's page.
+- My List: no My List row on Home; the rail's bookmark opens the page, lit
+  yellow there, the ring on the first saved show.
 - Back: episode → season → Home with the remote's back button, including after
   Dropout played the next episode by itself.
 - Search: results four across, reachable with the arrows.
 - `/series` grid: Down past the last row loads more; focus continues.
-- Series page: season switch by Left/Right; Enter on an episode plays it.
+- A show's page: opening a show from Home lands on its newest season, with no
+  flash of Season 1; the seasons run newest first with the one on screen
+  yellow; ▲ from the episodes lands on it; ◀ ▶ walk the row, OK opens a season
+  and Back then leaves the show; episodes three across, watched ones ticked,
+  one in progress with a bar; the selection starts on the episode to watch
+  next; *Trailer* and *My list* reachable, Share gone; Enter on an episode
+  plays it.
+- A special: *Watch Movie* and *My list* reachable; the extras below.
+- ◀ closes Leanback's settings and the top of the playback settings; ◀ at the
+  start of the search box moves to the rail.
+- *Clear Continue Watching*: Continue Watching empties; episodes already
+  watched keep their ticks.
 - Video page: theater layout appears; OK toggles; Left/Right seeks; Down opens
   the transport bar, Down again reaches the page; back returns to the season
   page.
@@ -370,8 +455,15 @@ Manual checklist (full version with expected results in
 - Depends on Dropout's markup; class names can change without notice.
   `sites/dropout.json` and the drift check are the mitigation. If Home finds
   nothing to draw, Dropout's own page is shown and driven directly.
+- Opening a show on its newest season loads that season's page after
+  Dropout's, so the screen is blank for a moment. The episode the selection
+  starts on is chosen from the episodes Dropout has drawn (its first page of a
+  long season).
 - Continue Watching sees Dropout's progress only on the rows Home has loaded,
   and watching in Firefox does not reach Dropout's history (see Milestones).
+- A show's wide picture comes from the data Dropout's page was built from,
+  not from its markup. If Dropout changes that, show cards fall back to the
+  tall poster, cropped to the card.
 - Login and search need a keyboard or the HTPC shell OSK bridge; login also loads
   reCAPTCHA Enterprise, which may block a kiosk login flow.
 - Firefox's autoplay policy may block autoplay-with-sound until the site has

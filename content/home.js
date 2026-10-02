@@ -62,6 +62,87 @@
     return (Number(m[1] || 0) * 3600) + Number(m[2]) * 60 + Number(m[3]);
   }
 
+  /** "06:03" → "6:03": Dropout pads short running times; a TV reads them bare. */
+  function tidyDuration(s) {
+    return parseDuration(s) === null ? s : s.replace(/^0(?=\d)/, "");
+  }
+
+  // -- the data a tile was drawn from ---------------------------------------
+  //
+  // Firefox shows a content script the DOM's native face; what the page's own
+  // scripts attached to an element (React's fiber, and with it the data the
+  // tile was drawn from) is behind wrappedJSObject. Only plain data properties
+  // are read: a getter is page code, and is never run.
+
+  function pageView(o) {
+    return (o && o.wrappedJSObject) || o;
+  }
+
+  function own(obj, key) {
+    if (obj === null || (typeof obj !== "object" && typeof obj !== "function")) return undefined;
+    try {
+      const d = Object.getOwnPropertyDescriptor(obj, key);
+      return d && "value" in d ? d.value : undefined;
+    } catch (_err) {
+      return undefined;
+    }
+  }
+
+  let fiberKey = null; // "__reactFiber$<random>", the same for every element
+
+  function fiberOf(el) {
+    const w = pageView(el);
+    if (fiberKey) {
+      const f = own(w, fiberKey);
+      if (f) return f;
+    }
+    let keys;
+    try {
+      keys = Object.keys(w);
+    } catch (_err) {
+      return null;
+    }
+    const k = keys.find((x) => x.startsWith("__reactFiber$") || x.startsWith("__reactInternalInstance$"));
+    if (!k) return null;
+    fiberKey = k;
+    return own(w, k);
+  }
+
+  /**
+   * A value from the props of the component that drew `el`, or of one of the
+   * few components above it, by a dotted path ("data.thumbnail.medium").
+   */
+  function propOf(el, path) {
+    const parts = String(path || "").split(".").filter(Boolean);
+    if (!parts.length) return undefined;
+    let f = fiberOf(el);
+    for (let i = 0; f && i < 6; i++, f = own(f, "return")) {
+      let v = own(f, "memoizedProps");
+      for (const p of parts) v = own(v, p);
+      if (v !== undefined && v !== null) return v;
+    }
+    return undefined;
+  }
+
+  // A show's tile carries a tall poster; the wide picture, the one its own
+  // page uses, is in the tile's data (rules: itemPoster, itemWideArt). Found
+  // once per tile and poster.
+  const wideCache = new WeakMap(); // tile element → {poster, wide}
+  let wideMissing = false;
+
+  function wideArtOf(item, poster, rules) {
+    const hit = wideCache.get(item);
+    if (hit && hit.poster === poster) return hit.wide;
+    const v = propOf(item, rules.itemWideArt);
+    const wide = typeof v === "string" && /^https:\/\//.test(v) ? v : "";
+    wideCache.set(item, { poster, wide });
+    if (!wide && !wideMissing) {
+      wideMissing = true;
+      console.warn("[leanback-for-dropout] a show's wide picture is not in its tile's data; its poster is used");
+    }
+    return wide;
+  }
+
   function percentOf(bar) {
     if (!bar) return null;
     const w = parseFloat((bar.style && bar.style.width) || "");
@@ -121,13 +202,17 @@
         if (!href || seen.has(href)) continue;
         seen.add(href);
         const img = qs(rules.itemImage, item);
-        const durationText = textOf(qs(rules.itemDuration, item));
+        const durationText = tidyDuration(textOf(qs(rules.itemDuration, item)));
+        let image = img ? img.getAttribute("src") || "" : "";
+        if (rules.itemPoster && rules.itemWideArt && qs(rules.itemPoster, item)) {
+          image = wideArtOf(item, image, rules) || image;
+        }
         items.push({
           key: href,
           href,
           title: textOf(qs(rules.itemTitle, item)) || (img && img.getAttribute("alt")) || "",
           subtitle: textOf(qs(rules.itemSubtext, item)),
-          image: img ? img.getAttribute("src") || "" : "",
+          image,
           duration: parseDuration(durationText),
           durationText,
           percent: percentOf(qs(rules.itemProgress, item)),
@@ -149,11 +234,29 @@
     }
   }
 
+  // The time left, in the style of the running times on the other cards:
+  // "2:48", "1:12:05".
   function clock(seconds) {
-    const s = Math.max(0, Math.round(seconds || 0));
+    const s = Math.max(0, Math.floor(seconds || 0));
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
-    return h ? `${h} h ${m} min` : `${Math.max(1, m)} min`;
+    const ss = String(s % 60).padStart(2, "0");
+    return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+  }
+
+  // Per-row adjustments from the rules (home.rowOverrides), keyed by the path
+  // of the row's View all link: a heading of Leanback's own, no badges, or not
+  // drawn at all (hidden).
+  function rowOverride(R, key) {
+    const all = R && R.rowOverrides;
+    if (!all || typeof all !== "object") return null;
+    try {
+      const path = new URL(key).pathname.replace(/\/+$/, "");
+      const o = all[path];
+      return o && typeof o === "object" ? o : null;
+    } catch (_err) {
+      return null; // a row with no View all link has no address
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -228,6 +331,7 @@
     let slide = 0;
     let pos = { row: HERO, col: 0 };
     let heroCol = 0;
+    let awaitingHero = false; // landed on a card only because the banner was not drawn yet
     const memory = new Map(); // row key → card key
     let lastObserved = "";
     let more = null; // {rows, deadline, scrolled}
@@ -287,23 +391,30 @@
 
     function siteRow(r) {
       const s = store();
+      const tweak = rowOverride(R, r.key) || {};
+      const title = typeof tweak.title === "string" && tweak.title ? tweak.title : r.title;
       const items = r.items.map((it) => {
         const key = H ? H.keyOf(it.href) : null;
         const mine = key && s.entries[key] ? H.progressOf(s, key) : null;
         const fraction = mine !== null ? mine : it.percent !== null ? it.percent / 100 : null;
-        return Object.assign({}, it, { fraction });
+        const extra = { fraction };
+        if (tweak.badges === false) extra.badge = "";
+        return Object.assign({}, it, extra);
       });
       if (r.items.length >= pageSize && r.viewAll) {
-        items.push({ key: VIEW_ALL_KEY, href: r.viewAll, title: "View all", subtitle: r.title, viewAll: true });
+        items.push({ key: VIEW_ALL_KEY, href: r.viewAll, title: "View all", subtitle: title, viewAll: true });
       }
-      return { key: r.key, title: r.title, items };
+      return { key: r.key, title, items };
     }
 
     function model() {
       const list = [];
       const cw = continueRow();
       if (cw) list.push(cw);
-      for (const r of site.rows) list.push(siteRow(r));
+      for (const r of site.rows) {
+        const tweak = rowOverride(R, r.key);
+        if (!(tweak && tweak.hidden === true)) list.push(siteRow(r));
+      }
       return list;
     }
 
@@ -517,6 +628,8 @@
       }
       const t = y ? `translateY(${-y}px)` : "";
       if (scroller.style.transform !== t) scroller.style.transform = t;
+      // With a row selected, home.css fades out everything above its heading.
+      setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
       const row = rows[pos.row];
       if (row) {
         const card = row.links[pos.col] ? row.links[pos.col].parentNode : null;
@@ -608,6 +721,7 @@
     }
 
     function move(dir) {
+      awaitingHero = false;
       if (pos.row === HERO) {
         if (dir === "left") return along(-1, heroButtons.length, "left");
         if (dir === "right") return along(1, heroButtons.length, "right");
@@ -634,15 +748,19 @@
       return { edge: "none" };
     }
 
-    // Where the selection starts: the featured banner's first button, else the
-    // first card.
+    // Where the selection starts: the featured banner's first button (Watch
+    // now), else the first card. Dropout draws the banner after Home is up
+    // (Continue Watching is ready at once), so a start on a card waits for the
+    // banner and moves there when it arrives, unless the viewer moved first.
     function initial() {
+      awaitingHero = false;
       if (heroButtons.length) {
         pos = { row: HERO, col: 0 };
         return true;
       }
       if (rows.length && rows[0].links.length) {
         pos = { row: 0, col: 0 };
+        awaitingHero = true;
         return true;
       }
       return false;
@@ -658,6 +776,8 @@
     /** Point the model at an element (a click, or focus coming back). */
     function select(target) {
       if (!target) return false;
+      // Leanback's own focus lands here too; only somewhere else is the viewer.
+      if (target !== current()) awaitingHero = false;
       const h = heroButtons.indexOf(target);
       if (h >= 0) {
         pos = { row: HERO, col: h };
@@ -693,7 +813,8 @@
       renderHero();
       renderRows(model());
       if (more && (site.rows.length > more.rows || !site.more)) endMore();
-      restore(before);
+      if (awaitingHero && heroButtons.length) initial();
+      else restore(before);
       if (ready()) layer.hidden = false;
       applyScroll();
       observe();

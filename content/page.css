@@ -17,9 +17,9 @@
   pointer-events: none;
   z-index: 2147483647;
   border: var(--tenfoot-ring-width) solid var(--tenfoot-ring-color);
-  border-radius: 8px;
+  border-radius: 8px; /* until nav/focus-ring.js matches it to the target's */
   box-shadow: 0 0 0 2px var(--tenfoot-edge), inset 0 0 0 2px var(--tenfoot-edge);
-  transition: left 150ms ease-out, top 150ms ease-out, width 150ms ease-out, height 150ms ease-out;
+  transition: left 150ms ease-out, top 150ms ease-out, width 150ms ease-out, height 150ms ease-out, border-radius 150ms ease-out;
   margin: 0;
   padding: 0;
 }
@@ -169,11 +169,20 @@ html.tenfoot-theater [data-tenfoot-hide] {
 .tenfoot-menu-item:focus {
   outline: none;
 }
+/* Dropout gives every button a background on hover and focus (button:hover,
+   button:focus: #007095), which outranks the rule above; the rows keep their
+   own in every state. */
+.tenfoot-menu-item:hover,
+.tenfoot-menu-item:focus,
+.tenfoot-menu-item:active {
+  background: transparent !important;
+  transition: none !important;
+}
 /* The selection is drawn from the stamp nav/menu.js sets, not from :focus.
    During playback the ring is parked on the video and cannot mark the panel,
    and a page that steals the focus would otherwise leave it looking dead. */
 .tenfoot-menu-item[data-tenfoot-current="true"] {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.14) !important;
   box-shadow: inset 0 0 0 var(--tenfoot-ring-width, 4px) var(--tenfoot-ring-color, #feea3b);
 }
 .tenfoot-menu-detail {
