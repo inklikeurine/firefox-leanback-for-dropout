@@ -18,6 +18,7 @@
   const TRANSPORT_CLASS = "tenfoot-transport";
   const SAVE_EVERY_MS = 15000; // how often the watch history hears from a playing video
   const RESUME_SLACK_S = 5; // already this close to the saved point: leave it
+  const TITLE_MS = 4000; // the title when a video starts, and the bar with it on a pause
   const DEFAULT_RULES = { video: "video", captionsButton: "button[aria-label*='aption'], button[aria-label*='ubtitle']" };
   const VISIBLE = (el) => Boolean(el) && Boolean(el.getClientRects && el.getClientRects().length);
 
@@ -70,6 +71,11 @@
     unmuteWhenPlaying: false,
     offerFromPage: false,
     lastSave: 0,
+    // What the page says about this video (show, season, episode, title), and
+    // the video whose start has shown the title.
+    info: null,
+    infoLoad: null,
+    titleShownFor: null,
     // Picking up where the viewer left off: the point, whether it is still to
     // be applied, and whether it was (which is what offers Start Over).
     resume: { video: null, at: null, pending: false, resumed: false, told: false }
@@ -349,6 +355,7 @@
       onPanelFailed: (kind) => console.warn(LOG, "the player offered no", kind, "menu")
     });
     state.bar.setStyle(state.settings);
+    state.bar.setInfo(state.info);
     return state.bar;
   }
 
@@ -698,9 +705,47 @@
     saveProgress(false);
   }
 
+  // A pause the viewer made brings up the title and the bar for a moment,
+  // without taking the arrows from playback. Firefox stopping an unmute, and
+  // the settings panel holding the picture, are not the viewer's pauses.
   function onPause() {
     report();
     saveProgress(false);
+    const b = state.bar;
+    const v = state.video;
+    if (b && v && state.userPaused && !v.ended && !b.panelOpen && ownChrome() && state.settings.enabled) b.peek(TITLE_MS, true, "pause");
+  }
+
+  // The show, season, episode and title, from the page (page:info). Without
+  // an answer, the player's own title.
+  function loadInfo(v) {
+    const d = ottData();
+    const fallback = { title: d && d.video ? d.video.title : "" };
+    state.info = fallback;
+    state.infoLoad = send({ type: "page:info" }).then((r) => {
+      if (state.video !== v) return;
+      const has = (n) => typeof n === "number" && Number.isFinite(n);
+      state.info = r && r.ok ? {
+        series: typeof r.series === "string" ? r.series : "",
+        season: has(r.season) ? r.season : null,
+        episode: has(r.episode) ? r.episode : null,
+        title: (typeof r.title === "string" && r.title) || fallback.title
+      } : fallback;
+      if (state.bar) state.bar.setInfo(state.info);
+    });
+    if (state.bar) state.bar.setInfo(state.info);
+  }
+
+  // The first time a video plays, its title shows for a moment.
+  function titleOnStart(v) {
+    if (state.titleShownFor === v || !ownChrome() || !state.settings.enabled) return;
+    state.titleShownFor = v;
+    const show = () => {
+      const b = bar();
+      if (b && state.video === v && !v.paused) b.flashTitle(TITLE_MS);
+    };
+    if (state.infoLoad) state.infoLoad.then(show);
+    else show();
   }
 
   function onSeeked() {
@@ -773,9 +818,13 @@
   // the preference again once the metadata is in.
   // Playback has started, which is the first moment turning the sound on can
   // work without costing the autoplay that just succeeded.
-  function onPlay() {
+  function onPlay(e) {
     applyResume();
     const v = state.video;
+    if (v && e && e.type === "play") {
+      titleOnStart(v);
+      if (state.bar) state.bar.endPeek("pause");
+    }
     if (v && state.unmuteWhenPlaying && !state.volumeTouched && !state.autoplayBlocked) {
       // A beat after playback starts, so the autoplay is established before we
       // touch the sound; unmuting in the same tick can still be refused.
@@ -943,6 +992,8 @@
     v.addEventListener("timeupdate", onTimeUpdate);
     v.addEventListener("seeked", onSeeked);
     state.lastSave = Date.now();
+    state.titleShownFor = null;
+    loadInfo(v);
     prepareResume(v);
     report();
   }

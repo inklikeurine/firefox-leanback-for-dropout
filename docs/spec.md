@@ -230,6 +230,14 @@ means Back at the top level closes Firefox.
 - **Next / previous episode.** Uses the site's own up-next data when present;
   otherwise the episode order from the series page. **Autoplay next** on
   `ended` is a setting (default on).
+- **The title.** Over the top left of the picture: the show's name in yellow
+  capitals, then "S9 · E3 · Whodunnit" (the page's season link and title;
+  the player's own title when the page does not answer). It shows for 4 s
+  when an episode first plays, and with the bar whenever the bar is up.
+- **Pause.** A pause the viewer makes brings up the title and the bar for
+  4 s, without the selection: ◀ ▶ still skip, OK plays (and the bar goes), ▼
+  enters the bar. The settings panel's own pause, and Firefox stopping an
+  unmute, show nothing.
 - **Transport bar.** ▼ on a playing video opens Leanback's own bar: play/pause
   · position · settings · fullscreen, as round buttons on a dark fade along
   the bottom of the picture, the play button larger with a yellow symbol; the
@@ -262,8 +270,6 @@ means Back at the top level closes Firefox.
 
 ## Optional / future functionality
 
-- The title and time over the video, shown on pause — never behind a letter
-  key.
 - Feedback on seeking: a ⏩ / ⏪ glyph with the new time, and the transport bar
   shown for about 250 ms on each skip. Rapid repeated skips must not make it
   flicker.

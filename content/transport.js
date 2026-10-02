@@ -9,6 +9,12 @@
 // Position is not a stop on the row: ◀ ▶ seek whenever the row is not holding
 // a button, which is the rule the rest of the extension follows.
 //
+// Over the top left of the picture, the title: the show's name, then
+// "S9 · E3 · Whodunnit". It shows whenever the bar does, and on its own for a
+// moment when a video starts. The bar can also "peek": shown for a moment
+// without holding the selection, so the keys keep doing what they do in
+// playback (on pause, on a skip).
+//
 // The settings panel is the one place the player is still asked anything.
 // Quality, speed and captions are the player's to know, so the panel proxies
 // its menu: it reads the real menu out of sight, draws the entries in
@@ -90,6 +96,10 @@
     let hideTimer = 0;
     let panel = null; // { kind, items, index, depth, vendor }
     let raf = 0;
+    let peeking = false; // shown for a moment, not holding the selection
+    let peekReason = "";
+    let peekTimer = 0;
+    let titleTimer = 0;
 
     // -- the row ------------------------------------------------------------
     const el = doc.createElement("div");
@@ -148,6 +158,49 @@
     row.appendChild(makeButton("fullscreen", "Full screen", "fullscreen"));
 
     doc.documentElement.appendChild(el);
+
+    // -- the title ----------------------------------------------------------
+    const osd = doc.createElement("div");
+    osd.className = "tenfoot-osd";
+    osd.hidden = true;
+    const osdShow = doc.createElement("p");
+    osdShow.className = "tenfoot-osd-show";
+    const osdEpisode = doc.createElement("p");
+    osdEpisode.className = "tenfoot-osd-episode";
+    osd.append(osdShow, osdEpisode);
+    doc.documentElement.appendChild(osd);
+
+    // {series, season, episode, title}: what the page knows about this video.
+    function setInfo(info) {
+      const i = info || {};
+      const has = (n) => typeof n === "number" && Number.isFinite(n);
+      const line = [has(i.season) ? `S${i.season}` : "", has(i.episode) ? `E${i.episode}` : "", i.title || ""]
+        .filter(Boolean).join(" · ");
+      osdShow.textContent = i.series || "";
+      osdShow.hidden = !i.series;
+      osdEpisode.textContent = line;
+      osdEpisode.hidden = !line;
+    }
+
+    function titleShown() {
+      return !osd.hidden;
+    }
+
+    function showTitle(ms) {
+      if (titleTimer) clearTimeout(titleTimer);
+      titleTimer = 0;
+      if (!osdShow.textContent && !osdEpisode.textContent) return;
+      osd.hidden = false;
+      if (ms) titleTimer = setTimeout(hideTitle, ms);
+    }
+
+    function hideTitle() {
+      if (titleTimer) clearTimeout(titleTimer);
+      titleTimer = 0;
+      // The bar on screen keeps its title.
+      if (open || peeking) return;
+      osd.hidden = true;
+    }
 
     // -- the settings panel -------------------------------------------------
     // Full height, flown in from the right, and its own element rather than a
@@ -240,7 +293,7 @@
     }
 
     function schedulePaint() {
-      if (raf || !open) return;
+      if (raf || !(open || peeking)) return;
       const w = doc.defaultView;
       raf = w && w.requestAnimationFrame ? w.requestAnimationFrame(paint) : setTimeout(paint, 60);
     }
@@ -839,10 +892,57 @@
       for (const ev of MEDIA_EVENTS) v.removeEventListener(ev, onTimeUpdate);
     }
 
+    // The bar and the title for `ms`, without the selection: the keys stay
+    // playback's. Opening the bar for real takes over from a peek. `reason`
+    // ("pause", "seek") lets the caller end only the peek it started.
+    function peek(ms, withBar, reason) {
+      if (open || panel) return false;
+      peekReason = reason || "";
+      if (withBar && !peeking) {
+        peeking = true;
+        el.hidden = false;
+        el.dataset.tenfootPeek = "true";
+        for (const key of ids) delete buttons[key].dataset.tenfootCurrent;
+        bind(getVideo());
+        paint();
+      }
+      showTitle(0);
+      if (peekTimer) clearTimeout(peekTimer);
+      peekTimer = setTimeout(endPeek, ms);
+      return true;
+    }
+
+    function endPeek(reason) {
+      if (!peekTimer && !peeking) return;
+      if (reason && reason !== peekReason) return;
+      if (peekTimer) clearTimeout(peekTimer);
+      peekTimer = 0;
+      peekReason = "";
+      if (peeking && !open) {
+        el.hidden = true;
+        unbind(getVideo());
+      }
+      peeking = false;
+      delete el.dataset.tenfootPeek;
+      hideTitle();
+    }
+
     return Object.freeze({
       element: el,
       panel: panelEl,
+      title: osd,
       get isOpen() { return open; },
+      get peeking() { return peeking; },
+      get titleShown() { return titleShown(); },
+      setInfo,
+      peek,
+      endPeek,
+      // The title alone, for a moment (a video starting).
+      flashTitle(ms) {
+        if (open || peeking || panel) return false;
+        showTitle(ms);
+        return true;
+      },
       get panelOpen() { return Boolean(panel); },
       get currentId() { return panel ? `panel:${panel.index}` : ids[index]; },
 
@@ -856,10 +956,16 @@
 
       open() {
         if (open) return true;
+        const wasPeeking = peeking;
+        if (peekTimer) clearTimeout(peekTimer);
+        peekTimer = 0;
+        peeking = false;
+        delete el.dataset.tenfootPeek;
         open = true;
         el.hidden = false;
         doc.documentElement.classList.add("tenfoot-transport-open");
-        bind(getVideo());
+        if (!wasPeeking) bind(getVideo());
+        showTitle(0);
         focus(0);
         paint();
         return true;
@@ -872,6 +978,7 @@
         el.hidden = true;
         doc.documentElement.classList.remove("tenfoot-transport-open");
         unbind(getVideo());
+        hideTitle();
         if (typeof o.onClose === "function") o.onClose();
         return true;
       },
@@ -945,10 +1052,13 @@
       },
 
       destroy() {
-        if (hideTimer) clearTimeout(hideTimer);
+        for (const t of [hideTimer, peekTimer, titleTimer]) if (t) clearTimeout(t);
         hideTimer = 0;
+        peekTimer = 0;
+        titleTimer = 0;
         unbind(getVideo());
         el.remove();
+        osd.remove();
         panelEl.remove();
         open = false;
         panel = null;

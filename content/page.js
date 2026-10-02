@@ -857,17 +857,29 @@
     const key = History.keyOf(location.href);
     if (!key) return;
     state.metaSent = location.href;
-    const p = state.page;
-    const text = (el) => (el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "");
-    const img = qs(p.videoImage);
+    const img = qs(state.page.videoImage);
+    const d = episodeDetails();
     send(Object.assign({
       type: "history:meta",
       key,
       url: location.href,
-      title: text(qs(p.videoTitle)),
-      series: text(qs(p.seriesLink)),
+      title: d.title,
+      series: d.series,
       image: img ? img.getAttribute("content") || "" : ""
     }, episodeInfo()));
+  }
+
+  // The episode page's own words: its title and the show's name, with the
+  // season and episode numbers.
+  function episodeDetails() {
+    const text = (el) => (el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "");
+    const info = episodeInfo();
+    return {
+      title: text(qs(state.page.videoTitle)),
+      series: text(qs(state.page.seriesLink)),
+      season: info.season === undefined ? null : info.season,
+      episode: info.episode === undefined ? null : info.episode
+    };
   }
 
   // Which show, season and episode this is. Dropout links the season as
@@ -1889,6 +1901,10 @@
         return false;
       case "page:state":
         reply(snapshot());
+        return false;
+      case "page:info":
+        // The player asks what the episode page knows, for its title.
+        reply(state.kind === "video" && state.rules ? Object.assign({ ok: true }, episodeDetails()) : { ok: false, error: "Not an episode page" });
         return false;
       case "page:action": {
         // BrowserBack pressed while the player had the keys: the same as on

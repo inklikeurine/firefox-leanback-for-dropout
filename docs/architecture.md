@@ -479,6 +479,17 @@ of the frame's width, with pixel minimums. While it is open, `left`/`right` walk
 back to seeking, and `down` closes it and hands focus to the page. With no
 video to drive, `down` goes straight to the page.
 
+**The title and the peek.** `transport.js` also draws the title
+(`.tenfoot-osd`, top left): the show's name, then "S9 · E3 · Whodunnit",
+from `setInfo()`. `player.js` asks the page for it once per video
+(`page:info`), falling back to `OTTData.video.title`. The title shows with
+the bar, and alone for 4 s on a video's first `play` (`flashTitle`). A
+**peek** shows the bar for a while without the selection
+(`data-tenfoot-peek`, no button stamped): the keys stay playback's, `open()`
+takes over from it, and it ends on its timer or `endPeek(reason)`. A pause
+the viewer made (`userPaused`, not the panel's hold nor the unmute rescue)
+peeks for 4 s; the video playing again ends that peek.
+
 **The settings panel** opens from the bar's gear or from the options button
 during playback. It pauses the picture and holds a stack of levels: the top
 rows (Quality, Speed, Play Next Episode, Closed Captions, Leanback Settings),
@@ -604,6 +615,7 @@ and on `player:bye` (`pagehide`).
 | `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player |
 | `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
 | `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`search`, `menu`, …); `browser-back` is BrowserBack pressed in the player frame |
+| `page:info` | player → bg → page | — | reply `{ok, series, title, season, episode}`: what the episode page says, for the title over the video; `ok: false` off an episode page |
 | `page:state` | harness → page | — | reply: a snapshot (page kind, theater, focused element and its rect, ring/hints, Home's model, the show page, the rail). For the tests; the extension never sends it |
 | `exit` | page → bg | — | exit hook; the reply says whether the tab was closed |
 | `history:progress` | player → bg | `{key, url, title, position, duration, ended, next}` | where the video is; `next` is Dropout's up-next `{url, title}`, or null when nothing follows |

@@ -172,6 +172,45 @@
   white-space: nowrap;
 }
 
+/* The title over the top left of the picture: the show's name in yellow
+   capitals, then "S9 · E3 · Whodunnit". */
+.tenfoot-osd {
+  --tf-pu: calc(100vw / 1920);
+  position: fixed;
+  left: calc(var(--tf-pu) * 64);
+  top: calc(var(--tf-pu) * 56);
+  z-index: 2147483646;
+  box-sizing: border-box;
+  max-width: 60vw;
+  padding: calc(var(--tf-pu) * 18) calc(var(--tf-pu) * 26);
+  border-radius: calc(var(--tf-pu) * 12);
+  background: rgba(0, 0, 0, 0.45);
+  color: #f5f6f7;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  pointer-events: none;
+}
+.tenfoot-osd[hidden],
+.tenfoot-osd [hidden] {
+  display: none;
+}
+.tenfoot-osd-show {
+  margin: 0;
+  font-size: max(13px, calc(var(--tf-pu) * 18));
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tenfoot-ring-color);
+}
+.tenfoot-osd-episode {
+  margin: calc(var(--tf-pu) * 6) 0 0;
+  font-size: max(16px, calc(var(--tf-pu) * 26));
+  font-weight: 600;
+  line-height: 1.25;
+}
+.tenfoot-osd-show[hidden] + .tenfoot-osd-episode {
+  margin-top: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-ring {
     transition: none;

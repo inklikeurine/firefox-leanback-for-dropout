@@ -132,7 +132,13 @@ navigation.
 
 A round play/pause button, the progress bar with the time so far under its
 start and the length under its end, then round settings and full-screen
-buttons; the selected button has the yellow ring round it.
+buttons; the selected button has the yellow ring round it. The title (the
+show, then "S9 · E3 · Whodunnit") is over the top left whenever the bar is
+up.
+
+A **pause** brings the bar and the title up for four seconds *without the
+selection*: no button is ringed, and the keys stay playback's — ◀ ▶ skip, OK
+plays (the bar goes), ▼ enters the bar on play/pause.
 
 - ◀ ▶ walk it, no wrapping. The **position is shown but never selected** —
   seeking is what ◀ ▶ do whenever the bar is not holding a button.

@@ -228,6 +228,12 @@ moment. *Start Over* at the top of the playback settings goes back to 0:00.
 An episode you finished, or stopped within its first minute, starts from the
 beginning.
 
+**The title**: when an episode starts, the show's name (in yellow) and
+"S9 · E3 · Whodunnit" show over the top left of the picture for four
+seconds. **Pausing** brings the title back with the control bar for four
+seconds; the buttons still do what they do while watching (◀ ▶ skip, OK
+plays), and ▼ takes you into the bar.
+
 **The transport bar**: press ▼ while a video is playing. The bar is the
 extension's own — **play/pause · position · settings · fullscreen**, round
 buttons on a dark fade along the bottom of the picture, with the time so far

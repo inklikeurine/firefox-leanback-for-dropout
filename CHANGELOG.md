@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.23.0] — 2026-10-01
+
+### Added
+
+- **The title over the video**: the show's name in yellow, then "S9 · E3 ·
+  Whodunnit", over the top left of the picture. It shows for four seconds
+  when an episode starts, and whenever the control bar is up.
+- **Pausing brings up the title and the control bar** for four seconds. The
+  remote's buttons still do what they do during playback: ◀ ▶ skip, OK
+  plays, ▼ takes you into the bar.
+
 ## [0.22.0] — 2026-10-01
 
 ### Changed
