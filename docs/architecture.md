@@ -472,7 +472,9 @@ everything not on `player.transportKeep` (and everything on
 entries are never stamped.
 
 `▼` on a playing video opens the bar: **play/pause · position · settings ·
-fullscreen**. While it is open, `left`/`right` walk it instead of seeking,
+fullscreen**, with the elapsed time under the start of the progress bar and
+the length under its end. `content/player.css` sizes it in `--tf-pu`, 1/1920
+of the frame's width, with pixel minimums. While it is open, `left`/`right` walk it instead of seeking,
 `select` takes the control, `up` and `back` close it and give `left`/`right`
 back to seeking, and `down` closes it and hands focus to the page. With no
 video to drive, `down` goes straight to the page.

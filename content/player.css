@@ -47,22 +47,31 @@
 
 /* ---------------------------------------------------------------------------
    the transport bar
+
+   The look of the TV-shell mockup: a scrim along the bottom of the picture, a
+   round play button, the progress bar with the time so far under its start
+   and the length under its end, then settings and full screen. Sizes are in
+   --tf-pu, 1/1920 of the frame's width, so the bar is the same share of a
+   1080p and a 4K screen.
    --------------------------------------------------------------------------- */
 
 .tenfoot-transport {
+  --tf-pu: calc(100vw / 1920);
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 2147483646;
   box-sizing: border-box;
-  padding: 24px 40px 28px;
+  min-height: calc(var(--tf-pu) * 200);
+  padding: 0 calc(var(--tf-pu) * 64) calc(var(--tf-pu) * 48);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  color: var(--tenfoot-text);
-  font: 500 20px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(to top, rgba(11, 12, 16, 0.94) 0%, rgba(11, 12, 16, 0.78) 55%, rgba(11, 12, 16, 0) 100%);
+  justify-content: flex-end;
+  color: #f5f6f7;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-weight: 600;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 55%, rgba(0, 0, 0, 0) 100%);
 }
 .tenfoot-transport[hidden] {
   display: none;
@@ -71,38 +80,46 @@
 .tenfoot-transport-row {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: calc(var(--tf-pu) * 32);
 }
 
-/* A control on the row. The selection is stamped by transport.js, never read
-   from :focus — the page moves the focus and the highlight must not go with
-   it. */
+/* A control on the row: a round button. The selection is stamped by
+   transport.js, never read from :focus — the page moves the focus and the
+   highlight must not go with it. */
 .tenfoot-tc {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  box-sizing: border-box;
+  width: max(40px, calc(var(--tf-pu) * 60));
+  height: max(40px, calc(var(--tf-pu) * 60));
   margin: 0;
   padding: 0;
-  border: var(--tenfoot-ring-width) solid transparent;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: inherit;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f6f7;
   font: inherit;
   cursor: pointer;
 }
 .tenfoot-tc svg {
-  width: 30px;
-  height: 30px;
+  width: 45%;
+  height: 45%;
+}
+/* Play / pause: larger, a dark disc with a yellow glyph. */
+.tenfoot-tc.tenfoot-tc-main {
+  width: max(52px, calc(var(--tf-pu) * 76));
+  height: max(52px, calc(var(--tf-pu) * 76));
+  background: #1a1c22;
+  color: var(--tenfoot-ring-color);
 }
 .tenfoot-tc:focus {
   outline: none;
 }
+/* The selection: the ring, on a dark edge, round like the button. */
 .tenfoot-tc[data-tenfoot-current="true"] {
-  border-color: var(--tenfoot-ring-color);
-  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 2px var(--tenfoot-edge), 0 0 0 calc(2px + var(--tenfoot-ring-width)) var(--tenfoot-ring-color);
 }
 
 /* Position. Shown, never selected: ◀ ▶ seek whenever the row is not holding a
@@ -110,16 +127,17 @@
 .tenfoot-scrub {
   flex: 1 1 auto;
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: calc(var(--tf-pu) * 12);
   min-width: 0;
+  /* The times hang under the bar; this keeps the bar level with the buttons. */
+  padding-top: max(26px, calc(var(--tf-pu) * 40));
 }
 .tenfoot-scrub-track {
   position: relative;
-  flex: 1 1 auto;
-  height: 8px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.24);
+  height: max(6px, calc(var(--tf-pu) * 8));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
 }
 .tenfoot-scrub-buffered,
 .tenfoot-scrub-played {
@@ -127,10 +145,10 @@
   left: 0;
   top: 0;
   height: 100%;
-  border-radius: 4px;
+  border-radius: 999px;
 }
 .tenfoot-scrub-buffered {
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.4);
 }
 .tenfoot-scrub-played {
   background: var(--tenfoot-ring-color);
@@ -138,18 +156,19 @@
 .tenfoot-scrub-head {
   position: absolute;
   top: 50%;
-  width: 18px;
-  height: 18px;
-  margin: -9px 0 0 -9px;
+  width: max(14px, calc(var(--tf-pu) * 20));
+  height: max(14px, calc(var(--tf-pu) * 20));
   border-radius: 50%;
   background: var(--tenfoot-ring-color);
-  box-shadow: 0 0 0 3px var(--tenfoot-edge);
+  transform: translate(-50%, -50%);
 }
-.tenfoot-scrub-time {
-  flex: 0 0 auto;
-  margin: 0;
+.tenfoot-scrub-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: max(14px, calc(var(--tf-pu) * 22));
+  line-height: 1.2;
+  color: #cfd3da;
   font-variant-numeric: tabular-nums;
-  font-size: 21px;
   white-space: nowrap;
 }
 

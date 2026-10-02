@@ -126,8 +126,13 @@ navigation.
 **Ours, not the player's.** ▼ on a playing video opens it:
 
 ```
-[ play/pause | ————●———— 12:04 / 24:30 | settings | fullscreen ]
+( ▶ )  ————————●————————————  ( ⚙ ) ( ⛶ )
+       12:04            24:30
 ```
+
+A round play/pause button, the progress bar with the time so far under its
+start and the length under its end, then round settings and full-screen
+buttons; the selected button has the yellow ring round it.
 
 - ◀ ▶ walk it, no wrapping. The **position is shown but never selected** —
   seeking is what ◀ ▶ do whenever the bar is not holding a button.

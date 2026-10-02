@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.22.0] — 2026-10-01
+
+### Changed
+
+- **The control bar over the video has a new look**, the one in the TV
+  mockup: a dark fade along the bottom of the picture, a round play button
+  with a yellow symbol, round settings and full-screen buttons, and the
+  selection a yellow ring around the button. It is the same share of the
+  screen on a 1080p and a 4K television.
+- **The times sit under the ends of the progress bar**: the time so far under
+  its start, the length under its end, instead of "12:04 / 24:30" at the
+  right.
+
 ## [0.21.0] — 2026-10-01
 
 ### Added

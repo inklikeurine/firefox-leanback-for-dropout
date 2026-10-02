@@ -229,7 +229,9 @@ An episode you finished, or stopped within its first minute, starts from the
 beginning.
 
 **The transport bar**: press ▼ while a video is playing. The bar is the
-extension's own — **play/pause · position · settings · fullscreen** — and
+extension's own — **play/pause · position · settings · fullscreen**, round
+buttons on a dark fade along the bottom of the picture, with the time so far
+under the start of the progress bar and the length under its end — and
 ◀ ▶ walk it, OK takes a control, back closes it and gives ◀ ▶ back to seeking.
 The position is shown but never selected: seeking is ◀ ▶ whenever the bar is
 not holding a button.

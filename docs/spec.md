@@ -231,7 +231,9 @@ means Back at the top level closes Firefox.
   otherwise the episode order from the series page. **Autoplay next** on
   `ended` is a setting (default on).
 - **Transport bar.** ▼ on a playing video opens Leanback's own bar: play/pause
-  · position · settings · fullscreen. ◀ ▶ walk it (and stop seeking while it is
+  · position · settings · fullscreen, as round buttons on a dark fade along
+  the bottom of the picture, the play button larger with a yellow symbol; the
+  time so far under the start of the progress bar, the length under its end. ◀ ▶ walk it (and stop seeking while it is
   open), OK takes a control, back closes it. ▼ again continues to the page
   below. The player's own chrome stays hidden.
 - **Settings panel (playback).** The bar's settings, or the menu button during

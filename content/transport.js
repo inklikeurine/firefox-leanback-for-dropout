@@ -115,9 +115,11 @@
     }
 
     row.appendChild(makeButton("playpause", "Play or pause", "play"));
+    buttons.playpause.classList.add("tenfoot-tc-main");
 
     // Position: shown, never selected. ◀ ▶ seek whenever the row is not
-    // holding a button, so there is nothing here to walk onto.
+    // holding a button, so there is nothing here to walk onto. The time so
+    // far sits under the start of the bar and the length under its end.
     const scrub = doc.createElement("div");
     scrub.className = "tenfoot-scrub";
     const track = doc.createElement("div");
@@ -129,10 +131,16 @@
     const head = doc.createElement("div");
     head.className = "tenfoot-scrub-head";
     track.append(buffered, played, head);
-    const time = doc.createElement("p");
-    time.className = "tenfoot-scrub-time";
-    time.textContent = "0:00 / 0:00";
-    scrub.append(track, time);
+    const times = doc.createElement("div");
+    times.className = "tenfoot-scrub-times";
+    const elapsed = doc.createElement("span");
+    elapsed.className = "tenfoot-scrub-elapsed";
+    elapsed.textContent = "0:00";
+    const total = doc.createElement("span");
+    total.className = "tenfoot-scrub-total";
+    total.textContent = "0:00";
+    times.append(elapsed, total);
+    scrub.append(track, times);
     row.appendChild(scrub);
 
     // Captions live in the settings panel, so the row has no CC button.
@@ -216,7 +224,9 @@
         if (v && v.buffered && v.buffered.length) buf = v.buffered.end(v.buffered.length - 1);
       } catch (_err) { /* buffered throws in some states; the bar just shows less */ }
       buffered.style.width = dur > 0 ? `${Math.min(100, (buf / dur) * 100)}%` : "0%";
-      time.textContent = `${clock(cur)} / ${clock(dur)}`;
+      if (elapsed.textContent !== clock(cur)) elapsed.textContent = clock(cur);
+      if (total.textContent !== clock(dur)) total.textContent = clock(dur);
+      scrub.setAttribute("aria-label", `${clock(cur)} of ${clock(dur)}`);
     }
 
     // Opening settings stops the picture, and it stays stopped until the panel
