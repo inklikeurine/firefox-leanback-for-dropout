@@ -528,6 +528,7 @@
       url: dv ? dv.url : null,
       upNext: d ? d.upNext : null,
       upNextShowing: offerShowing(),
+      upNextCard: state.upNext.shown,
       transport: state.transport,
       transportControls: state.transport ? state.controls.length : 0,
       resumed: state.resume.resumed,

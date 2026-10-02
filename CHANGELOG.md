@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.3] — 2026-10-02
+
+### Fixed
+
+- With the "Up next" card up, the button hints said ◀ ▶ skip; they now say
+  ◀ hides the card.
+
 ## [0.26.2] — 2026-10-02
 
 ### Fixed

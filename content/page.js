@@ -1550,9 +1550,11 @@
     if (state.kind === "video") {
       if (state.playerFocused) {
         const offering = state.playerState && state.playerState.upNextShowing;
+        // With Leanback's up-next card up, ◀ hides it rather than skipping.
+        const card = state.playerState && state.playerState.upNextCard;
         return [
           { keys: "OK", label: offering ? "Play next episode" : "Play / pause" },
-          { keys: "◀ ▶", label: `−${step} s / +${step} s` },
+          card ? { keys: "◀", label: "Hide up next" } : { keys: "◀ ▶", label: `−${step} s / +${step} s` },
           { keys: "▼", label: "Player controls" },
           { keys: "Menu", label: "Settings" },
           { keys: "Back", label: state.theater ? "Leave" : "Back" }
@@ -1857,9 +1859,11 @@
         return false;
       case "player:state": {
         const was = state.playerState && state.playerState.upNextShowing;
+        const wasCard = Boolean(state.playerState && state.playerState.upNextCard);
         state.playerState = msg.state && typeof msg.state === "object" ? msg.state : null;
         // The site is offering the next episode: say which key takes it.
-        if (state.enabled && state.playerState && state.playerState.upNextShowing && !was) showHints();
+        const ps = state.playerState;
+        if (state.enabled && ps && ((ps.upNextShowing && !was) || Boolean(ps.upNextCard) !== wasCard)) showHints();
         reply({ ok: true });
         return false;
       }

@@ -646,7 +646,7 @@ and on `player:bye` (`pagehide`).
 | `player:settings` | page → bg → player | — | open the settings panel (the options button during playback); reply `{ok}` — the page opens its own settings when `ok` is false |
 | `player:back` | page → bg → player | — | Back (Escape) on the page during playback: the frame closes what it can; reply `{consumed}` — the page walks its own layers when `consumed` is false |
 | `player:offer` | page → bg → player | `{showing}` | the site's up-next overlay is on the page, so OK in the player takes it |
-| `player:state` | player → bg → page | state object | hint bar, autoplay-next, up-next offer |
+| `player:state` | player → bg → page | state object | hint bar, autoplay-next, up-next offer (`upNextShowing`; `upNextCard` when it is Leanback's card, which ◀ hides) |
 | `player:ended` | player → bg → page | `{upNext, dismissed}` | autoplay next, unless the viewer hid the up-next card (`dismissed`) |
 | `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player |
 | `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
