@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0] — 2026-10-01
+
+### Added
+
+- **▼ leaves the search box** for what is below it: the result filters, then
+  the results. ▲ goes back up into the box; the other keys still type.
+
 ## [0.20.0] — 2026-10-01
 
 ### Added

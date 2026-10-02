@@ -40,9 +40,11 @@ reaching it with a keyboard costs nothing. Everything else a keyboard could
 do is reachable from the remote.
 
 While the focus is in a text field, **only the back button is ours** — even
-`/` belongs to the field — and ◀ when the text cursor is at the very start
-with nothing selected: then it leaves the field, for the rail on the search
-page.
+`/` belongs to the field — plus ◀ when the text cursor is at the very start
+with nothing selected (it leaves the field, for the rail on the search page)
+and ▼ in a one-line field such as the search box (it leaves the field for
+what is below it: the result filters, then the results; with nothing below,
+it stays the field's). In a field of several lines ▼ moves the cursor.
 
 ## Actions → behaviour by context
 
@@ -197,7 +199,8 @@ page; and in a tab opened straight on a page, with nothing behind it, Leanback
 does the Back itself. What that means for layers: the remote's Back leaves the
 page, whatever is open on it, so ◀ is the way out of what is open: it closes
 the options panel (as the menu button does) and the playback settings, one
-submenu at a time, and leaves the search box from the start of its text. The
+submenu at a time, and leaves the search box from the start of its text (▼
+leaves it for the results). The
 rail closes with ▶, the transport bar with ▲.
 
 ## Remote example: WeChip W1 air mouse

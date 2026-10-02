@@ -104,7 +104,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 23 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox (Dropout's own Home is back); click again restores it |
 | 24 | Change ring colour in options, reload | New colour |
 | 25 | Set exit hook to *close this tab*, go to Home, Escape | Tab closes (in kiosk: Firefox exits) |
-| 26 | `/search`: type a query | Letters reach the input; Escape leaves the field; the results are four across, large, and reachable with the arrows; Left from the first result reaches the rail. In the field, Left moves the text cursor, and at the start of the text reaches the rail; Right returns to the field |
+| 26 | `/search`: type a query | Letters reach the input; Escape leaves the field; the results are four across, large, and reachable with the arrows; Left from the first result reaches the rail. In the field, Left moves the text cursor, and at the start of the text reaches the rail; Right returns to the field. Down from the field reaches the filters, then the results; Up from the first row returns to the field |
 | 27 | Wiggle the mouse over cards on Home and tiles on `/series` | The ring does not move; no hover tooltips appear |
 | 28 | Press the keyboard's *Menu* key (`ContextMenu`) on Home | Leanback's settings open as a panel over Home; no context menu. Hovering its rows with the mouse turns none of them blue |
 | 28a | In that panel, Left | The panel closes and the ring is back where it was |

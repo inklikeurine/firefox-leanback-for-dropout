@@ -46,8 +46,10 @@
 
   /**
    * @param {KeyboardEvent|{key:string,ctrlKey?:boolean,altKey?:boolean,metaKey?:boolean}} event
-   * @param {{editable?: boolean, atStart?: boolean}} ctx — atStart: the text
-   *   cursor sits at the very start of the field, with nothing selected
+   * @param {{editable?: boolean, atStart?: boolean, singleLine?: boolean}} ctx —
+   *   atStart: the text cursor sits at the very start of the field, with
+   *   nothing selected; singleLine: a one-line field (a search box), where ▼
+   *   has nothing to do
    * @returns {string|null} action name, or null when the key is not ours
    */
   function actionFor(event, ctx) {
@@ -56,9 +58,11 @@
     const key = event.key;
     if (ctx && ctx.editable) {
       // Typing: the back button leaves the field, and so does ◀ when the
-      // cursor cannot go further left. Everything else is the field's,
-      // including "/".
+      // cursor cannot go further left, and ▼ from a one-line field (there is
+      // no line below to go to). Everything else is the field's, including
+      // "/".
       if (key === "Escape" || key === "BrowserBack") return "back";
+      if (key === "ArrowDown" && ctx.singleLine) return "down";
       return key === "ArrowLeft" && ctx.atStart ? "left" : null;
     }
     if (Object.prototype.hasOwnProperty.call(REMOTE, key)) return REMOTE[key];
@@ -84,6 +88,11 @@
     return false;
   }
 
+  // True for a one-line text field: an <input>, not a textarea or editable text.
+  function isSingleLine(el) {
+    return isEditable(el) && el.tagName === "INPUT";
+  }
+
   // True when the text cursor is at the very start of a field and nothing is
   // selected: the one place ◀ has nothing left to do inside it.
   function caretAtStart(el) {
@@ -94,5 +103,5 @@
     }
   }
 
-  globalThis.TenfootKeymap = Object.freeze({ actionFor, isEditable, caretAtStart, PLAYER_ACTIONS, REMOTE, KEYBOARD_EXCEPTIONS });
+  globalThis.TenfootKeymap = Object.freeze({ actionFor, isEditable, isSingleLine, caretAtStart, PLAYER_ACTIONS, REMOTE, KEYBOARD_EXCEPTIONS });
 })();

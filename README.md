@@ -273,7 +273,7 @@ with nothing behind it, Leanback walks up the site itself: episode → season �
 Home. The back button leaves the page whatever is open on it, so ◀ is the way
 out of what is open on a page: it closes the options panel and the playback
 settings, and with the text cursor at the start of the search box it moves to
-the rail. To leave the rail press ▶, to close the player's bar press ▲ (a
+the rail. ▼ leaves the search box for the results, and ▲ goes back into it. To leave the rail press ▶, to close the player's bar press ▲ (a
 keyboard's Escape closes each of them first).
 
 Full table: [docs/keymap.md](./docs/keymap.md).
@@ -333,9 +333,6 @@ declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
   Roku and Android apps recorded for the rows Home has loaded. Watching in
   Firefox does not reach Dropout's own history, so the Roku will not show it;
   syncing between devices is planned for 1.0.
-- On the search page the remote cannot reach the results from the search
-  field: there its arrows move the text cursor, and ◀ at the start of the
-  field goes to the rail, not the results. A keyboard's Escape does it.
 - A show opens on its newest season by going to that season's page, so
   opening a show loads two pages; the screen stays blank for that moment.
 - The show's yellow button knows an episode's season and number when Leanback

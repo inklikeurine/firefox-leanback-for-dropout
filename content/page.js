@@ -524,6 +524,7 @@
     const c = ctx || {};
     if (c.editable) {
       if (action === "back") return blurField();
+      if (action === "down") return leaveFieldBelow();
       return action === "left" ? leaveField() : false;
     }
     if (state.menu.isOpen) return dispatchInMenu(action);
@@ -1282,6 +1283,18 @@
     return true;
   }
 
+  // ▼ from a one-line field (the search box): out of it, to what is below —
+  // the search results. With nothing below, the key stays the field's.
+  function leaveFieldBelow() {
+    const el = document.activeElement;
+    if (!el || el === document.body) return false;
+    const { candidates } = collect();
+    const t = Spatial.pick("down", Ring.unscaledRect(el), candidates.filter((c) => c.el !== el));
+    if (!t) return false;
+    focusEl(t.el);
+    return true;
+  }
+
   function blurField() {
     const el = document.activeElement;
     if (el && el.blur) el.blur();
@@ -1601,7 +1614,8 @@
     if (!state.enabled) return;
     const editable = Keymap.isEditable(e.target);
     const atStart = editable && Keymap.caretAtStart(e.target);
-    const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart });
+    const singleLine = editable && Keymap.isSingleLine(e.target);
+    const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
       browserBack();

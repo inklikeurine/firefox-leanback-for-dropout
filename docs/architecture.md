@@ -66,7 +66,7 @@ engine. The extension itself stays standalone
 | `grid` | `/series`, `/collections/...`, `/my-list` | Geometric navigation over tiles, and the rail; Down past the last row clicks Load More. Initial focus: the first tile. Back → Home. |
 | `series` | `/<slug>[/season:N]` | Everything at a one-word address that is not a hub: a show, a special or a list, told apart by `content/show.js` from the page. A show gets the row of seasons, opens on its newest season, and starts on the episode to watch next; focusables are the show's buttons (*Trailer*, *My list*, *Watch Movie* on a special), the seasons (a row) and the tiles. A page whose layout is not recognised keeps Dropout's season and sort selects, each a two-step control: OK engages it, ◀ ▶ step its options, OK commits (going to the option's page), Back puts the old value back. A list's initial focus is its first tile. Back → Home. |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>` | Theater layout (setting `auto`), focus the player frame. Down from the player → the series link, else the first focusable under it. Back: theater on → leave theater; else the season page it was opened from when it is the same show, else the show's page. Media keys always reach the player. |
-| `search` | `/search` | Geometric navigation, and the rail; the search input keeps the keyboard (only Escape is intercepted while typing). |
+| `search` | `/search` | Geometric navigation, and the rail; the search input keeps the keyboard apart from Escape, ◀ at the start of the text (the rail) and ▼ (the results). |
 | `other` | everything else (login, account, legal pages) | No initial focus: the ring follows whatever the page focuses. Arrows move among links, buttons and form fields (`pages.other.focusable`). Back → Home. |
 
 ## Key handling
@@ -78,10 +78,12 @@ engine. The extension itself stays standalone
   Appendix A — then dispatches the action to the current context. Full table:
   [keymap.md](./keymap.md).
 - If the event target is editable (`input`, `textarea`, `[contenteditable]`,
-  or an open `<select>`), only `back` is handled, and `left` when the text
-  cursor is at the very start of the field with nothing selected: that leaves
-  the field for the rail where there is one, else for the nearest thing to
-  its left.
+  or an open `<select>`), only `back` is handled; `left` when the text
+  cursor is at the very start of the field with nothing selected, which
+  leaves the field for the rail where there is one, else for the nearest
+  thing to its left; and `down` in a one-line `input`, which leaves it for
+  the nearest thing below (on the search page, the filters and results), and
+  is left to the field when there is nothing below.
 - `preventDefault()`/`stopPropagation()` only when the action was consumed.
   Unconsumed keys reach the site untouched.
 - Repeat: OS auto-repeat is accepted but throttled to one move per 80 ms.

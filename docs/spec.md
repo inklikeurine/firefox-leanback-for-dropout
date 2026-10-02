@@ -396,7 +396,9 @@ nothing unfinished read before it counts for Continue Watching or resuming. The 
 - Never trap focus except inside a real dialog, and Escape always closes it.
 - Never inject synthetic key events into the page; act on elements directly.
 - Never override the site's behaviour for keys the extension doesn't need.
-  Typing in an input field is left alone except for Escape.
+  Typing in an input field is left alone except for Escape, ◀ at the very
+  start of the text, and ▼ in a one-line field, which have nothing to do
+  there.
 - Back must always lead somewhere sensible even when the tab was opened
   straight onto a deep link (kiosk case): with nothing behind, Leanback walks
   up the site.
@@ -448,7 +450,8 @@ Manual checklist (full version with expected results in
   plays it.
 - A special: *Watch Movie* and *My list* reachable; the extras below.
 - ◀ closes Leanback's settings and the top of the playback settings; ◀ at the
-  start of the search box moves to the rail.
+  start of the search box moves to the rail; ▼ from the search box reaches
+  the results, ▲ goes back into it.
 - *Clear Continue Watching*: Continue Watching empties; episodes already
   watched keep their ticks.
 - Video page: theater layout appears; OK toggles; Left/Right seeks; Down opens

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Leanback for Dropout",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Drive watch.dropout.tv with a TV remote: a TV-style Home screen with Continue Watching, a big focus ring, a theater player and media-key control",
   "browser_specific_settings": {
     "gecko": {
