@@ -772,8 +772,9 @@
       return true;
     }
 
-    // ▶ or OK on a top row with something below it.
-    async function enterRow(byRight) {
+    // ▶ or OK on a top row with something below it. Synchronous unless it asks
+    // the player's menu something (then a promise).
+    function enterRow(byRight) {
       if (!panel) return false;
       const row = panel.rows[panel.index];
       if (!row) return false;
@@ -792,7 +793,7 @@
     // ◀ or Back: one level up. In the player's menu that is its own Back
     // button, as many times as the level went down; without one, the menu is
     // started over at its root.
-    async function leaveSub() {
+    function leaveSub() {
       const lvl = level();
       if (!lvl) return false;
       if (lvl.kind !== "vendor") {
@@ -800,6 +801,10 @@
         refreshRows();
         return true;
       }
+      return leaveVendor(lvl);
+    }
+
+    async function leaveVendor(lvl) {
       let read = null;
       let pressed = 0;
       for (let i = 0; i < (lvl.backs || 1); i += 1) {
@@ -849,8 +854,8 @@
       return true;
     }
 
-    // OK inside a submenu.
-    async function takeSubItem(byRight) {
+    // OK inside a submenu. Synchronous unless it clicks the player's menu.
+    function takeSubItem(byRight) {
       const lvl = level();
       if (!lvl) return false;
       if (lvl.kind === "leanback") return takeLeanback(lvl, byRight);
@@ -864,17 +869,14 @@
       if (!it) return false;
       if (byRight && it.kind !== "drill" && it.kind !== "expand") return true;
       if (it.kind === "drill") return drillInto(it, it.label);
-      return follow(await clickVendor(it), it);
+      return clickVendor(it).then((read) => follow(read, it));
     }
 
     function takeRow(byRight) {
       if (!panel) return false;
       const row = panel.rows[panel.index];
       if (!row) return false;
-      if (row.kind === "vendor" || row.kind === "leanback" || row.kind === "captions" || row.kind === "captionStyle") {
-        enterRow(byRight);
-        return true;
-      }
+      if (row.kind === "vendor" || row.kind === "leanback" || row.kind === "captions" || row.kind === "captionStyle") return enterRow(byRight);
       if (byRight) return true;
       if (row.kind === "action") {
         if (typeof o.onNext === "function") o.onNext();
@@ -902,16 +904,40 @@
       return true;
     }
 
+    // One step with the player's menu at a time: OK held down repeats, and a
+    // second step started while the first is still waiting for the player
+    // would click its menu in the wrong state. Steps asked for meanwhile are
+    // dropped; ▲ ▼ still move.
+    let busy = false;
+    function step(fn) {
+      if (busy) return true;
+      busy = true;
+      let result;
+      try {
+        result = fn();
+      } catch (err) {
+        result = Promise.reject(err);
+      }
+      if (!result || typeof result.then !== "function") {
+        busy = false; // done already: nothing was asked of the player
+        return true;
+      }
+      result
+        .catch((err) => console.warn("[leanback-for-dropout] settings panel:", err && err.message))
+        .finally(() => { busy = false; });
+      return true;
+    }
+
     // A click on an entry (a mouse): as moving there and pressing OK.
     function pickEntry(i) {
       if (!panel) return;
       const lvl = level();
       if (lvl) {
         lvl.index = i;
-        takeSubItem(false);
+        step(() => takeSubItem(false));
       } else {
         panel.index = i;
-        takeRow(false);
+        step(() => takeRow(false));
       }
     }
 
@@ -1120,23 +1146,17 @@
             case "up": return movePanel(-1);
             case "down": return movePanel(1);
             case "select":
-              if (lvl) takeSubItem(false);
-              else takeRow(false);
-              return true;
+              return step(() => (lvl ? takeSubItem(false) : takeRow(false)));
             case "right":
               // ▶ opens what has something below it, and flips an on/off of
               // Leanback's; it never runs an action.
-              if (lvl) takeSubItem(true);
-              else takeRow(true);
-              return true;
+              return step(() => (lvl ? takeSubItem(true) : takeRow(true)));
             case "left":
             case "back":
               // ◀ and Back leave the submenu, one level at a time; at the top,
               // either one closes the panel.
-              if (lvl) {
-                leaveSub();
-                return true;
-              }
+              if (lvl) return step(() => leaveSub());
+              if (busy) return true;
               return closePanel();
             default: return false;
           }

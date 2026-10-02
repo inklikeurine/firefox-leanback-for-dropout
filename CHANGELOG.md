@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.26.2] — 2026-10-02
+
+### Fixed
+
+- Holding OK in the playback settings (on Closed Captions, say) could act
+  several times over while the player was still answering the first press,
+  leaving its menu in a muddle. A press that arrives meanwhile is ignored.
+
 ## [0.26.1] — 2026-10-02
 
 ### Fixed

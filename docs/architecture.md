@@ -550,6 +550,10 @@ times as the level went down and pop it; without one, the menu is started
 over at its root. In Leanback's own settings a switch flips on OK or ▶, a
 choice pushes its values (OK picks one and pops), and ▶ never runs an
 action. `onSetting` and `onAction` hand the changes to `content/player.js`.
+Taking an entry and going up are `step()`s: one at a time while a step waits
+on the player's menu (OK held down repeats), so presses that arrive
+meanwhile are dropped; ▲ ▼ still move. Steps that ask the player nothing
+finish at once.
 
 With **Player controls → the site's own** (`playerChrome: "site"`, on the
 options page only), nothing of the player is stamped and no bar is drawn: ▼
