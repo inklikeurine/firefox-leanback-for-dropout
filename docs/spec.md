@@ -194,8 +194,8 @@ means Back at the top level closes Firefox.
 - **Focus ring.** One overlay element drawn over the focused target: 4 px ring
   in Dropout yellow (`#feea3b`) with a dark edge, its corners rounded like the
   target's, and the target itself enlarged by the selection zoom (5 % by
-  default; *Enlarge selection* on the options page and the options panel,
-  *Selected Item Zoom* in the playback panel). Follows scroll and resize.
+  default; *Enlarge Selection* in Leanback's settings). Follows scroll and
+  resize.
   Colour, width and zoom are settings. Under `prefers-reduced-motion` nothing
   animates.
 - **Select / Back.** OK activates the focused element (native activation for
@@ -207,7 +207,7 @@ means Back at the top level closes Firefox.
   sibling (the previous episode, when Dropout's own up-next card went on to
   the next) carries on past it. So Back walks video → the season page you
   came from → Home. `Escape` does the same after closing what is open on the
-  page (a dialog, the options panel, the rail, the player's bar, theater). In
+  page (a dialog, the settings panel, the rail, the player's bar, theater). In
   a tab opened straight on a page, with nothing of the site behind it, Back
   walks up the site itself, and at Home runs the **exit hook** (setting:
   *nothing* (default) or *close this tab* — the HTPC shell kiosk hand-off).
@@ -256,28 +256,35 @@ means Back at the top level closes Firefox.
   time so far under the start of the progress bar, the length under its end. ◀ ▶ walk it (and stop seeking while it is
   open), OK takes a control, back closes it. ▼ again continues to the page
   below. The player's own chrome stays hidden.
+- **One settings panel.** Leanback's settings are one list
+  (`lib/settings.js` → `ROWS`) drawn by one panel (`nav/panel.js`), the same
+  on a page and during playback: full height from the right, the title and a
+  ✕ that is only a picture, the selected entry in yellow, a switch for each
+  on/off, a chevron and the value for an entry with several values, a tick on
+  the chosen option, headings over groups, and the keys along the foot
+  ("◀ Back · ▲▼ Move · OK Change"). ▲ ▼ move; OK or ▶ take an entry (a switch
+  flips, an entry with several values opens its short list, where OK picks one
+  and goes back up; ▶ never runs an action); ◀ or Back go up one level and at
+  the top close the panel. The options page shows the same entries in the
+  same words as a form.
 - **Settings panel (playback).** The bar's settings, or the menu button during
-  playback, opens a full-height panel: Quality, Speed and Closed Captions — the
-  player's own menus, as many levels deep as they go, caption style included —
-  plus Play Next Episode and Leanback Settings, headed by *Start Over* after a
-  resume. It pauses the picture while open. ◀ or back at its top level closes
-  it.
-- **Options (everywhere else).** The menu button (or the rail's gear) opens
-  Leanback's settings as a panel on the page, with Home, Search, *Clear
-  Continue Watching* (OK twice) and *Turn Leanback off* at the foot.
-  ▲ ▼ move, OK takes an entry, ◀ or back closes. Without it those would need letter
-  keys, which on a remote means the QWERTY pad on the back.
-- **Settings in the page.** "Leanback settings" fills the same panel rather
-  than opening a tab: any navigation away from the site would tear the
-  extension's state down, and in a kiosk there is no way back. Each row is the
-  same two-step control as a drop-down: OK starts changing it, ◀ ▶ change
-  it, OK confirms, back undoes.
+  playback, opens it: *Start Over* after a resume, Quality and Speed (the
+  player's own menus), Play Next Episode, **Closed Captions** as a switch (on:
+  the player's first track; off: Off; ▶ opens the player's captions menu),
+  **Caption Style** (the player's Customize: font, background, window, as many
+  levels deep as they go; one ◀ comes all the way back) and Leanback
+  Settings. It pauses the picture while open.
+- **Settings everywhere else.** The menu button (or the rail's gear) opens
+  Leanback's settings as a panel on the page, with *Clear Continue Watching*
+  (OK twice) and *Turn Leanback Off* under the settings. It fills a panel
+  rather than opening a tab: any navigation away from the site would tear the
+  extension's state down, and in a kiosk there is no way back.
 - **Button hints.** Off by default. When on, a bottom strip shows the buttons
   that matter in the current context: it stays on screen on pages, and during
   playback appears briefly on a press. Short notices ("No next episode") use
   the same strip and appear with hints off too.
-- **Toggle.** Clicking the toolbar button, the options panel's "Turn Leanback
-  off", or a user-assigned keyboard shortcut (`commands` API, no default
+- **Toggle.** Clicking the toolbar button, the settings panel's "Turn Leanback
+  Off", or a user-assigned keyboard shortcut (`commands` API, no default
   binding) turns the extension off/on for the site; state persists.
 
 ## Optional / future functionality
@@ -331,7 +338,7 @@ means Back at the top level closes Firefox.
 - `content/transport.js`: the transport bar and the playback settings panel.
 - `lib/history.js`: the watch history — keys, thresholds, merging, Continue
   Watching — shared by the background, the page and the player.
-- `nav/spatial.js`, `nav/focus-ring.js`, `nav/menu.js`, `nav/rail.js`:
+- `nav/spatial.js`, `nav/focus-ring.js`, `nav/panel.js`, `nav/rail.js`:
   site-agnostic pieces — they only see the rules object or what they are
   handed, never Dropout selectors — so they can be reused for another site or
   borrowed by another project without edits.
@@ -440,7 +447,7 @@ Manual checklist (full version with expected results in
 - Home's cards: shows have wide pictures; running times read `6:03`; no
   "New" on New Releases; the selected card and its ring touch no text; the
   ring's corners follow the card's.
-- Highlights: the rail's icons, the banner's buttons and the options panel's
+- Highlights: the rail's icons, the banner's buttons and the settings panel's
   rows show no coloured background when selected or hovered; the ring is the
   only highlight.
 - Continue Watching: an episode watched a few minutes in Firefox appears first
@@ -475,7 +482,10 @@ Manual checklist (full version with expected results in
   the transport bar, Down again reaches the page; back returns to the season
   page.
 - Settings panel: Closed Captions → Customize → Font is reachable, each group
-  of options headed; ◀ goes up one level; OK on a Leanback value goes round.
+  of options headed; ◀ goes up one level. Closed Captions flips on OK;
+  Caption Style opens the player's Customize, and one ◀ comes back.
+- Leanback's settings: the same list on a page and in the playback panel;
+  a switch flips on OK; Seek Step opens its list, OK picks a value (ticked).
 - Media keys work on a video page from anywhere on the page.
 - Autoplay next: the next episode starts when one ends.
 - Trailer modal and cookie banner: Escape closes; focus returns.

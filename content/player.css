@@ -380,127 +380,18 @@
   margin-left: calc(var(--tf-pu) * 14);
 }
 
+/* With the settings panel open, it is the one thing over the picture besides
+   the bar and the title. */
+html.tenfoot-settings-open .tenfoot-upnext,
+html.tenfoot-settings-open .tenfoot-seek {
+  visibility: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-upnext-ring-fill {
     transition: none;
   }
   .tenfoot-ring {
-    transition: none;
-  }
-}
-
-/* ---------------------------------------------------------------------------
-   the settings panel
-
-   Full height, flown in from the right. Dropout's own font stack, so it reads
-   as part of the site rather than as something bolted on.
-   --------------------------------------------------------------------------- */
-
-.tenfoot-settings {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2147483647;
-  box-sizing: border-box;
-  width: min(460px, 42vw);
-  overflow-y: auto;
-  padding: 40px 0;
-  background: #000000;
-  color: #ffffff;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
-  font-size: 21px;
-  font-weight: 700;
-  box-shadow: -24px 0 64px rgba(0, 0, 0, 0.7);
-  transform: translateX(0);
-  transition: transform 250ms ease-out;
-}
-.tenfoot-settings[hidden] {
-  display: none;
-}
-/* The fly-in. The panel is laid out first and slid into place on the next
-   frame, so it arrives from off screen rather than appearing over the video. */
-html:not(.tenfoot-settings-open) .tenfoot-settings {
-  transform: translateX(100%);
-}
-
-.tenfoot-settings-title {
-  margin: 0 0 20px;
-  padding: 0 32px;
-  font-size: 17px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  opacity: 0.55;
-}
-
-.tenfoot-settings-list {
-  display: flex;
-  flex-direction: column;
-}
-
-/* A heading over each group of the player's options ("Color", "Size"). Not a
-   stop: the arrows move between the entries only. */
-.tenfoot-settings-group {
-  margin: 14px 0 4px;
-  padding: 0 32px;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.55;
-}
-
-.tenfoot-settings-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  margin: 0;
-  padding: 18px 32px;
-  border: 0;
-  background: transparent;
-  color: #ffffff;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.tenfoot-settings-item:focus {
-  outline: none;
-}
-/* The selection: Dropout's yellow, black text. Stamped by transport.js rather
-   than read from :focus, so the page cannot take the highlight away. */
-.tenfoot-settings-item[data-tenfoot-current="true"] {
-  background: var(--tenfoot-ring-color, #feea3b);
-  color: #000000;
-}
-.tenfoot-settings-label {
-  flex: 1 1 auto;
-}
-.tenfoot-settings-value {
-  flex: 0 0 auto;
-  font-weight: 400;
-  opacity: 0.7;
-  white-space: nowrap;
-}
-.tenfoot-settings-item[data-tenfoot-current="true"] .tenfoot-settings-value {
-  opacity: 0.85;
-}
-.tenfoot-settings-mark {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-}
-.tenfoot-settings-mark svg {
-  width: 20px;
-  height: 20px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tenfoot-settings {
     transition: none;
   }
 }

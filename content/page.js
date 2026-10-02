@@ -38,7 +38,7 @@
   const Rules = globalThis.TenfootSiteRules;
   const Spatial = globalThis.TenfootSpatial;
   const Ring = globalThis.TenfootFocusRing;
-  const Menu = globalThis.TenfootMenu;
+  const Panel = globalThis.TenfootPanel;
   const Rail = globalThis.TenfootRail;
   const Home = globalThis.TenfootHome;
   const History = globalThis.TenfootHistory;
@@ -74,9 +74,8 @@
     modalReturn: null,
     menu: null,
     menuReturn: null,
-    settingRow: null,
     offerShowing: false,
-    settingBefore: null,
+    levels: [], // the settings panel's stack: the list, then a choice's values
     engaged: null,
     engagedIndex: 0,
     home: null,
@@ -1070,68 +1069,52 @@
     if (!r || r.action !== "close-tab") state.hints.show([{ keys: "Back", label: "Nothing to go back to" }], 2000, true);
   }
 
-  // id → how a value is shown and stepped. Every one is a short list or a
-  // number with a step, so ◀ ▶ can walk it.
-  const SETTING_ROWS = [
-    { id: "theater", label: "Theater layout", values: ["auto", "manual", "off"], show: { auto: "every video", manual: "on OK", off: "never" } },
-    { id: "seekStep", label: "Seek step", values: Settings.SEEK_STEPS, suffix: " s" },
-    { id: "autoplayNext", label: "Play next episode", bool: true },
-    { id: "seasonStart", label: "Shows open on", values: Settings.SEASON_START, show: { latest: "newest season", first: "first season" } },
-    { id: "startMuted", label: "Start videos muted", bool: true },
-    { id: "hintBar", label: "Button hints", bool: true },
-    { id: "ringWidth", label: "Ring width", min: 2, max: 12, step: 1, suffix: " px" },
-    { id: "ringColor", label: "Ring colour", values: ["#feea3b", "#ffffff", "#ff4081", "#41d6c3", "#ff8a3d"], show: { "#feea3b": "yellow", "#ffffff": "white", "#ff4081": "pink", "#41d6c3": "teal", "#ff8a3d": "orange" } },
-    { id: "focusZoom", label: "Enlarge selection", min: 0, max: 25, step: 5, suffix: "%" },
-    { id: "skipMarketingSite", label: "Skip dropout.tv home", bool: true },
-    { id: "exitHook", label: "Back on Home", values: ["none", "close-tab"], show: { none: "does nothing", "close-tab": "closes the tab" } }
-  ];
+  // -- Leanback's settings, in the panel (nav/panel.js) ------------------------
+  //
+  // The list is the one every settings panel shows (lib/settings.js → ROWS),
+  // then Clear Continue Watching and Turn Leanback Off. ▲ ▼ move; OK or ▶ take
+  // an entry: an on/off flips, a choice opens its short list, where OK picks
+  // one (ticked) and goes back up; ◀ or Back go back out, and at the top close
+  // the panel. state.levels is the stack: the list, then a choice's values.
 
-  function settingRow(id) {
-    return SETTING_ROWS.find((r) => r.id === id) || null;
+  function topEntries() {
+    const s = state.settings;
+    const entries = Settings.ROWS.map((r) => (r.kind === "toggle"
+      ? { id: r.id, label: r.label, kind: "toggle", on: Boolean(s[r.id]) }
+      : { id: r.id, label: r.label, kind: "choice", value: Settings.valueText(r, s[r.id]) }));
+    entries.push({ id: "forget", label: "Clear Continue Watching", kind: "action", value: state.forgetArmed ? "OK again to clear" : "", separator: true });
+    entries.push({ id: "disable", label: "Turn Leanback Off", kind: "action" });
+    return entries;
   }
 
-  function settingText(row) {
-    const v = state.settings[row.id];
-    if (row.bool) return v ? "on" : "off";
-    if (row.show) return row.show[v] || String(v);
-    if (row.id === "focusZoom" && v === 0) return "off";
-    return `${v}${row.suffix || ""}`;
-  }
-
-  // The few things that are not settings — where to go, and the way out — come
-  // along at the foot of the list.
-  function settingItems() {
-    const items = SETTING_ROWS.map((r) => ({ id: r.id, label: r.label, value: settingText(r) }));
-    items.push({ id: "browse", label: "Home" });
-    items.push({ id: "search", label: "Search", detail: "needs a keyboard" });
-    items.push({ id: "forget", label: "Clear Continue Watching" });
-    items.push({ id: "disable", label: "Turn Leanback off" });
-    return items;
-  }
-
-  function stepSetting(row, delta) {
-    const cur = state.settings[row.id];
-    let next;
-    if (row.bool) next = !cur;
-    else if (row.values) {
-      const list = row.values;
-      const i = list.indexOf(cur);
-      const j = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + delta));
-      next = list[j];
-    } else {
-      next = Math.min(row.max, Math.max(row.min, Number(cur) + delta * row.step));
+  function levelView(level) {
+    if (level.kind === "choice") {
+      const cur = state.settings[level.row.id];
+      return {
+        title: level.row.label,
+        index: level.index,
+        entries: level.values.map((v) => ({ id: String(v), label: Settings.valueText(level.row, v), kind: "option", checked: v === cur }))
+      };
     }
-    if (next === cur) return true;
-    state.settings = Object.assign({}, state.settings, { [row.id]: next });
-    state.menu.setValue(row.id, settingText(row));
-    send({ type: "settings:set", patch: { [row.id]: next } });
-    return true;
+    return { title: "Leanback Settings", index: level.index, entries: topEntries() };
+  }
+
+  function currentLevel() {
+    return state.levels[state.levels.length - 1] || null;
+  }
+
+  function renderSettings() {
+    const level = currentLevel();
+    if (level) state.menu.render(levelView(level));
   }
 
   function openSettings() {
-    state.settingRow = null;
     state.forgetArmed = false;
-    state.menu.open(settingItems(), { title: "Leanback settings" });
+    state.levels = [{ kind: "top", index: 0 }];
+    // Open, then draw: drawing moves the focus into the panel, and a panel
+    // that is not open yet would let the rail think the selection left it.
+    state.menu.open();
+    renderSettings();
     showHints();
     return true;
   }
@@ -1154,7 +1137,8 @@
 
   function closeMenu() {
     if (!state.menu.close()) return false;
-    state.settingRow = null;
+    state.levels = [];
+    state.forgetArmed = false;
     if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
     else if (state.playerFocused || state.theater) enterPlayer();
     state.menuReturn = null;
@@ -1163,108 +1147,100 @@
   }
 
   function dispatchInMenu(action) {
-    // A settings row being changed takes the arrows, exactly like an engaged
-    // dropdown on the page: OK starts, ◀ ▶ change, OK confirms, back undoes.
-    if (state.settingRow) {
-      switch (action) {
-        case "left":
-          return stepSetting(state.settingRow, -1);
-        case "right":
-          return stepSetting(state.settingRow, 1);
-        case "select":
-          return disengageSetting();
-        case "back":
-          return cancelSetting();
-        case "up":
-        case "down":
-          return true; // absorbed: leaving is a deliberate OK or back
-        default:
-          return false;
-      }
-    }
+    const level = currentLevel();
+    if (!level) return closeMenu();
     switch (action) {
       case "up":
-      case "down":
-        disarmForget();
-        state.menu.move(action === "up" ? -1 : 1);
+      case "down": {
+        const n = levelView(level).entries.length;
+        const next = Math.min(n - 1, Math.max(0, level.index + (action === "up" ? -1 : 1)));
+        if (next !== level.index) {
+          level.index = next;
+          state.forgetArmed = false;
+          renderSettings();
+        }
         return true;
+      }
       case "select":
-        state.menu.activate();
-        return true;
+        return takeSetting(level, false);
+      case "right":
+        return takeSetting(level, true);
       case "back":
       case "left":
-        return closeMenu(); // ◀ is the way out of a panel, as Back is
+        // ◀ is the way out, as Back is: one level, then the panel.
+        if (state.levels.length > 1) {
+          state.levels.pop();
+          renderSettings();
+          return true;
+        }
+        return closeMenu();
       case "menu":
         return closeMenu();
-      case "right":
-        return true; // absorbed: the panel is a single column
       default:
         return false;
     }
   }
 
-  function engageSetting(row) {
-    state.settingRow = row;
-    state.settingBefore = state.settings[row.id];
-    if (state.menu.current) state.menu.current.dataset.tenfootEngaged = "true";
-    showHints();
-    return true;
-  }
-
-  function disengageSetting() {
-    if (state.menu.current) delete state.menu.current.dataset.tenfootEngaged;
-    state.settingRow = null;
-    showHints();
-    return true;
-  }
-
-  function cancelSetting() {
-    const row = state.settingRow;
-    if (row && state.settings[row.id] !== state.settingBefore) {
-      state.settings = Object.assign({}, state.settings, { [row.id]: state.settingBefore });
-      state.menu.setValue(row.id, settingText(row));
-      send({ type: "settings:set", patch: { [row.id]: state.settingBefore } });
+  // OK (and ▶, which never runs an action) on the entry under the selection.
+  function takeSetting(level, byRight) {
+    if (level.kind === "choice") {
+      const v = level.values[level.index];
+      saveSetting(level.row.id, v);
+      state.levels.pop();
+      renderSettings();
+      return true;
     }
-    return disengageSetting();
+    const entry = topEntries()[level.index];
+    if (!entry) return true;
+    const row = Settings.rowOf(entry.id);
+    if (row && row.kind === "toggle") {
+      saveSetting(row.id, !state.settings[row.id]);
+      renderSettings();
+      return true;
+    }
+    if (row && row.kind === "choice") {
+      const values = Settings.choicesOf(row, state.settings[row.id]);
+      state.levels.push({ kind: "choice", row, values, index: Math.max(0, values.indexOf(state.settings[row.id])) });
+      renderSettings();
+      return true;
+    }
+    if (byRight) return true;
+    onMenuItem(entry.id);
+    return true;
+  }
+
+  function saveSetting(id, value) {
+    if (state.settings[id] === value) return;
+    state.settings = Object.assign({}, state.settings, { [id]: value });
+    send({ type: "settings:set", patch: { [id]: value } });
+  }
+
+  // A click on an entry (a mouse): the same as moving there and pressing OK.
+  function onPanelPick(i) {
+    const level = currentLevel();
+    if (!level) return;
+    level.index = i;
+    takeSetting(level, false);
   }
 
   // Clearing cannot be undone, so it takes OK twice.
-  function disarmForget() {
-    if (!state.forgetArmed) return;
-    state.forgetArmed = false;
-    state.menu.setValue("forget", "");
-  }
-
   function forgetHistory() {
     if (!state.forgetArmed) {
       state.forgetArmed = true;
-      state.menu.setValue("forget", "OK again to confirm");
+      renderSettings();
       return;
     }
     state.forgetArmed = false;
-    state.menu.setValue("forget", "cleared");
+    renderSettings();
     send({ type: "history:clear" });
     notice("Continue Watching cleared");
   }
 
+  // The actions at the foot of the list.
   function onMenuItem(id) {
-    const row = settingRow(id);
-    if (row) {
-      engageSetting(row);
-      return;
-    }
-    // Not a setting: one of the actions at the foot of the list.
     switch (id) {
       case "forget":
         forgetHistory();
-        return;
-      case "browse":
-        closeMenu();
-        goHome();
-        return;
-      case "search":
-        closeMenu();
-        goTop(state.rules.searchUrl || "/search");
         return;
       case "disable":
         closeMenu();
@@ -1588,12 +1564,11 @@
         { keys: "Back", label: state.theater ? "Leave" : "Back" }
       ];
     }
-    if (state.settingRow) return [{ keys: "◀ ▶", label: "Change" }, { keys: "OK", label: "Done" }, { keys: "Back", label: "Undo" }];
     if (state.menu.isOpen) {
       return [
         { keys: "▲ ▼", label: "Move" },
         { keys: "OK", label: "Change" },
-        { keys: "Back", label: "Close" }
+        { keys: "◀", label: "Back" }
       ];
     }
     if (state.engaged) return [{ keys: "◀ ▶", label: "Change" }, { keys: "OK", label: "Confirm" }, { keys: "Back", label: "Cancel" }];
@@ -1687,14 +1662,17 @@
       // traps), and closing the panel on that made "Leanback settings" shut
       // itself the instant it opened. Take the focus back, and stop trying
       // rather than fight a focus trap for ever.
-      if (state.menu.contains(t)) state.menuRefocus = 0;
-      else {
-        if (state.menuRefocus < MENU_REFOCUS_LIMIT) {
-          state.menuRefocus += 1;
-          state.menu.refocus();
-        }
+      if (state.menu.contains(t)) {
+        // The panel marks its own selection: no ring round it, no zoom on it.
+        state.menuRefocus = 0;
+        state.ring.hide();
         return;
       }
+      if (state.menuRefocus < MENU_REFOCUS_LIMIT) {
+        state.menuRefocus += 1;
+        state.menu.refocus();
+      }
+      return;
     }
     if (t !== state.lastFocus) {
       state.lastFocus = t;
@@ -2009,7 +1987,7 @@
     }
     state.ring = Ring.createRing(document, ringStyle());
     state.hints = Ring.createHintBar(document, { enabled: settings.hintBar });
-    state.menu = Menu.createMenu(document, { onActivate: onMenuItem });
+    state.menu = Panel.createPanel(document, { label: "Leanback settings", onPick: onPanelPick });
     if (History) {
       state.history = await History.load(API);
       History.watch(API, (store) => {

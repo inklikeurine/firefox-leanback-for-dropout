@@ -1,7 +1,9 @@
 /* global browser, chrome */
 // Leanback for Dropout — options page. Reads settings through the shared
 // TenfootSettings module, saves on every change, follows storage changes
-// made elsewhere (toolbar toggle) so the form never goes stale.
+// made elsewhere (toolbar toggle) so the form never goes stale. The settings
+// section is built from the one list (TenfootSettings.ROWS), so its names and
+// value words are the TV panels' own.
 
 (function () {
   const API = typeof browser !== "undefined" ? browser : chrome;
@@ -10,17 +12,59 @@
   const status = $("status");
   let statusTimer = 0;
 
-  const CHECKBOXES = ["enabled", "skipMarketingSite", "hintBar", "autoplayNext", "startMuted"];
-  const NUMBERS = ["ringWidth", "focusZoom"];
-  const SELECTS = ["theater", "exitHook", "playerChrome", "seasonStart"];
-  const NUMERIC_SELECTS = ["seekStep"];
+  // One row per entry of the list: a checkbox for an on/off, a drop-down for
+  // a choice.
+  function buildRows() {
+    const box = $("rows");
+    for (const row of Settings.ROWS) {
+      const line = document.createElement(row.kind === "toggle" ? "label" : "div");
+      line.className = "row";
+      if (row.kind === "toggle") {
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = row.id;
+        const text = document.createElement("span");
+        text.textContent = row.label;
+        line.append(input, text);
+      } else {
+        const label = document.createElement("label");
+        label.htmlFor = row.id;
+        label.textContent = row.label;
+        const select = document.createElement("select");
+        select.id = row.id;
+        line.append(label, select);
+      }
+      box.appendChild(line);
+    }
+  }
+
+  // A choice's options: its values, and the current one when it is not
+  // among them (a colour of your own, an older ring width).
+  function fillChoices(row, current) {
+    const select = $(row.id);
+    const values = Settings.choicesOf(row, current);
+    const want = values.map(String).join("|");
+    if (select.dataset.values !== want) {
+      while (select.firstChild) select.removeChild(select.firstChild);
+      for (const v of values) {
+        const opt = document.createElement("option");
+        opt.value = String(v);
+        opt.textContent = Settings.valueText(row, v);
+        select.appendChild(opt);
+      }
+      select.dataset.values = want;
+    }
+    select.value = String(current);
+  }
 
   function render(s) {
-    for (const id of CHECKBOXES) $(id).checked = s[id];
-    for (const id of NUMBERS) $(id).value = String(s[id]);
-    for (const id of SELECTS) $(id).value = s[id];
-    for (const id of NUMERIC_SELECTS) $(id).value = String(s[id]);
-    $("ringColor").value = s.ringColor;
+    $("enabled").checked = s.enabled;
+    $("playerChrome").value = s.playerChrome;
+    for (const row of Settings.ROWS) {
+      if (row.kind === "toggle") $(row.id).checked = Boolean(s[row.id]);
+      else fillChoices(row, s[row.id]);
+    }
+    $("ringColorPicker").value = s.ringColor;
     $("ringColorText").value = s.ringColor;
   }
 
@@ -31,12 +75,15 @@
   }
 
   function readPatch(id) {
-    if (CHECKBOXES.includes(id)) return { [id]: $(id).checked };
-    if (NUMBERS.includes(id)) return { [id]: Number($(id).value) };
-    if (SELECTS.includes(id)) return { [id]: $(id).value };
-    if (NUMERIC_SELECTS.includes(id)) return { [id]: Number($(id).value) };
-    if (id === "ringColor" || id === "ringColorText") return { ringColor: $(id).value };
-    return null;
+    if (id === "enabled") return { enabled: $(id).checked };
+    if (id === "playerChrome") return { playerChrome: $(id).value };
+    if (id === "ringColorPicker" || id === "ringColorText") return { ringColor: $(id).value };
+    const row = Settings.rowOf(id);
+    if (!row) return null;
+    if (row.kind === "toggle") return { [id]: $(id).checked };
+    const raw = $(id).value;
+    const v = row.values.some((x) => typeof x === "number") ? Number(raw) : raw;
+    return { [id]: v };
   }
 
   async function onChange(e) {
@@ -86,6 +133,7 @@
     $("forget").textContent = "Clear Continue Watching";
   }
 
+  buildRows();
   $("form").addEventListener("change", onChange);
   $("reset").addEventListener("click", reset);
   $("forget").addEventListener("click", forget);

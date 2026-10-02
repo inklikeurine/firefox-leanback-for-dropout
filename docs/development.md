@@ -98,7 +98,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 21 | Series page: Enter on "Watch trailer", then Escape | Trailer modal opens with the ring inside it; Escape closes it and the ring returns to the trailer button |
 | 21a | Series page: Up to *My list*, Enter, Enter | The show is added to Dropout's My List and removed again; the button shows no blue when selected |
 | 21b | A show you are partway through: open the season you are watching | Watched episodes carry a tick, the one in progress a bar, and the ring starts on the one to watch next |
-| 21c | Leanback settings: *Shows open on* → first season; open a show | Season 1 |
+| 21c | Leanback settings: *Shows Open On*, OK, ▼ to *First season*, OK; open a show | The list shows both, the newest ticked; afterwards the row reads *First season*; the show opens on Season 1 |
 | 21d | A special (e.g. a stand-up set from *All Series*) | *Watch Movie* and *My list* reachable; the video and its extras below |
 | 22 | Fresh profile, first visit | Cookie dialog is reachable by arrows and closable by Enter, above Home |
 | 23 | Click the toolbar button | Badge shows off; the site behaves as stock Firefox (Dropout's own Home is back); click again restores it |
@@ -106,12 +106,12 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 25 | Set exit hook to *close this tab*, go to Home, Escape | Tab closes (in kiosk: Firefox exits) |
 | 26 | `/search`: type a query | Letters reach the input; Escape leaves the field; the results are four across, large, and reachable with the arrows; Left from the first result reaches the rail. In the field, Left moves the text cursor, and at the start of the text reaches the rail; Right returns to the field. Down from the field reaches the filters, then the results; Up from the first row returns to the field |
 | 27 | Wiggle the mouse over cards on Home and tiles on `/series` | The ring does not move; no hover tooltips appear |
-| 28 | Press the keyboard's *Menu* key (`ContextMenu`) on Home | Leanback's settings open as a panel over Home; no context menu. Hovering its rows with the mouse turns none of them blue |
-| 28a | In that panel, Left | The panel closes and the ring is back where it was |
+| 28 | Press the keyboard's *Menu* key (`ContextMenu`) on Home | Leanback's settings slide in from the right, full height: *Leanback Settings* and a ✕ at the top, the keys along the foot, the selected entry yellow with no ring round it; switches for the on/offs, a value and › for the rest; no Home or Search; no context menu. Hovering entries with the mouse turns none of them blue |
+| 28a | In that panel: ▼ to *Seek Step*, OK, ▼, OK; then *Start Videos Muted*, OK; then Left | *Seek Step*'s values open with 10 s ticked; OK on 15 s picks it and goes back up, the row now reading 15 s. The switch flips. Left closes the panel and the ring is back where it was |
 | 29 | In that panel: *Clear Continue Watching*, Enter, Enter | The first Enter asks; the second clears, and Continue Watching disappears (Roku items included) until something is watched again; Dropout's bars still show on cards; episodes you had finished still carry their tick on the show's page |
 | 30 | On an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
-| 31 | In the panel: Closed Captions → OK → Customize → OK → Font | Font's options, under Color, Size and Opacity headings; ◀ goes back up one level at a time, and at the top closes the panel |
-| 32 | Leanback Settings → Seek Step, OK repeatedly | The value goes round from 300 s back to 5 s |
+| 31 | In the panel: Closed Captions, OK; OK again; then Caption Style, OK, Font, OK; then Left | Captions come on (the switch yellow) and go off again. Caption Style shows Font, Background, Window; Font's options under Color, Size and Opacity headings; Left goes back up one level, and from Caption Style straight back to the panel's top. The panel looks the same as on Home |
+| 32 | During playback: settings → Leanback Settings | The same entries, in the same order and words, as the panel on Home; Seek Step opens its list there too |
 | 33 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Verification hand-off
@@ -189,7 +189,7 @@ Time: ~10 minutes.
 - Plain ES2020, no modules that need bundling. The scripts in one manifest
   entry share a global, and each file publishes one frozen object on it
   (`TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
-  `TenfootMenu`, `TenfootTransport`, `TenfootSettings`).
+  `TenfootPanel`, `TenfootTransport`, `TenfootSettings`).
 - Log with the `[leanback-for-dropout]` prefix, `console.warn` / `console.error`
   only, for warnings, errors and one-off state changes.
 - All site selectors in `sites/dropout.json` — never inline in `content/*.js`.

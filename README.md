@@ -155,7 +155,7 @@ TV remote actually has are mapped, so nothing is hidden behind a letter key.
 | --- | --- | --- |
 | ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. Nothing else, ever. In the player, ◀ ▶ move the playhead and ▼ opens the transport bar (▼ again continues to the page) |
 | OK | `Enter` | Open, play, pause; open a season; start changing a setting; play the next episode while the "Up next" card is up |
-| back | `BrowserBack` (also `Escape`) | Back one page — Firefox's own Back. `Escape` first closes whatever is open (a dropdown, a dialog, the options panel, the rail, the player's bar) |
+| back | `BrowserBack` (also `Escape`) | Back one page — Firefox's own Back. `Escape` first closes whatever is open (a dropdown, a dialog, the settings panel, the rail, the player's bar) |
 | menu | `ContextMenu` | During playback, the **settings panel**; anywhere else, **Leanback's settings** as a panel on the page, with Home, Search, *Clear Continue Watching* and *Turn Leanback off* at the foot |
 | home | `BrowserHome` | **Reserved for your TV shell — never intercepted** |
 | volume | `AudioVolume*` | Your desktop's, never intercepted |
@@ -251,21 +251,26 @@ The position is shown but never selected: seeking is ◀ ▶ whenever the bar is
 not holding a button.
 
 **Settings** opens a full-height panel from the right and pauses the picture.
-It holds the player's settings and Leanback's in one list: *Start Over* (after
-a video picked up where you left it), Quality, Speed, Play Next Episode, Closed
-Captions, and **Leanback Settings** as a submenu. Quality,
-Speed and Closed Captions are the player's own, and opening one shows what it
-offers, as many levels deep as it goes: Closed Captions → Customize → Font,
-Background, Window, each with its options grouped under headings (Color, Size,
-Opacity). ▲ ▼ move; **▶ or OK opens a submenu, ◀ or back goes up one level**;
-OK picks an option, flips a switch, or steps a value round its list (▶ steps it
-on). ◀ or back at the top closes the panel, which starts the picture again
-unless it was already paused.
+It holds the player's settings and Leanback's together: *Start Over* (after a
+video picked up where you left it), Quality, Speed, Play Next Episode, **Closed
+Captions** (a switch), **Caption Style** (font, background, window) and
+**Leanback Settings**. Quality and Speed are the player's own, and opening one
+shows what it offers; Caption Style goes as many levels deep as the player's
+caption settings do, each group of options under its heading (Color, Size,
+Opacity). ▶ on Closed Captions opens the player's own captions menu, for a
+different track.
 
-**The options button** opens that panel during playback. Anywhere else it opens
-Leanback's settings directly, with Home, Search, *Clear Continue Watching* and
-*Turn Leanback off* at the foot of the list; ◀ or back closes it. *Clear
-Continue Watching* asks for OK a second time before it clears. It forgets
+**Leanback's settings look and work the same everywhere**: during playback
+(under Leanback Settings), on any other page (the options button, or the
+rail's gear), with the same entries in the same order and words. ▲ ▼ move.
+**OK or ▶** takes the entry under the selection: an on/off **switch** flips;
+an entry with several values (Seek Step, Shows Open On…) opens its **short
+list**, where OK picks one — it is ticked — and goes back up. **◀ or Back**
+goes back up one level, and at the top closes the panel (during playback the
+picture then starts again unless it was already paused). The ✕ in the corner
+is only a picture; the keys along the foot say the same. Under the settings
+come *Clear Continue Watching* and *Turn Leanback Off*. *Clear Continue
+Watching* asks for OK a second time before it clears. It forgets
 every video you have not finished and empties Continue Watching, Dropout's own
 progress from the Roku included, until something is watched again, here or on
 another device. What you finished stays watched. Dropout's progress bars still
@@ -287,10 +292,11 @@ itself — carries on to the season page. So Back from an episode is the season
 you were watching, and from a show, Home. In a tab opened straight on a page,
 with nothing behind it, Leanback walks up the site itself: episode → season →
 Home. The back button leaves the page whatever is open on it, so ◀ is the way
-out of what is open on a page: it closes the options panel and the playback
+out of what is open on a page: it closes the settings panel and the playback
 settings, and with the text cursor at the start of the search box it moves to
-the rail. ▼ leaves the search box for the results, and ▲ goes back into it. To leave the rail press ▶, to close the player's bar press ▲ (a
-keyboard's Escape closes each of them first).
+the rail. ▼ leaves the search box for the results, and ▲ goes back into it. To
+leave the rail press ▶, to close the player's bar press ▲ (a keyboard's Escape
+closes each of them first).
 
 Full table: [docs/keymap.md](./docs/keymap.md).
 

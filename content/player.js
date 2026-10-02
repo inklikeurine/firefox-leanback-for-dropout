@@ -433,6 +433,10 @@
         state.settings = Object.assign({}, state.settings, patch);
         send({ type: "settings:set", patch });
       },
+      // Leanback Settings → Clear Continue Watching, confirmed.
+      onAction: (id) => {
+        if (id === "forget") send({ type: "history:clear" });
+      },
       onClose: () => leaveTransport(),
       onPanelFailed: (kind) => console.warn(LOG, "the player offered no", kind, "menu")
     });

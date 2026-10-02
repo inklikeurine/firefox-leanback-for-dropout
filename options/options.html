@@ -13,100 +13,33 @@
 
       <form id="form">
         <fieldset>
-          <legend>General</legend>
+          <legend>Leanback</legend>
           <label class="row">
             <input type="checkbox" id="enabled">
             <span>Turn on for Dropout (the toolbar button toggles this too)</span>
           </label>
-          <label class="row">
-            <input type="checkbox" id="skipMarketingSite">
-            <span>Forward www.dropout.tv to Home</span>
-          </label>
-          <label class="row">
-            <input type="checkbox" id="hintBar">
-            <span>Show button hints along the bottom of the screen</span>
-          </label>
         </fieldset>
 
         <fieldset>
-          <legend>Focus ring</legend>
+          <legend>Leanback Settings</legend>
+          <p class="hint">The same settings, in the same order and words, as the panel the remote's menu button opens.</p>
+          <div id="rows"></div>
           <div class="row">
-            <label for="ringColor">Colour</label>
-            <input type="color" id="ringColor">
-            <input type="text" id="ringColorText" size="8" pattern="#[0-9a-fA-F]{6}" aria-label="Colour as hex">
-          </div>
-          <div class="row">
-            <label for="ringWidth">Width (px)</label>
-            <input type="number" id="ringWidth" min="2" max="12" step="1">
-          </div>
-          <div class="row">
-            <label for="focusZoom">Enlarge selection (%)</label>
-            <input type="number" id="focusZoom" min="0" max="25" step="5">
-            <span class="hint">0 turns it off; with reduced motion it changes without animating</span>
+            <label for="ringColorPicker">Ring Colour: your own</label>
+            <input type="color" id="ringColorPicker">
+            <input type="text" id="ringColorText" size="8" pattern="#[0-9a-fA-F]{6}" aria-label="Ring colour as hex">
           </div>
         </fieldset>
 
         <fieldset>
-          <legend>Player</legend>
+          <legend>Troubleshooting</legend>
           <div class="row">
-            <label>
-              Player controls
-              <select id="playerChrome">
-                <option value="leanback">Leanback's own transport bar</option>
-                <option value="site">The site's own player controls</option>
-              </select>
-            </label>
-            <span class="hint">For troubleshooting: the site's own controls if Leanback's ever fail</span>
-          </div>
-          <div class="row">
-            <label for="theater">Theater layout</label>
-            <select id="theater">
-              <option value="auto">On every video page</option>
-              <option value="manual">When Enter is pressed on the player</option>
-              <option value="off">Never</option>
+            <label for="playerChrome">Player controls</label>
+            <select id="playerChrome">
+              <option value="leanback">Leanback's own</option>
+              <option value="site">The site's own</option>
             </select>
-          </div>
-          <div class="row">
-            <label for="seekStep">Seek step</label>
-            <select id="seekStep">
-              <option value="5">5 seconds</option>
-              <option value="10">10 seconds</option>
-              <option value="15">15 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60">1 minute</option>
-              <option value="120">2 minutes</option>
-              <option value="300">5 minutes</option>
-            </select>
-          </div>
-          <label class="row">
-            <input type="checkbox" id="autoplayNext">
-            <span>Play the next episode when one ends</span>
-          </label>
-          <label class="row">
-            <input type="checkbox" id="startMuted">
-            <span>Start videos muted (off by default: Dropout starts them muted because Firefox blocks autoplay with sound, and this turns the sound back on)</span>
-          </label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Shows</legend>
-          <div class="row">
-            <label for="seasonStart">Open a show on</label>
-            <select id="seasonStart">
-              <option value="latest">Its newest season</option>
-              <option value="first">Its first season</option>
-            </select>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Leaving</legend>
-          <div class="row">
-            <label for="exitHook">Back on Home</label>
-            <select id="exitHook">
-              <option value="none">Does nothing</option>
-              <option value="close-tab">Closes this tab (kiosk setups)</option>
-            </select>
+            <span class="hint">The site's own, if Leanback's ever fail</span>
           </div>
         </fieldset>
 

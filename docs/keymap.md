@@ -48,13 +48,13 @@ it stays the field's). In a field of several lines ▼ moves the cursor.
 
 ## Actions → behaviour by context
 
-| Action | Page (`grid` / `series` / `search` / `other`) | Options panel (page) | `video`, focus on the page | `video`, focus in the player |
+| Action | Page (`grid` / `series` / `search` / `other`) | Settings panel (page) | `video`, focus on the page | `video`, focus in the player |
 | --- | --- | --- | --- | --- |
 | `up` | spatial / row move | previous entry | spatial; from the topmost element → player | closes the transport bar |
 | `down` | spatial / row move; past the last row → Load More | next entry | spatial | opens the **transport bar**; from the bar, on to the page |
-| `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | ◀ **closes the panel**, ▶ nothing — unless a settings row is being changed, when both change it | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead**; ◀ hides the "Up next" card while it is up |
-| `select` | activate; on a season, open it; on a `<select>` → engage or confirm; on the player → enter the player | take the entry, or start changing a settings row | activate | play / pause; take the control under the selection; play the next episode while the "Up next" card is up |
-| `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | undo a settings row → close | leave theater; else the page before | submenu → settings panel → transport bar → playback → the page before |
+| `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | ◀ **up one level**, at the top **closes the panel**; ▶ takes the entry (never an action) | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead**; ◀ hides the "Up next" card while it is up |
+| `select` | activate; on a season, open it; on a `<select>` → engage or confirm; on the player → enter the player | take the entry: flip a switch, open a list of values, pick one; Clear Continue Watching asks once more | activate | play / pause; take the control under the selection; play the next episode while the "Up next" card is up |
+| `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | up one level → close | leave theater; else the page before | submenu → settings panel → transport bar → playback → the page before |
 | `back` (BrowserBack) | Firefox's own Back, everywhere; Leanback steps in only when nothing of the site is behind the page, and then does what Escape does | | | |
 | `menu` | **opens Leanback's settings** | closes it | opens Leanback's settings | opens the **settings panel** in the player frame |
 | `search` | go to `/search` | — | same | same |
@@ -107,19 +107,19 @@ It opens the settings, and which settings depends on where you are.
 
 **During playback** it opens the **settings panel** in the player frame (below).
 **Everywhere else** — including an episode page whose player cannot be reached —
-it opens Leanback's own settings as a panel on the page. The few entries that
-are not settings sit at the foot of that list:
+it opens Leanback's own settings as a panel on the page: the same list, drawn
+the same way, as under *Leanback Settings* in the playback panel. Two entries
+that are not settings sit at the foot:
 
 | Entry | Does |
 | --- | --- |
-| Home | `/browse` |
-| Search | `/search` (needs a keyboard from there) |
 | Clear Continue Watching | forgets every video not finished, and empties Continue Watching; watched ones stay watched. The first OK asks, the second clears |
-| Turn Leanback off | the site behaves as stock Firefox |
+| Turn Leanback Off | the site behaves as stock Firefox |
 
-▲ ▼ move, OK starts changing a setting, ◀ ▶ change it, OK confirms, back undoes.
-◀ or back on the list itself closes it. No wrapping, like the rest of the
-navigation.
+▲ ▼ move, no wrapping. OK or ▶: a switch flips, an entry with several values
+opens its short list (OK picks one, ticked, and goes back up). ◀ or Back go
+up one level, and close the panel from its top. Home and Search are the
+rail's (and Back's, and `/`'s).
 
 ## The transport bar
 
@@ -166,14 +166,16 @@ already paused.
 | Quality | the player's own menu |
 | Speed | the player's own menu |
 | Play Next Episode | goes to the next episode — it is a link, not a toggle |
-| Closed Captions | the player's CC/subtitles menu: the tracks, and Customize → Font, Background, Window |
-| Leanback Settings | Leanback's own, as a submenu: Theater Layout, Autoplay Next Episode, Start Videos Muted, Button Hints, Seek Step, Selected Item Zoom, Selection Outline, Skip Marketing Site, Back On Home |
+| Closed Captions | a switch: OK turns the player's first track on, or captions off; ▶ opens the player's CC/subtitles menu (its tracks, and Customize) |
+| Caption Style | the player's Customize → Font, Background, Window; one ◀ comes all the way back |
+| Leanback Settings | Leanback's own, the same list as on a page: Autoplay Next Episode, Shows Open On, Seek Step, Theater Layout, Start Videos Muted, Button Hints, Enlarge Selection, Ring Width, Ring Colour, Skip dropout.tv Home, Back On Home; then Clear Continue Watching (OK twice) and Turn Leanback Off |
 
-- ▲ ▼ move. **▶ or OK opens a submenu; ◀ or back goes up one level.**
-- OK picks one of the player's options, flips a switch, or steps a value round
-  its list (from the last value back to the first). ▶ steps a value on and
-  stops at the last.
-- ◀ or back at the top closes the panel; back again, the bar.
+- ▲ ▼ move, no wrap. **OK or ▶ takes the entry**: a submenu opens; an on/off
+  switch flips; an entry with several values opens its short list, where OK
+  picks one (ticked) and goes back up. ▶ never runs an action (Start Over,
+  Play Next Episode, Clear Continue Watching).
+- **◀ or Back goes up one level**; at the top they close the panel; Back
+  again, the bar.
 
 The rows that come from the player are **proxied**: its menu is opened out of
 sight, read, and drawn in our own list, and the original is clicked when an
@@ -211,7 +213,7 @@ episode — when Dropout itself went on to the next — carries on to the season
 page; and in a tab opened straight on a page, with nothing behind it, Leanback
 does the Back itself. What that means for layers: the remote's Back leaves the
 page, whatever is open on it, so ◀ is the way out of what is open: it closes
-the options panel (as the menu button does) and the playback settings, one
+the settings panel (as the menu button does) and the playback settings, one
 submenu at a time, and leaves the search box from the start of its text (▼
 leaves it for the results). The
 rail closes with ▶, the transport bar with ▲.

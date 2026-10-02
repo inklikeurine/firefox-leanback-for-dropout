@@ -33,7 +33,7 @@ scripts, and the background script relays between them.
 
 | File | Runs in | Owns |
 | --- | --- | --- |
-| `lib/settings.js` | Every context (first script of each list) | The settings object: defaults, validation on read, `load`/`save`/`watch`. Shared rather than broadcast, so no context waits for another to start. |
+| `lib/settings.js` | Every context (first script of each list), and the options page | The settings object: defaults, validation on read, `load`/`save`/`watch`. Shared rather than broadcast, so no context waits for another to start. Also **the one list** of Leanback's settings (`ROWS`: id, label, on/off or choice, values and their words; `valueText`, `choicesOf`, `rowOf`), which every settings panel and the options page show. |
 | `nav/trail.js` | Top frame | The trail: which pages of the site are behind the current one in the tab's history, how a page was reached, and which pages are siblings. Site-agnostic; `sessionStorage` only. See [Back](#back-contentpagejs--navtrailjs). |
 | `lib/history.js` | Background, page and player | The watch history: video keys, the watched / in-progress thresholds, merging Leanback's readings with Dropout's progress bars, Continue Watching, resume points, the size cap, `load`/`save`/`watch` on `storage.local` key `progress`. Pure apart from those three. |
 | `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); per-tab registry of the player frame id in **`storage.session`** (an event page loses a plain variable when it unloads; a `Map` is the fallback if the API is missing); message relay page ⇄ player; toolbar button toggle and badge; `commands` handler; exit hook (`tabs.remove(sender.tab.id)`); the **only writer of the watch history**, one change at a time. |
@@ -44,7 +44,7 @@ scripts, and the background script relays between them.
 | `content/transport.js` | Every frame on `embed.vhx.tv` | Draws the transport bar (**play/pause · position · settings · fullscreen**) and drives the `<video>` directly. Also draws the full-height settings panel, which holds the player's settings (Quality, Speed, Closed Captions) and Leanback's in one list. The player's are **proxied** — see [The transport bar and the settings panel](#the-transport-bar-and-the-settings-panel). Leanback's are read from and written to `storage.local` through `content/player.js`. Site-agnostic apart from the `player` block of the rules it is handed. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | If the path is `/` and *skip marketing site* is on, `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Site-agnostic directional focus search over a candidate list; row-aware moves; focus memory. Knows nothing about Dropout. |
-| `nav/menu.js` | Top frame | The options panel the menu button opens: a list of `<button>`s the ring moves through like anything else. Site-agnostic; `content/page.js` supplies the entries and says what they do. |
+| `nav/panel.js` | Top frame and the player frame | The settings panel's look, the same everywhere: `render({title, index, entries})` draws a level (switches, chevrons and values, ticks, group headings, a ✕ picture, the keys along the foot), `open`/`close` slide it in and out. Logic-free and site-agnostic: `content/page.js` and `content/transport.js` own the levels and the keys. Styled by `content/panel.css`, in both frames' `css`. |
 | `nav/rail.js` | Top frame | The icon rail: buttons down the left edge, its own remembered position, which entry is the current page. Site-agnostic; `content/page.js` supplies the entries and says what they do. |
 | `nav/focus-ring.js` | Top frame | The overlay ring element and its positioning; hint bar element. Site-agnostic. |
 | `nav/keymap.js` | Both content scripts | Keys → action names, per context (page / player / typing). Pure and site-agnostic. |
@@ -124,13 +124,13 @@ entries of its own in its way; it makes sure the history is worth following:
    one top-level page to another from the rail (Browse, Search, My List,
    Dropout 24/7:
    pushed from Home, replaced from each other) never add a history entry. The
-   rail's and the options panel's *Home* go back down the history to Home
+   rail's *Home* goes back down the history to Home
    when it is on the trail (`history.go(-n)`), and open it otherwise.
 3. **Siblings are skipped on the way back.** When a page is reached by Back
    and the page left is its sibling (same kind and same show: the previous
    episode, after Dropout's own up-next card went on to the next), it carries
    on back past every sibling at once, before setting anything up.
-4. **Escape** runs the layered Back — dialog, options panel, rail, transport
+4. **Escape** runs the layered Back — dialog, settings panel, rail, transport
    bar and settings panel (asking the player frame first, `player:back`),
    theater — and then the browser's Back (`history.go(-1)`), the same step
    the remote's BrowserBack takes.
@@ -391,7 +391,7 @@ onto the rail; while `railActive`, ▲ ▼ move inside it without wrapping, OK
 takes the entry, ◀ is absorbed, and ▶ or Back call `leaveRail()`, which puts
 the selection back on `railReturn` (telling Home's model when it is a card).
 Only plain buttons live in the rail, so the arrows always have a way out. The
-gear opens the options panel with the gear as its return point.
+gear opens the settings panel with the gear as its return point.
 
 ## Watch history (`lib/history.js`)
 
@@ -420,7 +420,7 @@ Every write goes through the background, one change at a time (read → apply
 | `player.js` | pause, seeked, ended, the frame losing focus or being hidden, and every 15 s of `timeupdate` while playing. Never for a trailer or a live stream; a report under 5 s never replaces a stored position | `history:progress` |
 | `page.js` | once per episode page: its address, title, show name and picture; the show, season and episode from the season link ("Season 2, Episode 1", `video.episodeInfo`), else the show and season from `og:url` (`video.canonical`) | `history:meta` |
 | `home.js`, through `page.js` | the loaded rows' progress bars, when their values change | `history:observe` |
-| options panel, options page | *Clear Continue Watching* (asked twice): a watched video is kept whole. Of every other video, Leanback's own readings and the details from episode pages are deleted; Dropout's bars stay (they are Dropout's, and still show on cards) but the store notes `clearedAt`, and nothing unfinished read before it appears in Continue Watching or resumes | `history:clear` |
+| settings panel (page or playback), options page | *Clear Continue Watching* (asked twice): a watched video is kept whole. Of every other video, Leanback's own readings and the details from episode pages are deleted; Dropout's bars stay (they are Dropout's, and still show on cards) but the store notes `clearedAt`, and nothing unfinished read before it appears in Continue Watching or resumes | `history:clear` |
 
 **Resume.** When the player finds its `<video>` it looks up
 `resumePoint()` for the video. For a video in progress it sets `currentTime`
@@ -440,10 +440,11 @@ playback panel until it is used.
 - Style tokens (settings): `--tenfoot-ring-color` (`#feea3b`),
   `--tenfoot-ring-width` (`4px`), a dark outer edge for contrast on light
   images, and no transition under reduced motion. The focused element itself
-  is enlarged by the selection zoom (`focusZoom`: *Enlarge selection* on the
-  options page and the options panel, *Selected Item Zoom* in the playback
-  panel; `--tenfoot-zoom`, class `tenfoot-scaled`); an inline target is made `inline-block` first, because a
-  transform does nothing to an inline box.
+  is enlarged by the selection zoom (`focusZoom`: *Enlarge Selection*;
+  `--tenfoot-zoom`, class `tenfoot-scaled`); an inline target is made
+  `inline-block` first, because a transform does nothing to an inline box.
+  While the settings panel has the focus the ring is hidden: the panel marks
+  its own selection.
 - The ring sits `width + 2` px outside the target and its corner radius is
   the target's (its computed `border-top-left-radius`, enlarged by the zoom)
   plus that offset, so the two curves run parallel on anything rounded.
@@ -451,7 +452,7 @@ playback panel until it is used.
   (`a:link`), and every `<button>` blue on hover and focus (`button:hover,
   button:focus { background-color: #007095 }`, which outranks a single class).
   Leanback's buttons — the rail, the banner's **›** and proxied *My list*,
-  the options panel's rows — pin their backgrounds in those states with
+  the settings panel's entries — pin their backgrounds in those states with
   `!important`, so the ring is the only mark of the selection.
 - The hint bar is a second fixed element at the bottom: key glyphs and labels
   for the current context, on a scrim. **Off by default** (`hintBar`). When on,
@@ -512,9 +513,17 @@ and Dropout's Hide is pressed once when it appears. An empty end screen (Vimeo's
 outro, at the very end) is no offer.
 
 **The settings panel** opens from the bar's gear or from the options button
-during playback. It pauses the picture and holds a stack of levels: the top
-rows (Quality, Speed, Play Next Episode, Closed Captions, Leanback Settings),
-then Leanback's own settings or as many levels of the player's menu as it has.
+during playback, drawn by `nav/panel.js` as on a page. It pauses the picture
+and holds a stack of levels: the top rows (*Start Over* after a resume,
+Quality, Speed, Play Next Episode, Closed Captions, Caption Style, Leanback
+Settings), then Leanback's own settings (the shared list, `ROWS`, with Clear
+Continue Watching and Turn Leanback Off), a setting's values, or as many
+levels of the player's menu as it has. **Closed Captions** is a switch:
+`toggleCaptions()` opens the player's captions entry, clicks *Off* or its
+first other option, and reads the root again; ▶ instead opens that menu as a
+level. **Caption Style** (`openCaptionStyle()`) clicks through to the entry
+matching *Customize* and pushes it as one level that remembers it is two deep
+(`backs: 2`), so one ◀ presses the player's Back twice.
 The player's menu (`player.menu`) is always in the DOM, so it is read without
 being shown. On each level:
 
@@ -536,9 +545,11 @@ Taking an entry clicks the original and re-reads the menu once it has changed.
 A drill pushes a level. Anything else follows the player: if its menu stays on
 the same titled panel, that level is re-read in place (a caption colour); if
 it goes back up or to the root, the panel pops to match (a caption track).
-◀ and Back press the player's own Back button (`player.menuBack`) and pop one
-level; without one, the menu is started over at its root. In Leanback's own
-submenu, OK steps a value round its list and ▶ steps it on to the last.
+◀ and Back press the player's own Back button (`player.menuBack`) as many
+times as the level went down and pop it; without one, the menu is started
+over at its root. In Leanback's own settings a switch flips on OK or ▶, a
+choice pushes its values (OK picks one and pops), and ▶ never runs an
+action. `onSetting` and `onAction` hand the changes to `content/player.js`.
 
 With **Player controls → the site's own** (`playerChrome: "site"`, on the
 options page only), nothing of the player is stamped and no bar is drawn: ▼
@@ -665,11 +676,13 @@ The shipped `manifest.json` (MV2). Notes on the parts that are not obvious:
   it is needed; the files in one list share a global, which is how `lib/*`,
   `nav/*` and `content/home.js` publish `TenfootSettings`, `TenfootHistory`,
   `TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
-  `TenfootMenu`, `TenfootRail`, `TenfootTrail`, `TenfootHome` and
+  `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootHome` and
   `TenfootShow` to `content/page.js`.
-- The page's `css` is `content/page.css` (ring, hints, panel, theater),
-  `content/home.css` (Home and the rail) and `content/show.css` (a show's
-  page), all gated on `html[data-tenfoot="on"]`.
+- The page's `css` is `content/page.css` (ring, hints, theater),
+  `content/panel.css` (the settings panel, which is also in the player
+  frame's list), `content/home.css` (Home and the rail) and
+  `content/show.css` (a show's page). All but the panel's are gated on
+  `html[data-tenfoot="on"]`; the panel only exists while open.
 - A second `watch.dropout.tv` entry, at `document_start`, holds only
   `content/early.css`. Content-script stylesheets arrive with their scripts'
   `run_at`, so this is the only way a rule applies before the first paint: it

@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.26.0] — 2026-10-02
+
+### Changed
+
+- **One settings panel, the same everywhere.** Leanback's settings on any
+  page and during playback are now the same list, in the same order and
+  words, drawn the same way: full height from the right, the selected entry
+  in yellow, a switch for each on/off, the value and a › for the rest, and
+  the keys along the foot. The options page uses the same words.
+- **Changing a setting**: OK (or ▶) flips a switch, or opens the setting's
+  short list of values, where OK picks one — it is ticked — and goes back.
+  ◀ or Back goes back one step, and closes the panel from its top.
+- **Closed Captions is a switch** in the playback panel: OK turns them on or
+  off. **Caption Style**, under it, goes straight to the font, background and
+  window settings, and one ◀ comes straight back. ▶ on Closed Captions still
+  opens the player's own captions menu, for another track.
+- Clear Continue Watching and Turn Leanback Off are in the playback panel's
+  Leanback Settings too.
+- The ✕ at the top of the panel is only a picture: Back closes.
+- Seek steps of a minute and more read "1 min", "2 min", "5 min".
+
+### Removed
+
+- Home and Search from the settings panel: the rail does them.
+
 ## [0.25.0] — 2026-10-02
 
 ### Added
