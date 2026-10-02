@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.19.1] — 2026-10-01
+
+### Fixed
+
+- **Home could show two Continue Watching rows.** On days when something
+  was in progress on the Roku or the Android app, Dropout drew its own
+  Continue Watching row as well as Leanback's. Dropout's row is no longer
+  drawn. What was on it still appears in Leanback's row, merged with what you
+  watched in Firefox, most recent first.
+
 ## [0.19.0] — 2026-09-27
 
 The show page. It works the same way for every show, including ones Dropout

@@ -244,19 +244,30 @@
     return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
   }
 
-  // Per-row adjustments from the rules (home.rowOverrides), keyed by the path
-  // of the row's View all link: a heading of Leanback's own, no badges, or not
-  // drawn at all (hidden).
-  function rowOverride(R, key) {
-    const all = R && R.rowOverrides;
+  // Per-row adjustments from the rules: a heading of Leanback's own, no
+  // badges, or not drawn at all (hidden). home.rowOverrides is keyed by the
+  // path of the row's View all link; home.rowTitleOverrides by the row's
+  // heading, in any case, for a row whose address is not certain.
+  function rowOverride(R, key, title) {
+    return byPath(R && R.rowOverrides, key) || byTitle(R && R.rowTitleOverrides, title);
+  }
+
+  function byPath(all, key) {
     if (!all || typeof all !== "object") return null;
     try {
-      const path = new URL(key).pathname.replace(/\/+$/, "");
-      const o = all[path];
+      const o = all[new URL(key).pathname.replace(/\/+$/, "")];
       return o && typeof o === "object" ? o : null;
     } catch (_err) {
       return null; // a row with no View all link has no address
     }
+  }
+
+  function byTitle(all, title) {
+    if (!all || typeof all !== "object" || !title) return null;
+    const want = String(title).trim().toLowerCase();
+    const k = Object.keys(all).find((t) => t.trim().toLowerCase() === want);
+    const o = k ? all[k] : null;
+    return o && typeof o === "object" ? o : null;
   }
 
   // ---------------------------------------------------------------------------
@@ -391,7 +402,7 @@
 
     function siteRow(r) {
       const s = store();
-      const tweak = rowOverride(R, r.key) || {};
+      const tweak = rowOverride(R, r.key, r.title) || {};
       const title = typeof tweak.title === "string" && tweak.title ? tweak.title : r.title;
       const items = r.items.map((it) => {
         const key = H ? H.keyOf(it.href) : null;
@@ -412,7 +423,7 @@
       const cw = continueRow();
       if (cw) list.push(cw);
       for (const r of site.rows) {
-        const tweak = rowOverride(R, r.key);
+        const tweak = rowOverride(R, r.key, r.title);
         if (!(tweak && tweak.hidden === true)) list.push(siteRow(r));
       }
       return list;

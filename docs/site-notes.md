@@ -137,7 +137,9 @@ The header is server-rendered; everything below it is one React tree in
 - **Dropout's own Continue Watching row** appears on the website only for
   videos started on its Roku or Android app: an ordinary row titled
   "Continue Watching", with *View all*. When there is none in progress there,
-  the rows start with My list.
+  the rows start with My list. Its *View all* address is not in any capture
+  (only a screenshot shows the row); the rules hide it by the address
+  `/continue-watching`, Dropout's page of that name, and by its heading.
 - Below the last row there is only the footer.
 
 ### All series (`/series`)

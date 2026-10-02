@@ -93,7 +93,9 @@ means Back at the top level closes Firefox.
     the running time (`6:03`, without Dropout's leading zero), Dropout's badge
     ("New", "New Episode") and the progress bar. The New Releases row shows
     no "New" badge, since the row says so already. Dropout's "My list" row is
-    not drawn: My List is a page of its own, on the rail. The selected card
+    not drawn: My List is a page of its own, on the rail. Nor is Dropout's own
+    "Continue Watching" row (shown when something is in progress on its apps):
+    its videos are in Leanback's Continue Watching. The selected card
     grows by the selection zoom and its
     title steps down, so neither the card nor the ring touches any text.
   - **Rows arrive as the selection goes down.** Dropout draws a few rows at a

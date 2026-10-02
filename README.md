@@ -180,7 +180,9 @@ little inside the yellow ring, and its title steps down to make room.
 **Continue Watching** is the first row on Home. It merges two sources: how far
 you got in each video here in Firefox (Leanback keeps that itself, in this
 Firefox only), and the progress bars Dropout draws for what you watched on its
-Roku or Android app. The most recent comes first; a video counts as watched at
+Roku or Android app. It is the only Continue Watching row: the one Dropout
+draws for its apps is not shown, and what is on it appears here instead. The
+most recent comes first; a video counts as watched at
 95 %, or with less than 90 seconds left, and as started after a minute. Each
 card shows its progress bar and, in the corner of the picture, the time left
 to the second (*2:48 left*).

@@ -235,12 +235,16 @@ selection off it; only what changed is written, which also keeps the
 change to the site and every change to the watch history.
 
 **Per-row tweaks** come from `home.rowOverrides`, keyed by the path of the
-row's *View all* link: `title` replaces Dropout's heading, `badges: false`
-drops the tiles' badges (`/new-releases`, where "New" says what the heading
-does), and `hidden: true` leaves the row out of Home altogether (`/my-list`,
-which is on the rail instead). A hidden row is still read, so its progress
-bars still reach the watch history. A row without a *View all* link has no
-address and no tweaks.
+row's *View all* link, and `home.rowTitleOverrides`, keyed by the row's
+heading in any case, for a row whose address is not certain; the address
+wins. `title` replaces Dropout's heading, `badges: false` drops the tiles'
+badges (`/new-releases`, where "New" says what the heading does), and
+`hidden: true` leaves the row out of Home altogether: `/my-list`, which is on
+the rail instead, and Dropout's own Continue Watching (`/continue-watching`,
+or the heading "Continue Watching"), which Leanback's merged row replaces. A
+hidden row is still read, so its progress bars still reach the watch history
+and Leanback's Continue Watching. A row without a *View all* link is matched
+by its heading only.
 
 **Sizes** (`content/home.css`) are in `--tf-u`, 1/1920 of the viewport width
 × 0.8: Home and the rail are drawn at 80 % of a 1920-wide layout. The rail is

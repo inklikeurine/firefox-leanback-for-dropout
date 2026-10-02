@@ -288,8 +288,12 @@
     "itemBadge": "[data-testid^='thumbnail-badge-']",
     "rowPageSize": 12,
     "rowOverrides": {
+      "/continue-watching": { "hidden": true },
       "/my-list": { "hidden": true },
       "/new-releases": { "badges": false }
+    },
+    "rowTitleOverrides": {
+      "Continue Watching": { "hidden": true }
     },
     "showMore": ".see-more-row--show button"
   }
