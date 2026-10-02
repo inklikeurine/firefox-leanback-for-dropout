@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.20.0] — 2026-10-01
+
+### Added
+
+- **A show's page has a button that picks the show up where you left it**,
+  yellow, first among the show's buttons. It says **Resume S9 E3** for the
+  episode you were most recently partway through, in any season; otherwise
+  **Play S9 E4** for the one after the last you finished, following
+  Dropout's own "up next" into the next season; otherwise **Play** the first
+  episode on the page. Episodes watched on the Roku or the Android app count
+  too.
+- The watch history notes each episode's show, season and episode number,
+  and the episode Dropout plays after it, as it plays in Firefox.
+
 ## [0.19.1] — 2026-10-01
 
 ### Fixed

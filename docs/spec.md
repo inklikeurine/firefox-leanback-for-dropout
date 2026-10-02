@@ -158,8 +158,15 @@ means Back at the top level closes Firefox.
     Back leaves the show); OK on the season already on screen goes down to its
     episodes. Episodes are three across, in Dropout's order, the size of
     Home's cards; a watched one is dimmed with a tick, one in progress has a
-    bar. Above the seasons: the show's *Trailer*, where it has one, and *My
-    list*.
+    bar. Above the seasons: the show's buttons, Leanback's own first.
+  - **The main button** (yellow, first of the show's buttons) picks the show
+    up: **Resume S9 E3**, the episode most recently in progress in any
+    season; else **Play S9 E4**, the next unwatched episode after the last
+    one finished, on screen or, past the end of what is on screen, the one
+    Dropout's up-next named when it played here; else **Play S9 E1**, the
+    first episode on screen. Leanback's history and Dropout's own bars on the
+    tiles both count; progress from before *Clear Continue Watching* does not
+    resume. Then *Trailer*, where the show has one, and *My list*.
   - **Opening a show.** Dropout opens every show on Season 1. At an address
     that names no season, Leanback goes on to the **newest** season (setting:
     *Shows open on* newest / first), replacing the page; an address that
@@ -341,7 +348,9 @@ corrupt value falls back to the default rather than throwing) by
 
 The watch history is a separate key, `progress`, so a settings save never
 rewrites it: `{ entries: { <video slug>: { url, title, series, image,
-duration, local: { position, at }, dropout: { percent, at } } } }`, normalised
+duration, show, season, episode, next: { url, season, episode }, local: {
+position, at }, dropout: { percent, at } } } }` (`show`, `season` and
+`episode` from the episode page, `next` from Dropout's up-next), normalised
 on every read by `lib/history.js` and capped at 500 videos (the least recently
 touched go first). *Clear Continue Watching* keeps every watched video whole;
 of the rest it keeps only Dropout's own readings, and it sets `clearedAt`:
@@ -427,6 +436,9 @@ Manual checklist (full version with expected results in
   Dropout played the next episode by itself.
 - Search: results four across, reachable with the arrows.
 - `/series` grid: Down past the last row loads more; focus continues.
+- A show's main button: *Resume S9 E3* for an episode partway through,
+  *Play S9 E4* after one finished, *Play S9 E1* for a show not started; OK
+  plays it.
 - A show's page: opening a show from Home lands on its newest season, with no
   flash of Season 1; the seasons run newest first with the one on screen
   yellow; ▲ from the episodes lands on it; ◀ ▶ walk the row, OK opens a season

@@ -348,6 +348,21 @@ from the watch history merged with Dropout's own `.percentage-bar` on the
 tile (a Roku play). Everything is written only when it changed, so the
 mutation observer does not come back round for nothing.
 
+**The main button** (S8). On a show, `placeResume()` (run by `refresh()`)
+puts an `<a data-tenfoot-resume data-tenfoot-action="primary">` first in the
+header's buttons (`show.actionsBox`), its address and words from
+`TenfootHistory.pickUp()`: the show's entries in the history (by their
+`show`, or the show in their address) and the episodes on screen (address,
+season from the address or the season on screen, number from
+`show.episodeNumber`, title, Dropout's bar). The most recent episode in
+progress that is not older than *Clear Continue Watching* is `resume`. Else
+the most recently finished is the anchor: the next unwatched episode after it
+on screen, else its `next` (Dropout's up-next when it played here),
+followed past any already watched, is `next`. Else the first episode on
+screen (`first`). The words are `pickUpLabel()`: "Resume S9 E3",
+"Play S9 E4", or less where the numbers are unknown. It is an ordinary link:
+OK follows it, one level down, like a tile.
+
 **The start episode** (`startEpisode()`): the last episode in page order that
 is watched or in progress is the anchor. None: Episode 1. In progress: that
 one. Watched: the next episode after it that is not watched, or Episode 1
@@ -382,7 +397,11 @@ One entry per video, keyed by the slug after `/videos/` (the same in tile
 links, episode page addresses and `OTTData.video.url`). An entry holds up to
 two readings — `local` (Leanback's: position and time) and `dropout` (the bar
 on Dropout's tiles: percent, and the time Leanback first saw that value) —
-plus the address, title, show, picture and length. The newer reading is
+plus the address, title, show name, picture and length, the show, season
+and episode numbers the episode page gave (`show`, `season`, `episode`) and
+the episode Dropout plays after it (`next`: address, season, episode, read
+from the player's up-next, whose title is "E2, S1 - Game Changer"). The newer
+reading is
 believed. A first sighting of a Dropout value is dated 0 when Leanback already
 has its own reading of that video, so an old bar never overrides a fresh local
 one; a value that **changes** is dated now, since another device played it
@@ -397,7 +416,7 @@ Every write goes through the background, one change at a time (read → apply
 | Who | When | Message |
 | --- | --- | --- |
 | `player.js` | pause, seeked, ended, the frame losing focus or being hidden, and every 15 s of `timeupdate` while playing. Never for a trailer or a live stream; a report under 5 s never replaces a stored position | `history:progress` |
-| `page.js` | once per episode page: its address, title, show and picture | `history:meta` |
+| `page.js` | once per episode page: its address, title, show name and picture; the show, season and episode from the season link ("Season 2, Episode 1", `video.episodeInfo`), else the show and season from `og:url` (`video.canonical`) | `history:meta` |
 | `home.js`, through `page.js` | the loaded rows' progress bars, when their values change | `history:observe` |
 | options panel, options page | *Clear Continue Watching* (asked twice): a watched video is kept whole. Of every other video, Leanback's own readings and the details from episode pages are deleted; Dropout's bars stay (they are Dropout's, and still show on cards) but the store notes `clearedAt`, and nothing unfinished read before it appears in Continue Watching or resumes | `history:clear` |
 
@@ -583,8 +602,8 @@ and on `player:bye` (`pagehide`).
 | `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`search`, `menu`, …); `browser-back` is BrowserBack pressed in the player frame |
 | `page:state` | harness → page | — | reply: a snapshot (page kind, theater, focused element and its rect, ring/hints, Home's model, the show page, the rail). For the tests; the extension never sends it |
 | `exit` | page → bg | — | exit hook; the reply says whether the tab was closed |
-| `history:progress` | player → bg | `{key, url, title, position, duration, ended}` | where the video is |
-| `history:meta` | page → bg | `{key, url, title, series, image}` | what the episode page knows |
+| `history:progress` | player → bg | `{key, url, title, position, duration, ended, next}` | where the video is; `next` is Dropout's up-next `{url, title}`, or null when nothing follows |
+| `history:meta` | page → bg | `{key, url, title, series, image, show?, season?, episode?}` | what the episode page knows |
 | `history:observe` | page → bg | `{items: [{key, url, percent, duration, title, image}]}` | Dropout's progress bars on Home |
 | `history:clear` | page / options → bg | — | *Clear Continue Watching* |
 | `player:resumed` | player → bg → page | `{at}` | the video picked up at `at` seconds: show the notice |

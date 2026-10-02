@@ -7,9 +7,11 @@
 // Dropout's page stays underneath and keeps its nodes. On a show, Leanback
 // adds a row of seasons, newest first, built from Dropout's own season list;
 // choosing one goes to that season's page, which is how Dropout switches
-// seasons too. It also marks what Leanback hides, and stamps each episode
-// watched or in progress from the watch history and Dropout's own bars.
-// content/page.js drives it; content/show.css draws it.
+// seasons too. It adds the show's main button, which picks the show up where
+// you left it ("Resume S9 E3", "Play S9 E4"). It also marks what Leanback
+// hides, and stamps each episode watched or in progress from the watch
+// history and Dropout's own bars. content/page.js drives it; content/show.css
+// draws it.
 
 (function () {
   const LAYOUT_ATTR = "data-tenfoot-show";
@@ -17,6 +19,7 @@
   const ROW_ATTR = "data-tenfoot-seasons";
   const SEASON_ATTR = "data-tenfoot-season";
   const WATCH_ATTR = "data-tenfoot-watch";
+  const RESUME_ATTR = "data-tenfoot-resume";
   // The parts of Dropout's page content/show.css restyles, stamped so the
   // stylesheet never names Dropout's classes.
   const PART_ATTRS = ["data-tenfoot-action", "data-tenfoot-ep-grid", "data-tenfoot-ep", "data-tenfoot-ep-link", "data-tenfoot-ep-art", "data-tenfoot-ep-text"];
@@ -131,6 +134,14 @@
     return pick && !pick.current ? pick.url : null;
   }
 
+  /** The main button's words: "Resume S9 E3", "Play S9 E4", "Play E1", "Play". */
+  function pickUpLabel(p) {
+    const has = (v) => typeof v === "number" && Number.isFinite(v);
+    const where = [has(p.season) ? `S${p.season}` : "", has(p.episode) ? `E${p.episode}` : ""].filter(Boolean).join(" ");
+    const verb = p.action === "resume" ? "Resume" : "Play";
+    return where ? `${verb} ${where}` : verb;
+  }
+
   // Dropout's own progress bar on a tile (Roku and Android plays), as a
   // percentage, or null.
   function barPercent(el) {
@@ -158,6 +169,7 @@
     const omitted = [];
     let block = null;
     let row = null;
+    let resume = null; // the show's main button
 
     function omit(list) {
       for (const sel of R().selectorList(list)) {
@@ -310,12 +322,84 @@
       } else if (st.status !== "watched" && tick) tick.remove();
     }
 
+    // The episodes on screen, in page order, as the watch history reads them:
+    // address, season (from the address, else the season on screen), episode
+    // number ("Episode 3"), title and Dropout's own bar.
+    function episodesOnScreen() {
+      const cur = seasons.find((s) => s.current) || null;
+      const out = [];
+      for (const li of episodeItems()) {
+        const link = qs(rules.episodeLink, li);
+        if (!link || !link.href) continue;
+        const numberEl = qs(rules.episodeNumber, li);
+        const m = numberEl ? /(\d+)/.exec(numberEl.textContent || "") : null;
+        const titleEl = qs(rules.episodeTitle, li);
+        const season = seasonNumber(link.href);
+        out.push({
+          url: link.href,
+          season: season !== null ? season : cur ? cur.number : null,
+          episode: m ? Number(m[1]) : null,
+          title: titleEl ? clean(titleEl.textContent, NAME_MAX) : "",
+          percent: barPercent(qs(rules.episodeProgress, li))
+        });
+      }
+      return out;
+    }
+
+    function showSlug() {
+      const path = doc.location ? doc.location.pathname : "";
+      return path.split("/").filter(Boolean)[0] || null;
+    }
+
+    /**
+     * What the show's main button plays (S8): the most recent episode in
+     * progress, else the one after the last finished, else the first on
+     * screen.
+     */
+    function pickUp() {
+      const eps = episodesOnScreen();
+      const store = typeof o.history === "function" ? o.history() : null;
+      const hit = H && H.pickUp ? H.pickUp(store, showSlug(), eps) : null;
+      if (hit && hit.url) return hit;
+      const first = eps[0];
+      return first ? { action: "first", url: first.url, season: first.season, episode: first.episode, title: first.title } : null;
+    }
+
+    // First among the show's buttons, in the yellow of a primary action.
+    // Written only when something changed.
+    function placeResume() {
+      const p = layout === "show" ? pickUp() : null;
+      if (!p) {
+        if (resume) resume.remove();
+        resume = null;
+        return;
+      }
+      if (!resume) {
+        resume = doc.createElement("a");
+        resume.className = "tenfoot-resume";
+        resume.setAttribute("data-tenfoot-action", "primary");
+        const box = qs(rules.actionsBox, doc);
+        if (box) box.insertBefore(resume, box.firstChild);
+        else if (block && block.parentNode) block.parentNode.insertBefore(resume, block);
+        else {
+          resume = null;
+          return;
+        }
+      }
+      const label = pickUpLabel(p);
+      mark(resume, "href", p.url);
+      mark(resume, RESUME_ATTR, p.action);
+      mark(resume, "aria-label", p.title ? `${label}: ${p.title}` : label);
+      if (resume.textContent !== label) resume.textContent = label;
+    }
+
     /** Re-read what may have changed: new tiles (load more), the history. */
     function refresh() {
       omitAll();
       stampParts();
       if (layout !== "show") return;
       for (const li of episodeItems()) stamp(li, tileState(li));
+      placeResume();
     }
 
     /**
@@ -343,8 +427,10 @@
 
     function destroy() {
       if (block) block.remove();
+      if (resume) resume.remove();
       block = null;
       row = null;
+      resume = null;
       for (const el of omitted) el.removeAttribute(OMIT_ATTR);
       omitted.length = 0;
       for (const attr of [WATCH_ATTR, ...PART_ATTRS]) {
@@ -365,6 +451,7 @@
       startEpisode,
       destroy,
       get row() { return row; },
+      get resume() { return resume; },
       get currentSeason() { return currentSeasonButton(); },
       contains: (el) => Boolean(block && el && block.contains(el)),
       snapshot: () => ({
@@ -372,11 +459,12 @@
         seasons: row ? Array.from(row.children).map((b) => b.textContent) : [],
         current: (seasons.find((s) => s.current) || {}).label || null,
         heading: block ? clean(block.querySelector(".tenfoot-season-heading").textContent, NAME_MAX) : null,
+        resume: resume ? { label: resume.textContent, href: resume.getAttribute("href"), action: resume.getAttribute(RESUME_ATTR) } : null,
         watched: episodeItems().filter((li) => li.getAttribute(WATCH_ATTR) === "watched").length,
         inProgress: episodeItems().filter((li) => li.getAttribute(WATCH_ATTR) === "in-progress").length
       })
     });
   }
 
-  globalThis.TenfootShow = Object.freeze({ createShow, layoutOf, readSeasons, seasonTarget, seasonNumber, namesSeason, labelOf });
+  globalThis.TenfootShow = Object.freeze({ createShow, layoutOf, readSeasons, seasonTarget, seasonNumber, namesSeason, labelOf, pickUpLabel });
 })();

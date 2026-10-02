@@ -63,6 +63,7 @@
     },
     "series": {
       "focusable": [
+        "[data-tenfoot-resume]",
         "a.custom-btn-action-primary",
         "a.custom-btn-action-trailer",
         "button.custom-btn-action-my-list",
@@ -97,6 +98,9 @@
         "episodeArt": ".browse-image-container",
         "episodeProgress": ".percentage-bar",
         "episodeText": ".padding-small",
+        "episodeNumber": ".media-episode",
+        "episodeTitle": ".browse-item-title",
+        "actionsBox": ".collection-actions",
         "actions": ".collection-actions > .btn",
         "primaryAction": ".custom-btn-action-primary",
         "omit": {
@@ -119,6 +123,8 @@
       "seriesLink": ".series-title a.context-link",
       "videoTitle": "#watch-info .video-title",
       "videoImage": "meta[property='og:image']",
+      "episodeInfo": "#watch-info a[href*='/season:']",
+      "canonical": "meta[property='og:url']",
       "focusable": [
         "#watch-info a[href]",
         "a[data-similar-items-site]"

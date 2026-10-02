@@ -859,14 +859,35 @@
     const p = state.page;
     const text = (el) => (el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "");
     const img = qs(p.videoImage);
-    send({
+    send(Object.assign({
       type: "history:meta",
       key,
       url: location.href,
       title: text(qs(p.videoTitle)),
       series: text(qs(p.seriesLink)),
       image: img ? img.getAttribute("content") || "" : ""
-    });
+    }, episodeInfo()));
+  }
+
+  // Which show, season and episode this is. Dropout links the season as
+  // "Season 2, Episode 1" even at /videos/<slug>, and its canonical address
+  // names the show and season too.
+  function episodeInfo() {
+    const out = {};
+    for (const a of qsa(Rules.selector(state.page.episodeInfo))) {
+      const m = /Episode\s+(\d+)/i.exec(a.textContent || "");
+      const season = History.seasonOf(a.href);
+      if (!m || season === null) continue;
+      out.show = seriesSlug(a.href);
+      out.season = season;
+      out.episode = Number(m[1]);
+      break;
+    }
+    const canonical = qs(state.page.canonical);
+    const url = canonical ? canonical.getAttribute("content") || "" : "";
+    if (!out.show && History.showOf(url)) out.show = History.showOf(url);
+    if (out.season === undefined && History.seasonOf(url) !== null) out.season = History.seasonOf(url);
+    return out;
   }
 
   // A <select> is a two-step control on a remote: Enter engages it, Left/Right

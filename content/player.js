@@ -662,12 +662,15 @@
 
   // The video's history key and the details kept with it, or null for what is
   // not worth remembering: a trailer, a live stream.
+  // `next` is the episode Dropout plays after this one, or null at the end of
+  // a show: the show's page offers it once this one is finished.
   function watchTarget() {
     const d = ottData();
     const v = d && d.video;
     if (!v || v.trailer || v.live || !History) return null;
     const key = History.keyOf(v.url);
-    return key ? { key, url: v.url, title: v.title } : null;
+    const u = d.upNext;
+    return key ? { key, url: v.url, title: v.title, next: u && u.url ? { url: u.url, title: u.title || "" } : null } : null;
   }
 
   function saveProgress(ended) {
@@ -684,7 +687,8 @@
       title: t.title,
       position: Number(v.currentTime) || 0,
       duration,
-      ended: Boolean(ended)
+      ended: Boolean(ended),
+      next: t.next
     });
   }
 

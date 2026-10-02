@@ -32,9 +32,11 @@ navigate, not what you can watch.
   settings.
 - **Search results made for a TV**: four across the screen, larger, reachable
   with the arrows.
-- **A show's page made for a TV**: a row of seasons, newest first, over the
-  season's episodes three across, each marked watched or in progress. A show
-  opens on its newest season, with the selection on the episode to watch next.
+- **A show's page made for a TV**: a button that picks the show up where you
+  left it (*Resume S9 E3*, *Play S9 E4*), a row of seasons, newest first, and
+  the season's episodes three across, each marked watched or in progress. A
+  show opens on its newest season, with the selection on the episode to watch
+  next.
 - **Arrow-key navigation** across every other page of `watch.dropout.tv`: the
   series grid, specials and their extras, lists of episodes, search results.
 - **A focus ring you can see from the sofa** — 4 px, Dropout yellow,
@@ -210,8 +212,13 @@ newest season (*Shows open on* in the settings switches that to the first),
 and the selection starts on the episode to watch next: Episode 1 of a season
 you have not started, otherwise the one you are partway through or the one
 after the last you finished. Watched episodes carry a tick; one in progress
-has a bar showing how far you got. Above the seasons are the show's *Trailer*
-and *My list*. A special (a stand-up set, a film) has *Watch Movie* and
+has a bar showing how far you got. Above the seasons are the show's buttons:
+first a yellow one that picks the show up where you left it, then *Trailer*
+and *My list*. The yellow button says **Resume S9 E3** for the episode you
+were most recently partway through, in any season; otherwise **Play S9 E4**
+for the one after the last you finished (following Dropout's own "up next"
+into the next season); otherwise **Play** the first episode on screen.
+Episodes watched on the Roku or the Android app count too. A special (a stand-up set, a film) has *Watch Movie* and
 *My list*, then the video and its extras. A list (Trending, a show's new
 episodes, the trailers) is just its videos or shows.
 
@@ -331,6 +338,11 @@ declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
   field goes to the rail, not the results. A keyboard's Escape does it.
 - A show opens on its newest season by going to that season's page, so
   opening a show loads two pages; the screen stays blank for that moment.
+- The show's yellow button knows an episode's season and number when Leanback
+  noted them from the episode's own page as it played in Firefox, or when the
+  episode is on the show's page; otherwise it says just *Resume* or *Play*.
+  The episode after a finished one is known when it is on the page, or when
+  the finished one was played in Firefox (Dropout's "up next").
 - Where the selection starts on a show is worked out from the episodes
   Dropout has put on the page. In a season longer than Dropout's first page of
   episodes, one further down is not considered until more are loaded.

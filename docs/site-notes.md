@@ -254,7 +254,9 @@ meta[property="og:image"][content]                   ← the episode's picture (
       #watch-unauthorized.embed-content              ← logged-out placeholder ("Watch this video and more on Dropout")
   #watch-info
     .series-title a.context-link[href="/<series>"]   ← back to the series
-    a[href="…/<series>/season:N"] "Season N, Episode M"  ← the season, even at /videos/<slug>; og:url carries it too
+    h5 a[href="…/<series>/season:N"] "Season N, Episode M"  ← show, season and episode, even at /videos/<slug>
+                                                     (another link to the season page reads just "Season N")
+    meta[property="og:url"]                          ← "/<series>/season:N/videos/<slug>": show and season
     .video-title
     button.my-list.custom-btn-action-my-list[data-video-id]   ← toggles in place, like the series button
     .video-content-actions, .share-tools              ← share buttons — low priority targets
@@ -566,6 +568,10 @@ logged-in page is committed.
 | `video.theaterRoot` / `playerMount` / `playerFrame` | `#watch-player…` | 1 each |
 | `video.seriesLink` | `.series-title a.context-link` | 1 |
 | `video.focusable` | `#watch-info a[href]`, `a[data-similar-items-site]` | many |
+| `video.episodeInfo` | `#watch-info a[href*='/season:']` | 2: "Season N" and "Season N, Episode M"; the one with an episode is used |
+| `video.canonical` | `meta[property='og:url']` | 1 |
+| `series.show.actionsBox` | `.collection-actions` | 1 on a show and a special |
+| `series.show.episodeNumber` | `.media-episode` | one per episode ("Episode 1") |
 | `player.transport` | `.vp-controls` | 1 |
 | `player.captionsButton` | `#cc-control-bar-button` | 1 |
 | `player.upNextOverlay` | `.vp-outro-wrapper`, `.ott-up-next` | 1 each in the frame, near the end |
