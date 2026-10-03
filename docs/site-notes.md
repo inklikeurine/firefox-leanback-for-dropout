@@ -561,6 +561,11 @@ logged-in page is committed.
 |---|---|---|
 | `common.header` | `.site-header` | 1 |
 | `common.focusable` | `.site-header a[href]` | 16–17 |
+| `common.chrome` | `.site-header`, `footer.footer--site` | 1 each |
+| `screen.root` | `section.collection-container ul.js-load-more-items-container` | 1 on `/series`, `/my-list` and every list |
+| `screen.title` | `h1.collection-title` | 1 ("Series", "My list", "Trending"…) |
+| `screen.item` / `itemLink` | `li.js-collection-item` / `.browse-item-card a[href]` | one per tile |
+| `screen.more` | `a.js-load-more-link` | 1 while there are more |
 | `series.focusable` | `select.js-switch-season`, `select.js-sort-items`, `a.custom-btn-action-trailer`, `button.custom-btn-action-my-list`, `a.custom-btn-action-primary` | 1 each where the page has it (the selects on a show, *Watch Movie* on a special) |
 | `series.show.layouts` | `section.episode-container`, `section.movie-container`, `section.collection-container` | 1 on a show, a special, a list respectively |
 | `series.show.actions` | `.collection-actions > .btn` | the header's 2–3 buttons (not the share dialog's) |

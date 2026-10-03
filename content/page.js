@@ -41,6 +41,7 @@
   const Panel = globalThis.TenfootPanel;
   const Rail = globalThis.TenfootRail;
   const Home = globalThis.TenfootHome;
+  const Screen = globalThis.TenfootScreen;
   const History = globalThis.TenfootHistory;
   const Trail = globalThis.TenfootTrail;
   const Show = globalThis.TenfootShow;
@@ -416,6 +417,18 @@
     return { theaterRoot, mount, frame: qs(p.playerFrame) };
   }
 
+  // Dropout's own top bar and footer (rules: common.chrome) are hidden on every
+  // page but sign-in, account, help and legal (`other`), which keep them.
+  function stampChrome() {
+    const want = state.enabled && state.kind !== "other";
+    for (const sel of Rules.selectorList(state.rules.common && state.rules.common.chrome)) {
+      for (const el of qsa(sel)) {
+        if (want) el.setAttribute("data-tenfoot-chrome", "");
+        else el.removeAttribute("data-tenfoot-chrome");
+      }
+    }
+  }
+
   // A page whose results the site lays out for a desktop (search: a narrow
   // centred column of small pictures) is marked so content/home.css can
   // spread it across a television: rules → pages.<kind>.tvGrid.
@@ -619,21 +632,53 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Home and the rail
+  // Leanback's screens (Home, and the pages it draws) and the rail
   // ---------------------------------------------------------------------------
+  //
+  // state.home is Leanback's own screen on this page, when it draws one: Home
+  // (content/home.js) on Home and the hubs, or the page screen
+  // (content/screen.js) on Browse, My List and the lists. Both answer the
+  // same calls, so the rest of this file treats them alike.
 
-  function isHomeKind() {
-    return state.kind === "browse" || state.kind === "hub";
+  function screenRules() {
+    return (state.rules && state.rules.screen) || {};
+  }
+
+  // "home", "page", or null for a page Leanback does not draw.
+  function screenKind() {
+    if (state.kind === "browse" || state.kind === "hub") return "home";
+    if (state.kind === "grid") return "page";
+    if (state.kind === "series" && Show && Show.layoutOf(document, state.page.show) === "list") return "page";
+    return null;
   }
 
   function startHome() {
-    if (state.home || !Home || !qs(homeRules().root)) return;
-    state.home = Home.createHome(document, {
-      rules: homeRules(),
-      history: () => state.history,
-      continueWatching: state.kind === "browse",
-      onObserve: (items) => send({ type: "history:observe", items })
-    });
+    const which = screenKind();
+    if (state.home || !which) return;
+    if (which === "home") {
+      if (!Home || !qs(homeRules().root)) return;
+      state.home = Home.createHome(document, {
+        rules: homeRules(),
+        history: () => state.history,
+        continueWatching: state.kind === "browse",
+        onObserve: (items) => send({ type: "history:observe", items })
+      });
+    } else {
+      if (!Screen || !qs(screenRules().root)) return;
+      // A page the rail links to goes by the rail's name (My List); the New
+      // Releases list carries no "New" badges, as its row on Home does not.
+      const link = railLinks().find((l) => samePath(l.url, location.href));
+      const tweak = Home && Home.rowOverride ? Home.rowOverride(homeRules(), location.href, "") : null;
+      const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
+      state.home = Screen.createScreen(document, {
+        rules: screenRules(),
+        title: link ? link.label : "",
+        rail: kinds.includes(state.kind),
+        badges: !(tweak && tweak.badges === false),
+        history: () => state.history,
+        onObserve: (items) => send({ type: "history:observe", items })
+      });
+    }
     root.dataset.tenfootHome = "on";
     state.homeRefocus = 0;
     state.home.refresh();
@@ -1758,6 +1803,7 @@
     refreshHome();
     if (state.show) state.show.refresh();
     stampTvGrid();
+    stampChrome();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
     if (state.kind === "video") {
@@ -1919,10 +1965,11 @@
     stopShow();
     if (openSeason()) return;
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
-    if (state.kind === "series") {
+    if (state.kind === "series" && screenKind() !== "page") {
       startShow();
       captureEpisodeOrder();
     }
+    stampChrome();
     if (state.kind === "video") {
       markVideoElements();
       if (state.settings.theater === "auto") setTheater(true);
@@ -1930,7 +1977,7 @@
     }
     state.railActive = false;
     state.railReturn = null;
-    if (isHomeKind()) startHome();
+    if (screenKind()) startHome();
     else stopHome();
     setupRail();
     stampTvGrid();

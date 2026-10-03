@@ -182,6 +182,18 @@ means Back at the top level closes Firefox.
     more. **A hub** (Dimension 20) gets Home's screen.
   - Hidden: Share, the season drop-down and sort control (S2), and the My
     List button Dropout puts on each episode for a mouse (M7).
+- **Pages Leanback draws.** Besides Home: Browse (`/series`), My List
+  (`/my-list`), `/collections/…`, and the lists at a one-word address
+  (Trending, New Releases, a show's new episodes…): `content/screen.js` reads
+  the page's title and tiles (`sites/dropout.json` → `screen`) and draws
+  Leanback's own screen over it, as Home is drawn — the page's name, then
+  Home's cards five across, the selected row sliding to the same place, more
+  loaded through Dropout's own *Load More* near the end. Browse and My List
+  have the rail; the lists do not (they are reached from Home's *View all*).
+  My List is named as on the rail. New Releases shows no "New" badges.
+- **Dropout's top bar and footer** are hidden on every page but sign-in,
+  account, help and legal (the `other` pages); the rail and Back do their
+  jobs.
 - **Search results** are spread across the screen for a TV: four across, the
   full width beside the rail, larger titles. Dropout lays them out for a
   desktop, five small pictures in a centred column.

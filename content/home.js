@@ -45,27 +45,8 @@
     }
   }
 
-  function textOf(el) {
-    return el ? (el.textContent || "").replace(/ /g, " ").replace(/\s+/g, " ").trim() : "";
-  }
-
-  function hrefOf(el) {
-    if (!el) return "";
-    const h = el.href || el.getAttribute("href") || "";
-    return typeof h === "string" && h && !h.startsWith("javascript:") ? h : "";
-  }
-
-  /** "1:45:05" → 6305, "24:30" → 1470; null for anything else. */
-  function parseDuration(s) {
-    const m = /^(?:(\d+):)?(\d{1,2}):(\d{2})$/.exec(String(s || "").trim());
-    if (!m) return null;
-    return (Number(m[1] || 0) * 3600) + Number(m[2]) * 60 + Number(m[3]);
-  }
-
-  /** "06:03" → "6:03": Dropout pads short running times; a TV reads them bare. */
-  function tidyDuration(s) {
-    return parseDuration(s) === null ? s : s.replace(/^0(?=\d)/, "");
-  }
+  const C = globalThis.TenfootCards;
+  const { textOf, hrefOf, parseDuration, tidyDuration, percentOf, clock } = C;
 
   // -- the data a tile was drawn from ---------------------------------------
   //
@@ -141,12 +122,6 @@
       console.warn("[leanback-for-dropout] a show's wide picture is not in its tile's data; its poster is used");
     }
     return wide;
-  }
-
-  function percentOf(bar) {
-    if (!bar) return null;
-    const w = parseFloat((bar.style && bar.style.width) || "");
-    return Number.isFinite(w) ? Math.min(100, Math.max(0, w)) : null;
   }
 
   /**
@@ -232,16 +207,6 @@
     } catch (_err) {
       return false;
     }
-  }
-
-  // The time left, in the style of the running times on the other cards:
-  // "2:48", "1:12:05".
-  function clock(seconds) {
-    const s = Math.max(0, Math.floor(seconds || 0));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const ss = String(s % 60).padStart(2, "0");
-    return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
   }
 
   // Per-row adjustments from the rules: a heading of Leanback's own, no
@@ -355,16 +320,7 @@
       return e;
     }
 
-    function setText(node, v) {
-      const t = v || "";
-      if (node.textContent !== t) node.textContent = t;
-    }
-
-    function setAttr(node, name, v) {
-      if (v === null || v === undefined || v === "") {
-        if (node.hasAttribute(name)) node.removeAttribute(name);
-      } else if (node.getAttribute(name) !== String(v)) node.setAttribute(name, String(v));
-    }
+    const { setText, setAttr } = C;
 
     function store() {
       try {
@@ -431,54 +387,6 @@
 
     // -- drawing ---------------------------------------------------------------
 
-    function makeCard(item) {
-      const wrap = el("div", "tenfoot-card");
-      const link = el("a", "tenfoot-card-link");
-      const art = el("img", "tenfoot-card-art");
-      art.alt = "";
-      art.loading = "lazy";
-      art.decoding = "async";
-      const badge = el("span", "tenfoot-card-badge");
-      const time = el("span", "tenfoot-card-time");
-      const bar = el("span", "tenfoot-card-progress");
-      const fill = el("span", "tenfoot-card-progress-fill");
-      bar.appendChild(fill);
-      const label = el("span", "tenfoot-card-viewall");
-      link.append(art, badge, time, bar, label);
-      const title = el("div", "tenfoot-card-title");
-      const sub = el("div", "tenfoot-card-sub");
-      wrap.append(link, title, sub);
-      const card = { item, wrap, link, art, badge, time, bar, fill, label, title, sub };
-      updateCard(card, item);
-      return card;
-    }
-
-    function updateCard(card, item) {
-      card.item = item;
-      setAttr(card.link, "href", item.href);
-      setAttr(card.link, "aria-label", [item.title, item.subtitle].filter(Boolean).join(", "));
-      setAttr(card.wrap, "data-tenfoot-card", item.key);
-      if (item.viewAll) {
-        card.wrap.dataset.tenfootViewall = "true";
-        setText(card.label, "View all");
-        setAttr(card.art, "src", null);
-      } else {
-        delete card.wrap.dataset.tenfootViewall;
-        setText(card.label, "");
-        if (item.image && card.art.getAttribute("src") !== item.image) card.art.setAttribute("src", item.image);
-      }
-      setText(card.badge, item.badge || "");
-      card.badge.hidden = !item.badge;
-      setText(card.time, item.durationText || "");
-      card.time.hidden = !item.durationText;
-      const f = typeof item.fraction === "number" && item.fraction > 0 ? Math.min(1, item.fraction) : null;
-      card.bar.hidden = f === null;
-      const w = f === null ? "" : `${Math.round(f * 1000) / 10}%`;
-      if (card.fill.style.width !== w) card.fill.style.width = w;
-      setText(card.title, item.viewAll ? item.subtitle : item.title);
-      setText(card.sub, item.viewAll ? "" : item.subtitle);
-    }
-
     function makeRow(r) {
       const section = el("section", "tenfoot-row");
       const titleEl = el("h2", "tenfoot-row-title");
@@ -519,29 +427,8 @@
     }
 
     function renderCards(row, items) {
-      const seen = new Set();
-      let prev = null;
-      const links = [];
-      for (const it of items) {
-        let card = row.cards.get(it.key);
-        if (!card) {
-          card = makeCard(it);
-          row.cards.set(it.key, card);
-        } else updateCard(card, it);
-        seen.add(it.key);
-        const ref = prev ? prev.nextSibling : row.track.firstChild;
-        if (card.wrap !== ref) row.track.insertBefore(card.wrap, ref);
-        prev = card.wrap;
-        links.push(card.link);
-      }
-      for (const [k, card] of row.cards) {
-        if (!seen.has(k)) {
-          card.wrap.remove();
-          row.cards.delete(k);
-        }
-      }
+      row.links = C.reconcile(doc, row.track, row.cards, items);
       row.items = items;
-      row.links = links;
     }
 
     function renderHero() {
@@ -905,5 +792,5 @@
     });
   }
 
-  globalThis.TenfootHome = Object.freeze({ createHome, readSite, parseDuration, LAYER_CLASS });
+  globalThis.TenfootHome = Object.freeze({ createHome, readSite, rowOverride, parseDuration, LAYER_CLASS });
 })();

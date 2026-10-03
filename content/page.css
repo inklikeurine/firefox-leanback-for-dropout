@@ -113,6 +113,12 @@ html.tenfoot-theater [data-tenfoot-hide] {
   display: none !important;
 }
 
+/* Dropout's own top bar and footer (rules: common.chrome), on every page but
+   sign-in, account, help and legal: the rail and Back do their jobs. */
+html[data-tenfoot="on"] [data-tenfoot-chrome] {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-ring,
   .tenfoot-scaled {

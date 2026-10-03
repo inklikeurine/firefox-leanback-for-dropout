@@ -31,6 +31,10 @@
   ],
   "common": {
     "header": ".site-header",
+    "chrome": [
+      ".site-header",
+      "footer.footer--site"
+    ],
     "focusable": [
       ".site-header a[href]"
     ],
@@ -270,6 +274,19 @@
         "url": "https://watch.dropout.tv/dropout-24-7"
       }
     ]
+  },
+  "screen": {
+    "root": "section.collection-container ul.js-load-more-items-container",
+    "title": "h1.collection-title",
+    "item": "li.js-collection-item",
+    "itemLink": ".browse-item-card a[href]",
+    "itemImage": ".browse-image-container img",
+    "itemTitle": ".browse-item-title",
+    "itemSubtext": ".browse-item-subtext",
+    "itemDuration": ".duration-container",
+    "itemProgress": ".percentage-bar",
+    "itemBadge": "[data-testid^='thumbnail-badge-']",
+    "more": "a.js-load-more-link"
   },
   "home": {
     "root": "#browse-component",

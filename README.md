@@ -27,6 +27,11 @@ navigate, not what you can watch.
 - **Picks up where you left off.** An episode you stopped halfway starts where
   you stopped, with a short "Resumed at 12:04" note; *Start Over* in the
   playback settings goes back to the beginning.
+- **Browse, My List and the lists drawn for a TV** (Trending, New Releases, a
+  show's new episodes…): Leanback's own screen, like Home, with the page's
+  name at the top and its shows or episodes five across; more arrive as you
+  get near the end. Dropout's own top bar and footer are hidden on every page
+  you browse or watch.
 - **An icon rail** down the left of Home, Browse, My List, Search and
   Dropout 24/7: Search, Home, Browse, My List, Dropout 24/7, and Leanback's
   settings.
@@ -202,9 +207,17 @@ Leanback's settings in place. The page you are on has its icon in yellow; the
 yellow box is where the selection is. The rail is on Home, Browse (all shows),
 My List, Search and Dropout 24/7, and not on a show's page or during playback.
 
-**My List** is Dropout's page of the shows and videos you saved, a grid like
-Browse: the selection starts on the first one, and the arrows move between
-them.
+**Browse, My List and the lists** (Trending, New Releases, a show's new
+episodes, the trailers…) are Leanback's own screens, drawn like Home from
+what Dropout puts on the page: the page's name at the top, then its cards
+five across, the same cards as on Home with their running times, badges and
+progress. ◀ ▶ move along a row and stop at its ends, ▲ ▼ go a row up or down
+in the same column, and the selected row slides up to the same place each
+time. Near the end, Leanback presses Dropout's own *Load More*, and more cards
+join. Browse and My List have the rail beside them (◀ from the first column);
+the lists do not, as they are reached from Home's *View all*. My List starts
+on the first show you saved. Dropout's own top bar and footer are hidden
+everywhere except its sign-in, account, help and legal pages.
 
 **A show's page** works the same way for every show, because Leanback reads
 each page as it loads rather than knowing any show by name. A show with more

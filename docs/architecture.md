@@ -38,6 +38,8 @@ scripts, and the background script relays between them.
 | `lib/history.js` | Background, page and player | The watch history: video keys, the watched / in-progress thresholds, merging Leanback's readings with Dropout's progress bars, Continue Watching, resume points, the size cap, `load`/`save`/`watch` on `storage.local` key `progress`. Pure apart from those three. |
 | `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); per-tab registry of the player frame id in **`storage.session`** (an event page loses a plain variable when it unloads; a `Map` is the fallback if the API is missing); message relay page ⇄ player; toolbar button toggle and badge; `commands` handler; exit hook (`tabs.remove(sender.tab.id)`); the **only writer of the watch history**, one change at a time. |
 | `content/page.js` | Top frame of `watch.dropout.tv` | Loads `sites/dropout.json`; classifies the URL into a page kind; wires keys → actions; starts the Home screen on Home and hubs and the show page on a show; opens a show on its newest (or first) season; drives the rail, spatial navigation, focus ring, hint bar, theater layout, structural Back, load-more, next/previous episode; sends the episode page's details to the watch history. |
+| `content/cards.js` | Top frame | The card both screens draw (picture, badge, time, progress, title, subtitle), `reconcile()` by key, and the readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
+| `content/screen.js` | Top frame, Browse, My List, lists | A page Leanback draws: reads a collection page's title and tiles (rules `screen`) and draws Leanback's own layer, Home's look, the cards five across. See [Pages Leanback draws](#pages-leanback-draws-contentscreenjs). |
 | `content/home.js` | Top frame, Home and hubs | The Home screen: reads the featured banner and the rows off Dropout's page (rules `home`), draws Leanback's own layer from them, keeps the selection model and the TV-style scrolling, presses Dropout's *Show more*, builds Continue Watching. See [The Home screen](#the-home-screen-contenthomejs). |
 | `content/show.js` | Top frame, pages at a one-word address | A show's page, a special or a list: tells which from the page, draws the row of seasons from Dropout's season list, marks what Leanback hides and the parts `content/show.css` restyles, stamps episodes watched or in progress, picks the episode to start on. See [A show's page](#a-shows-page-contentshowjs). |
 | `content/player.js` | Every frame on `embed.vhx.tv` (`all_frames: true`) | Registers with the background (`player:hello`); finds the `<video>`; handles keys while the frame has focus; executes `player:command`; reports `player:state` and `player:ended`; exposes `OTTData` facts; reports progress to the watch history and resumes a video in progress. Owns **when** the transport bar is open and what Back means while it is, and applies the `startMuted` preference once per video. It loads `lib/history.js`, `nav/site-rules.js`, `nav/spatial.js`, `nav/focus-ring.js` and `content/transport.js`, plus `content/player.css`. |
@@ -63,8 +65,8 @@ engine. The extension itself stays standalone
 | --- | --- | --- |
 | `browse` | `/browse` | **Home**: Leanback's own screen ([below](#the-home-screen-contenthomejs)) and the rail. Initial focus: the featured banner's first button. Back → exit hook. If Home finds nothing to draw within 10 s: row-aware navigation over Dropout's own rows (`pages.browse`). |
 | `hub` | a one-segment path whose page holds `home.root` (`/dimension-20`, `/dropout-24-7`) | The same screen without Continue Watching; the rail with no entry marked as the current page. Back → Home. |
-| `grid` | `/series`, `/collections/...`, `/my-list` | Geometric navigation over tiles, and the rail; Down past the last row clicks Load More. Initial focus: the first tile. Back → Home. |
-| `series` | `/<slug>[/season:N]` | Everything at a one-word address that is not a hub: a show, a special or a list, told apart by `content/show.js` from the page. A show gets the row of seasons, opens on its newest season, and starts on the episode to watch next; focusables are the show's buttons (*Trailer*, *My list*, *Watch Movie* on a special), the seasons (a row) and the tiles. A page whose layout is not recognised keeps Dropout's season and sort selects, each a two-step control: OK engages it, ◀ ▶ step its options, OK commits (going to the option's page), Back puts the old value back. A list's initial focus is its first tile. Back → Home. |
+| `grid` | `/series`, `/collections/...`, `/my-list` | **Drawn by Leanback** (`content/screen.js`), with the rail. Initial focus: the first card. If the screen finds nothing to draw: geometric navigation over Dropout's tiles; Down past the last row clicks Load More. Back → Home. |
+| `series` | `/<slug>[/season:N]` | Everything at a one-word address that is not a hub: a show, a special or a list, told apart by `content/show.js` from the page. A show gets the row of seasons, opens on its newest season, and starts on the episode to watch next; focusables are the show's buttons (*Trailer*, *My list*, *Watch Movie* on a special), the seasons (a row) and the tiles. A **list** is drawn by Leanback (`content/screen.js`, no rail). A page whose layout is not recognised keeps Dropout's season and sort selects, each a two-step control: OK engages it, ◀ ▶ step its options, OK commits (going to the option's page), Back puts the old value back. A list's initial focus is its first tile. Back → Home. |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>` | Theater layout (setting `auto`), focus the player frame. Down from the player → the series link, else the first focusable under it. Back: theater on → leave theater; else the season page it was opened from when it is the same show, else the show's page. Media keys always reach the player. |
 | `search` | `/search` | Geometric navigation, and the rail; the search input keeps the keyboard apart from Escape, ◀ at the start of the text (the rail) and ▼ (the results). |
 | `other` | everything else (login, account, legal pages) | No initial focus: the ring follows whatever the page focuses. Arrows move among links, buttons and form fields (`pages.other.focusable`). Back → Home. |
@@ -301,6 +303,43 @@ to the background as `history:observe` whenever the set of values changes.
 **When it cannot draw**: if the page holds `home.root` but nothing can be read
 from it by the initial-focus deadline (10 s), `page.js` removes the layer and
 drives Dropout's page with the `browse` rules instead.
+
+## Pages Leanback draws (`content/screen.js`)
+
+Browse, My List, `/collections/…` and the lists (a `series` page whose layout
+is a list) are drawn like Home: `page.js` `screenKind()` is `page` for them,
+and `startHome()` creates the screen in `state.home`'s place, so everything
+that drives Home — the moves, the initial focus, the rail's way back, the
+redraw on every change to the page or the history — drives it too. The layer
+is Home's (`div.tenfoot-home.tenfoot-screen`, a child of `<html>`), and
+`html[data-tenfoot-home="on"]` shows it.
+
+**Reading.** `readPage()` reads, with `sites/dropout.json → screen`, the
+page's title (`h1.collection-title`) and its tiles (`li.js-collection-item`
+in `ul.js-load-more-items-container`), one per link: picture, title,
+subtitle, running time, Dropout's bar, badge. The same markup serves Browse,
+My List loaded as a page, and every list. `more` is whether Dropout's *Load
+More* link is there.
+
+**Drawing.** The page's name heads it (the rail's name for a page the rail
+links to: *My List*), then the cards from `content/cards.js`, reconciled by
+link, in a CSS grid of `COLUMNS` (5) at Home's card size — all sizes scale
+with the width, so it is five on any screen. Progress is the watch history's
+where it has the video, else Dropout's bar; the bars are sent as
+`history:observe`. New Releases' "New" badges are dropped
+(`home.rowOverrides`, by the page's path).
+
+**The selection** is an index into the cards: ◀ ▶ along a row, stopping at
+its ends (`{edge: "left"}` enters the rail on Browse and My List), ▲ ▼ by
+`COLUMNS`, into a shorter last row its last card. The selected row is moved
+to 7 % of the height, as Home's rows are (the first row leaves the title in
+view). Two rows from the end, Dropout's *Load More* is clicked once; its new
+tiles arrive as a change to the page and join the grid, the selection kept by
+key; after 6 s the attempt ends.
+
+**Dropout's chrome.** `page.js` `stampChrome()` stamps the top bar and footer
+(`common.chrome`) `data-tenfoot-chrome`, which `page.css` hides, on every page
+kind but `other`.
 
 ## A show's page (`content/show.js`)
 
@@ -680,11 +719,11 @@ The shipped `manifest.json` (MV2). Notes on the parts that are not obvious:
   it is needed; the files in one list share a global, which is how `lib/*`,
   `nav/*` and `content/home.js` publish `TenfootSettings`, `TenfootHistory`,
   `TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
-  `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootHome` and
-  `TenfootShow` to `content/page.js`.
+  `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootCards`,
+  `TenfootHome`, `TenfootScreen` and `TenfootShow` to `content/page.js`.
 - The page's `css` is `content/page.css` (ring, hints, theater),
   `content/panel.css` (the settings panel, which is also in the player
-  frame's list), `content/home.css` (Home and the rail) and
+  frame's list), `content/home.css` (Home, the pages Leanback draws, the rail) and
   `content/show.css` (a show's page). All but the panel's are gated on
   `html[data-tenfoot="on"]`; the panel only exists while open.
 - A second `watch.dropout.tv` entry, at `document_start`, holds only

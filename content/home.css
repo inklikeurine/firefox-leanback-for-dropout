@@ -480,6 +480,36 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-card-link.tenfoot-scaled ~ .tenfoot-card-sub {
   transform: translateY(var(--tf-reach));
 }
+/* --- a page Leanback draws (content/screen.js): Browse, My List, lists --- */
+
+/* No rail beside it: the view starts at the left edge. */
+.tenfoot-home[data-tenfoot-norail="true"] .tenfoot-home-view {
+  left: 0;
+}
+.tenfoot-screen-head {
+  margin: 0 0 calc(var(--tf-u) * 30);
+}
+.tenfoot-screen-title {
+  margin: 0;
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  font-weight: 800;
+  font-size: max(22px, calc(var(--tf-u) * 52));
+  line-height: 1.1;
+}
+/* Five across (screen.js COLUMNS), Home's card size; room under each row for
+   the selected card to grow into, as under Home's headings. */
+.tenfoot-screen-grid {
+  display: grid;
+  grid-template-columns: repeat(5, var(--tf-card-w));
+  column-gap: var(--tf-card-gap);
+  row-gap: calc(var(--tf-u) * 36 + var(--tf-reach));
+  padding-top: var(--tf-reach);
+}
+.tenfoot-screen-grid .tenfoot-card {
+  width: var(--tf-card-w);
+}
+
 .tenfoot-home-more {
   margin: 0;
   color: var(--tf-dim);

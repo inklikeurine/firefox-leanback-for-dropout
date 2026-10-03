@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.28.0] — 2026-10-02
+
+### Changed
+
+- **Browse, My List and the lists are Leanback's own screens**, drawn like
+  Home: the page's name at the top, then its shows or episodes as Home's
+  cards, five across, with their running times, badges and progress. ◀ ▶ move
+  along a row, ▲ ▼ go up and down a row, and the selected row slides up to
+  the same place each time. More arrive by themselves near the end (Dropout's
+  own *Load More*). The lists — Trending, New Releases, a show's new
+  episodes, the trailers… — are the pages Home's *View all* opens.
+- **Dropout's own top bar and footer are hidden** on every page you browse
+  or watch; they stay on its sign-in, account, help and legal pages.
+
 ## [0.27.0] — 2026-10-02
 
 ### Changed
