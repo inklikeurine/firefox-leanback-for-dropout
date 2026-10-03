@@ -144,6 +144,19 @@ html.tenfoot-theater [data-tenfoot-hide] {
   display: none !important;
 }
 
+/* While a screen of Leanback's is being built (Home's rows come after the
+   page), Dropout's page stays hidden under it, so it never shows first;
+   page.js lifts this as soon as the screen is up, or gives up on it. */
+html[data-tenfoot="on"][data-tenfoot-pending] {
+  background-color: #0b0c10 !important;
+}
+html[data-tenfoot="on"][data-tenfoot-pending] body {
+  visibility: hidden !important;
+}
+html[data-tenfoot="on"][data-tenfoot-pending] [data-tenfoot-theater-root] {
+  visibility: visible !important;
+}
+
 /* Dropout's own top bar and footer (rules: common.chrome), on every page but
    sign-in, account, help and legal: the rail and Back do their jobs. */
 html[data-tenfoot="on"] [data-tenfoot-chrome] {

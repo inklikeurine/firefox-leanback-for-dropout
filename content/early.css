@@ -1,14 +1,18 @@
 /* Leanback for Dropout — the one stylesheet applied before the page is drawn
    (run_at document_start; content scripts' stylesheets otherwise arrive with
-   the scripts, after the first paint). It names Dropout's own classes because
-   no script has run yet to stamp anything.
+   the scripts, after the first paint). No script has run yet, so it can only
+   name the page itself.
 
-   Dropout opens every show on Season 1, and content/page.js may move it on to
-   the newest season. Until page.js has decided (html[data-tenfoot-ready]), a
-   show's page stays blank, so Season 1 never flashes up. If page.js never
-   decides, the page appears by itself after 2 s. */
-html:not([data-tenfoot-ready]) body.collections-show:has(select.js-switch-season) {
-  animation: tenfoot-reveal 0s linear 2s both !important;
+   Until content/page.js has started (html[data-tenfoot-ready]), Dropout's
+   page stays blank on Leanback's own dark ground, so it never shows before
+   Leanback's screen does — nor Season 1 of a show that page.js moves on to
+   its newest season. If page.js never starts, the page appears by itself
+   after 3 s. */
+html:not([data-tenfoot-ready]) {
+  background-color: #0b0c10 !important;
+}
+html:not([data-tenfoot-ready]) body {
+  animation: tenfoot-reveal 0s linear 3s both !important;
 }
 @keyframes tenfoot-reveal {
   from {

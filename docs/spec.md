@@ -384,8 +384,8 @@ means Back at the top level closes Firefox.
   buttons, seasons, episodes, what is watched, the episode to start on), and
   restyles Dropout's page when it cannot. `content/show.css` styles the
   seasons and the restyle; `content/early.css`, the one stylesheet
-  loaded before the page is drawn, keeps a show blank until its season is
-  decided.
+  loaded before the page is drawn, keeps Dropout's page blank until Leanback
+  has started, so Dropout's page never shows first.
 - `content/player.js` (every `embed.vhx.tv` frame): finds the `<video>`,
   handles keys while the frame has focus, executes player commands, reports
   state (`paused`, `currentTime`, `duration`, `ended`, up-next) to the page,

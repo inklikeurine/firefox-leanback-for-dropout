@@ -116,8 +116,16 @@ entries of its own in its way; it makes sure the history is worth following:
    structural parent. The load's navigation type
    (`PerformanceNavigationTiming.type`), and the intent Leanback left before
    navigating (`tenfoot.intent`: `push`, `replace` or `back`), say whether the
-   page was pushed, replaced or gone back to. A page restored from Firefox's
-   back-forward cache does the same from `pageshow`.
+   page was pushed, replaced or gone back to. The search app adds a history
+   step of its own for every search (`history.pushState`, no page load);
+   `followSearchHistory()` gives each one a trail entry, cuts the trail back
+   to the step Firefox's Back returned to, and otherwise updates the top's
+   address, so going back down to Home counts every step.
+   **No back-forward cache:** `page.js` adds an empty `unload` listener,
+   which keeps the site's pages out of Firefox's back-forward cache, so Back
+   always loads a page afresh. A page restored from that cache did not get
+   the keyboard back (every key went nowhere until a reload). The `pageshow`
+   handler for a restored page stays, in case one is restored anyway.
 2. **Sideways moves replace.** Another episode (next / previous / autoplay),
    another season (a button in the row of seasons, or a two-step select whose
    options are addresses, goes there with `location.replace` instead of
@@ -128,6 +136,8 @@ entries of its own in its way; it makes sure the history is worth following:
    pushed from Home, replaced from each other) never add a history entry. The
    rail's *Home* goes back down the history to Home
    when it is on the trail (`history.go(-n)`), and open it otherwise.
+   Leanback's own Back (and `/` on Search) goes to the newest trail entry
+   that is another page (`backIndex()`): past all of search's steps at once.
 3. **Siblings are skipped on the way back.** When a page is reached by Back
    and the page left is its sibling (same kind and same show: the previous
    episode, after Dropout's own up-next card went on to the next), it carries
@@ -144,6 +154,23 @@ entries of its own in its way; it makes sure the history is worth following:
    still there, Leanback runs the same layered Back. BrowserBack pressed while
    the player frame has the keys is passed to the page (`page:action`
    `browser-back`).
+
+## Before the first paint
+
+Dropout's page must never show before Leanback's screen does.
+`content/early.css` (at `document_start`, before any script) keeps `<body>`
+hidden on Leanback's dark ground until `page.js` sets
+`html[data-tenfoot-ready]`; if nothing ever sets it, a 3 s animation shows
+the page anyway. `page.js` sets it at the end of `setupPage()` (before the
+initial focus: nothing in a hidden body can take the focus), when Leanback
+is turned off, and when it fails to start. A show whose bare address is
+moved on to its newest season never sets it, so Season 1 stays blank until
+the new page loads.
+
+A screen that is not up yet when the page is set up (Home's rows come after
+the page) sets `html[data-tenfoot-pending]` as well: `content/page.css` keeps
+`<body>` hidden under it (the theater root excepted), until `refreshHome()`
+finds the screen ready, or `stopHome()` gives it up.
 
 ## Spatial navigation (`nav/spatial.js`)
 
@@ -438,11 +465,9 @@ address. Before anything else is set up, `page.js` `openSeason()` reads the
 seasons and, when the address names none, goes to the newest (setting
 `seasonStart`: `latest`, or `first`) with `goSideways()`. An address that
 names its season (`/<show>/season:N`) is never moved, so a season picked
-from the row, or reached by Back from an episode, stays. `content/early.css`
-keeps `body.collections-show` with a season control blank until `page.js`
-sets `html[data-tenfoot-ready]`, at the end of every setup, when Leanback is
-turned off, and when it fails to start; if nothing sets it, a 2 s animation
-shows the page anyway.
+from the row, or reached by Back from an episode, stays. Until then the
+page stays blank ([Before the first paint](#before-the-first-paint)), so
+Season 1 never shows.
 
 **What is read** (`readDetail()`, rules `pages.series.show`). The banner:
 the show's name (`heroTitle`), the season count (`heroStats`), the
@@ -816,10 +841,8 @@ The shipped `manifest.json` (MV2). Notes on the parts that are not obvious:
   `html[data-tenfoot="on"]`; the panel only exists while open.
 - A second `watch.dropout.tv` entry, at `document_start`, holds only
   `content/early.css`. Content-script stylesheets arrive with their scripts'
-  `run_at`, so this is the only way a rule applies before the first paint: it
-  keeps a show's page blank until `page.js` has decided its season. It is the
-  one stylesheet that names Dropout's classes, since no script has run yet to
-  stamp anything.
+  `run_at`, so this is the only way a rule applies before the first paint;
+  see [Before the first paint](#before-the-first-paint).
 - `sites/dropout.json` is **not** in `web_accessible_resources`: the
   background fetches it and hands it to the content scripts, and an extension
   reading its own packaged file needs no declaration.

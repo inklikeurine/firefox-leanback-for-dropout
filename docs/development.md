@@ -96,6 +96,9 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 15 | Up | Back in the full-window video |
 | 16 | Escape, Escape | Theater off: the episode's page as in 14; then back to the season page |
 | 17 | From Home, open a show, an episode, let it play into the next (or press Next); then the remote's Back, twice | Back goes to the season page (not the previous episode), then Home |
+| 17a | Watch an episode for a moment, then the remote's Back, Back; on each page, press ◀ ▶ | Every page answers the remote straight away; no page needs a reload |
+| 17b | Search: type a word, wait for results, type another; then ◀ to the rail, Home, OK | Home opens; Escape from the results instead leaves Search in one step |
+| 17c | Open any page from the rail, watch the screen as it loads | A dark screen, then Leanback's; Dropout's own page never shows first |
 | 18 | On the season page, switch season with the row, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
 | 19 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
 | 20 | Let an episode end (or seek near the end) | Eight seconds before the end, the "Up next" card over the bottom right: picture, ring counting down, "UP NEXT · 0:08", "S… · E…", the show, *OK Play now · ◀ Hide*. The next episode starts at the end (autoplay next on). Again, with OK on the card: it starts at once. Again, with ◀: the card goes and nothing plays by itself at the end |

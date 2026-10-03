@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.31.1] — 2026-10-03
+
+### Fixed
+
+- **Pages no longer freeze after going back.** Going back to a page (for
+  example out of an episode) could leave every key doing nothing until the
+  page was reloaded; Back now always loads the page afresh.
+- **Home on the rail works from Search.** After a search, it did nothing.
+  Back from Search, and `/`, also leave Search in one step instead of
+  stepping through earlier searches.
+- **Dropout's own page no longer shows for a moment** before Leanback's
+  screen appears: the screen stays dark until Leanback's is ready.
+
 ## [0.31.0] — 2026-10-02
 
 ### Changed

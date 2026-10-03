@@ -85,6 +85,7 @@
     homeRefocus: 0,
     dockUntil: 0,
     dockFrame: 0,
+    historyLength: 0,
     show: null,
     rail: null,
     railActive: false,
@@ -721,6 +722,7 @@
     state.home.destroy();
     state.home = null;
     delete root.dataset.tenfootHome;
+    setPending(false);
     syncDock();
   }
 
@@ -777,6 +779,7 @@
     if (!state.home) return;
     const before = currentEl();
     const target = state.home.refresh();
+    if (state.home.ready) setPending(false);
     if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || state.playerFocused || state.theater || !target) return;
     // The card the selection was on went away, or the site took the focus:
     // put it on the card Home now has selected.
@@ -974,6 +977,14 @@
     root.setAttribute("data-tenfoot-ready", "");
   }
 
+  // A screen Leanback is still building keeps Dropout's page hidden under it
+  // (content/page.css), so Dropout's page never shows first. Lifted when the
+  // screen is up, or when it is given up (stopHome).
+  function setPending(on) {
+    if (on) root.setAttribute("data-tenfoot-pending", "");
+    else root.removeAttribute("data-tenfoot-pending");
+  }
+
   // ---------------------------------------------------------------------------
   // watch history: what the episode page knows
   // ---------------------------------------------------------------------------
@@ -1148,8 +1159,18 @@
   // opened straight on this page — Back walks up the site instead, replacing
   // this page rather than adding one: episode → its season → Home → the exit
   // hook.
+  // The newest entry of the trail below this page that is another page, or
+  // -1. Only search has entries of its own page below it: one per search the
+  // app recorded, which Back goes past all at once.
+  function backIndex() {
+    if (!Trail) return -1;
+    for (let j = state.trail.length - 2; j >= 0; j--) if (!Trail.same(state.trail[j].url, location.href)) return j;
+    return -1;
+  }
+
   function stepBack() {
-    if (Trail && Trail.depth(state.trail) > 0) return goBackTo(-1, state.trail[state.trail.length - 2].url);
+    const j = backIndex();
+    if (j >= 0) return goBackTo(j - (state.trail.length - 1), state.trail[j].url);
     if (state.kind === "browse") {
       exit();
       return true;
@@ -1382,7 +1403,8 @@
   // "/" is a toggle: it opens search, and on the search page it closes it and
   // puts you back where you were.
   function leaveSearch() {
-    if (Trail && Trail.depth(state.trail) > 0) return goBackTo(-1, state.trail[state.trail.length - 2].url);
+    const j = backIndex();
+    if (j >= 0) return goBackTo(j - (state.trail.length - 1), state.trail[j].url);
     return goHome();
   }
 
@@ -1831,12 +1853,37 @@
   function onPopState() {
     if (state.leaving || !state.enabled) return;
     clearBackFallback();
-    if (location.href !== state.href) onNavigate();
+    if (location.href !== state.href) onNavigate(true);
   }
 
   // ---------------------------------------------------------------------------
   // the trail (nav/trail.js)
   // ---------------------------------------------------------------------------
+
+  // The search app adds a step to the tab's history for every search it runs
+  // (history.pushState), without a page load. The trail follows: an entry
+  // for each new step, cut back to the step Firefox's Back returned to, the
+  // top's address updated otherwise — so going back down to Home counts
+  // every step.
+  function followSearchHistory(popped) {
+    if (!Trail || !state.trail.length) return;
+    const href = location.href;
+    let t = state.trail.slice();
+    const top = t[t.length - 1];
+    if (popped) {
+      let j = -1;
+      for (let i = t.length - 2; i >= 0; i--) if (t[i].url === href) { j = i; break; }
+      if (j >= 0) t = t.slice(0, j + 1);
+      else t[t.length - 1] = Object.assign({}, top, { url: href });
+    } else if (history.length > state.historyLength) {
+      t.push(Object.assign({}, top, { url: href }));
+    } else {
+      t[t.length - 1] = Object.assign({}, top, { url: href });
+    }
+    state.historyLength = history.length;
+    state.trail = t;
+    Trail.save(sessionStore(), t);
+  }
 
   // Where this page sits in the tab's history. Returns true when it was
   // reached by Back and is only a sibling of the page left — the previous
@@ -1882,11 +1929,12 @@
     Trail.save(sessionStore(), state.trail);
   }
 
-  function onNavigate() {
+  function onNavigate(popped) {
     if (!state.enabled) return;
     // The search app puts the words in the address as you type: the same
     // page, the same screen, the selection left in the box.
     if (state.kind === "search" && state.home && Rules.classify(state.rules, location.pathname) === "search") {
+      followSearchHistory(Boolean(popped));
       state.href = location.href;
       refreshHome();
       return;
@@ -2065,6 +2113,7 @@
   function setupPage() {
     clearInitialFocusTimer();
     state.href = location.href;
+    state.historyLength = history.length;
     clearBackFallback();
     stopShow();
     if (openSeason()) return;
@@ -2085,9 +2134,13 @@
     stampTvGrid();
     recordTrail();
     syncModal();
+    // Dropout's page shows from here on (content/early.css), unless a screen
+    // of Leanback's is still to come; and it must, before anything in it can
+    // take the focus.
+    setPending(Boolean(state.home && !state.home.ready));
+    markReady();
     tryInitialFocus();
     if (!state.theater && !state.playerFocused) showHints();
-    markReady();
   }
 
   function applyEnabled(on) {
@@ -2160,6 +2213,10 @@
       clearBackFallback();
     });
     window.addEventListener("pagehide", () => { state.leaving = true; });
+    // An unload listener keeps the page out of Firefox's back-forward cache,
+    // so Back always loads it afresh. A page restored from that cache did not
+    // get the keyboard back: every key went nowhere until a reload.
+    window.addEventListener("unload", () => {});
     // Back to a page Firefox kept in memory: the scripts are still running,
     // so pick up from where the history now is.
     window.addEventListener("pageshow", (e) => {
