@@ -258,8 +258,9 @@ means Back at the top level closes Firefox.
   below. The player's own chrome stays hidden.
 - **One settings panel.** Leanback's settings are one list
   (`lib/settings.js` → `ROWS`) drawn by one panel (`nav/panel.js`), the same
-  on a page and during playback: full height from the right, the title and a
-  ✕ that is only a picture, the selected entry in yellow, a switch for each
+  on a page and during playback: full height from the right and narrow (310
+  of 1920 units), each value on the line under its name, the title and a ✕
+  that is only a picture, the selected entry in yellow, a switch for each
   on/off, a chevron and the value for an entry with several values, a tick on
   the chosen option, headings over groups, and the keys along the foot
   ("◀ Back · ▲▼ Move · OK Change"). ▲ ▼ move; OK or ▶ take an entry (a switch

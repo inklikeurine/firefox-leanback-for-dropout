@@ -2,9 +2,10 @@
    and during playback. Full height, flown in from the right: Leanback's dark
    ground, the selected entry in Dropout's yellow with black text, a switch for
    each on/off, a chevron where an entry opens a list, a tick on the chosen
-   option, and the keys along the foot. Sizes are in --tf-su, 1/1920 of the
-   window's width, with pixel minimums. Dropout's own button colours reach
-   into the page, so the entries pin theirs. */
+   option, and the keys along the foot. It is narrow, so an entry's value sits
+   under its name. Sizes are in --tf-su, 1/1920 of the window's width, with
+   pixel minimums. Dropout's own button colours reach into the page, so the
+   entries pin theirs. */
 
 .tenfoot-settings {
   --tf-su: calc(100vw / 1920);
@@ -14,7 +15,7 @@
   bottom: 0;
   z-index: 2147483647;
   box-sizing: border-box;
-  width: min(92vw, max(360px, calc(var(--tf-su) * 620)));
+  width: min(92vw, max(260px, calc(var(--tf-su) * 310)));
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -23,7 +24,7 @@
   border-left: 1px solid #1d2027;
   color: #f5f6f7;
   font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif !important;
-  font-size: max(16px, calc(var(--tf-su) * 26));
+  font-size: max(15px, calc(var(--tf-su) * 22));
   font-weight: 700;
   line-height: 1.25;
   text-align: left;
@@ -49,17 +50,20 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   justify-content: space-between;
   gap: calc(var(--tf-su) * 16);
   margin: 0;
-  padding: calc(var(--tf-su) * 48) calc(var(--tf-su) * 40) calc(var(--tf-su) * 28);
+  padding: calc(var(--tf-su) * 40) calc(var(--tf-su) * 24) calc(var(--tf-su) * 22);
   border-bottom: 1px solid #1d2027;
 }
 .tenfoot-settings-title {
   margin: 0;
-  font-size: max(22px, calc(var(--tf-su) * 40));
+  min-width: 0;
+  font-size: max(20px, calc(var(--tf-su) * 32));
+  line-height: 1.15;
   font-weight: 800;
   color: #ffffff;
 }
 /* A picture of a close button: Back is what closes. */
 .tenfoot-settings-close {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,7 +91,7 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
 /* A heading over a group of options ("Color", "Size"). Not a stop. */
 .tenfoot-settings-group {
   margin: calc(var(--tf-su) * 22) 0 calc(var(--tf-su) * 6);
-  padding: 0 calc(var(--tf-su) * 40);
+  padding: 0 calc(var(--tf-su) * 24);
   font-size: max(13px, calc(var(--tf-su) * 19));
   font-weight: 800;
   letter-spacing: 0.1em !important;
@@ -101,12 +105,12 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
 .tenfoot-settings-item:active {
   display: flex;
   align-items: center;
-  gap: calc(var(--tf-su) * 18);
+  gap: calc(var(--tf-su) * 14);
   box-sizing: border-box;
   width: 100%;
-  min-height: max(44px, calc(var(--tf-su) * 76));
+  min-height: max(44px, calc(var(--tf-su) * 72));
   margin: 0;
-  padding: calc(var(--tf-su) * 14) calc(var(--tf-su) * 40);
+  padding: calc(var(--tf-su) * 14) calc(var(--tf-su) * 24);
   border: 0;
   border-radius: 0;
   background: transparent !important;
@@ -127,18 +131,27 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   background: var(--tenfoot-ring-color, #feea3b) !important;
   color: #000000 !important;
 }
-.tenfoot-settings-label {
+/* The name, and its value on the line under it. */
+.tenfoot-settings-text {
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tenfoot-settings-label {
   min-width: 0;
 }
 .tenfoot-settings-value {
-  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.8em;
   font-weight: 600;
   color: #9aa0ac;
+}
+.tenfoot-settings-value:empty {
+  display: none;
 }
 .tenfoot-settings-item[data-tenfoot-current="true"] .tenfoot-settings-value {
   color: #1a1a05;
@@ -207,9 +220,9 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   flex-wrap: wrap;
   gap: calc(var(--tf-su) * 12);
   margin: 0;
-  padding: calc(var(--tf-su) * 24) calc(var(--tf-su) * 40) calc(var(--tf-su) * 32);
+  padding: calc(var(--tf-su) * 20) calc(var(--tf-su) * 24) calc(var(--tf-su) * 28);
   border-top: 1px solid #1d2027;
-  font-size: max(13px, calc(var(--tf-su) * 20));
+  font-size: max(13px, calc(var(--tf-su) * 18));
   font-weight: 600;
   color: #cfd3da;
 }
@@ -228,7 +241,7 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   color: #1a1a05;
 }
 .tenfoot-settings-keys span {
-  margin-right: calc(var(--tf-su) * 14);
+  margin-right: calc(var(--tf-su) * 8);
 }
 
 @media (prefers-reduced-motion: reduce) {

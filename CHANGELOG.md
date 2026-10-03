@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.0] — 2026-10-02
+
+### Changed
+
+- **The settings panel is half as wide.** Each setting's value is on the line
+  under its name, and its text is a little smaller; a long name takes two
+  lines.
+
 ## [0.26.3] — 2026-10-02
 
 ### Fixed

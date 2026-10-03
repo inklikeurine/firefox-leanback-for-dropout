@@ -140,7 +140,11 @@
           mark.appendChild(sw);
         } else if (entry.checked) mark.appendChild(icon(doc, "check"));
         else if (kind === "choice" || kind === "drill") mark.appendChild(icon(doc, "chevron"));
-        b.append(label, value, mark);
+        // The name with its value under it, then the switch, chevron or tick.
+        const text = doc.createElement("span");
+        text.className = "tenfoot-settings-text";
+        text.append(label, value);
+        b.append(text, mark);
         b.addEventListener("click", (e) => {
           // The site never sees it: a click bubbling out would wake its own
           // handlers, which move the focus.
