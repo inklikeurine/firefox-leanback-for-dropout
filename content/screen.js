@@ -8,15 +8,19 @@
 //   head      — a plain page title (Browse, My List, a list), or
 //   hero      — a banner like Home's: picture, title, meta, description and
 //               buttons (a show's page, a special: content/show.js);
-//   pills     — a row of choices (a show's seasons, newest first);
+//   field     — a search box: Leanback's own, whose text is typed into
+//               Dropout's (search);
+//   pills     — a row of choices (a show's seasons, newest first; search's
+//               filters, which press Dropout's own);
 //   sections  — groups of cards, each with its own title and columns;
+//   empty     — what to say when there are no cards (Dropout's own words);
 //   more      — Dropout's own Load More, pressed near the end;
 //   start     — the key of the card or button the selection starts on.
-// This file reads collection pages itself (readPage, sites/dropout.json →
-// screen); show.js reads shows and specials.
+// This file reads collection pages and search itself (readPage, searchModel,
+// sites/dropout.json → screen); show.js reads shows and specials.
 //
-// The selection moves over rows: the buttons, the seasons, then each
-// section's cards in rows of its columns. ◀ ▶ move along a row and stop at
+// The selection moves over rows: the search box, the buttons, the seasons
+// or filters, then each section's cards in rows of its columns. ◀ ▶ move along a row and stop at
 // its ends ({edge: "left"} is the cue for the rail); ▲ ▼ move a row, keeping
 // the column between rows of cards, and landing where a row was left (the
 // season on screen, at first). Down to the first row of cards the screen is
@@ -85,6 +89,57 @@
     return out;
   }
 
+  /**
+   * Dropout's search page as a screen model: Leanback's own search box, the
+   * type filters (All, Videos, Collections) as pills, the results as cards.
+   * Null when Dropout's search box is not on the page.
+   * @param {Document} doc
+   * @param {object} R — the rules' "screen.search" object
+   */
+  function searchModel(doc, R) {
+    const rules = R || {};
+    const input = qs(rules.input, doc);
+    if (!input) return null;
+    const { textOf } = C();
+    const page = readPage(doc, rules);
+    const filters = qsa(rules.filter, doc).map((b, i) => {
+      let current = false;
+      try {
+        current = Boolean(rules.filterSelected) && b.matches(rules.filterSelected);
+      } catch (_err) { /* a bad selector marks none */ }
+      return { key: b.getAttribute("data-filter-type") || `filter-${i}`, label: textOf(b), current, proxy: b };
+    }).filter((f) => f.label);
+    return {
+      kind: "search",
+      head: "",
+      hero: null,
+      field: { value: String(input.value || ""), placeholder: input.getAttribute("placeholder") || "Search", proxy: input },
+      pills: filters.length ? { items: filters } : null,
+      sections: [{ key: "results", title: "", sub: "", columns: COLUMNS, items: page.items }],
+      empty: textOf(qs(rules.empty, doc)),
+      more: qs(rules.more, doc),
+      start: "field"
+    };
+  }
+
+  /**
+   * Type `value` into one of the site's text boxes as if typed there: its
+   * own value setter (past a framework's watcher on the element), then an
+   * input event, which is what a React box listens for.
+   */
+  function typeInto(input, value) {
+    if (!input || !input.isConnected) return;
+    const win = input.ownerDocument.defaultView || globalThis;
+    try {
+      const desc = Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, "value");
+      if (desc && desc.set) desc.set.call(input, value);
+      else input.value = value;
+    } catch (_err) {
+      input.value = value;
+    }
+    input.dispatchEvent(new win.Event("input", { bubbles: true }));
+  }
+
   /** A collection page as a screen model: its title over a grid of cards. */
   function collectionModel(doc, R) {
     const page = readPage(doc, R);
@@ -109,7 +164,8 @@
    *   badges?: boolean,                     // false: no badges on the cards
    *   history?: () => object,               // the watch-history store
    *   onObserve?: (items: object[]) => void,// Dropout's progress bars, for the history
-   *   onPill?: (pill: object) => void       // OK on a pill (a season)
+   *   onPill?: (pill: object) => void,      // OK on a pill (a season); a pill with a proxy presses it instead
+   *   onFieldDone?: () => void              // Enter in the search box
    * }} opts
    */
   function createScreen(doc, opts) {
@@ -149,14 +205,35 @@
     const heroActions = el("div", "tenfoot-hero-actions");
     heroBody.append(heroTitle, heroMeta, heroText, heroActions);
     hero.append(heroArt, heroScrim, heroBody);
+    // The search box: Leanback's own, typed into; its text goes on to the
+    // site's box, whose results come back as a change to the page.
+    const fieldBox = el("div", "tenfoot-screen-field");
+    fieldBox.hidden = true;
+    const field = el("input", "tenfoot-screen-field-input");
+    field.type = "search";
+    field.autocomplete = "off";
+    field.spellcheck = false;
+    field.setAttribute("aria-label", "Search");
+    field.setAttribute("data-tenfoot-nozoom", "");
+    fieldBox.appendChild(field);
+    field.addEventListener("input", () => {
+      if (model && model.field) typeInto(model.field.proxy, field.value);
+    });
+    field.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (typeof o.onFieldDone === "function") o.onFieldDone();
+    });
     const pillRow = el("div", "tenfoot-season-row tenfoot-screen-pills");
     pillRow.setAttribute("role", "list");
     pillRow.hidden = true;
     const sectionsBox = el("div", "tenfoot-screen-sections");
+    const emptyBox = el("p", "tenfoot-screen-empty");
+    emptyBox.hidden = true;
     const moreBox = el("p", "tenfoot-home-more");
     moreBox.textContent = "Loading more…";
     moreBox.hidden = true;
-    scroller.append(head, hero, pillRow, sectionsBox, moreBox);
+    scroller.append(head, hero, fieldBox, pillRow, sectionsBox, emptyBox, moreBox);
     view.appendChild(scroller);
     layer.appendChild(view);
     doc.documentElement.appendChild(layer);
@@ -165,7 +242,7 @@
     let actionEls = new Map(); // key → element
     let pillEls = new Map();
     const sectionEls = new Map(); // key → {box, titleEl, subEl, grid, cards: Map}
-    let rows = []; // [{key, kind: "actions"|"pills"|"cards", section, els, keys}]
+    let rows = []; // [{key, kind: "field"|"actions"|"pills"|"cards", section, els, keys}]
     let pos = { row: 0, col: 0 };
     let started = false;
     const memory = new Map(); // row key → item key
@@ -267,7 +344,11 @@
             e.preventDefault();
             e.stopPropagation();
             const pill = model && model.pills ? model.pills.items.find((x) => x.key === b.dataset.tenfootPill) : null;
-            if (pill && typeof o.onPill === "function") o.onPill(pill);
+            if (pill && pill.proxy) {
+              try {
+                pill.proxy.click();
+              } catch (_err) { /* nothing to press */ }
+            } else if (pill && typeof o.onPill === "function") o.onPill(pill);
           });
         }
         b.dataset.tenfootPill = it.key;
@@ -279,6 +360,23 @@
       });
       for (const [k, b] of pillEls) if (!next.has(k)) b.remove();
       pillEls = next;
+    }
+
+    // The box shows the site's text unless it is being typed in, so a search
+    // opened from an address (?q=) shows its words, and typing is never
+    // overwritten by a slower page.
+    function renderField() {
+      const f = model && model.field;
+      fieldBox.hidden = !f;
+      if (!f) return;
+      setAttr(field, "placeholder", f.placeholder || null);
+      if (doc.activeElement !== field && field.value !== f.value) field.value = f.value;
+    }
+
+    function renderEmpty() {
+      const text = (model && model.empty) || "";
+      setText(emptyBox, text);
+      emptyBox.hidden = !text || cardCount() > 0;
     }
 
     function renderSections() {
@@ -323,6 +421,7 @@
     // The rows the selection moves over, top to bottom.
     function buildRows() {
       const next = [];
+      if (model && model.field) next.push({ key: "field", kind: "field", els: [field], keys: ["field"] });
       if (model && model.hero && actionEls.size) {
         next.push({ key: "actions", kind: "actions", els: Array.from(actionEls.values()), keys: Array.from(actionEls.keys()) });
       }
@@ -535,8 +634,10 @@
       }
       renderHead();
       renderHero();
+      renderField();
       renderPills();
       renderSections();
+      renderEmpty();
       buildRows();
       if (more && (cardCount() > more.count || !(model && model.more))) endMore();
       const at = before && before.key ? find(before.key) : null;
@@ -590,6 +691,15 @@
         loading: Boolean(more),
         more: Boolean(model && model.more)
       };
+      if (model && model.field) {
+        out.search = {
+          text: field.value,
+          site: model.field.value,
+          filters: model.pills ? model.pills.items.map((p) => p.label) : [],
+          filter: model.pills ? (model.pills.items.find((p) => p.current) || {}).label || null : null,
+          empty: emptyBox.hidden ? null : emptyBox.textContent
+        };
+      }
       if (model && model.hero) {
         const actions = model.hero.actions || [];
         const resume = actions.find((a) => a.key === "resume") || null;
@@ -618,5 +728,5 @@
     });
   }
 
-  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, COLUMNS, LAYER_CLASS });
+  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, typeInto, COLUMNS, LAYER_CLASS });
 })();

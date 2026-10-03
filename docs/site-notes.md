@@ -39,7 +39,7 @@ it is matched by the `Name_module_` prefix.
 | `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special**, read by `content/show.js` and drawn by `content/screen.js` |
 | `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` |
 | `/<series-slug>/videos/<slug>`, `/videos/<slug>`, `/featured/videos/<slug>` | Trailer or standalone video | `video` |
-| `/search` | One React app that changes the address without reloading; `document.title` is empty | `search` (with the rail, and its results laid out for a TV) |
+| `/search` | One React app that changes the address without reloading; `document.title` is empty | `search` — drawn by `content/screen.js`, with the rail |
 | `/my-list` | Loaded fresh: a server-rendered collection grid (`li.js-collection-item › .browse-item-card a.browse-item-link`, Dropout's *Remove from my list* button inside the link). Reached from `/search` inside the React app, the address changes and the search results can stay on screen | `grid` (with the rail); the rail opens it with a fresh load |
 | `/login`, `/checkout/…`, `/contact/…`, `/privacy`, `/settings`, … | Account and legal pages | `other` — the extension stays passive |
 
@@ -295,7 +295,7 @@ previous results on screen after an address change. On `/search` itself it is
     .Search-module__results-content-container
       .SearchResults-module__search-results-container
         .TypeFilters-module__type-filters-container
-          button.TypeFilters-module__type-filter[data-filter-type="all|video|collection"]   ← "All (20)"
+          button.TypeFilters-module__type-filter[data-filter-type="all|video|collection"]   ← "All (20)"; .TypeFilters-module__selected on the one on screen
         ul.SearchResults-module__search-results       ← flex, wrapping
           li.SearchResults-module__search-result       ← width 20 % (25 % with filters) from 1250 px
             .horizontal-row-item › .browse-item-card    ← the React tile, margin 0 3 %
@@ -308,7 +308,11 @@ So at 1280–1920 px a result picture is about 150–250 px wide in a centred
 column. Leanback marks these parts (`tvGrid` in the rules) and lays them out
 four across, the full width beside the rail. The React tile's link has no
 class, so the rules' `target` for search is `a.browse-item-link, a[href]`.
-`.BlankSearchResults-module__no-results` is the empty state. The rules also
+`h3.BlankSearchResults-module__no-results` ("Start typing to see results",
+2026-09-27 capture) is the empty state: with nothing typed, the filters, the
+list and Load More are all gone. Leanback draws the page from these parts
+(`screen.search` in the rules) and types into
+`input.SearchForm-module__search-input`. The rules also
 list `.Filters-module__…` / `.Filter-module__…`, which the captured pages do
 not use, in case a page does. The My List page reuses the same results.
 

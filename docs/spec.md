@@ -4,8 +4,8 @@ This is the product spec. How the code realises it is in
 [architecture.md](./architecture.md); the site knowledge it rests on, checked
 against captures of the logged-in site, is in [site-notes.md](./site-notes.md).
 Leanback is becoming a TV shell one screen at a time: Home, Browse, My List,
-the lists, a show's page and a special are Leanback's own screens; search and
-the episode page under the player follow.
+the lists, a show's page, a special and search are Leanback's own screens;
+the episode page under the player follows.
 The [milestones](#milestones) below are what 1.0 needs.
 
 ## About
@@ -209,9 +209,19 @@ means Back at the top level closes Firefox.
 - **Dropout's top bar and footer** are hidden on every page but sign-in,
   account, help and legal (the `other` pages); the rail and Back do their
   jobs.
-- **Search results** are spread across the screen for a TV: four across, the
-  full width beside the rail, larger titles. Dropout lays them out for a
-  desktop, five small pictures in a centred column.
+- **Search is Leanback's own screen**, drawn from Dropout's search app
+  (`sites/dropout.json` → `screen.search`), which stays underneath:
+  Leanback's own search box at the top, as wide as five cards, with large
+  text; what is typed into it is typed into Dropout's box, and Dropout's
+  results come back as Home's cards, five across beside the rail. Under the
+  box, Dropout's type filters (*All (118)*, *Videos (115)*, *Collections
+  (4)*) as a row of pills, the one on screen yellow; OK presses Dropout's
+  own. With nothing typed, Dropout's own words ("Start typing to see
+  results"). The selection starts in the box. ▼, OK or Back leave the box
+  for the filters, then the results; ▲ comes back up; ◀ at the start of the
+  text is the rail (N1, N2). Dropout's *Load More* is pressed near the end
+  of the results, never while typing. The box is ringed but not zoomed.
+  Without Dropout's search box on the page, the page is driven as it is.
 - **Spatial navigation** everywhere else. Arrow keys move DOM focus to the
   nearest focusable element in that direction. A tile with two links (image +
   title) counts as one target. ◀ moves only to something level with the
@@ -426,8 +436,8 @@ nothing unfinished read before it counts for Continue Watching or resuming. The 
   Roboto, Arial), a near-black ground (`#0b0c10`), yellow (`#feea3b`) for the
   ring, badges and progress. Sizes scale with the screen width, so it reads
   the same on a 1080p and a 4K television; no text is smaller than 13 px.
-  Home and the rail are drawn at 80 % of a 1920-wide layout; search results
-  at full size.
+  Home, the rail and every page Leanback draws are at 80 % of a 1920-wide
+  layout.
 - Options page: plain form, ≥ 16 px text, fully operable by Tab/arrows/Enter,
   light/dark via `prefers-color-scheme`.
 - No browser-action popup — a popup cannot be driven from a remote.
@@ -493,7 +503,9 @@ Manual checklist (full version with expected results in
   yellow there, the ring on the first saved show.
 - Back: episode → season → Home with the remote's back button, including after
   Dropout played the next episode by itself.
-- Search: results four across, reachable with the arrows.
+- Search: Leanback's box at the top with the selection in it; typing brings
+  Dropout's results as cards five across; ▼ the filters, ▼ the results; OK
+  on a filter shows only those.
 - `/series` grid: Down past the last row loads more; focus continues.
 - A show's main button: *Resume S9 E3* for an episode partway through,
   *Play S9 E4* after one finished, *Play S9 E1* for a show not started; OK

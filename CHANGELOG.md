@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.30.0] — 2026-10-02
+
+### Changed
+
+- **Search is Leanback's own screen**: a large search box at the top, with
+  the selection in it, ready to type; what you type goes to Dropout's
+  search, and the results arrive as Home's cards, five across, as you type.
+  Under the box, Dropout's filters (*All*, *Videos*, *Collections*): OK on
+  one shows only those results. ▼, OK or Back leave the box for the filters
+  and results; ▲ comes back up; ◀ at the start of the text is the rail.
+  More results arrive near the end.
+- The search box is ringed but does not grow when selected.
+
 ## [0.29.0] — 2026-10-02
 
 ### Changed

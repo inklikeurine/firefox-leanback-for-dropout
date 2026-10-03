@@ -35,17 +35,18 @@ navigate, not what you can watch.
 - **An icon rail** down the left of Home, Browse, My List, Search and
   Dropout 24/7: Search, Home, Browse, My List, Dropout 24/7, and Leanback's
   settings.
-- **Search results made for a TV**: four across the screen, larger, reachable
-  with the arrows.
+- **Search drawn for a TV**: Leanback's own search box, large, with
+  Dropout's filters (All, Videos, Collections) under it and the results as
+  Home's cards, five across beside the rail.
 - **A show's page drawn for a TV**, like Home: the show's wide picture and
   name, a button that picks the show up where you left it (*Resume S9 E3*,
   *Play S9 E4*), a row of seasons, newest first, and the season's episodes
   three across, each marked watched or in progress. A show opens on its
   newest season, with the selection on the episode to watch next. Specials
   (a stand-up set, a film) are drawn the same way.
-- **Arrow-key navigation** across the pages Leanback does not draw: search
-  results, an episode's page under the player, and Dropout's sign-in,
-  account and help pages.
+- **Arrow-key navigation** across the pages Leanback does not draw: an
+  episode's page under the player, and Dropout's sign-in, account and help
+  pages.
 - **A focus ring you can see from the sofa** — 4 px, Dropout yellow,
   configurable.
 - **Theater layout** on video pages: the player fills the window; Escape brings
@@ -249,6 +250,15 @@ A special (a stand-up set, a film) is drawn the same way: its picture and
 name, *Watch Movie* (where the selection starts) and *My List*, then the
 video and its extras. A list (Trending, a show's new episodes, the trailers)
 is drawn like Browse.
+
+**Search** is Leanback's own screen too. The search box is at the top, with
+the selection in it, ready to type; what you type goes to Dropout's own
+search, and its results come back as Home's cards, five across, as you type.
+▼ (or OK, or Back) leaves the box for the filters — *All*, *Videos*,
+*Collections*, with Dropout's counts — and ▼ again for the results; ▲ goes
+back up into the box, and ◀ at the start of the text is the rail. OK on a
+filter shows only those results. More results arrive near the end, as on
+Browse.
 
 **Picking up where you left off**: open an episode you stopped halfway and it
 starts where you stopped, with "Resumed at 12:04" along the bottom for a

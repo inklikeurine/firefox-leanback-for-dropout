@@ -44,7 +44,9 @@ While the focus is in a text field, **only the back button is ours** — even
 with nothing selected (it leaves the field, for the rail on the search page)
 and ▼ in a one-line field such as the search box (it leaves the field for
 what is below it: the result filters, then the results; with nothing below,
-it stays the field's). In a field of several lines ▼ moves the cursor.
+it stays the field's). In a field of several lines ▼ moves the cursor. In
+the search box Leanback draws, OK and Back also leave it for what is below
+(Back, with nothing below, goes back as anywhere else).
 
 ## Actions → behaviour by context
 

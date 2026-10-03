@@ -497,6 +497,46 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   font-size: max(22px, calc(var(--tf-u) * 52));
   line-height: 1.1;
 }
+/* Search: Leanback's own box, as wide as five cards, its text large enough
+   to read from the sofa; the site's text colours and fonts are held off. */
+.tenfoot-screen-field {
+  margin: 0 0 calc(var(--tf-u) * 30);
+}
+.tenfoot-screen-field[hidden] {
+  display: none;
+}
+html[data-tenfoot="on"] input.tenfoot-screen-field-input {
+  box-sizing: border-box;
+  width: min(100%, calc(var(--tf-card-w) * 5 + var(--tf-card-gap) * 4));
+  height: auto;
+  margin: 0;
+  padding: calc(var(--tf-u) * 18) calc(var(--tf-u) * 26);
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: calc(var(--tf-u) * 10);
+  background: var(--tf-raised) !important;
+  box-shadow: none !important;
+  color: var(--tf-text) !important;
+  font-family: var(--tf-font) !important;
+  font-weight: 600;
+  font-size: max(18px, calc(var(--tf-u) * 40)) !important;
+  line-height: 1.2;
+  outline: none;
+}
+html[data-tenfoot="on"] input.tenfoot-screen-field-input::placeholder {
+  color: var(--tf-dim);
+  opacity: 1;
+}
+/* Nothing to show: the site's own words ("Start typing to see results"). */
+.tenfoot-screen-empty {
+  margin: calc(var(--tf-u) * 20) 0 0;
+  color: var(--tf-dim);
+  font-family: var(--tf-font);
+  font-weight: 600;
+  font-size: max(16px, calc(var(--tf-u) * 30));
+}
+.tenfoot-screen-empty[hidden] {
+  display: none;
+}
 /* A section of cards: its own number across (--tf-cols: five on a list,
    three for a season's episodes), Home's card size; room under each row for
    the selected card to grow into, as under Home's headings. */

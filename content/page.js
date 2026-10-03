@@ -535,7 +535,9 @@
   function dispatch(action, ctx) {
     const c = ctx || {};
     if (c.editable) {
-      if (action === "back") return blurField();
+      // Back from the search box Leanback draws: down to the results, or,
+      // with none, Back as anywhere else.
+      if (action === "back") return inScreen(document.activeElement) ? leaveFieldBelow() || goBack() : blurField();
       if (action === "down") return leaveFieldBelow();
       return action === "left" ? leaveField() : false;
     }
@@ -646,11 +648,12 @@
     return (state.rules && state.rules.screen) || {};
   }
 
-  // "home", "page" (a grid of cards), "detail" (a show or a special), or null
-  // for a page Leanback does not draw.
+  // "home", "page" (a grid of cards), "detail" (a show or a special),
+  // "search", or null for a page Leanback does not draw.
   function screenKind() {
     if (state.kind === "browse" || state.kind === "hub") return "home";
     if (state.kind === "grid") return "page";
+    if (state.kind === "search") return "search";
     if (state.kind === "series" && Show) {
       const layout = Show.layoutOf(document, state.page.show);
       if (layout === "list") return "page";
@@ -672,9 +675,12 @@
       });
     } else {
       if (!Screen) return;
-      const read = which === "detail"
-        ? () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href })
-        : () => Screen.collectionModel(document, screenRules());
+      const readers = {
+        detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href }),
+        search: () => Screen.searchModel(document, screenRules().search),
+        page: () => Screen.collectionModel(document, screenRules())
+      };
+      const read = readers[which];
       // Nothing to draw from: Dropout's page stays, driven (and on a show
       // restyled) as before.
       if (!read()) return;
@@ -690,7 +696,8 @@
         badges: !(tweak && tweak.badges === false),
         history: () => state.history,
         onObserve: (items) => send({ type: "history:observe", items }),
-        onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current))
+        onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current)),
+        onFieldDone: () => leaveFieldBelow()
       });
     }
     root.dataset.tenfootHome = "on";
@@ -1335,11 +1342,21 @@
   function leaveFieldBelow() {
     const el = document.activeElement;
     if (!el || el === document.body) return false;
+    if (inScreen(el)) {
+      const r = state.home.move("down");
+      if (!r || !r.el) return false;
+      focusEl(r.el, { scroll: false });
+      return true;
+    }
     const { candidates } = collect();
     const t = Spatial.pick("down", Ring.unscaledRect(el), candidates.filter((c) => c.el !== el));
     if (!t) return false;
     focusEl(t.el);
     return true;
+  }
+
+  function inScreen(el) {
+    return Boolean(el && state.home && !state.modal && state.home.contains(el));
   }
 
   function blurField() {
@@ -1801,6 +1818,13 @@
 
   function onNavigate() {
     if (!state.enabled) return;
+    // The search app puts the words in the address as you type: the same
+    // page, the same screen, the selection left in the box.
+    if (state.kind === "search" && state.home && Rules.classify(state.rules, location.pathname) === "search") {
+      state.href = location.href;
+      refreshHome();
+      return;
+    }
     setTheater(false);
     classifyPage();
     setupPage();

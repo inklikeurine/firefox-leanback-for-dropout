@@ -299,7 +299,23 @@
     "itemDuration": ".duration-container",
     "itemProgress": ".percentage-bar",
     "itemBadge": "[data-testid^='thumbnail-badge-']",
-    "more": "a.js-load-more-link"
+    "more": "a.js-load-more-link",
+    "search": {
+      "input": "input.SearchForm-module__search-input",
+      "filter": "button.TypeFilters-module__type-filter",
+      "filterSelected": ".TypeFilters-module__selected",
+      "root": "ul.SearchResults-module__search-results",
+      "item": "li.SearchResults-module__search-result",
+      "itemLink": "a[href]",
+      "itemImage": ".browse-image-container img",
+      "itemTitle": ".subtext-container .truncate",
+      "itemSubtext": ".browse-item-subtext",
+      "itemDuration": ".duration-container",
+      "itemProgress": ".percentage-bar",
+      "itemBadge": "[data-testid^='thumbnail-badge-']",
+      "empty": ".BlankSearchResults-module__no-results",
+      "more": "button.SearchResults-module__load-more"
+    }
   },
   "home": {
     "root": "#browse-component",

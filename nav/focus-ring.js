@@ -89,8 +89,9 @@
     // is made inline-block first. It deliberately does NOT scale the tile around it: a transform
     // makes its element the containing block for positioned descendants, which
     // moves the very thing we are trying to highlight.
+    // An element marked data-tenfoot-nozoom (a text box) is ringed, not grown.
     function scaleTarget(el, on) {
-      if (!on) {
+      if (!on || (el.hasAttribute && el.hasAttribute("data-tenfoot-nozoom"))) {
         el.classList.remove(SCALED_CLASS);
         return;
       }
