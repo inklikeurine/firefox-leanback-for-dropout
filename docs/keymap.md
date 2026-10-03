@@ -86,20 +86,23 @@ anything at the left edge. It is not on a show's page or during playback.
 
 ## A show's page
 
-The show's buttons (*Trailer*, *My list*), then the row of seasons, newest
-first, then the season's episodes, three across. A show opens on its newest
-season (setting: *Shows Open On*), with the selection on the episode to watch
-next.
+Leanback's own screen: the show's picture and name, its buttons (the yellow
+one that picks the show up, *Trailer*, *My List*), then the row of seasons,
+newest first, then the season's episodes, three across. A show opens on its
+newest season (setting: *Shows Open On*), with the selection on the episode
+to watch next.
 
-| Action | The show's buttons and episodes | The row of seasons |
-| --- | --- | --- |
-| `up` / `down` | spatial; ▲ from the episodes into the row lands on the season on screen, or where the row was left | spatial: ▲ the show's buttons, ▼ the episodes |
-| `left` / `right` | spatial | along the row, which slides to keep the selection in view; stops at its ends (there is no rail here) |
-| `select` | open the episode, or take the button | open that season, in place of this one; on the season already on screen, down to its episodes |
-| `back` | the page before (Firefox's Back): switching seasons never adds a page, so Back leaves the show | the same |
+| Action | The show's buttons | The row of seasons | The episodes |
+| --- | --- | --- | --- |
+| `up` | nothing above | the show's buttons, where that row was left | from the first row of episodes, the season on screen (or where the row was left); else a row up, same column |
+| `down` | the row of seasons, where it was left | the episode the selection came from | a row down, same column; into a shorter last row, its last episode |
+| `left` / `right` | along the buttons; stops at the ends | along the row, which slides to keep the selection in view; stops at its ends (there is no rail here) | along the row; stops at its ends |
+| `select` | follow the yellow button; *Trailer* and *My List* press Dropout's own | open that season, in place of this one; on the season already on screen, down to its episodes | play the episode |
+| `back` | the page before (Firefox's Back): switching seasons never adds a page, so Back leaves the show | the same | the same |
 
-A special (*Watch Movie*, *My list*, the movie and its extras) and a list
-(Trending, a show's new episodes) are driven the same way, without a row.
+A special (*Watch Movie*, *My List*, the movie and its extras) is driven the
+same way, without a row of seasons; a list (Trending, a show's new episodes)
+like Browse, without the rail.
 
 ## The options button
 

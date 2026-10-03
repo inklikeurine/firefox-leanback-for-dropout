@@ -1,19 +1,27 @@
-// Leanback for Dropout — the screen Leanback draws for Dropout's collection
-// pages: Browse (all shows), My List, and the lists (Trending, New Releases,
-// a show's new episodes…). Like Home (content/home.js), the page is only
-// read: Dropout's page stays underneath, untouched, and Leanback's layer
-// covers it, a child of <html> outside the site's tree. It is drawn as Home
-// is — the same layer, the same cards (content/cards.js), the same scrolling
-// — with the page's title at the top and the tiles in a grid of COLUMNS
-// across.
+// Leanback for Dropout — the screens Leanback draws for the pages that are not
+// Home. Like Home (content/home.js), the page is only read: Dropout's page
+// stays underneath, untouched, and Leanback's layer covers it, a child of
+// <html> outside the site's tree. It is drawn as Home is — the same layer, the
+// same cards (content/cards.js), the same scrolling.
 //
-// The selection is a position in the list of cards. ◀ ▶ move along a row and
-// stop at its ends ({edge: "left"} is the cue for the rail); ▲ ▼ move a row,
-// keeping the column. The selected row slides up to the same place near the
-// top every time. Near the end Dropout's own Load More is pressed, and its
-// new tiles join the grid.
+// What a screen holds comes from a reader, as a description (a "model"):
+//   head      — a plain page title (Browse, My List, a list), or
+//   hero      — a banner like Home's: picture, title, meta, description and
+//               buttons (a show's page, a special: content/show.js);
+//   pills     — a row of choices (a show's seasons, newest first);
+//   sections  — groups of cards, each with its own title and columns;
+//   more      — Dropout's own Load More, pressed near the end;
+//   start     — the key of the card or button the selection starts on.
+// This file reads collection pages itself (readPage, sites/dropout.json →
+// screen); show.js reads shows and specials.
 //
-// Site-specific selectors come from sites/dropout.json → screen.
+// The selection moves over rows: the buttons, the seasons, then each
+// section's cards in rows of its columns. ◀ ▶ move along a row and stop at
+// its ends ({edge: "left"} is the cue for the rail); ▲ ▼ move a row, keeping
+// the column between rows of cards, and landing where a row was left (the
+// season on screen, at first). Down to the first row of cards the screen is
+// shown from the top; each row of cards after it slides up to the same place
+// near the top, as Home's rows do.
 
 (function () {
   const LAYER_CLASS = "tenfoot-home";
@@ -77,22 +85,38 @@
     return out;
   }
 
+  /** A collection page as a screen model: its title over a grid of cards. */
+  function collectionModel(doc, R) {
+    const page = readPage(doc, R);
+    if (!page.root) return null;
+    return {
+      kind: "collection",
+      head: page.title,
+      hero: null,
+      pills: null,
+      sections: [{ key: "items", title: "", sub: "", columns: COLUMNS, items: page.items }],
+      more: page.more ? qs(R.more, doc) : null,
+      start: null
+    };
+  }
+
   /**
    * @param {Document} doc
    * @param {{
-   *   rules: object,                        // sites/dropout.json → screen
-   *   title?: string,                       // in place of the page's own
+   *   read: () => object|null,              // the model, read afresh on every refresh
+   *   title?: string,                       // in place of the model's head
    *   rail?: boolean,                       // the rail is beside it (room is left)
    *   badges?: boolean,                     // false: no badges on the cards
    *   history?: () => object,               // the watch-history store
-   *   onObserve?: (items: object[]) => void // Dropout's progress bars, for the history
+   *   onObserve?: (items: object[]) => void,// Dropout's progress bars, for the history
+   *   onPill?: (pill: object) => void       // OK on a pill (a season)
    * }} opts
    */
   function createScreen(doc, opts) {
     const o = opts || {};
-    const R = o.rules || {};
     const H = globalThis.TenfootHistory;
     const win = doc.defaultView || globalThis;
+    const { setText, setAttr } = C();
 
     const el = (tag, cls) => {
       const e = doc.createElement(tag);
@@ -111,20 +135,40 @@
     const head = el("div", "tenfoot-screen-head");
     const titleEl = el("h1", "tenfoot-screen-title");
     head.appendChild(titleEl);
-    const grid = el("div", "tenfoot-screen-grid");
+    head.hidden = true;
+    // The banner, as Home's (its parts survive a redraw, so does the selection).
+    const hero = el("section", "tenfoot-hero tenfoot-screen-hero");
+    hero.hidden = true;
+    const heroArt = el("img", "tenfoot-hero-art");
+    heroArt.alt = "";
+    const heroScrim = el("div", "tenfoot-hero-scrim");
+    const heroBody = el("div", "tenfoot-hero-body");
+    const heroTitle = el("h1", "tenfoot-hero-title");
+    const heroMeta = el("p", "tenfoot-hero-meta");
+    const heroText = el("p", "tenfoot-hero-text");
+    const heroActions = el("div", "tenfoot-hero-actions");
+    heroBody.append(heroTitle, heroMeta, heroText, heroActions);
+    hero.append(heroArt, heroScrim, heroBody);
+    const pillRow = el("div", "tenfoot-season-row tenfoot-screen-pills");
+    pillRow.setAttribute("role", "list");
+    pillRow.hidden = true;
+    const sectionsBox = el("div", "tenfoot-screen-sections");
     const moreBox = el("p", "tenfoot-home-more");
     moreBox.textContent = "Loading more…";
     moreBox.hidden = true;
-    scroller.append(head, grid, moreBox);
+    scroller.append(head, hero, pillRow, sectionsBox, moreBox);
     view.appendChild(scroller);
     layer.appendChild(view);
     doc.documentElement.appendChild(layer);
 
-    let page = { root: false, title: "", items: [], more: false };
-    let items = [];
-    let links = [];
-    const cards = new Map();
-    let index = 0;
+    let model = null;
+    let actionEls = new Map(); // key → element
+    let pillEls = new Map();
+    const sectionEls = new Map(); // key → {box, titleEl, subEl, grid, cards: Map}
+    let rows = []; // [{key, kind: "actions"|"pills"|"cards", section, els, keys}]
+    let pos = { row: 0, col: 0 };
+    let started = false;
+    const memory = new Map(); // row key → item key
     let more = null; // {count, deadline}
     let moreTimer = 0;
     let lastObserved = "";
@@ -138,50 +182,198 @@
       }
     }
 
-    // The page's tiles with Leanback's own progress where it has it (as on
-    // Home: one merged reading per video).
-    function model() {
+    // A card's progress: what the reader says, else Leanback's own reading,
+    // else Dropout's bar (as on Home: one merged reading per video).
+    function withProgress(it) {
+      if (it.fraction !== undefined) return o.badges === false ? Object.assign({}, it, { badge: "" }) : it;
       const s = store();
-      return page.items.map((it) => {
-        const key = H ? H.keyOf(it.href) : null;
-        const mine = key && s.entries[key] ? H.progressOf(s, key) : null;
-        const fraction = mine !== null ? mine : it.percent !== null ? it.percent / 100 : null;
-        const extra = { fraction };
-        if (o.badges === false) extra.badge = "";
-        return Object.assign({}, it, extra);
+      const key = H ? H.keyOf(it.href) : null;
+      const mine = key && s.entries[key] ? H.progressOf(s, key) : null;
+      const pct = typeof it.percent === "number" ? it.percent : null;
+      const fraction = mine !== null ? mine : pct !== null ? pct / 100 : null;
+      const extra = { fraction };
+      if (o.badges === false) extra.badge = "";
+      return Object.assign({}, it, extra);
+    }
+
+    // -- drawing --------------------------------------------------------------
+
+    function renderHead() {
+      const text = o.title || (model && model.head) || "";
+      setText(titleEl, text);
+      head.hidden = !text || Boolean(model && model.hero);
+      setAttr(layer, "aria-label", text || (model && model.hero ? model.hero.title : null));
+    }
+
+    function renderHero() {
+      const h = model && model.hero;
+      hero.hidden = !h;
+      if (!h) {
+        actionEls = new Map();
+        return;
+      }
+      if (h.image && heroArt.getAttribute("src") !== h.image) heroArt.setAttribute("src", h.image);
+      if (!h.image) setAttr(heroArt, "src", null);
+      setText(heroTitle, h.title);
+      setText(heroMeta, h.meta);
+      heroMeta.hidden = !h.meta;
+      setText(heroText, h.description);
+      heroText.hidden = !h.description;
+      const next = new Map();
+      (h.actions || []).forEach((a, i) => {
+        const tag = a.href ? "A" : "BUTTON";
+        let node = actionEls.get(a.key);
+        if (!node || node.tagName !== tag) {
+          if (node) node.remove();
+          node = el(a.href ? "a" : "button", "tenfoot-hero-button tenfoot-hero-action");
+          if (!a.href) {
+            node.type = "button";
+            node.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const act = model && model.hero ? (model.hero.actions || []).find((x) => x.key === node.dataset.tenfootAction) : null;
+              if (act && act.proxy) {
+                try {
+                  act.proxy.click();
+                } catch (_err) { /* nothing to press */ }
+              }
+            });
+          }
+        }
+        node.dataset.tenfootAction = a.key;
+        setAttr(node, "href", a.href || null);
+        setAttr(node, "aria-label", a.ariaLabel || a.label);
+        setAttr(node, "data-tenfoot-listed", a.listed ? "true" : null);
+        node.classList.toggle("tenfoot-hero-primary", Boolean(a.primary));
+        setText(node, a.label);
+        if (heroActions.children[i] !== node) heroActions.insertBefore(node, heroActions.children[i] || null);
+        next.set(a.key, node);
       });
+      for (const [k, node] of actionEls) if (!next.has(k)) node.remove();
+      actionEls = next;
     }
 
-    function current() {
-      return links[index] || null;
+    function renderPills() {
+      const p = model && model.pills;
+      pillRow.hidden = !p || !p.items.length;
+      const next = new Map();
+      ((p && p.items) || []).forEach((it, i) => {
+        let b = pillEls.get(it.key);
+        if (!b) {
+          b = el("button", "tenfoot-season");
+          b.type = "button";
+          b.setAttribute("role", "listitem");
+          b.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const pill = model && model.pills ? model.pills.items.find((x) => x.key === b.dataset.tenfootPill) : null;
+            if (pill && typeof o.onPill === "function") o.onPill(pill);
+          });
+        }
+        b.dataset.tenfootPill = it.key;
+        setAttr(b, "title", it.title || null);
+        setAttr(b, "aria-current", it.current ? "true" : null);
+        setText(b, it.label);
+        if (pillRow.children[i] !== b) pillRow.insertBefore(b, pillRow.children[i] || null);
+        next.set(it.key, b);
+      });
+      for (const [k, b] of pillEls) if (!next.has(k)) b.remove();
+      pillEls = next;
     }
 
-    function ready() {
-      return links.length > 0;
+    function renderSections() {
+      const list = (model && model.sections) || [];
+      const seen = new Set();
+      let prev = null;
+      for (const s of list) {
+        let sec = sectionEls.get(s.key);
+        if (!sec) {
+          const box = el("section", "tenfoot-screen-section");
+          const titleBox = el("h2", "tenfoot-row-title tenfoot-screen-section-title");
+          const name = el("span", "tenfoot-screen-section-name");
+          const sub = el("span", "tenfoot-screen-section-sub");
+          titleBox.append(name, sub);
+          const grid = el("div", "tenfoot-screen-grid");
+          box.append(titleBox, grid);
+          sec = { box, titleBox, name, sub, grid, cards: new Map(), links: [] };
+          sectionEls.set(s.key, sec);
+        }
+        seen.add(s.key);
+        sec.box.dataset.tenfootSection = s.key;
+        setText(sec.name, s.title || "");
+        setText(sec.sub, s.sub || "");
+        sec.titleBox.hidden = !s.title && !s.sub;
+        const cols = Math.max(1, s.columns || COLUMNS);
+        sec.grid.style.setProperty("--tf-cols", String(cols));
+        sec.columns = cols;
+        sec.links = C().reconcile(doc, sec.grid, sec.cards, s.items.map(withProgress));
+        sec.items = s.items;
+        const ref = prev ? prev.nextSibling : sectionsBox.firstChild;
+        if (sec.box !== ref) sectionsBox.insertBefore(sec.box, ref);
+        prev = sec.box;
+      }
+      for (const [k, sec] of sectionEls) {
+        if (!seen.has(k)) {
+          sec.box.remove();
+          sectionEls.delete(k);
+        }
+      }
     }
 
-    // -- scrolling (TV style, as on Home) ---------------------------------------
+    // The rows the selection moves over, top to bottom.
+    function buildRows() {
+      const next = [];
+      if (model && model.hero && actionEls.size) {
+        next.push({ key: "actions", kind: "actions", els: Array.from(actionEls.values()), keys: Array.from(actionEls.keys()) });
+      }
+      if (pillEls.size) next.push({ key: "pills", kind: "pills", els: Array.from(pillEls.values()), keys: Array.from(pillEls.keys()) });
+      for (const s of (model && model.sections) || []) {
+        const sec = sectionEls.get(s.key);
+        if (!sec) continue;
+        for (let i = 0; i < sec.links.length; i += sec.columns) {
+          next.push({
+            key: `${s.key}:${i / sec.columns}`,
+            kind: "cards",
+            section: s.key,
+            els: sec.links.slice(i, i + sec.columns),
+            keys: sec.items.slice(i, i + sec.columns).map((it) => it.key)
+          });
+        }
+      }
+      rows = next;
+    }
 
+    // -- scrolling ---------------------------------------------------------------
+
+    // The buttons, the seasons and the first row of cards stay where they
+    // are; every row of cards after that slides up to the same place near the
+    // top, as Home's rows do.
     function applyScroll() {
-      const row = Math.floor(index / COLUMNS);
+      const row = rows[pos.row];
+      const node = row ? row.els[pos.col] : null;
+      const firstCards = rows.findIndex((r) => r.kind === "cards");
       let y = 0;
-      const card = links[index] ? links[index].parentNode : null;
-      if (row > 0 && card) {
-        const anchor = Math.round((win.innerHeight || 0) * ROW_ANCHOR);
-        y = Math.max(0, card.offsetTop - anchor);
+      if (row && row.kind === "cards" && node && pos.row !== firstCards) {
+        y = Math.max(0, node.parentNode.offsetTop - Math.round((win.innerHeight || 0) * ROW_ANCHOR));
       }
       const t = y ? `translateY(${-y}px)` : "";
       if (scroller.style.transform !== t) scroller.style.transform = t;
-      C().setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
+      setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
+      // A long row of seasons slides sideways to keep the selection in it.
+      if (row && row.kind === "pills" && node) {
+        const left = node.offsetLeft - pillRow.offsetLeft;
+        const right = left + node.offsetWidth;
+        if (left < pillRow.scrollLeft) pillRow.scrollLeft = Math.max(0, left - 12);
+        else if (right > pillRow.scrollLeft + pillRow.clientWidth) pillRow.scrollLeft = right - pillRow.clientWidth + 12;
+      }
     }
 
-    // -- more tiles ---------------------------------------------------------------
+    // -- more ----------------------------------------------------------------------
 
     function wantMore() {
-      if (more || !page.more) return;
-      const link = qs(R.more, doc);
-      if (!link) return;
-      more = { count: page.items.length, deadline: Date.now() + MORE_TIMEOUT_MS };
+      const link = model && model.more;
+      if (more || !link || !link.isConnected) return;
+      more = { count: cardCount(), deadline: Date.now() + MORE_TIMEOUT_MS };
       moreBox.hidden = false;
       try {
         link.click();
@@ -198,14 +390,45 @@
       moreBox.hidden = true;
     }
 
-    // -- selection ------------------------------------------------------------------
+    function cardCount() {
+      let n = 0;
+      for (const sec of sectionEls.values()) n += sec.links.length;
+      return n;
+    }
+
+    // -- selection -----------------------------------------------------------------
+
+    function current() {
+      const row = rows[pos.row];
+      return row ? row.els[pos.col] || null : null;
+    }
+
+    function remember() {
+      const row = rows[pos.row];
+      if (!row) return;
+      memory.set(row.kind === "cards" ? `section:${row.section}` : row.key, row.keys[pos.col]);
+    }
 
     function settle() {
-      const rows = Math.ceil(links.length / COLUMNS);
-      if (Math.floor(index / COLUMNS) >= rows - 1 - PREFETCH_ROWS) wantMore();
+      remember();
+      const lastCards = rows.length - 1;
+      if (rows[pos.row] && rows[pos.row].kind === "cards" && pos.row >= lastCards - PREFETCH_ROWS) wantMore();
       applyScroll();
       const target = current();
       return target ? { el: target } : { edge: "none" };
+    }
+
+    // Where a row is entered from another: the season on screen or where the
+    // row was left; between rows of cards, the same column.
+    function entryCol(row, from) {
+      if (row.kind === "cards" && from && from.kind === "cards" && from.section === row.section) {
+        return Math.min(pos.col, row.els.length - 1);
+      }
+      const key = memory.get(row.kind === "cards" ? `section:${row.section}` : row.key);
+      let i = key ? row.keys.indexOf(key) : -1;
+      if (i < 0 && row.kind === "pills") i = row.els.findIndex((b) => b.getAttribute("aria-current") === "true");
+      if (i < 0 && row.kind === "cards" && from && from.kind === "cards") i = Math.min(pos.col, row.els.length - 1);
+      return Math.max(0, i);
     }
 
     /**
@@ -214,63 +437,114 @@
      * enter the rail).
      */
     function move(dir) {
-      const n = links.length;
-      if (!n) return { edge: "none" };
-      const col = index % COLUMNS;
+      const row = rows[pos.row];
+      if (!row) return initial() ? settle() : { edge: "none" };
       if (dir === "left") {
-        if (col === 0) return { edge: "left" };
-        index -= 1;
-      } else if (dir === "right") {
-        if (col === COLUMNS - 1 || index === n - 1) return { edge: "right" };
-        index += 1;
-      } else if (dir === "up") {
-        if (index < COLUMNS) return { edge: "up" };
-        index -= COLUMNS;
-      } else if (dir === "down") {
-        const lastRow = Math.floor((n - 1) / COLUMNS);
-        if (Math.floor(index / COLUMNS) >= lastRow) {
+        if (pos.col === 0) return { edge: "left" };
+        pos.col -= 1;
+        return settle();
+      }
+      if (dir === "right") {
+        if (pos.col >= row.els.length - 1) return { edge: "right" };
+        pos.col += 1;
+        return settle();
+      }
+      if (dir === "up" || dir === "down") {
+        const to = pos.row + (dir === "up" ? -1 : 1);
+        if (to < 0) return { edge: "up" };
+        if (to >= rows.length) {
           wantMore();
           return { edge: "down" };
         }
-        // Into a shorter last row: its last card.
-        index = Math.min(index + COLUMNS, n - 1);
-      } else return { edge: "none" };
-      return settle();
+        const target = rows[to];
+        // Into a section of cards from outside it: back to the card last
+        // selected there, in whichever of its rows.
+        if (target.kind === "cards" && !(row.kind === "cards" && row.section === target.section)) {
+          const key = memory.get(`section:${target.section}`);
+          const at = key ? find(key) : null;
+          if (at && rows[at.row].section === target.section) {
+            pos = at;
+            return settle();
+          }
+        }
+        pos = { row: to, col: entryCol(target, row) };
+        return settle();
+      }
+      return { edge: "none" };
+    }
+
+    function find(key) {
+      for (let r = 0; r < rows.length; r += 1) {
+        const c = rows[r].keys.indexOf(key);
+        if (c >= 0) return { row: r, col: c };
+      }
+      return null;
+    }
+
+    // Where the selection starts: the model's start, else the first card,
+    // else the first row.
+    function initial() {
+      if (!rows.length) return false;
+      const at = (model && model.start && find(model.start)) || null;
+      if (at) pos = at;
+      else {
+        const firstCards = rows.findIndex((r) => r.kind === "cards");
+        pos = { row: firstCards >= 0 ? firstCards : 0, col: 0 };
+      }
+      started = true;
+      return true;
     }
 
     function initialTarget() {
-      if (!ready()) return null;
-      index = 0;
+      if (!ready() || !initial()) return null;
       settle();
       return current();
     }
 
     /** Point the model at an element (a click, or focus coming back). */
     function select(target) {
-      const i = links.indexOf(target);
-      if (i < 0) return false;
-      index = i;
-      settle();
-      return true;
+      for (let r = 0; r < rows.length; r += 1) {
+        const c = rows[r].els.indexOf(target);
+        if (c >= 0) {
+          pos = { row: r, col: c };
+          settle();
+          return true;
+        }
+      }
+      return false;
     }
 
-    // -- refresh ------------------------------------------------------------------
+    function ready() {
+      return rows.length > 0;
+    }
+
+    // -- refresh -------------------------------------------------------------------
 
     /**
-     * Re-read Dropout's page and redraw what changed. The selection stays on
-     * the same card (by key), or on the nearest when it has gone.
+     * Read the page again and redraw what changed. The selection stays on the
+     * same card or button (by key), or the nearest when it has gone.
      */
     function refresh() {
       if (destroyed) return null;
-      const before = items[index] ? items[index].key : null;
-      page = readPage(doc, R);
-      C().setText(titleEl, o.title || page.title);
-      C().setAttr(layer, "aria-label", o.title || page.title || null);
-      items = model();
-      links = C().reconcile(doc, grid, cards, items);
-      if (more && (page.items.length > more.count || !page.more)) endMore();
-      const keep = before ? items.findIndex((it) => it.key === before) : -1;
-      index = keep >= 0 ? keep : Math.min(index, Math.max(0, links.length - 1));
+      const before = rows[pos.row] ? { key: rows[pos.row].keys[pos.col], row: pos.row, col: pos.col } : null;
+      try {
+        model = typeof o.read === "function" ? o.read() : null;
+      } catch (err) {
+        console.warn("[leanback-for-dropout] the page could not be read:", err && err.message);
+        model = null;
+      }
+      renderHead();
+      renderHero();
+      renderPills();
+      renderSections();
+      buildRows();
+      if (more && (cardCount() > more.count || !(model && model.more))) endMore();
+      const at = before && before.key ? find(before.key) : null;
+      if (at) pos = at;
+      else if (before && rows.length) {
+        const r = Math.min(before.row, rows.length - 1);
+        pos = { row: r, col: Math.min(before.col, rows[r].els.length - 1) };
+      }
       if (ready()) layer.hidden = false;
       applyScroll();
       observe();
@@ -279,12 +553,14 @@
 
     // Tell the history what Dropout's progress bars say, once per change.
     function observe() {
-      if (typeof o.onObserve !== "function" || !H) return;
+      if (typeof o.onObserve !== "function" || !H || !model) return;
       const seen = [];
-      for (const it of page.items) {
-        if (it.percent === null) continue;
-        const key = H.keyOf(it.href);
-        if (key) seen.push({ key, url: it.href, percent: it.percent, duration: it.duration, title: it.title, image: it.image });
+      for (const s of model.sections || []) {
+        for (const it of s.items) {
+          if (typeof it.percent !== "number") continue;
+          const key = H.keyOf(it.href);
+          if (key) seen.push({ key, url: it.href, percent: it.percent, duration: it.duration, title: it.title, image: it.image });
+        }
       }
       const sig = seen.map((i) => `${i.key}:${i.percent}`).join("|");
       if (!seen.length || sig === lastObserved) return;
@@ -299,17 +575,37 @@
     }
 
     function snapshot() {
-      return {
+      const row = rows[pos.row];
+      const cards = cardCount();
+      const out = {
         kind: "screen",
+        layout: model ? model.kind : null,
         ready: ready(),
         shown: !layer.hidden,
-        title: titleEl.textContent,
-        count: links.length,
-        index,
+        title: (model && model.hero && model.hero.title) || titleEl.textContent,
+        count: cards,
+        row: row ? row.kind : null,
+        index: row && row.kind === "cards" ? rows.slice(0, pos.row).filter((r) => r.kind === "cards" && r.section === row.section).reduce((n, r) => n + r.els.length, 0) + pos.col : null,
         columns: COLUMNS,
         loading: Boolean(more),
-        more: page.more
+        more: Boolean(model && model.more)
       };
+      if (model && model.hero) {
+        const actions = model.hero.actions || [];
+        const resume = actions.find((a) => a.key === "resume") || null;
+        out.show = {
+          layout: model.kind,
+          actions: actions.map((a) => a.label),
+          resume: resume ? { label: resume.label, href: resume.href, action: resume.pick } : null,
+          seasons: model.pills ? model.pills.items.map((p) => p.label) : [],
+          current: model.current || null,
+          heading: (model.sections[0] && [model.sections[0].title, model.sections[0].sub].filter(Boolean).join(" · ")) || null,
+          sections: model.sections.map((s) => s.title || s.key),
+          watched: model.sections.reduce((n, s) => n + s.items.filter((it) => it.watch === "watched").length, 0),
+          inProgress: model.sections.reduce((n, s) => n + s.items.filter((it) => it.watch === "in-progress").length, 0)
+        };
+      }
+      return out;
     }
 
     return Object.freeze({
@@ -317,9 +613,10 @@
       element: layer,
       get current() { return current(); },
       get ready() { return ready(); },
+      get started() { return started; },
       contains: (node) => layer.contains(node)
     });
   }
 
-  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, COLUMNS, LAYER_CLASS });
+  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, COLUMNS, LAYER_CLASS });
 })();

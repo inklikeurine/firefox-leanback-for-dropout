@@ -37,13 +37,15 @@ navigate, not what you can watch.
   settings.
 - **Search results made for a TV**: four across the screen, larger, reachable
   with the arrows.
-- **A show's page made for a TV**: a button that picks the show up where you
-  left it (*Resume S9 E3*, *Play S9 E4*), a row of seasons, newest first, and
-  the season's episodes three across, each marked watched or in progress. A
-  show opens on its newest season, with the selection on the episode to watch
-  next.
-- **Arrow-key navigation** across every other page of `watch.dropout.tv`: the
-  series grid, specials and their extras, lists of episodes, search results.
+- **A show's page drawn for a TV**, like Home: the show's wide picture and
+  name, a button that picks the show up where you left it (*Resume S9 E3*,
+  *Play S9 E4*), a row of seasons, newest first, and the season's episodes
+  three across, each marked watched or in progress. A show opens on its
+  newest season, with the selection on the episode to watch next. Specials
+  (a stand-up set, a film) are drawn the same way.
+- **Arrow-key navigation** across the pages Leanback does not draw: search
+  results, an episode's page under the player, and Dropout's sign-in,
+  account and help pages.
 - **A focus ring you can see from the sofa** — 4 px, Dropout yellow,
   configurable.
 - **Theater layout** on video pages: the player fills the window; Escape brings
@@ -219,26 +221,34 @@ the lists do not, as they are reached from Home's *View all*. My List starts
 on the first show you saved. Dropout's own top bar and footer are hidden
 everywhere except its sign-in, account, help and legal pages.
 
-**A show's page** works the same way for every show, because Leanback reads
-each page as it loads rather than knowing any show by name. A show with more
-than one season has a row of seasons above its episodes, newest first: ◀ ▶
-move along it and OK opens that season in place of the one on screen, so Back
-still leaves the show. The season on screen is the yellow one, and its full
-name and episode count head the episodes, three across. A show opens on its
-newest season (*Shows Open On* in the settings switches that to the first),
-and the selection starts on the episode to watch next: Episode 1 of a season
+**A show's page** is Leanback's own screen too, drawn from what Dropout puts
+on the page, so it works the same way for every show. At the top, the show's
+wide picture, its name, the number of seasons and its description, with the
+show's buttons: first a yellow one that picks the show up where you left
+it, then *Trailer* and *My List* (ticked when the show is on your list).
+The yellow button says **Resume S9 E3** for the episode you were most
+recently partway through, in any season; otherwise **Play S9 E4** for the
+one after the last you finished (following Dropout's own "up next" into the
+next season); otherwise **Play** the first episode on screen. Episodes
+watched on the Roku or the Android app count too.
+
+Under the buttons, a show with more than one season has a row of seasons,
+newest first: ◀ ▶ move along it and OK opens that season in place of the
+one on screen, so Back still leaves the show. The season on screen is the
+yellow one, and its full name and episode count head its episodes, three
+across. ▲ from the episodes goes to the season on screen; ▼ from the
+seasons goes back to the episode you came from. A show opens on its newest
+season (*Shows Open On* in the settings switches that to the first), and
+the selection starts on the episode to watch next: Episode 1 of a season
 you have not started, otherwise the one you are partway through or the one
-after the last you finished. Watched episodes carry a tick; one in progress
-has a bar showing how far you got. Above the seasons are the show's buttons:
-first a yellow one that picks the show up where you left it, then *Trailer*
-and *My list*. The yellow button says **Resume S9 E3** for the episode you
-were most recently partway through, in any season; otherwise **Play S9 E4**
-for the one after the last you finished (following Dropout's own "up next"
-into the next season); otherwise **Play** the first episode on screen.
-Episodes watched on the Roku or the Android app count too. A special (a
-stand-up set, a film) has *Watch Movie* and *My list*, then the video and its
-extras. A list (Trending, a show's new
-episodes, the trailers) is just its videos or shows.
+after the last you finished. Watched episodes are dimmed with a tick; one in
+progress has a bar showing how far you got. More episodes arrive as you get
+near the end.
+
+A special (a stand-up set, a film) is drawn the same way: its picture and
+name, *Watch Movie* (where the selection starts) and *My List*, then the
+video and its extras. A list (Trending, a show's new episodes, the trailers)
+is drawn like Browse.
 
 **Picking up where you left off**: open an episode you stopped halfway and it
 starts where you stopped, with "Resumed at 12:04" along the bottom for a
@@ -379,6 +389,8 @@ declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
   episode is on the show's page; otherwise it says just *Resume* or *Play*.
   The episode after a finished one is known when it is on the page, or when
   the finished one was played in Firefox (Dropout's "up next").
+- If Leanback cannot read a show's page (Dropout has changed it), Dropout's
+  own page is shown, restyled, with the same buttons, seasons and episodes.
 - Where the selection starts on a show is worked out from the episodes
   Dropout has put on the page. In a season longer than Dropout's first page of
   episodes, one further down is not considered until more are loaded.

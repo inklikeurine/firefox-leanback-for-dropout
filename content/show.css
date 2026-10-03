@@ -8,14 +8,17 @@
 
 /* What Leanback hides: Share, the season and sort controls the row replaces,
    and the tiles' hover-only extras. It outweighs every rule below that shows
-   something (the header's buttons are display: inline-flex). */
+   something but the header's buttons (display: inline-flex), and show.js
+   never stamps an omitted element as one of those. */
 html[data-tenfoot="on"] body [data-tenfoot-omit] {
   display: none !important;
 }
 
 /* --- the header's buttons (Trailer, My List, Watch Movie) ---------------- */
+/* Dropout's own, inside <body>: the buttons on the screen Leanback draws
+   (content/screen.js) carry the same attribute but sit outside it. */
 
-html[data-tenfoot="on"] [data-tenfoot-action] {
+html[data-tenfoot="on"] body [data-tenfoot-action] {
   display: inline-flex !important;
   align-items: center;
   box-sizing: border-box;
@@ -34,13 +37,13 @@ html[data-tenfoot="on"] [data-tenfoot-action] {
   white-space: nowrap;
   transition: none !important;
 }
-html[data-tenfoot="on"] [data-tenfoot-action]:is(:hover, :focus, :active, :link, :visited) {
+html[data-tenfoot="on"] body [data-tenfoot-action]:is(:hover, :focus, :active, :link, :visited) {
   background: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   outline: none;
 }
-html[data-tenfoot="on"] [data-tenfoot-action="primary"],
-html[data-tenfoot="on"] [data-tenfoot-action="primary"]:is(:hover, :focus, :active, :link, :visited) {
+html[data-tenfoot="on"] body [data-tenfoot-action="primary"],
+html[data-tenfoot="on"] body [data-tenfoot-action="primary"]:is(:hover, :focus, :active, :link, :visited) {
   border-color: #feea3b !important;
   background: #feea3b !important;
   color: #1a1a05 !important;

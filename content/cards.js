@@ -63,7 +63,7 @@
 
   /**
    * A card for `item`: {key, href, title, subtitle, image, durationText,
-   * badge, fraction (0–1, or null), viewAll}. Returns the card's parts;
+   * badge, fraction (0–1, or null), watch ("watched" for a tick), viewAll}. Returns the card's parts;
    * `wrap` is the element to place, `link` the one that takes the selection.
    */
   function makeCard(doc, item) {
@@ -79,11 +79,13 @@
     const fill = el(doc, "span", "tenfoot-card-progress-fill");
     bar.appendChild(fill);
     const label = el(doc, "span", "tenfoot-card-viewall");
-    link.append(art, badge, time, bar, label);
+    const tick = el(doc, "span", "tenfoot-card-tick");
+    tick.setAttribute("aria-hidden", "true");
+    link.append(art, badge, time, bar, tick, label);
     const title = el(doc, "div", "tenfoot-card-title");
     const sub = el(doc, "div", "tenfoot-card-sub");
     wrap.append(link, title, sub);
-    const card = { item, wrap, link, art, badge, time, bar, fill, label, title, sub };
+    const card = { item, wrap, link, art, badge, time, bar, fill, tick, label, title, sub };
     updateCard(card, item);
     return card;
   }
@@ -111,6 +113,8 @@
     card.bar.hidden = f === null;
     const w = f === null ? "" : `${Math.round(f * 1000) / 10}%`;
     if (card.fill.style.width !== w) card.fill.style.width = w;
+    setAttr(card.wrap, "data-tenfoot-watch", item.watch || null);
+    card.tick.hidden = item.watch !== "watched";
     setText(card.title, item.viewAll ? item.subtitle : item.title);
     setText(card.sub, item.viewAll ? "" : item.subtitle);
   }

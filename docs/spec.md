@@ -3,8 +3,9 @@
 This is the product spec. How the code realises it is in
 [architecture.md](./architecture.md); the site knowledge it rests on, checked
 against captures of the logged-in site, is in [site-notes.md](./site-notes.md).
-Leanback is becoming a TV shell one screen at a time: Home is Leanback's own
-screen; the show page, the player and the settings follow, planned separately.
+Leanback is becoming a TV shell one screen at a time: Home, Browse, My List,
+the lists, a show's page and a special are Leanback's own screens; search and
+the episode page under the player follow.
 The [milestones](#milestones) below are what 1.0 needs.
 
 ## About
@@ -146,7 +147,12 @@ means Back at the top level closes Firefox.
 - **A show's page, one for every show.** Pages at a one-word address are
   sorted by what the page holds, never by address or name, so every show
   works the same way, including ones Dropout adds later
-  (`sites/dropout.json` → `pages.series.show.layouts`):
+  (`sites/dropout.json` → `pages.series.show.layouts`). A show and a special
+  are **Leanback's own screen**, drawn as Home is from what the page holds,
+  Dropout's page untouched underneath (G6):
+  - **The banner**, Home's: the show's wide picture (the one on its page),
+    its name, the number of seasons and its description, and the show's
+    buttons.
   - **a show** (an episode grid): if it has more than one season, a **row of
     seasons, newest first**, built from Dropout's own season list, above the
     selected season's episodes. Each season button says "Season N"; the whole
@@ -156,9 +162,12 @@ means Back at the top level closes Firefox.
     the row lands on the season on screen, or where the row was left. OK
     opens that season's page in place of this one (seasons are sideways, so
     Back leaves the show); OK on the season already on screen goes down to its
-    episodes. Episodes are three across, in Dropout's order, the size of
-    Home's cards; a watched one is dimmed with a tick, one in progress has a
-    bar. Above the seasons: the show's buttons, Leanback's own first.
+    episodes. Episodes are three across, in Dropout's order, Home's cards
+    (picture, running time, title, "Episode N"); a watched one is dimmed
+    with a tick, one in progress has a bar. Rows of episodes past the first
+    slide to the same place near the top, as Home's rows do; more load
+    through Dropout's own *Load More* near the end. Above the seasons: the
+    show's buttons, Leanback's own first.
   - **The main button** (yellow, first of the show's buttons) picks the show
     up: **Resume S9 E3**, the episode most recently in progress in any
     season; else **Play S9 E4**, the next unwatched episode after the last
@@ -166,7 +175,9 @@ means Back at the top level closes Firefox.
     Dropout's up-next named when it played here; else **Play S9 E1**, the
     first episode on screen. Leanback's history and Dropout's own bars on the
     tiles both count; progress from before *Clear Continue Watching* does not
-    resume. Then *Trailer*, where the show has one, and *My list*.
+    resume. Then *Trailer*, where the show has one, and *My List*, which
+    presses Dropout's own button and carries a tick while the show is on the
+    list.
   - **Opening a show.** Dropout opens every show on Season 1. At an address
     that names no season, Leanback goes on to the **newest** season (setting:
     *Shows Open On* newest / first), replacing the page; an address that
@@ -176,12 +187,16 @@ means Back at the top level closes Firefox.
     the first one after the last you finished; else, for a season not started
     or finished all the way through, Episode 1. Watched and in progress come
     from the watch history and from Dropout's own bars on the tiles.
-  - **a special** (a movie and its extras): *Watch Movie* and *My list*, then
-    the movie and its Extras. **A list** (Trending, New Releases, a show's
+  - **a special** (a movie and its extras): the banner with *Watch Movie*
+    (where the selection starts) and *My List*, then the movie and its
+    Extras. **A list** (Trending, New Releases, a show's
     new episodes, trailers): its tiles, of episodes or of shows, with load
     more. **A hub** (Dimension 20) gets Home's screen.
-  - Hidden: Share, the season drop-down and sort control (S2), and the My
+  - Not drawn: Share, the season drop-down and sort control (S2), and the My
     List button Dropout puts on each episode for a mouse (M7).
+  - **A show Leanback cannot read** (no name in its header: Dropout has
+    changed the page) is restyled instead: Dropout's page with the same
+    buttons, row of seasons and episode marks.
 - **Pages Leanback draws.** Besides Home: Browse (`/series`), My List
   (`/my-list`), `/collections/…`, and the lists at a one-word address
   (Trending, New Releases, a show's new episodes…): `content/screen.js` reads
@@ -334,14 +349,19 @@ means Back at the top level closes Firefox.
 - `content/page.js` (top frame of `watch.dropout.tv`): loads
   `sites/dropout.json`, detects the page kind from the URL, runs spatial
   navigation, focus ring, hint bar, the rail, theater layout, back logic,
-  load-more, and starts the Home screen on Home and hubs.
+  load-more, and starts Leanback's screen on Home, hubs and the pages it
+  draws.
 - `content/home.js`: the Home screen — reads the banner and rows off
   Dropout's page (and a show's wide picture from the data its tile was drawn
   from) and draws Leanback's own layer from them.
+- `content/screen.js`: the pages Leanback draws besides Home — a title or a
+  banner, a row of seasons, sections of cards — from a model its reader
+  builds; it reads collection pages itself.
 - `content/show.js`: a show's page (and specials and lists) — tells which it
-  is from the page, draws the row of seasons from Dropout's season list,
-  marks what is hidden and what is watched, and picks the episode to start
-  on. `content/show.css` restyles it; `content/early.css`, the one stylesheet
+  is from the page, reads a show or special for `content/screen.js` (banner,
+  buttons, seasons, episodes, what is watched, the episode to start on), and
+  restyles Dropout's page when it cannot. `content/show.css` styles the
+  seasons and the restyle; `content/early.css`, the one stylesheet
   loaded before the page is drawn, keeps a show blank until its season is
   decided.
 - `content/player.js` (every `embed.vhx.tv` frame): finds the `<video>`,
@@ -483,9 +503,11 @@ Manual checklist (full version with expected results in
   yellow; ▲ from the episodes lands on it; ◀ ▶ walk the row, OK opens a season
   and Back then leaves the show; episodes three across, watched ones ticked,
   one in progress with a bar; the selection starts on the episode to watch
-  next; *Trailer* and *My list* reachable, Share gone; Enter on an episode
-  plays it.
-- A special: *Watch Movie* and *My list* reachable; the extras below.
+  next; *Trailer* and *My List* reachable, Share gone; Enter on an episode
+  plays it. It is Leanback's screen: the show's picture and name at the top,
+  Dropout's top bar hidden.
+- A special: Leanback's screen with *Watch Movie* (selected) and *My List*;
+  the movie and the extras below.
 - ◀ closes Leanback's settings and the top of the playback settings; ◀ at the
   start of the search box moves to the rail; ▼ from the search box reaches
   the results, ▲ goes back into it.

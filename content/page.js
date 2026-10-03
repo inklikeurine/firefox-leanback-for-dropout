@@ -636,19 +636,26 @@
   // ---------------------------------------------------------------------------
   //
   // state.home is Leanback's own screen on this page, when it draws one: Home
-  // (content/home.js) on Home and the hubs, or the page screen
-  // (content/screen.js) on Browse, My List and the lists. Both answer the
-  // same calls, so the rest of this file treats them alike.
+  // (content/home.js) on Home and the hubs, or a screen of content/screen.js
+  // — Browse, My List and the lists (a grid of cards), a show's page and a
+  // special (a banner, the seasons, sections of cards: content/show.js reads
+  // them). Both answer the same calls, so the rest of this file treats them
+  // alike.
 
   function screenRules() {
     return (state.rules && state.rules.screen) || {};
   }
 
-  // "home", "page", or null for a page Leanback does not draw.
+  // "home", "page" (a grid of cards), "detail" (a show or a special), or null
+  // for a page Leanback does not draw.
   function screenKind() {
     if (state.kind === "browse" || state.kind === "hub") return "home";
     if (state.kind === "grid") return "page";
-    if (state.kind === "series" && Show && Show.layoutOf(document, state.page.show) === "list") return "page";
+    if (state.kind === "series" && Show) {
+      const layout = Show.layoutOf(document, state.page.show);
+      if (layout === "list") return "page";
+      if (layout === "show" || layout === "special") return "detail";
+    }
     return null;
   }
 
@@ -664,19 +671,26 @@
         onObserve: (items) => send({ type: "history:observe", items })
       });
     } else {
-      if (!Screen || !qs(screenRules().root)) return;
+      if (!Screen) return;
+      const read = which === "detail"
+        ? () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href })
+        : () => Screen.collectionModel(document, screenRules());
+      // Nothing to draw from: Dropout's page stays, driven (and on a show
+      // restyled) as before.
+      if (!read()) return;
       // A page the rail links to goes by the rail's name (My List); the New
       // Releases list carries no "New" badges, as its row on Home does not.
       const link = railLinks().find((l) => samePath(l.url, location.href));
       const tweak = Home && Home.rowOverride ? Home.rowOverride(homeRules(), location.href, "") : null;
       const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
       state.home = Screen.createScreen(document, {
-        rules: screenRules(),
+        read,
         title: link ? link.label : "",
         rail: kinds.includes(state.kind),
         badges: !(tweak && tweak.badges === false),
         history: () => state.history,
-        onObserve: (items) => send({ type: "history:observe", items })
+        onObserve: (items) => send({ type: "history:observe", items }),
+        onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current))
       });
     }
     root.dataset.tenfootHome = "on";
@@ -882,8 +896,8 @@
       goSideways(url);
       return;
     }
-    const t = state.show && state.show.startEpisode();
-    if (t) focusEl(t);
+    const t = state.show ? state.show.startEpisode() : state.home ? state.home.initialTarget() : null;
+    if (t) focusEl(t, { scroll: !state.home });
   }
 
   // content/early.css keeps a show's page blank until this is set, so Season 1
@@ -1882,7 +1896,7 @@
       ring: Boolean(state.ring) && !state.ring.element.hidden,
       hints: Boolean(state.hints) && state.hints.visible,
       home: state.home ? state.home.snapshot() : null,
-      show: state.show ? state.show.snapshot() : null,
+      show: state.show ? state.show.snapshot() : (state.home && state.home.snapshot().show) || null,
       rail: railShown() ? { active: state.railActive, item: state.rail.currentId, page: railPage() } : null
     };
   }
@@ -1965,10 +1979,7 @@
     stopShow();
     if (openSeason()) return;
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
-    if (state.kind === "series" && screenKind() !== "page") {
-      startShow();
-      captureEpisodeOrder();
-    }
+    if (state.kind === "series") captureEpisodeOrder();
     stampChrome();
     if (state.kind === "video") {
       markVideoElements();
@@ -1979,6 +1990,7 @@
     state.railReturn = null;
     if (screenKind()) startHome();
     else stopHome();
+    if (state.kind === "series" && !state.home) startShow();
     setupRail();
     stampTvGrid();
     recordTrail();

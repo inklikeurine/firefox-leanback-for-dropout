@@ -31,12 +31,12 @@ it is matched by the `Name_module_` prefix.
 | --- | --- | --- |
 | `/browse` | Home: a banner and rows (React) | `browse` — Leanback draws its own Home from it |
 | `/series` | All series, a server-rendered grid with Show More | `grid` |
-| `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection (Dropout calls it a category): a server-rendered grid of episodes, of shows, or of both shows and specials. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where `content/show.js` sees a **list** and the first tile gets the selection |
+| `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection (Dropout calls it a category): a server-rendered grid of episodes, of shows, or of both shows and specials. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where `content/show.js` sees a **list**; both are drawn by `content/screen.js` |
 | `/dimension-20`, `/dropout-24-7` | A hub: a small Home-style page with its own rows | `hub` — a one-segment address whose page holds `#browse-component`; drawn like Home |
 | `/<hub>/events/<slug>` | A live event, with the live player | `other` |
-| `/<series-slug>` | A show: details, season and sort selects, episode grid, opened on Season 1 | `series` — a **show** to `content/show.js`; Leanback moves on to the newest season |
+| `/<series-slug>` | A show: details, season and sort selects, episode grid, opened on Season 1 | `series` — a **show**, read by `content/show.js` and drawn by `content/screen.js`; Leanback moves on to the newest season |
 | `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` — a **show** |
-| `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special** to `content/show.js` |
+| `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special**, read by `content/show.js` and drawn by `content/screen.js` |
 | `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` |
 | `/<series-slug>/videos/<slug>`, `/videos/<slug>`, `/featured/videos/<slug>` | Trailer or standalone video | `video` |
 | `/search` | One React app that changes the address without reloading; `document.title` is empty | `search` (with the rail, and its results laid out for a TV) |
@@ -202,10 +202,14 @@ body.collections.collections-show
     .collection-details-container .collection-details
       h1.collection-title, .collection-description ([data-truncate] show more/less)
       h2.collection-stats                                   ← "25 Seasons"
+      .show-for-small-only.cover-art img[data-image-primary]  ← the cover picture, 640 × 360 (phone copy), before the title
+      h1.collection-title …
       .collection-actions
         a.btn.custom-btn-action-trailer                     ← some shows only; opens #modal-trailer
         button.my-list.btn.custom-btn-action-my-list.icon-watchlist-add[data-series-id]
+                                                            ← .icon-watchlist-remove while on My List
         a.btn.custom-btn-action-share + div.reveal-modal    ← Share and its dialog (its links are .btn too)
+    .hide-for-small-only.cover-art img[data-image-primary]  ← the same picture, 1280 × 720: the LAST match
   section.episode-container
     .season-controls
       select.js-switch-season   ← options oldest first: value="https://watch.dropout.tv/<slug>/season:N", one [selected]
@@ -235,7 +239,8 @@ art blurred (`?blur=180`).
 
 **A special**: `.collection-actions` holds `a.btn.custom-btn-action-primary`
 ("Watch Movie", the video's address), `button.custom-btn-action-my-list`
-(`[data-movie-id]`) and Share; `section.movie-container` holds the one video
+(`[data-movie-id]`, `.icon-watchlist-remove` while on My List) and Share;
+the cover picture is as on a show; `section.movie-container` holds the one video
 and `section.extras-container` (heading "Extras") the rest.
 
 **A list**: `section.collection-container`, 24 tiles then

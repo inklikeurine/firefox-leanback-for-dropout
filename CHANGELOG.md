@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.29.0] — 2026-10-02
+
+### Changed
+
+- **A show's page is Leanback's own screen**, drawn like Home from what
+  Dropout puts on the page: the show's wide picture, its name, the number of
+  seasons and its description, with the yellow button that picks the show up,
+  *Trailer* and *My List* (ticked while the show is on your list). Under
+  them, the row of seasons, newest first, and the season's episodes three
+  across as Home's cards, with their pictures and running times, watched ones
+  dimmed with a tick. Rows of episodes slide up to the same place as you go
+  down, and more arrive near the end. ▲ from the episodes goes to the season
+  on screen, and ▼ back to the episode you came from.
+- **A special** (a stand-up set, a film) is drawn the same way: its picture
+  and name, *Watch Movie* (where the selection starts) and *My List*, then
+  the video and its extras.
+- A show Leanback cannot read (if Dropout changes the page) is still shown
+  as Dropout's page, restyled as before.
+
 ## [0.28.0] — 2026-10-02
 
 ### Changed

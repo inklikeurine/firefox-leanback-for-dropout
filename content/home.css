@@ -497,14 +497,73 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   font-size: max(22px, calc(var(--tf-u) * 52));
   line-height: 1.1;
 }
-/* Five across (screen.js COLUMNS), Home's card size; room under each row for
+/* A section of cards: its own number across (--tf-cols: five on a list,
+   three for a season's episodes), Home's card size; room under each row for
    the selected card to grow into, as under Home's headings. */
+.tenfoot-screen-section {
+  margin: 0 0 calc(var(--tf-u) * 44);
+}
+.tenfoot-screen-section-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: calc(var(--tf-u) * 8) calc(var(--tf-u) * 20);
+}
+.tenfoot-screen-section-title[hidden] {
+  display: none;
+}
+.tenfoot-screen-section-sub {
+  color: var(--tf-dim);
+  font-size: 0.75em;
+  font-weight: 700;
+}
 .tenfoot-screen-grid {
   display: grid;
-  grid-template-columns: repeat(5, var(--tf-card-w));
+  grid-template-columns: repeat(var(--tf-cols, 5), var(--tf-card-w));
   column-gap: var(--tf-card-gap);
   row-gap: calc(var(--tf-u) * 36 + var(--tf-reach));
+}
+.tenfoot-screen-section-title[hidden] + .tenfoot-screen-grid {
   padding-top: var(--tf-reach);
+}
+/* A show's page or a special: Home's banner, the row of seasons under it. */
+.tenfoot-screen-hero {
+  height: calc(var(--tf-u) * 500);
+}
+html[data-tenfoot="on"] .tenfoot-screen-pills {
+  margin: 0 var(--tf-gutter) calc(var(--tf-u) * 20) calc(-12px);
+}
+html[data-tenfoot="on"] .tenfoot-screen-pills[hidden] {
+  display: none;
+}
+/* Watched: the picture dimmed, a yellow tick in the corner. */
+.tenfoot-card[data-tenfoot-watch="watched"] .tenfoot-card-art {
+  opacity: 0.6;
+}
+.tenfoot-card-tick {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--tf-u) * 10);
+  right: calc(var(--tf-u) * 10);
+  width: max(20px, calc(var(--tf-u) * 34));
+  height: max(20px, calc(var(--tf-u) * 34));
+  border-radius: 50%;
+  background: rgba(11, 12, 16, 0.8);
+}
+.tenfoot-card-tick[hidden] {
+  display: none;
+}
+.tenfoot-card-tick::after {
+  content: "";
+  position: absolute;
+  left: 36%;
+  top: 20%;
+  width: 24%;
+  height: 44%;
+  box-sizing: border-box;
+  border: solid #feea3b;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
 }
 .tenfoot-screen-grid .tenfoot-card {
   width: var(--tf-card-w);
