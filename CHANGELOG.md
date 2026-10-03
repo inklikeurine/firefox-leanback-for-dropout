@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.31.0] — 2026-10-02
+
+### Changed
+
+- **An episode's page is Leanback's own screen.** Out of the full-window
+  video (▼ twice, or Escape), the video carries on in a large picture at the
+  top left; beside it the show's name, the episode's title, its season and
+  number, its description, and *Play* (back into the video, playing),
+  *Episodes* (the season's page) and *My List*. Under them, *Up Next in
+  Season N* as cards. ▲ from the buttons goes back into the video.
+
 ## [0.30.0] — 2026-10-02
 
 ### Changed

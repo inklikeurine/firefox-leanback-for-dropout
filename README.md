@@ -44,13 +44,16 @@ navigate, not what you can watch.
   three across, each marked watched or in progress. A show opens on its
   newest season, with the selection on the episode to watch next. Specials
   (a stand-up set, a film) are drawn the same way.
-- **Arrow-key navigation** across the pages Leanback does not draw: an
-  episode's page under the player, and Dropout's sign-in, account and help
-  pages.
+- **An episode's page drawn for a TV**: out of the full-window player, the
+  video carries on in a large picture at the top left, with the episode
+  beside it (the show, the title, the season and episode, the description,
+  *Play*, *Episodes*, *My List*) and the rest of the season under it.
+- **Arrow-key navigation** on the pages Leanback does not draw: Dropout's
+  sign-in, account and help pages.
 - **A focus ring you can see from the sofa** — 4 px, Dropout yellow,
   configurable.
-- **Theater layout** on video pages: the player fills the window; Escape brings
-  the page back.
+- **Theater layout** on video pages: the player fills the window; Escape (or
+  ▼ twice) brings the episode's page back, with the video in it.
 - **Player control** without a mouse: OK plays and pauses, ◀ ▶ seek, ▼ opens
   Leanback's own control bar, and media keys (play/pause, stop, next,
   previous) work from anywhere on the page.
@@ -259,6 +262,15 @@ search, and its results come back as Home's cards, five across, as you type.
 back up into the box, and ◀ at the start of the text is the rail. OK on a
 filter shows only those results. More results arrive near the end, as on
 Browse.
+
+**An episode's page**: the video fills the window as it plays. Escape, or ▼
+twice (once for the control bar, once more out of it), brings the episode's
+page: the video carries on in a large picture at the top left, and beside it
+the show's name, the episode's title, its season and number, its
+description and three buttons — *Play* (back into the full-window video,
+playing), *Episodes* (the season's page) and *My List*. Under them, Dropout's
+*Up Next in Season N*: the next episodes as cards. ▲ from the buttons goes
+back into the video; Escape again leaves the episode for its season.
 
 **Picking up where you left off**: open an episode you stopped halfway and it
 starts where you stopped, with "Resumed at 12:04" along the bottom for a

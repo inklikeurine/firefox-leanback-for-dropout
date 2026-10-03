@@ -3,9 +3,9 @@
 This is the product spec. How the code realises it is in
 [architecture.md](./architecture.md); the site knowledge it rests on, checked
 against captures of the logged-in site, is in [site-notes.md](./site-notes.md).
-Leanback is becoming a TV shell one screen at a time: Home, Browse, My List,
-the lists, a show's page, a special and search are Leanback's own screens;
-the episode page under the player follows.
+Leanback is a TV shell: Home, Browse, My List, the lists, a show's page, a
+special, search and the episode's page under the player are Leanback's own
+screens; only sign-in, account, help and legal pages are Dropout's.
 The [milestones](#milestones) below are what 1.0 needs.
 
 ## About
@@ -36,8 +36,8 @@ The [milestones](#milestones) below are what 1.0 needs.
 - A focus ring readable from 3 m.
 - Player control from the remote: play/pause, seek, next/previous episode,
   captions.
-- A **theater layout** on video pages: the player fills the viewport; the rest
-  of the page is one Escape away.
+- A **theater layout** on video pages: the player fills the viewport; the
+  episode's page is one Escape away.
 - Site knowledge kept as data and checkable with a script, so following site
   changes is cheap.
 
@@ -261,9 +261,21 @@ means Back at the top level closes Firefox.
 - **Video pages.** On load: enter theater layout, focus the player. Inside the
   player: OK and Play-Pause toggle playback, Left/Right seek by the seek step
   (10 s by default), Down opens the transport bar and Down again goes to the
-  page below (up-next, series link); back leaves theater layout, and again goes
-  up a layer. Media keys (Play/Pause, Stop, Next, Previous) work from anywhere
+  episode's page; back leaves theater layout, and again goes up a layer. Media keys (Play/Pause, Stop, Next, Previous) work from anywhere
   on a video page. Full table: [keymap.md](./keymap.md).
+- **The episode's page is Leanback's own screen** (G6), drawn from Dropout's
+  page under the player (`sites/dropout.json` → `screen.episode`): Dropout's
+  player, moved by style only (moving the frame would reload it), sits in a
+  large 16:9 place at the top left, over Leanback's screen, and keeps
+  playing; beside it the show's name (yellow capitals), the episode's title,
+  "Season 2, Episode 1 · 28-Feb-2020", the description (four lines) and the
+  buttons *Play* (yellow: into the video, theater as the setting says,
+  playing if it was paused), *Episodes* (the season's page, else the show's)
+  and *My List* (Dropout's own button, ticked while on the list). Under them
+  Dropout's *Up Next in Season N* as Home's cards. The selection lands on
+  *Play* leaving the video (▼ out of the bar, or Back out of theater); ▲
+  from the buttons goes back into the video. A page with no title to read
+  is driven as Dropout draws it.
 - **Next / previous episode.** Uses the site's own up-next data when present;
   otherwise the episode order from the series page. **Autoplay next** on
   `ended` is a setting (default on).
@@ -526,8 +538,9 @@ Manual checklist (full version with expected results in
 - *Clear Continue Watching*: Continue Watching empties; episodes already
   watched keep their ticks.
 - Video page: theater layout appears; OK toggles; Left/Right seeks; Down opens
-  the transport bar, Down again reaches the page; back returns to the season
-  page.
+  the transport bar, Down again reaches the episode's page, the video carrying
+  on at the top left, the ring on *Play*; ▲ back into the video; back returns
+  to the season page.
 - Settings panel: Closed Captions → Customize → Font is reachable, each group
   of options headed; ◀ goes up one level. Closed Captions flips on OK;
   Caption Style opens the player's Customize, and one ◀ comes back.

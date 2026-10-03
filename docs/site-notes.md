@@ -37,7 +37,7 @@ it is matched by the `Name_module_` prefix.
 | `/<series-slug>` | A show: details, season and sort selects, episode grid, opened on Season 1 | `series` — a **show**, read by `content/show.js` and drawn by `content/screen.js`; Leanback moves on to the newest season |
 | `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` — a **show** |
 | `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special**, read by `content/show.js` and drawn by `content/screen.js` |
-| `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` |
+| `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` — the player, then the page under it drawn by `content/screen.js` |
 | `/<series-slug>/videos/<slug>`, `/videos/<slug>`, `/featured/videos/<slug>` | Trailer or standalone video | `video` |
 | `/search` | One React app that changes the address without reloading; `document.title` is empty | `search` — drawn by `content/screen.js`, with the rail |
 | `/my-list` | Loaded fresh: a server-rendered collection grid (`li.js-collection-item › .browse-item-card a.browse-item-link`, Dropout's *Remove from my list* button inside the link). Reached from `/search` inside the React app, the address changes and the search results can stay on screen | `grid` (with the rail); the rail opens it with a fresh load |
@@ -258,20 +258,27 @@ meta[property="og:image"][content]                   ← the episode's picture (
       iframe#watch-embed.sticky-player-child[src="https://embed.vhx.tv/videos/<id>?api=1&auth-user-token=…&autoplay=1&…&up_next_*=…"]
       #watch-unauthorized.embed-content              ← logged-out placeholder ("Watch this video and more on Dropout")
   #watch-info
-    .series-title a.context-link[href="/<series>"]   ← back to the series
-    h5 a[href="…/<series>/season:N"] "Season N, Episode M"  ← show, season and episode, even at /videos/<slug>
+    h3.series-title a.context-link[href="/<series>"] ← back to the series
+    h1.collection-title.video-title strong           ← the episode's title
+    h5.badges-container
+      a[href="…/<series>/season:N"] "Season N, Episode M"  ← show, season and episode, even at /videos/<slug>
                                                      (another link to the season page reads just "Season N")
+      • a.meta-data-link "28-Feb-2020"                ← the release date
     meta[property="og:url"]                          ← "/<series>/season:N/videos/<slug>": show and season
-    .video-title
-    button.my-list.custom-btn-action-my-list[data-video-id]   ← toggles in place, like the series button
-    .video-content-actions, .share-tools              ← share buttons — low priority targets
-    h3 "Up Next in Season N" and its tiles            ← the rest of the season, server-rendered
+    .read-more-wrap[data-truncate] > p               ← the description; tags follow in .meta-data-info
+    .video-content-actions
+      button.my-list.custom-btn-action-my-list[data-video-id]   ← toggles in place (.icon-watchlist-remove), like the series button
+    .share-tools                                     ← share buttons
+    h3.head.secondary "Up Next in <a>Season N</a>"   ← then a ul of li.js-collection-item tiles (the series tile markup;
+                                                       Dropout's bar on a watched one): the next episodes, 3 in the capture
     a.meta-data-link[data-similar-items-site][href="#"]   ← related items (the attribute is on the <a>)
   #modal-trailer.reveal-modal.large[data-reveal]
     .embed[data-vimeo-player][data-trailer-url="https://embed.vhx.tv/videos/<id>"]
     a.close-reveal-modal
 ```
 
+Leanback draws the page under the player from these parts (`screen.episode`
+in the rules) and docks `#watch-player` over its own screen by style.
 `window.VHX.config.embed_url` holds the player URL; `window.COMMENTABLE_ID` is
 the video id. The history keeps the episode's `.video-title`, the
 `.series-title` text and `og:image`, keyed by the slug after `/videos/`, which

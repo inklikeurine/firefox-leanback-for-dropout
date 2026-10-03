@@ -7,7 +7,9 @@
 // What a screen holds comes from a reader, as a description (a "model"):
 //   head      — a plain page title (Browse, My List, a list), or
 //   hero      — a banner like Home's: picture, title, meta, description and
-//               buttons (a show's page, a special: content/show.js);
+//               buttons (a show's page, a special: content/show.js); on an
+//               episode's page, a place for the player (dock) in place of
+//               the picture, which page.js puts Dropout's player over;
 //   field     — a search box: Leanback's own, whose text is typed into
 //               Dropout's (search);
 //   pills     — a row of choices (a show's seasons, newest first; search's
@@ -16,8 +18,9 @@
 //   empty     — what to say when there are no cards (Dropout's own words);
 //   more      — Dropout's own Load More, pressed near the end;
 //   start     — the key of the card or button the selection starts on.
-// This file reads collection pages and search itself (readPage, searchModel,
-// sites/dropout.json → screen); show.js reads shows and specials.
+// This file reads collection pages, search and an episode's page itself
+// (readPage, searchModel, episodeModel; sites/dropout.json → screen);
+// show.js reads shows and specials.
 //
 // The selection moves over rows: the search box, the buttons, the seasons
 // or filters, then each section's cards in rows of its columns. ◀ ▶ move along a row and stop at
@@ -140,6 +143,51 @@
     input.dispatchEvent(new win.Event("input", { bubbles: true }));
   }
 
+  /**
+   * An episode's page, under its player, as a screen model: the player's
+   * place with the episode beside it — the show, the title, "Season 2,
+   * Episode 1 · 28-Feb-2020", the description, and Play, Episodes and My
+   * List — then Dropout's "Up Next in Season N" as cards. Null when the page
+   * has no title to show.
+   * @param {Document} doc
+   * @param {object} R — the rules' "screen.episode" object
+   */
+  function episodeModel(doc, R) {
+    const rules = R || {};
+    const { textOf, hrefOf } = C();
+    const title = textOf(qs(rules.title, doc));
+    if (!title) return null;
+    const actions = [{ key: "play", label: "Play", run: "player", primary: true }];
+    const back = hrefOf(qs(rules.season, doc)) || hrefOf(qs(rules.show, doc));
+    if (back) actions.push({ key: "episodes", label: "Episodes", href: back });
+    const list = qs(rules.listAction, doc);
+    if (list) {
+      let listed = false;
+      try {
+        listed = Boolean(rules.listed) && list.matches(rules.listed);
+      } catch (_err) { /* a bad selector: not listed */ }
+      actions.push({ key: "mylist", label: "My List", proxy: list, listed });
+    }
+    const page = readPage(doc, rules);
+    return {
+      kind: "episode",
+      head: "",
+      hero: {
+        dock: true,
+        kicker: textOf(qs(rules.show, doc)),
+        title,
+        meta: textOf(qs(rules.info, doc)).replace(/\s*•\s*/g, " · "),
+        description: textOf(qs(rules.description, doc)),
+        image: "",
+        actions
+      },
+      pills: null,
+      sections: page.items.length ? [{ key: "upnext", title: textOf(qs(rules.upNextTitle, doc)) || "Up Next", sub: "", columns: COLUMNS, items: page.items }] : [],
+      more: null,
+      start: "play"
+    };
+  }
+
   /** A collection page as a screen model: its title over a grid of cards. */
   function collectionModel(doc, R) {
     const page = readPage(doc, R);
@@ -165,7 +213,9 @@
    *   history?: () => object,               // the watch-history store
    *   onObserve?: (items: object[]) => void,// Dropout's progress bars, for the history
    *   onPill?: (pill: object) => void,      // OK on a pill (a season); a pill with a proxy presses it instead
-   *   onFieldDone?: () => void              // Enter in the search box
+   *   onFieldDone?: () => void,             // Enter in the search box
+   *   onRun?: (what: string) => void,       // OK on a button that runs something ("player")
+   *   onLayout?: () => void                 // the screen moved (the player's place with it)
    * }} opts
    */
   function createScreen(doc, opts) {
@@ -198,13 +248,18 @@
     const heroArt = el("img", "tenfoot-hero-art");
     heroArt.alt = "";
     const heroScrim = el("div", "tenfoot-hero-scrim");
+    // Where the player goes on an episode's page: an empty box the size of
+    // the video, which page.js puts Dropout's own player over.
+    const heroDock = el("div", "tenfoot-screen-player");
+    heroDock.hidden = true;
     const heroBody = el("div", "tenfoot-hero-body");
+    const heroKicker = el("p", "tenfoot-hero-label");
     const heroTitle = el("h1", "tenfoot-hero-title");
     const heroMeta = el("p", "tenfoot-hero-meta");
     const heroText = el("p", "tenfoot-hero-text");
     const heroActions = el("div", "tenfoot-hero-actions");
-    heroBody.append(heroTitle, heroMeta, heroText, heroActions);
-    hero.append(heroArt, heroScrim, heroBody);
+    heroBody.append(heroKicker, heroTitle, heroMeta, heroText, heroActions);
+    hero.append(heroArt, heroScrim, heroDock, heroBody);
     // The search box: Leanback's own, typed into; its text goes on to the
     // site's box, whose results come back as a change to the page.
     const fieldBox = el("div", "tenfoot-screen-field");
@@ -291,6 +346,10 @@
       }
       if (h.image && heroArt.getAttribute("src") !== h.image) heroArt.setAttribute("src", h.image);
       if (!h.image) setAttr(heroArt, "src", null);
+      setAttr(hero, "data-tenfoot-dock", h.dock ? "true" : null);
+      heroDock.hidden = !h.dock;
+      setText(heroKicker, h.kicker || "");
+      heroKicker.hidden = !h.kicker;
       setText(heroTitle, h.title);
       setText(heroMeta, h.meta);
       heroMeta.hidden = !h.meta;
@@ -313,7 +372,7 @@
                 try {
                   act.proxy.click();
                 } catch (_err) { /* nothing to press */ }
-              }
+              } else if (act && act.run && typeof o.onRun === "function") o.onRun(act.run);
             });
           }
         }
@@ -456,7 +515,10 @@
         y = Math.max(0, node.parentNode.offsetTop - Math.round((win.innerHeight || 0) * ROW_ANCHOR));
       }
       const t = y ? `translateY(${-y}px)` : "";
-      if (scroller.style.transform !== t) scroller.style.transform = t;
+      if (scroller.style.transform !== t) {
+        scroller.style.transform = t;
+        if (typeof o.onLayout === "function") o.onLayout();
+      }
       setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
       // A long row of seasons slides sideways to keep the selection in it.
       if (row && row.kind === "pills" && node) {
@@ -649,6 +711,7 @@
       if (ready()) layer.hidden = false;
       applyScroll();
       observe();
+      if (typeof o.onLayout === "function") o.onLayout();
       return current();
     }
 
@@ -703,6 +766,15 @@
       if (model && model.hero) {
         const actions = model.hero.actions || [];
         const resume = actions.find((a) => a.key === "resume") || null;
+        if (model.kind === "episode") {
+          out.episode = {
+            show: model.hero.kicker || null,
+            title: model.hero.title,
+            meta: model.hero.meta || null,
+            actions: actions.map((a) => a.label),
+            upNext: model.sections[0] ? model.sections[0].title : null
+          };
+        }
         out.show = {
           layout: model.kind,
           actions: actions.map((a) => a.label),
@@ -721,6 +793,8 @@
     return Object.freeze({
       refresh, move, select, initialTarget, destroy, snapshot,
       element: layer,
+      // The player's place on an episode's page, while it is drawn.
+      get dock() { return model && model.hero && model.hero.dock && !layer.hidden ? heroDock : null; },
       get current() { return current(); },
       get ready() { return ready(); },
       get started() { return started; },
@@ -728,5 +802,5 @@
     });
   }
 
-  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, typeInto, COLUMNS, LAYER_CLASS });
+  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, episodeModel, typeInto, COLUMNS, LAYER_CLASS });
 })();

@@ -92,9 +92,9 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 11a | Open a special (a stand-up set) | The same screen: its picture and name, *Watch Movie* yellow with the ring on it, *My List*; Down to the movie, then its extras |
 | 12 | Enter on an episode | Video page, theater layout, playback starts or Enter starts it |
 | 13 | In the player: Enter, Enter, Right, Left | Play: the show's name and "S… · E… · title" show top left for four seconds. Pause: the title and the control bar come up, no button ringed; Right, Left skip +10 s, −10 s with the bar still up; after four seconds both go. While playing, Right ×5 quickly: ⏩ and the new time in the middle, the bar up, steady, gone a second after the last press |
-| 14 | Down, then Down again | Leanback's transport bar opens over the video; then the ring lands on the series link under the player, theater staying |
-| 15 | Up | Back in the player |
-| 16 | Escape, Escape | Theater off with the page visible; then back to the series page |
+| 14 | Down, then Down again | Leanback's transport bar opens over the video; then the episode's page: the video carries on in a large picture at the top left, the show, title, season line and description beside it, the ring on a yellow *Play*; *Up Next in Season …* under it as cards |
+| 15 | Up | Back in the full-window video |
+| 16 | Escape, Escape | Theater off: the episode's page as in 14; then back to the season page |
 | 17 | From Home, open a show, an episode, let it play into the next (or press Next); then the remote's Back, twice | Back goes to the season page (not the previous episode), then Home |
 | 18 | On the season page, switch season with the row, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
 | 19 | On a video page, press MediaPlayPause with focus on the page | Player toggles |

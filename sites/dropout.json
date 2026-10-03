@@ -315,6 +315,25 @@
       "itemBadge": "[data-testid^='thumbnail-badge-']",
       "empty": ".BlankSearchResults-module__no-results",
       "more": "button.SearchResults-module__load-more"
+    },
+    "episode": {
+      "title": "#watch-info .video-title",
+      "show": "#watch-info .series-title a.context-link",
+      "info": "#watch-info h5.badges-container",
+      "season": "#watch-info h5.badges-container a[href*='/season:']",
+      "description": "#watch-info .read-more-wrap > p",
+      "listAction": "#watch-info .video-content-actions button.custom-btn-action-my-list",
+      "listed": ".icon-watchlist-remove",
+      "upNextTitle": "#watch-info h3.head.secondary",
+      "root": "#watch-info",
+      "item": "li.js-collection-item",
+      "itemLink": "a.browse-item-link",
+      "itemImage": ".browse-image-container img",
+      "itemTitle": ".browse-item-title",
+      "itemSubtext": ".browse-item-subtext",
+      "itemDuration": ".duration-container",
+      "itemProgress": ".percentage-bar",
+      "itemBadge": "[data-testid^='thumbnail-badge-']"
     }
   },
   "home": {

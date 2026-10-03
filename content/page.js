@@ -13,6 +13,8 @@
   const LOG = "[leanback-for-dropout]";
   const MARK = "tenfoot";
   const THEATER_CLASS = "tenfoot-theater";
+  const DOCK_CLASS = "tenfoot-docked";
+  const DOCK_FOLLOW_MS = 400; // how long the player follows the screen sliding
   const EPISODES_KEY = "tenfoot.episodes";
   const MOVE_THROTTLE_MS = 80;
   const MUTATION_DEBOUNCE_MS = 100;
@@ -81,6 +83,8 @@
     engagedIndex: 0,
     home: null,
     homeRefocus: 0,
+    dockUntil: 0,
+    dockFrame: 0,
     show: null,
     rail: null,
     railActive: false,
@@ -630,6 +634,8 @@
     const r = state.home.move(dir);
     if (r && r.el) focusEl(r.el, { scroll: false });
     else if (r && r.edge === "left") enterRail();
+    // Above an episode's page is its player.
+    else if (r && r.edge === "up" && state.kind === "video") enterPlayer();
     return true;
   }
 
@@ -649,11 +655,13 @@
   }
 
   // "home", "page" (a grid of cards), "detail" (a show or a special),
-  // "search", or null for a page Leanback does not draw.
+  // "search", "episode" (under the player), or null for a page Leanback does
+  // not draw.
   function screenKind() {
     if (state.kind === "browse" || state.kind === "hub") return "home";
     if (state.kind === "grid") return "page";
     if (state.kind === "search") return "search";
+    if (state.kind === "video") return "episode";
     if (state.kind === "series" && Show) {
       const layout = Show.layoutOf(document, state.page.show);
       if (layout === "list") return "page";
@@ -678,6 +686,7 @@
       const readers = {
         detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href }),
         search: () => Screen.searchModel(document, screenRules().search),
+        episode: () => Screen.episodeModel(document, screenRules().episode),
         page: () => Screen.collectionModel(document, screenRules())
       };
       const read = readers[which];
@@ -697,7 +706,9 @@
         history: () => state.history,
         onObserve: (items) => send({ type: "history:observe", items }),
         onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current)),
-        onFieldDone: () => leaveFieldBelow()
+        onFieldDone: () => leaveFieldBelow(),
+        onRun: (what) => (what === "player" ? playFromScreen() : false),
+        onLayout: () => syncDock()
       });
     }
     root.dataset.tenfootHome = "on";
@@ -710,13 +721,63 @@
     state.home.destroy();
     state.home = null;
     delete root.dataset.tenfootHome;
+    syncDock();
+  }
+
+  // On an episode's page Leanback's screen has a place for the player, and
+  // Dropout's own player is put over it (content/page.css: html.tenfoot-docked)
+  // — moved by style only, as theater does, because moving the frame in the
+  // page would reload it. It follows the place while the screen slides.
+  function syncDock() {
+    const slot = state.enabled && state.home && state.kind === "video" ? state.home.dock : null;
+    root.classList.toggle(DOCK_CLASS, Boolean(slot));
+    if (!slot) {
+      for (const v of ["--tf-dock-x", "--tf-dock-y", "--tf-dock-w", "--tf-dock-h"]) root.style.removeProperty(v);
+      return;
+    }
+    const place = () => {
+      const r = slot.getBoundingClientRect();
+      root.style.setProperty("--tf-dock-x", `${Math.round(r.left)}px`);
+      root.style.setProperty("--tf-dock-y", `${Math.round(r.top)}px`);
+      root.style.setProperty("--tf-dock-w", `${Math.round(r.width)}px`);
+      root.style.setProperty("--tf-dock-h", `${Math.round(r.height)}px`);
+    };
+    place();
+    state.dockUntil = performance.now() + DOCK_FOLLOW_MS;
+    if (state.dockFrame || typeof requestAnimationFrame !== "function") return;
+    const step = () => {
+      state.dockFrame = 0;
+      if (!state.home || !state.home.dock) return;
+      place();
+      if (performance.now() < state.dockUntil) state.dockFrame = requestAnimationFrame(step);
+    };
+    state.dockFrame = requestAnimationFrame(step);
+  }
+
+  // The selection onto Leanback's screen of an episode, leaving the player.
+  function focusScreen() {
+    if (!state.home || state.kind !== "video") return false;
+    const t = state.home.started ? state.home.current : state.home.initialTarget();
+    if (!t) return false;
+    state.playerFocused = false;
+    focusEl(t, { scroll: false });
+    syncDock();
+    return true;
+  }
+
+  // Play on an episode's page: into the player (theater, as the setting
+  // says), playing.
+  function playFromScreen() {
+    enterPlayer();
+    if (state.playerState && state.playerState.paused) send({ type: "player:command", cmd: "play" });
+    return true;
   }
 
   function refreshHome() {
     if (!state.home) return;
     const before = currentEl();
     const target = state.home.refresh();
-    if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || !target) return;
+    if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || state.playerFocused || state.theater || !target) return;
     // The card the selection was on went away, or the site took the focus:
     // put it on the card Home now has selected.
     if (!before || !before.isConnected || before !== target) focusEl(target, { scroll: false });
@@ -1071,6 +1132,7 @@
     if (state.modal) return closeModal();
     if (state.kind === "video" && state.theater) {
       setTheater(false);
+      if (focusScreen()) return true;
       const mount = qs(state.page.playerMount);
       if (mount) focusEl(mount);
       return true;
@@ -1490,6 +1552,7 @@
     } else {
       state.ring.refresh();
     }
+    syncDock();
   }
 
   function enterPlayer() {
@@ -1520,6 +1583,9 @@
     if (hint === "back") return goBack();
     // "below": the page must be visible for the ring to mean anything.
     setTheater(false);
+    // Leanback's screen of the episode: its Play button, or where the
+    // selection was left on it.
+    if (focusScreen()) return true;
     // The link back to the show is what someone leaving the player wants far
     // more often than whatever markup sits closest under the video (the
     // metadata tags do), so it wins over the geometric pick.
@@ -1722,7 +1788,7 @@
         // A click, or the focus coming back: the model follows.
         state.home.select(t);
         state.homeRefocus = 0;
-      } else if (!ownUi(t)) {
+      } else if (!ownUi(t) && !(state.kind === "video" && t.closest("[data-tenfoot-theater-root]"))) {
         // Dropout's page is underneath and still moves the focus about.
         // Take it back — a bounded number of times, never a tug of war.
         if (state.homeRefocus < HOME_REFOCUS_LIMIT && state.home.current) {
@@ -2088,6 +2154,7 @@
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
     window.addEventListener("popstate", onPopState);
+    window.addEventListener("resize", () => syncDock());
     window.addEventListener("beforeunload", () => {
       state.unloading = true;
       clearBackFallback();

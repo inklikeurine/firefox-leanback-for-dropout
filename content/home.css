@@ -497,6 +497,46 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   font-size: max(22px, calc(var(--tf-u) * 52));
   line-height: 1.1;
 }
+/* An episode's page: the player's place on the left (Dropout's player is
+   docked over it: content/page.css), the episode beside it. */
+.tenfoot-screen-hero[data-tenfoot-dock] {
+  display: grid;
+  grid-template-columns: calc(var(--tf-u) * 1100) minmax(0, 1fr);
+  column-gap: calc(var(--tf-u) * 56);
+  align-items: center;
+  height: auto;
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+}
+.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-art,
+.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-scrim {
+  display: none;
+}
+.tenfoot-screen-player {
+  aspect-ratio: 16 / 9;
+  border-radius: calc(var(--tf-u) * 16);
+  background: #000;
+}
+.tenfoot-screen-player[hidden],
+.tenfoot-hero-label[hidden] {
+  display: none;
+}
+.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-body {
+  position: static;
+  max-width: none;
+}
+.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-title {
+  font-size: max(22px, calc(var(--tf-u) * 56));
+  line-height: 1.05;
+}
+.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-text {
+  -webkit-line-clamp: 4;
+}
+.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-actions {
+  flex-wrap: wrap;
+  row-gap: calc(var(--tf-u) * 14);
+}
 /* Search: Leanback's own box, as wide as five cards, its text large enough
    to read from the sofa; the site's text colours and fonts are held off. */
 .tenfoot-screen-field {

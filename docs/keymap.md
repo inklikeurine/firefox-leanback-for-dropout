@@ -52,11 +52,11 @@ the search box Leanback draws, OK and Back also leave it for what is below
 
 | Action | Page (`grid` / `series` / `search` / `other`) | Settings panel (page) | `video`, focus on the page | `video`, focus in the player |
 | --- | --- | --- | --- | --- |
-| `up` | spatial / row move | previous entry | spatial; from the topmost element → player | closes the transport bar |
-| `down` | spatial / row move; past the last row → Load More | next entry | spatial | opens the **transport bar**; from the bar, on to the page |
+| `up` | spatial / row move | previous entry | a row up on the episode's screen; from its buttons → the player | closes the transport bar |
+| `down` | spatial / row move; past the last row → Load More | next entry | a row down: the buttons, then Up Next | opens the **transport bar**; from the bar, on to the page (its *Play* button) |
 | `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | ◀ **up one level**, at the top **closes the panel**; ▶ takes the entry (never an action) | spatial | seek ∓/± the seek step; **while the bar is open they walk it instead**; ◀ hides the "Up next" card while it is up |
-| `select` | activate; on a season, open it; on a `<select>` → engage or confirm; on the player → enter the player | take the entry: flip a switch, open a list of values, pick one; Clear Continue Watching asks once more | activate | play / pause; take the control under the selection; play the next episode while the "Up next" card is up |
-| `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | up one level → close | leave theater; else the page before | submenu → settings panel → transport bar → playback → the page before |
+| `select` | activate; on a season, open it; on a `<select>` → engage or confirm; on the player → enter the player | take the entry: flip a switch, open a list of values, pick one; Clear Continue Watching asks once more | the button or card; *Play* → into the player, playing | play / pause; take the control under the selection; play the next episode while the "Up next" card is up |
+| `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | up one level → close | leave theater (for the episode's page, on *Play*); else the page before | submenu → settings panel → transport bar → playback → the page before |
 | `back` (BrowserBack) | Firefox's own Back, everywhere; Leanback steps in only when nothing of the site is behind the page, and then does what Escape does | | | |
 | `menu` | **opens Leanback's settings** | closes it | opens Leanback's settings | opens the **settings panel** in the player frame |
 | `search` | go to `/search` | — | same | same |
