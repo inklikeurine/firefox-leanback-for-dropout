@@ -33,7 +33,7 @@ it is matched by the `Name_module_` prefix.
 | `/series` | All series, a server-rendered grid with Show More | `grid` |
 | `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection (Dropout calls it a category): a server-rendered grid of episodes, of shows, or of both shows and specials. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where `content/show.js` sees a **list**; both are drawn by `content/screen.js` |
 | `/dimension-20`, `/dropout-24-7` | A hub: a small Home-style page with its own rows | `hub` — a one-segment address whose page holds `#browse-component`; drawn like Home |
-| `/<hub>/events/<slug>` | A live event, with the live player | `other` |
+| `/<hub>/events/<slug>` | A live event, with the live player (Dropout 24/7: `/dropout-247/events/dropout-24-7`) | `video` — the player in `section#live-event` (theater root), the page under it drawn by `content/screen.js` |
 | `/<series-slug>` | A show: details, season and sort selects, episode grid, opened on Season 1 | `series` — a **show**, read by `content/show.js` and drawn by `content/screen.js`; Leanback moves on to the newest season |
 | `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` — a **show** |
 | `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special**, read by `content/show.js` and drawn by `content/screen.js` |
@@ -286,6 +286,25 @@ is the same in this address, in Home's tile links and in the player's
 `OTTData.video.url`. The player address carries the next episode as `up_next_url`,
 `up_next_title`, `up_next_thumbnail_url`, `up_next_rating` and
 `up_next_offset_seconds`.
+
+### A live event (`/<hub>/events/<slug>`)
+
+Dropout 24/7's stream (2026-10-03 capture). The hub page `/dropout-24-7`
+holds a single *Live now* banner and no rows; its *Watch* opens this page.
+
+```text
+section#live-event.top-container                     ← THEATER ROOT
+  .embed.live-event-player
+    iframe#watch-embed[src="https://embed.vhx.tv/videos/<id>?…&live=1…"]
+section#watch-info
+  h1.collection-title.live-event-title strong        ← "Dropout 24/7"
+  #live-status-text                                  ← scheduled/live status (empty in the capture)
+  .live-event-description > p                        ← the description; a second p links the FAQ
+  .share-tools                                       ← share buttons
+```
+
+No season line, show link, My List or Up Next. The player reports a live
+video (`is_live_video`), which the watch history leaves out.
 
 ### Search and My List (`/search`, `/my-list`)
 

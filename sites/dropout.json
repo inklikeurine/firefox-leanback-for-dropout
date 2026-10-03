@@ -17,6 +17,10 @@
       "path": "/videos/[^/]+/?$"
     },
     {
+      "kind": "video",
+      "path": "^/[^/]+/events/[^/]+/?$"
+    },
+    {
       "kind": "search",
       "path": "^/search(/|$)"
     },
@@ -134,9 +138,9 @@
       }
     },
     "video": {
-      "theaterRoot": "#watch-player",
-      "playerMount": "#watch-player .embed",
-      "playerFrame": "#watch-player iframe[src*='embed.vhx.tv']",
+      "theaterRoot": "#watch-player, #live-event",
+      "playerMount": "#watch-player .embed, #live-event .embed",
+      "playerFrame": "#watch-player iframe[src*='embed.vhx.tv'], #live-event iframe[src*='embed.vhx.tv']",
       "seriesLink": ".series-title a.context-link",
       "videoTitle": "#watch-info .video-title",
       "videoImage": "meta[property='og:image']",
@@ -271,7 +275,8 @@
       "browse",
       "hub",
       "grid",
-      "search"
+      "search",
+      "series"
     ],
     "links": [
       {
@@ -317,11 +322,11 @@
       "more": "button.SearchResults-module__load-more"
     },
     "episode": {
-      "title": "#watch-info .video-title",
+      "title": "#watch-info .video-title, #watch-info .live-event-title",
       "show": "#watch-info .series-title a.context-link",
       "info": "#watch-info h5.badges-container",
       "season": "#watch-info h5.badges-container a[href*='/season:']",
-      "description": "#watch-info .read-more-wrap > p",
+      "description": "#watch-info .read-more-wrap > p, #watch-info .live-event-description > p",
       "listAction": "#watch-info .video-content-actions button.custom-btn-action-my-list",
       "listed": ".icon-watchlist-remove",
       "upNextTitle": "#watch-info h3.head.secondary",

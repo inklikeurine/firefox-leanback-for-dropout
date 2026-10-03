@@ -412,6 +412,16 @@
         .slice(0, 40);
     }
 
+    // An option inside an accordion (the font's Family, its Edge style): the
+    // accordion's name, read from its header.
+    function accordionOf(node) {
+      const g = node.closest ? node.closest("[role='group']") : null;
+      const head = g ? g.querySelector("[role='button'][aria-expanded]") : null;
+      if (!head || head === node) return "";
+      const texts = qsa(rules.menuText, head).map(textOf).filter(Boolean);
+      return (texts[0] || textOf(head)).slice(0, 60);
+    }
+
     // drill: opens a submenu. expand: opens an accordion in place. option: one
     // of a set (a track, a colour, a size). action: anything else ("Reset all").
     function kindOf(node) {
@@ -442,6 +452,8 @@
           value: value.slice(0, 30),
           checked: node.getAttribute("aria-checked") === "true",
           group: groupOf(node),
+          accordion: kind === "option" ? accordionOf(node) : "",
+          expanded: kind === "expand" && node.getAttribute("aria-expanded") === "true",
           node
         });
       }
@@ -617,7 +629,53 @@
     // settings, a setting's choices, or as many levels of the player's menu
     // as it has.
     const level = () => (panel && panel.stack.length ? panel.stack[panel.stack.length - 1] : null);
-    const firstChecked = (items) => Math.max(0, items.findIndex((i) => i.checked));
+
+    // A level of the player's menu as the panel lists it. A set of options
+    // with a heading (the font's Color, Size, Opacity) and an accordion (its
+    // Family, Edge style) are one entry each, showing the current choice; OK
+    // opens a level of their own with the choices. Everything else is listed
+    // as it is.
+    function vendorView(items) {
+      const out = [];
+      const seen = new Set();
+      for (const it of items) {
+        if (it.kind === "option" && it.accordion) continue;
+        if (it.kind === "option" && it.group) {
+          if (seen.has(it.group)) continue;
+          seen.add(it.group);
+          const on = items.find((x) => x.kind === "option" && x.group === it.group && x.checked);
+          out.push({ entry: { label: it.group, value: on ? on.label : "", kind: "drill" }, act: { type: "set", key: it.group } });
+          continue;
+        }
+        if (it.kind === "expand") {
+          out.push({ entry: { label: it.label, value: it.value, kind: "drill" }, act: { type: "accordion", key: it.label, item: it } });
+          continue;
+        }
+        out.push({
+          entry: { label: it.label, value: it.value, kind: it.kind === "drill" ? "drill" : it.kind === "option" ? "option" : "action", checked: it.kind === "option" && it.checked },
+          act: { type: "item", item: it }
+        });
+      }
+      return out;
+    }
+
+    // The choices of one set or accordion, from its parent level's last read.
+    function choicesOf(lvl) {
+      const items = lvl.parent ? lvl.parent.items : [];
+      return items.filter((x) => x.kind === "option" && (lvl.accordion ? x.accordion === lvl.key : !x.accordion && x.group === lvl.key));
+    }
+
+    // Where a level of the player's menu starts: its first ticked entry.
+    const firstChecked = (items) => Math.max(0, vendorView(items).findIndex((v) => v.entry.checked));
+
+    // The entry for what was just taken: itself, or the set or accordion it
+    // belongs to.
+    function viewIndexOf(items, taken) {
+      if (!taken) return -1;
+      return vendorView(items).findIndex((v) => (v.act.type === "item" && v.act.item.label === taken.label && v.act.item.group === taken.group)
+        || (v.act.type === "set" && !taken.accordion && v.act.key === taken.group)
+        || (v.act.type === "accordion" && v.act.key === (taken.accordion || "")));
+    }
 
     function entriesOf(lvl) {
       if (!lvl) return panel.rows.map(rowEntry);
@@ -626,13 +684,8 @@
         const cur = settings()[lvl.row.id];
         return lvl.values.map((v) => ({ id: String(v), label: Settings.valueText(lvl.row, v), kind: "option", checked: v === cur }));
       }
-      return lvl.items.map((it) => ({
-        label: it.label,
-        value: it.value,
-        kind: it.kind === "drill" || it.kind === "expand" ? "drill" : it.kind === "option" ? "option" : "action",
-        checked: it.kind === "option" && it.checked,
-        group: it.group
-      }));
+      if (lvl.kind === "pick") return choicesOf(lvl).map((it) => ({ label: it.label, kind: "option", checked: it.checked }));
+      return vendorView(lvl.items).map((v) => v.entry);
     }
 
     function renderPanel() {
@@ -704,8 +757,8 @@
         if (l.kind !== "vendor" || l.vendorTitle !== read.title) continue;
         panel.stack.length = i + 1;
         l.items = read.items;
-        const keep = taken ? l.items.findIndex((x) => x.label === taken.label && x.group === taken.group) : -1;
-        l.index = keep >= 0 ? keep : Math.min(l.index, l.items.length - 1);
+        const keep = viewIndexOf(l.items, taken);
+        l.index = keep >= 0 ? keep : Math.min(l.index, vendorView(l.items).length - 1);
         renderPanel();
         return true;
       }
@@ -854,6 +907,30 @@
       return true;
     }
 
+    // A set's or an accordion's own level: its choices, titled with the
+    // panel it is on ("Font Color").
+    function openChoices(lvl, act) {
+      const title = [lvl.vendorTitle && lvl.vendorTitle !== act.key ? lvl.vendorTitle : "", act.key].filter(Boolean).join(" ");
+      const pick = { title, kind: "pick", parent: lvl, key: act.key, accordion: act.type === "accordion", index: 0 };
+      pick.index = Math.max(0, choicesOf(pick).findIndex((x) => x.checked));
+      panel.stack.push(pick);
+      renderPanel();
+      return true;
+    }
+
+    // An accordion opens in the player's menu first (its choices are not
+    // there until it does), then as a level of its own.
+    async function openAccordion(lvl, act) {
+      if (!act.item.expanded) {
+        const read = await clickVendor(act.item);
+        if (!panel || !read) return false;
+        follow(read, null);
+        if (level() !== lvl) return true; // the player went somewhere else
+      }
+      if (!choicesOf({ parent: lvl, key: act.key, accordion: true }).length) return true;
+      return openChoices(lvl, act);
+    }
+
     // OK inside a submenu. Synchronous unless it clicks the player's menu.
     function takeSubItem(byRight) {
       const lvl = level();
@@ -865,9 +942,19 @@
         renderPanel();
         return true;
       }
-      const it = lvl.items[lvl.index];
-      if (!it) return false;
-      if (byRight && it.kind !== "drill" && it.kind !== "expand") return true;
+      if (lvl.kind === "pick") {
+        // The player's own option is pressed; its level is read again and
+        // the panel goes back to it, on the set just changed.
+        const it = choicesOf(lvl)[lvl.index];
+        if (!it) return false;
+        return clickVendor(it).then((read) => follow(read, it));
+      }
+      const v = vendorView(lvl.items)[lvl.index];
+      if (!v) return false;
+      if (v.act.type === "set") return openChoices(lvl, v.act);
+      if (v.act.type === "accordion") return openAccordion(lvl, v.act);
+      const it = v.act.item;
+      if (byRight && it.kind !== "drill") return true;
       if (it.kind === "drill") return drillInto(it, it.label);
       return clickVendor(it).then((read) => follow(read, it));
     }

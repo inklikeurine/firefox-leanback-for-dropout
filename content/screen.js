@@ -16,7 +16,8 @@
 //               filters, which press Dropout's own);
 //   sections  — groups of cards, each with its own title and columns;
 //   empty     — what to say when there are no cards (Dropout's own words);
-//   more      — Dropout's own Load More, pressed near the end;
+//   more      — Dropout's own Load More, pressed near the end (at once and
+//               until it is gone, with loadAll: a season run newest first);
 //   start     — the key of the card or button the selection starts on.
 // This file reads collection pages, search and an episode's page itself
 // (readPage, searchModel, episodeModel; sites/dropout.json → screen);
@@ -702,6 +703,7 @@
       renderEmpty();
       buildRows();
       if (more && (cardCount() > more.count || !(model && model.more))) endMore();
+      if (model && model.loadAll) wantMore();
       const at = before && before.key ? find(before.key) : null;
       if (at) pos = at;
       else if (before && rows.length) {
@@ -782,6 +784,7 @@
           seasons: model.pills ? model.pills.items.map((p) => p.label) : [],
           current: model.current || null,
           heading: (model.sections[0] && [model.sections[0].title, model.sections[0].sub].filter(Boolean).join(" · ")) || null,
+          order: model.newestFirst ? "newest-first" : "episode-1-first",
           sections: model.sections.map((s) => s.title || s.key),
           watched: model.sections.reduce((n, s) => n + s.items.filter((it) => it.watch === "watched").length, 0),
           inProgress: model.sections.reduce((n, s) => n + s.items.filter((it) => it.watch === "in-progress").length, 0)

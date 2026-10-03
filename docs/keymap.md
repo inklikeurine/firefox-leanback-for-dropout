@@ -84,13 +84,14 @@ the featured banner's buttons, then one row per shelf.
 | `menu` | Leanback's settings | the same |
 
 The rail is also on Browse (`/series`), My List and Search, where ◀ reaches it from
-anything at the left edge. It is not on a show's page or during playback.
+anything at the left edge. It is on every page that plays no video (show
+pages and lists included); not on an episode's page or during playback.
 
 ## A show's page
 
 Leanback's own screen: the show's picture and name, its buttons (the yellow
 one that picks the show up, *Trailer*, *My List*), then the row of seasons,
-newest first, then the season's episodes, three across. A show opens on its
+newest first, then the season's episodes, five across. A show opens on its
 newest season (setting: *Shows Open On*), with the selection on the episode
 to watch next.
 
@@ -98,13 +99,13 @@ to watch next.
 | --- | --- | --- | --- |
 | `up` | nothing above | the show's buttons, where that row was left | from the first row of episodes, the season on screen (or where the row was left); else a row up, same column |
 | `down` | the row of seasons, where it was left | the episode the selection came from | a row down, same column; into a shorter last row, its last episode |
-| `left` / `right` | along the buttons; stops at the ends | along the row, which slides to keep the selection in view; stops at its ends (there is no rail here) | along the row; stops at its ends |
+| `left` / `right` | along the buttons; ◀ from the first is the rail | along the row, which slides to keep the selection in view; ◀ from the newest season is the rail | along the row; ◀ from the first column is the rail |
 | `select` | follow the yellow button; *Trailer* and *My List* press Dropout's own | open that season, in place of this one; on the season already on screen, down to its episodes | play the episode |
 | `back` | the page before (Firefox's Back): switching seasons never adds a page, so Back leaves the show | the same | the same |
 
 A special (*Watch Movie*, *My List*, the movie and its extras) is driven the
 same way, without a row of seasons; a list (Trending, a show's new episodes)
-like Browse, without the rail.
+like Browse.
 
 ## The options button
 
@@ -172,7 +173,7 @@ already paused.
 | Speed | the player's own menu |
 | Play Next Episode | goes to the next episode — it is a link, not a toggle |
 | Closed Captions | a switch: OK turns the player's first track on, or captions off; ▶ opens the player's CC/subtitles menu (its tracks, and Customize) |
-| Caption Style | the player's Customize → Font, Background, Window; one ◀ comes all the way back |
+| Caption Style | the player's Customize → Font, Background, Window, each listing its settings (Family, Color, Size, Opacity, Edge Style) with the current choice; OK on one opens its choices, OK picks one and goes back up; one ◀ from Customize comes all the way back |
 | Leanback Settings | Leanback's own, the same list as on a page: Autoplay Next Episode, Shows Open On, Seek Step, Theater Layout, Start Videos Muted, Button Hints, Enlarge Selection, Ring Width, Ring Colour, Skip dropout.tv Home, Back On Home; then Clear Continue Watching (OK twice) and Turn Leanback Off |
 
 - ▲ ▼ move, no wrap. **OK or ▶ takes the entry**: a submenu opens; an on/off

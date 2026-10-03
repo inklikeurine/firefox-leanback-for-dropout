@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.32.0] — 2026-10-03
+
+### Changed
+
+- **A season's episodes are five across**, as Home's rows are.
+- **The rail is on every page that does not play a video**: show pages,
+  specials and the lists (Trending, New Releases…) now have it too.
+- **With *Shows Open On: Newest*, the episode to watch next is near the
+  top**: a season you are caught up with runs newest first, the newest
+  episode top left and selected; a season you have not started (or are
+  early in) runs from Episode 1.
+- **Caption Style is a menu to click through**: Font, Background and Window
+  each list their settings — Family, Color, Size, Opacity, Edge Style — with
+  the current choice beside each; OK on one opens its choices (*Font
+  Color*: White, Yellow…), and OK on a choice sets it and goes back up.
+
+### Added
+
+- **Dropout 24/7's stream has Leanback's look**: it plays in the full window
+  like an episode, and ▼ ▼ (or Escape) shows its page — the stream in a
+  large picture at the top left, its title and description, and *Play*.
+
 ## [0.31.1] — 2026-10-03
 
 ### Fixed

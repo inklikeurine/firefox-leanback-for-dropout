@@ -133,8 +133,9 @@ means Back at the top level closes Firefox.
   left, with "Resumed at 12:04" for a moment. *Start Over* heads the playback
   panel after a resume and goes back to 0:00. Resuming never changes whether
   the video is playing or muted.
-- **The rail.** On Home, Browse (`/series`, all shows), My List, Search and
-  Dropout 24/7, an icon rail runs down the left: Search, Home, Browse, My List
+- **The rail.** On every page that plays no video — Home, Browse (`/series`,
+  all shows), My List, Search, Dropout 24/7, the lists, every show's page and
+  special — an icon rail runs down the left: Search, Home, Browse, My List
   (a bookmark, `/my-list`), Dropout 24/7 (`/dropout-24-7`), and a gear for
   Leanback's settings in place. My List is a grid of tiles like Browse, the
   selection starting on the first. The current
@@ -142,8 +143,8 @@ means Back at the top level closes Firefox.
   or selected, so the ring is the only mark of the selection.
   ◀ from the first card of a row (or anything at the left edge) enters it on
   the current page's entry, or on the one last used; ▲ ▼ move, OK opens, ▶
-  (and Escape) return to exactly where the selection came from. Not on a
-  show's page, not during playback.
+  (and Escape) return to exactly where the selection came from. Not on an
+  episode's page or Dropout 24/7's stream, not during playback.
 - **A show's page, one for every show.** Pages at a one-word address are
   sorted by what the page holds, never by address or name, so every show
   works the same way, including ones Dropout adds later
@@ -162,12 +163,16 @@ means Back at the top level closes Firefox.
     the row lands on the season on screen, or where the row was left. OK
     opens that season's page in place of this one (seasons are sideways, so
     Back leaves the show); OK on the season already on screen goes down to its
-    episodes. Episodes are three across, in Dropout's order, Home's cards
-    (picture, running time, title, "Episode N"); a watched one is dimmed
-    with a tick, one in progress has a bar. Rows of episodes past the first
-    slide to the same place near the top, as Home's rows do; more load
-    through Dropout's own *Load More* near the end. Above the seasons: the
-    show's buttons, Leanback's own first.
+    episodes. Episodes are five across, Home's cards (picture, running time,
+    title, "Episode N"); a watched one is dimmed with a tick, one in
+    progress has a bar. In Dropout's order (Episode 1 first), except with
+    *Shows Open On: Newest*, where they run whichever way puts the episode
+    to watch next near the top: newest first when it is past the middle of
+    the season (caught up with a running season), Episode 1 first before
+    that; newest first loads the whole season first (Dropout's own *Load
+    More*, pressed until it is gone). Rows of episodes past the first slide
+    to the same place near the top, as Home's rows do. Above the seasons:
+    the show's buttons, Leanback's own first.
   - **The main button** (yellow, first of the show's buttons) picks the show
     up: **Resume S9 E3**, the episode most recently in progress in any
     season; else **Play S9 E4**, the next unwatched episode after the last
@@ -311,7 +316,7 @@ means Back at the top level closes Firefox.
   of 1920 units), each value on the line under its name, the title and a ✕
   that is only a picture, the selected entry in yellow, a switch for each
   on/off, a chevron and the value for an entry with several values, a tick on
-  the chosen option, headings over groups, and the keys along the foot
+  the chosen option, and the keys along the foot
   ("◀ Back · ▲▼ Move · OK Change"). ▲ ▼ move; OK or ▶ take an entry (a switch
   flips, an entry with several values opens its short list, where OK picks one
   and goes back up; ▶ never runs an action); ◀ or Back go up one level and at
@@ -321,9 +326,13 @@ means Back at the top level closes Firefox.
   playback, opens it: *Start Over* after a resume, Quality and Speed (the
   player's own menus), Play Next Episode, **Closed Captions** as a switch (on:
   the player's first track; off: Off; ▶ opens the player's captions menu),
-  **Caption Style** (the player's Customize: font, background, window, as many
-  levels deep as they go; one ◀ comes all the way back) and Leanback
-  Settings. It pauses the picture while open.
+  **Caption Style** (the player's Customize: Font, Background, Window; one ◀
+  comes all the way back) and Leanback Settings. Inside Font, Background and
+  Window, each set of the player's options — Family, Color, Size, Opacity,
+  Edge Style — is one entry with its current choice beside it, and OK opens
+  its choices ("Font Color"): OK picks one (the player's own option is
+  pressed) and goes back up; ◀ goes back up without changing anything. It
+  pauses the picture while open.
 - **Settings everywhere else.** The menu button (or the rail's gear) opens
   Leanback's settings as a panel on the page, with *Clear Continue Watching*
   (OK twice) and *Turn Leanback Off* under the settings. It fills a panel
@@ -510,7 +519,8 @@ Manual checklist (full version with expected results in
 - Resume: reopening that episode starts where it stopped, says so, and
   *Start Over* goes back to 0:00.
 - Rail: ◀ from the first card enters it; ▶ returns to that card; My List and
-  Dropout 24/7 open; the gear opens settings in place; not on a show's page.
+  Dropout 24/7 open; the gear opens settings in place; on show pages and
+  lists too; not on an episode's page.
 - My List: no My List row on Home; the rail's bookmark opens the page, lit
   yellow there, the ring on the first saved show.
 - Back: episode → season → Home with the remote's back button, including after
@@ -525,7 +535,7 @@ Manual checklist (full version with expected results in
 - A show's page: opening a show from Home lands on its newest season, with no
   flash of Season 1; the seasons run newest first with the one on screen
   yellow; ▲ from the episodes lands on it; ◀ ▶ walk the row, OK opens a season
-  and Back then leaves the show; episodes three across, watched ones ticked,
+  and Back then leaves the show; episodes five across, watched ones ticked,
   one in progress with a bar; the selection starts on the episode to watch
   next; *Trailer* and *My List* reachable, Share gone; Enter on an episode
   plays it. It is Leanback's screen: the show's picture and name at the top,
@@ -541,9 +551,12 @@ Manual checklist (full version with expected results in
   the transport bar, Down again reaches the episode's page, the video carrying
   on at the top left, the ring on *Play*; ▲ back into the video; back returns
   to the season page.
-- Settings panel: Closed Captions → Customize → Font is reachable, each group
-  of options headed; ◀ goes up one level. Closed Captions flips on OK;
-  Caption Style opens the player's Customize, and one ◀ comes back.
+- Settings panel: Closed Captions → Customize → Font is reachable; Font lists
+  Family, Color, Size… with their current choices, and each opens its own
+  list; ◀ goes up one level. Closed Captions flips on OK; Caption Style opens
+  the player's Customize, and one ◀ comes back.
+- Dropout 24/7's stream: theater as on an episode; ▼ twice, its page with the
+  stream docked, its title and description, *Play*.
 - Leanback's settings: the same list on a page and in the playback panel;
   a switch flips on OK; Seek Step opens its list, OK picks a value (ticked).
 - Media keys work on a video page from anywhere on the page.

@@ -270,11 +270,13 @@
    * (content/screen.js): a banner like Home's — the show's wide picture, its
    * name, the season count, the description and its buttons (S8's yellow
    * Resume / Play, or Watch Movie; Trailer; My List) — then, on a show, the
-   * row of seasons (newest first) and the season's episodes three across; on
+   * row of seasons (newest first) and the season's episodes five across; on
    * a special, the movie and its extras. Null for any other page.
    * @param {Document} doc
    * @param {object} rules — pages.series.show
-   * @param {{history?: object, href?: string}} [opts] — the watch-history store
+   * @param {{history?: object, href?: string, smartOrder?: boolean}} [opts] —
+   *   the watch-history store; the address; smartOrder: the setting "Shows
+   *   open on" is "newest", so the episodes may run newest first
    */
   function readDetail(doc, rules, opts) {
     const o = opts || {};
@@ -305,16 +307,22 @@
     if (list) actions.push({ key: "mylist", label: "My List", proxy: list, listed: safeMatches(list, r.listed) });
     const sections = [];
     let start = null;
+    let newestFirst = false;
     if (layout === "show") {
       const tiles = episodeTiles(doc, r).filter((li) => qs(r.episodeLink, li));
       const states = tiles.map((li) => tileStateOf(li, r, store));
       const items = tiles.map((li, i) => tileItem(li, r, states[i]));
       const si = startIndex(states);
       start = si >= 0 ? items[si].key : actions.length ? actions[0].key : null;
+      // With "Shows open on: newest", the episodes run whichever way puts
+      // the one to watch next nearer the top: newest first once it is past
+      // the middle of the season (caught up with a running season), Episode
+      // 1 first before that (a season not started, or one being binged).
+      newestFirst = Boolean(o.smartOrder) && items.length > 1 && si > (items.length - 1) / 2;
       const countEl = qs(r.episodeCount, doc);
-      sections.push({ key: "episodes", title: cur ? cur.name : "", sub: countEl ? clean(countEl.textContent, LABEL_MAX) : "", columns: 3, items });
+      sections.push({ key: "episodes", title: cur ? cur.name : "", sub: countEl ? clean(countEl.textContent, LABEL_MAX) : "", columns: 5, items: newestFirst ? items.slice().reverse() : items });
     } else {
-      for (const [key, sel, columns] of [["movie", r.movieSection, 3], ["extras", r.extrasSection, 5]]) {
+      for (const [key, sel, columns] of [["movie", r.movieSection, 5], ["extras", r.extrasSection, 5]]) {
         const section = qs(sel, doc);
         if (!section) continue;
         const tiles = qsa(r.episode, section).filter((li) => qs(r.episodeLink, li));
@@ -339,6 +347,10 @@
         : null,
       sections,
       more: qs(r.more, doc),
+      // Newest first needs the whole season: Dropout's Load More is pressed
+      // until every episode is on the page.
+      loadAll: newestFirst,
+      newestFirst,
       start,
       current: cur ? cur.label : null
     };

@@ -41,9 +41,9 @@ navigate, not what you can watch.
 - **A show's page drawn for a TV**, like Home: the show's wide picture and
   name, a button that picks the show up where you left it (*Resume S9 E3*,
   *Play S9 E4*), a row of seasons, newest first, and the season's episodes
-  three across, each marked watched or in progress. A show opens on its
-  newest season, with the selection on the episode to watch next. Specials
-  (a stand-up set, a film) are drawn the same way.
+  five across, each marked watched or in progress. A show opens on its
+  newest season, with the selection on the episode to watch next, near the
+  top. Specials (a stand-up set, a film) are drawn the same way.
 - **An episode's page drawn for a TV**: out of the full-window player, the
   video carries on in a large picture at the top left, with the episode
   beside it (the show, the title, the season and episode, the description,
@@ -210,8 +210,9 @@ button, moves onto the rail down the left. ▲ ▼ move along it, OK opens an en
 and ▶ returns you to exactly where you were. *Search*, *Home*, *Browse*,
 *My List* (the bookmark) and *Dropout 24/7* go to those pages; the gear opens
 Leanback's settings in place. The page you are on has its icon in yellow; the
-yellow box is where the selection is. The rail is on Home, Browse (all shows),
-My List, Search and Dropout 24/7, and not on a show's page or during playback.
+yellow box is where the selection is. The rail is on every page that does not
+play a video: Home, Browse, My List, Search, Dropout 24/7, the lists and every
+show's page; not on an episode's page or Dropout 24/7's stream.
 
 **Browse, My List and the lists** (Trending, New Releases, a show's new
 episodes, the trailers…) are Leanback's own screens, drawn like Home from
@@ -239,15 +240,18 @@ watched on the Roku or the Android app count too.
 Under the buttons, a show with more than one season has a row of seasons,
 newest first: ◀ ▶ move along it and OK opens that season in place of the
 one on screen, so Back still leaves the show. The season on screen is the
-yellow one, and its full name and episode count head its episodes, three
+yellow one, and its full name and episode count head its episodes, five
 across. ▲ from the episodes goes to the season on screen; ▼ from the
-seasons goes back to the episode you came from. A show opens on its newest
-season (*Shows Open On* in the settings switches that to the first), and
-the selection starts on the episode to watch next: Episode 1 of a season
-you have not started, otherwise the one you are partway through or the one
-after the last you finished. Watched episodes are dimmed with a tick; one in
-progress has a bar showing how far you got. More episodes arrive as you get
-near the end.
+seasons goes back to the episode you came from; ◀ from the first column is
+the rail. A show opens on its newest season (*Shows Open On* in the settings
+switches that to the first), and the selection starts on the episode to
+watch next: Episode 1 of a season you have not started, otherwise the one
+you are partway through or the one after the last you finished. With *Shows
+Open On: Newest*, the episodes run whichever way puts that episode near the
+top: newest first once you are past the middle of the season (caught up with
+a season still coming out, the newest is at the top), Episode 1 first before
+that. Watched episodes are dimmed with a tick; one in progress has a bar
+showing how far you got.
 
 A special (a stand-up set, a film) is drawn the same way: its picture and
 name, *Watch Movie* (where the selection starts) and *My List*, then the
@@ -271,6 +275,11 @@ description and three buttons — *Play* (back into the full-window video,
 playing), *Episodes* (the season's page) and *My List*. Under them, Dropout's
 *Up Next in Season N*: the next episodes as cards. ▲ from the buttons goes
 back into the video; Escape again leaves the episode for its season.
+
+**Dropout 24/7**: the stream plays in the full window, as an episode does;
+▼ twice (or Escape) shows its page, the stream carrying on in a large
+picture at the top left beside its title and description, and *Play* back
+into it.
 
 **Picking up where you left off**: open an episode you stopped halfway and it
 starts where you stopped, with "Resumed at 12:04" along the bottom for a
@@ -305,10 +314,11 @@ It holds the player's settings and Leanback's together: *Start Over* (after a
 video picked up where you left it), Quality, Speed, Play Next Episode, **Closed
 Captions** (a switch), **Caption Style** (font, background, window) and
 **Leanback Settings**. Quality and Speed are the player's own, and opening one
-shows what it offers; Caption Style goes as many levels deep as the player's
-caption settings do, each group of options under its heading (Color, Size,
-Opacity). ▶ on Closed Captions opens the player's own captions menu, for a
-different track.
+shows what it offers. Caption Style opens *Font*, *Background* and *Window*;
+each of those lists its settings — Family, Color, Size, Opacity, Edge Style —
+with the current choice beside each, and OK on one opens its choices (*Font
+Color*: White, Yellow…), where OK picks one and goes back up. ▶ on Closed
+Captions opens the player's own captions menu, for a different track.
 
 **Leanback's settings look and work the same everywhere**: during playback
 (under Leanback Settings), on any other page (the options button, or the

@@ -685,7 +685,7 @@
     } else {
       if (!Screen) return;
       const readers = {
-        detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href }),
+        detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href, smartOrder: state.settings.seasonStart !== "first" }),
         search: () => Screen.searchModel(document, screenRules().search),
         episode: () => Screen.episodeModel(document, screenRules().episode),
         page: () => Screen.collectionModel(document, screenRules())

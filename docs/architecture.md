@@ -66,8 +66,8 @@ engine. The extension itself stays standalone
 | `browse` | `/browse` | **Home**: Leanback's own screen ([below](#the-home-screen-contenthomejs)) and the rail. Initial focus: the featured banner's first button. Back → exit hook. If Home finds nothing to draw within 10 s: row-aware navigation over Dropout's own rows (`pages.browse`). |
 | `hub` | a one-segment path whose page holds `home.root` (`/dimension-20`, `/dropout-24-7`) | The same screen without Continue Watching; the rail with no entry marked as the current page. Back → Home. |
 | `grid` | `/series`, `/collections/...`, `/my-list` | **Drawn by Leanback** (`content/screen.js`), with the rail. Initial focus: the first card. If the screen finds nothing to draw: geometric navigation over Dropout's tiles; Down past the last row clicks Load More. Back → Home. |
-| `series` | `/<slug>[/season:N]` | Everything at a one-word address that is not a hub: a show, a special or a list, told apart by `content/show.js` from the page. All three are **drawn by Leanback** (`content/screen.js`, no rail). A show opens on its newest season and starts on the episode to watch next; a special starts on *Watch Movie*. A show Leanback cannot read is restyled instead: the same buttons, seasons and episodes on Dropout's own page. A page whose layout is not recognised keeps Dropout's season and sort selects, each a two-step control: OK engages it, ◀ ▶ step its options, OK commits (going to the option's page), Back puts the old value back. A list's initial focus is its first tile. Back → Home. |
-| `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>` | Theater layout (setting `auto`), focus the player frame. The page under the player is **drawn by Leanback** ([An episode's page](#an-episodes-page-docking-the-player)), the player docked in it. Down out of the player, or Back out of theater → its *Play* button; ▲ from its buttons → the player. Back: theater on → leave theater; else the season page it was opened from when it is the same show, else the show's page. Media keys always reach the player. A page with no title to read: Down from the player → the series link, else the first focusable under it. |
+| `series` | `/<slug>[/season:N]` | Everything at a one-word address that is not a hub: a show, a special or a list, told apart by `content/show.js` from the page. All three are **drawn by Leanback** (`content/screen.js`), with the rail. A show opens on its newest season and starts on the episode to watch next; a special starts on *Watch Movie*. A show Leanback cannot read is restyled instead: the same buttons, seasons and episodes on Dropout's own page. A page whose layout is not recognised keeps Dropout's season and sort selects, each a two-step control: OK engages it, ◀ ▶ step its options, OK commits (going to the option's page), Back puts the old value back. A list's initial focus is its first tile. Back → Home. |
+| `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (a live event: Dropout 24/7's stream) | Theater layout (setting `auto`), focus the player frame. The page under the player is **drawn by Leanback** ([An episode's page](#an-episodes-page-docking-the-player)), the player docked in it. Down out of the player, or Back out of theater → its *Play* button; ▲ from its buttons → the player. Back: theater on → leave theater; else the season page it was opened from when it is the same show, else the show's page. Media keys always reach the player. A page with no title to read: Down from the player → the series link, else the first focusable under it. |
 | `search` | `/search` | **Drawn by Leanback** (`content/screen.js`), with the rail: its own search box, typed into Dropout's; the filters; the results. Initial focus: the box. The box keeps the keyboard apart from Escape and OK (down to the results), ◀ at the start of the text (the rail) and ▼ (the filters, then the results). The search app changing the address as you type is not a new page: the screen is only redrawn. Without Dropout's search box: geometric navigation over Dropout's page, its results laid out four across (`tvGrid`). |
 | `other` | everything else (login, account, legal pages) | No initial focus: the ring follows whatever the page focuses. Arrows move among links, buttons and form fields (`pages.other.focusable`). Back → Home. |
 
@@ -400,7 +400,7 @@ sent as `history:observe`. New Releases' "New" badges are dropped
 
 **The selection** moves over rows: the search box, the buttons, the pills,
 then each section's cards in rows of its columns. ◀ ▶ move along a row and stop at
-its ends (`{edge: "left"}` enters the rail on Browse and My List). ▲ ▼ move
+its ends (`{edge: "left"}` enters the rail, on every page that has it). ▲ ▼ move
 a row: between rows of one section's cards they keep the column (into a
 shorter last row, its last card); into any other row they land where that
 row was left (memory per row, and per section for cards) — at first the
@@ -481,10 +481,19 @@ the number comes from `/season:N`, the one on screen is the one the address
 names, else the option Dropout selected — and with two or more they are the
 pills, newest first, each labelled with the option text before its first
 colon. On a show, one section: the season's full name and Dropout's episode
-count over its episodes, three across (S3); each episode is its link,
-title, "Episode N", picture, running time, its state, and a bar of its own
-when it is in progress. On a special: the movie (three across) and its
-*Extras* (five across), titled as on the page. A page with no name in its
+count over its episodes, five across; each episode is its link, title,
+"Episode N", picture, running time, its state, and a bar of its own when it
+is in progress. On a special: the movie and its *Extras*, five across,
+titled as on the page.
+
+**The order** (`smartOrder`, which `page.js` passes while *Shows Open On* is
+not `first`): the episodes run newest first when the episode the selection
+starts on (S12, below) is past the middle of what is on the page, else in
+Dropout's order. So a season caught up with has its newest episode top left,
+and one not started has Episode 1 there. Newest first sets the model's
+`loadAll`, and `content/screen.js` presses Dropout's *Load More* on every
+redraw until it is gone; the order is worked out again as episodes arrive,
+the selection kept by address. A page with no name in its
 header is not read, and is restyled instead (below).
 
 **Watched or in progress** (`tileStateOf()`): the watch history merged with
@@ -528,7 +537,8 @@ what turning Leanback off does.
 
 A `<nav>` of buttons appended to `<html>`: Search, Home, Browse, the site's
 own links from `rail.links` (My List, Dropout 24/7), and the gear at the foot. Shown on the page kinds in `rail.kinds` (Home, hubs, Browse,
-My List and Search) under `html[data-tenfoot-rail="on"]`; pages that are not replaced
+My List, Search, and `series`: shows, specials and lists — every page that
+plays no video) under `html[data-tenfoot-rail="on"]`; pages that are not replaced
 get `padding-left` on `<body>` to make room. The entry for the page on screen
 has its icon in yellow (the ring is the rail's only yellow box) and is where
 the rail is first entered; after that the rail remembers
@@ -687,10 +697,23 @@ being shown. On each level:
   *action* ("Reset all");
 - labels come from `player.menuLabel`, the `aria-label` (colour swatches) or
   the text; values from `player.menuValue`; each option carries the heading of
-  its `[role="radiogroup"]`, found through `aria-labelledby`, and the panel
-  draws that heading above the group;
+  its `[role="radiogroup"]`, found through `aria-labelledby` (`group`), or the
+  name of the accordion it sits in (`accordion`, from the header of its
+  `[role="group"]`);
 - the level's title is the player's own header (`player.menuTitle`), absent at
   the root.
+
+**Sets of options are levels of their own** (`vendorView()`). On a level of
+the player's menu, every set of options with a heading (Color, Size,
+Opacity) and every accordion (Family, Edge style) is listed as one entry
+with its current choice as the value; their options are not listed there.
+OK on a set pushes a `pick` level titled with the panel and the set ("Font
+Color") whose entries are the set's options from the parent level's last
+read (`choicesOf()`). OK on an accordion first opens it in the player's menu
+unless it is open already (a second click would shut it), then pushes its
+`pick` level. OK on a choice clicks the player's option, and the re-read
+pops back to the parent level with the selection on the set
+(`viewIndexOf()`); ◀ pops without touching the player's menu.
 
 Taking an entry clicks the original and re-reads the menu once it has changed.
 A drill pushes a level. Anything else follows the player: if its menu stays on
