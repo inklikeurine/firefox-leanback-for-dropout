@@ -11,8 +11,8 @@ scripts, and the background script relays between them.
 ```
                         watch.dropout.tv tab
 ┌────────────────────────────────────────────────────────────────────┐
-│ top frame — content/page.js (+ nav/spatial, focus-ring, menu)      │
-│   page kind · spatial nav · focus ring · hint bar · theater · back │
+│ top frame — content/page.js, home/screen/show/cards.js, nav/*      │
+│   screens · rail · spatial nav · ring · hints · theater · back     │
 │                                                                    │
 │   ┌──────────────────────────────────────────────────────────┐     │
 │   │ iframe embed.vhx.tv — content/player.js + transport.js   │     │
@@ -64,7 +64,7 @@ What each key does on each: [keymap.md](./keymap.md).
 | Kind | URL ([routes](./site-notes.md#routes)) | Drawn by | Initial focus | When Leanback cannot draw it |
 | --- | --- | --- | --- | --- |
 | `browse` | `/browse` | Home, with the rail | the banner's first button | nothing to draw within 10 s → row-aware navigation over Dropout's rows (`pages.browse`) |
-| `hub` | a one-segment path whose page holds `home.root` (`/dimension-20`, `/dropout-24-7`) | Home without Continue Watching; the rail, no entry lit | as Home | as Home |
+| `hub` | a one-segment path whose page holds `home.root` (`/dimension-20`, `/dropout-24-7`) | Home without Continue Watching; the rail (Dropout 24/7's entry lit on `/dropout-24-7`, none on other hubs) | as Home | as Home |
 | `grid` | `/series`, `/collections/...`, `/my-list` | `screen.js`, with the rail | the first card | geometric navigation over Dropout's tiles; ▼ past the last row clicks Load More |
 | `series` | `/<slug>[/season:N]`, not a hub | show or special: `show.js` + `screen.js`; list: `screen.js`. With the rail | show: the episode to watch next; special: *Watch Movie*; list: the first card | show: restyled (`createShow()`); unrecognised layout: Dropout's season and sort `<select>`s stay |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (Dropout 24/7's stream) | `screen.js` round the [docked player](#an-episodes-page); theater when `theater` is `auto` | the player frame | no title to read: ▼ from the player → the series link, else the first focusable below |
@@ -647,13 +647,19 @@ options button to the page's settings.
 
 Firefox blocks autoplay with sound, so Dropout starts videos muted — that is
 *how* it autoplays. An unmute without user activation makes Firefox stop the
-video, so insisting trades "starts muted" for "does not play".
+video, so insisting trades "starts muted" for "does not play". No extension
+can grant the permission: Firefox has no WebExtension API for it
+(`contentSettings` is Chrome's, `browserSettings` does not cover autoplay),
+and events a content script makes are untrusted, so they carry no user
+activation. How a user grants it: README → [Sound on autoplay](../README.md#sound-on-autoplay).
 
-`applyMutePreference()` tries once. If playback stops within 250 ms, the video
+`player.js` asks `navigator.getAutoplayPolicy("mediaelement")` first and
+unmutes at once when it answers `"allowed"`.
+
+Otherwise `applyMutePreference()` tries once. If playback stops within 250 ms, the video
 is muted again and restarted, `autoplayBlocked` is set so nothing retries,
 and the next handled key — a real user gesture — turns the sound on. A profile
-that allows autoplay with sound (the kiosk in [targets.md](./targets.md))
-never hits the revert.
+that allows autoplay with sound never hits the revert.
 
 The site also restores a remembered mute for a video already watched,
 sometimes after `loadedmetadata`, so the preference is re-applied on

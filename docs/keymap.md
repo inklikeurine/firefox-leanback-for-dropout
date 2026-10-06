@@ -62,13 +62,8 @@ the search box Leanback draws, OK and Back also leave it for what is below
 | `search` | go to `/search` | — | same | same |
 | `play_pause` `stop` `next` `previous` `fast_forward` `rewind` | ignored (no player) | — | forwarded to the player | handled in the player |
 
-**Back follows the history, and the history is kept structural.** The
-remote's Back is Firefox's own Back (T2 below), and Escape does the same after
-closing whatever is open on the page. Sideways moves never add a page to the
-history, and a Back that lands on the previous episode carries on, so Back
-walks up the site — episode → the season page you came from → Home — rather
-than through every episode you watched. In a tab opened straight on a page,
-with nothing behind it, Back walks up the site the same way on its own.
+Back walks up the site — episode → the season page you came from → Home —
+rather than through every episode you watched: see [T2](#t2--back-is-firefoxs).
 
 ## Home and the rail
 
@@ -79,13 +74,12 @@ the featured banner's buttons, then one row per shelf.
 | --- | --- | --- |
 | `up` / `down` | row to row; each row comes back to the card last selected in it. The selected row always lands at the same height. Two rows from the end, more rows are asked for | move along the rail, no wrap |
 | `left` / `right` | along the row or the banner's buttons, stopping at the ends; ◀ at the start enters the **rail** | ▶ returns to exactly where the selection came from; ◀ does nothing |
-| `select` | open the card (its own link: a show, an episode, *View all*); on the banner, its button — **›**, beside *Watch now*, shows the next featured show | open the entry: Search, Home (on Home: back to the banner), Browse (all shows), Dropout 24/7, the gear (Leanback's settings, in place) |
-| `back` | the page before (Firefox's Back); at Home with nothing behind, the exit hook | Escape: back to the show it came from. BrowserBack leaves the page |
+| `select` | open the card (its own link: a show, an episode, *View all*); on the banner, its button — **›**, beside *Watch now*, shows the next featured show | open the entry: Search, Home (on Home: back to the banner), Browse (all shows), My List, Dropout 24/7, the gear (Leanback's settings, in place) |
+| `back` | the page before (Firefox's Back); at Home with nothing behind, the exit hook | Escape: back to where the selection came from. BrowserBack leaves the page |
 | `menu` | Leanback's settings | the same |
 
-The rail is also on Browse (`/series`), My List and Search, where ◀ reaches it from
-anything at the left edge. It is on every page that plays no video (show
-pages and lists included); not on an episode's page or during playback.
+The rail is on every page that plays no video (Browse, My List, Search, show
+pages and lists too), where ◀ reaches it from anything at the left edge.
 
 ## A show's page
 
@@ -183,15 +177,8 @@ already paused.
 - **◀ or Back goes up one level**; at the top they close the panel; Back
   again, the bar.
 
-The rows that come from the player are **proxied**: its menu is opened out of
-sight, read, and drawn in our own list, and the original is clicked when an
-entry is taken. The panel follows it as many levels deep as it goes, lists only
-the options it is showing (a collapsed section's are listed once it is
-opened), heads each group of options with its name (Color, Size, Opacity), and
-leaves a submenu with the player's own Back. After a pick it shows whatever the
-player shows next: a caption colour stays on its panel with the tick moved; a
-caption track goes back up with the new value. None of its markup is ever on
-screen.
+The rows that come from the player are its own menu, read out of sight and
+drawn in Leanback's list ([architecture.md](./architecture.md#the-transport-bar-and-the-settings-panel)).
 
 ## Keys the browser or the desktop own
 
@@ -205,40 +192,22 @@ screen.
 
 ### T2 — Back is Firefox's
 
-A remote's back button typically sends `KEY_BACK` (Consumer Control), which arrives as
-`event.key === "BrowserBack"` (`trusted`, seen at capture and bubble).
-Cancelling it with `preventDefault()` does **not** stop Firefox's own
-history-back — on the page or with the player focused ([targets.md](./targets.md)
-T2, checked with [Leanback Dev Probe](../../leanback-dev-probe/)'s Block Back),
-and an extra history entry for it to land on does not hold it either. So
-Leanback follows Firefox's Back rather than fighting it
-([architecture.md](./architecture.md#back-contentpagejs--navtrailjs)):
-moving sideways (another episode, another season, another rail section)
-replaces the page instead of adding one; landing by Back on the previous
-episode — when Dropout itself went on to the next — carries on to the season
-page; and in a tab opened straight on a page, with nothing behind it, Leanback
-does the Back itself. What that means for layers: the remote's Back leaves the
-page, whatever is open on it, so ◀ is the way out of what is open: it closes
-the settings panel (as the menu button does) and the playback settings, one
-submenu at a time, and leaves the search box from the start of its text (▼
-leaves it for the results). The
-rail closes with ▶, the transport bar with ▲.
+A remote's back button sends `KEY_BACK`, which arrives as a trusted
+`BrowserBack`. Cancelling it with `preventDefault()` does **not** stop
+Firefox's own history-back, on the page or with the player focused, and an
+extra history entry for it to land on does not hold it either (checked with
+[Leanback Dev Probe](../../leanback-dev-probe/)'s Block Back). So Leanback
+keeps the history in the shape Back should follow
+([architecture.md](./architecture.md#back-contentpagejs--navtrailjs)): sideways
+moves replace the page, a Back that lands on the previous episode carries on
+to the season page, and in a tab opened straight on a page Leanback does the
+Back itself.
 
-## Remote example: a typical air mouse
+What that means for layers: the remote's Back leaves the page, whatever is
+open on it, so ◀ is the way out of what is open — it closes the settings
+panels one level at a time and leaves the search box from the start of its
+text. The rail closes with ▶, the transport bar with ▲.
 
-An air-mouse remote as the only input device ([targets.md](./targets.md#what-a-remote-sends)).
-Every button, and what it does — the QWERTY pad on the back is needed only to
-type a search query or log in:
-
-| Button | Arrives as | Home, Browse, series pages | Video page |
-| --- | --- | --- | --- |
-| ▲ ▼ ◀ ▶ | `Arrow*` | move the ring | ◀ ▶ seek; ▼ the transport bar, ▼ again the page |
-| OK | `Enter` | open / play | play – pause; take the control under the selection |
-| back | `BrowserBack` | Firefox's Back: the page before — Home from a show, whichever season it is on | Firefox's Back: the season page (past any episodes Dropout went on to by itself) |
-| menu | `ContextMenu` | Leanback's settings | the settings panel |
-| home | `BrowserHome` | nothing (reserved for the TV shell) | nothing |
-| volume ± | `AudioVolume*` | system volume | system volume |
-| QWERTY pad | — | `/` opens search; typing in search and login | — |
-
-Five buttons (▲ ▼ ◀ ▶ OK) plus *back* and *menu* do everything. Many air mice
-have no media keys; the ones the extension maps are there for remotes that do.
+Most air-mouse remotes have no media keys; their QWERTY pad is needed only to
+type a search or log in. What a typical one sends:
+[targets.md](./targets.md#what-a-remote-sends).

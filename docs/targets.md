@@ -11,7 +11,7 @@ to run on your own setup.
 
 | Fact | Consequence for the extension |
 | --- | --- |
-| Firefox from the distro's **release channel** | Only AMO-signed extensions stay installed → unlisted signing early ([development.md](./development.md#releasing)). |
+| Firefox from the distro's **release channel** | Only AMO-signed extensions stay installed → unlisted signing early ([spec.md](./spec.md#release-checklist)). |
 | One tab, kiosk/fullscreen, opened on `/browse` | Structural Back (no history to go back to); exit hook `close-tab` ends Firefox and returns to the TV shell or desktop. |
 | No pointer in normal use (or one that drifts) | Focus never follows the pointer; every feature reachable by 5 keys. |
 | Remote buttons arrive as key events, some of which the browser or the desktop own (`BrowserBack`, `BrowserHome`, `ContextMenu`, volume) | Intercept what the page can see, design around what it can't ([keymap.md](./keymap.md#keys-the-browser-or-the-desktop-own)). |
@@ -56,46 +56,13 @@ Some remotes send `Escape` or `GoBack` for back, and some have media keys;
   Back doing the wrong thing in some context (→ layered Back), Escape not
   leaving playback (→ Back leaves the player first).
 
-## Sound without a button press is a profile setting, not extension code
+## Sound without a button press
 
-Firefox blocks audible autoplay by default (`media.autoplay.default = 1`,
-"block audio"). Nothing an extension can do lifts that:
-
-- Firefox exposes no WebExtension API for the autoplay permission.
-  `contentSettings` is a Chrome API and is not implemented here, and
-  `browserSettings` does not cover autoplay.
-- Events a content script synthesises are `isTrusted: false` and therefore
-  create no user activation.
-
-So in a default profile, setting `video.muted = false` before the viewer has
-pressed anything makes Firefox stop the video — the "plays, then pauses after
-0.01s" behaviour. `content/player.js` reads
-`navigator.getAutoplayPolicy("mediaelement")` (Firefox 120+) and unmutes
-immediately only when it answers `"allowed"`; otherwise it waits for the first
-press, because unmuting earlier costs the playback.
-
-Three ways to make it answer `"allowed"`:
-
-| Where | What | Scope |
-|---|---|---|
-| `user.js` in the kiosk profile | `user_pref("media.autoplay.default", 0);` | that profile, every site |
-| `policies.json` | `Permissions` → `Autoplay` → `"Default": "allow-audio-video"`, or `"Allow": ["https://watch.dropout.tv"]` to keep it to the one site | system-wide |
-| Settings → Privacy & Security → Autoplay → Settings… | add `watch.dropout.tv`, "Allow Audio and Video" | that profile, that site, set by hand once |
-
-`media.autoplay.default`: `0` allow audio and video, `1` block audio (the
-default), `5` block audio and video. Leave `media.autoplay.blocking_policy` at
-its default of `0`. The `Autoplay` policy's `Default` takes exactly
-`allow-audio-video`, `block-audio` or `block-audio-video` (Firefox's
-`policies-schema.json`).
-
-**There is no command-line flag for this.** Release Firefox accepts no
-`--pref`; the setting has to live in the profile or in a policy file. The
-launch command is unchanged — `--profile <dir>` is what points at the profile
-holding it.
-
-Check it on your setup: open an episode, and in the console on the player
-frame `navigator.getAutoplayPolicy("mediaelement")` should return
-`"allowed"`.
+Firefox blocks autoplay with sound, and no extension can lift that; it is a
+profile setting (`media.autoplay.default = 0` in the kiosk profile's
+`user.js`) or a policy. The three ways, and how to check it took:
+README → [Sound on autoplay](../README.md#sound-on-autoplay). Why the
+extension cannot do it: [architecture.md](./architecture.md#sound-and-the-autoplay-policy).
 
 ## Launch recipe (sketch — check it on your setup, T1–T8)
 
@@ -122,7 +89,7 @@ frame `navigator.getAutoplayPolicy("mediaelement")` should return
 | # | Question | How | Affects |
 | --- | --- | --- | --- |
 | T1 | Does the TV shell take `KEY_HOMEPAGE` globally while Firefox is in front? Does Firefox stay running behind? | Launch the kiosk, press home, check whether `firefox` is still running | exit paths, memory |
-| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? **Answered: the page sees it (`trusted=true`, capture and bubble), and `preventDefault()` does not stop the history-back — on the page and with the player focused.** | Leanback Dev Probe's Block Back, press back | Back is Firefox's: Leanback keeps the history structural instead, see [architecture.md](./architecture.md#back-contentpagejs--navtrailjs). A history entry for Firefox to land on (plan B) did not hold it either |
+| T2 | Does `preventDefault()` on `BrowserBack` stop Firefox's own history-back? **Answered: no** ([keymap.md](./keymap.md#t2--back-is-firefoxs)) | Leanback Dev Probe's Block Back, press back | Back |
 | T3 | Does `ContextMenu` open a context menu in `--kiosk`? Does cancelling the `contextmenu` event suppress it outside kiosk? | Press menu on `/browse` | `menu` action |
 | T4 | Does `close-tab` in `--kiosk` end the Firefox process and drop back to the shell cleanly, with no restore prompt next time? | Set the exit hook, press back at `/browse` | exit hook |
 | T5 | Is hardware decode active (`about:support` → Media → "Hardware decoding"), and is 1080p playback smooth at TV distance? | Play an episode | whether the setup is worth it |

@@ -15,59 +15,27 @@ navigate, not what you can watch.
 
 ## What it does
 
-- **A TV Home screen.** Home is Leanback's own screen, drawn from what Dropout
-  puts on the page — the featured banner and every row of shows, with the same
-  links. Rows slide up to the same place as you go down, the way a TV app's
-  do, and more rows arrive as you get near the end. A row of more than 12 ends
-  with a **View all** card. Shows appear with their wide picture, the one on
-  their own page.
-- **Continue Watching**, first on Home: what you started here in Firefox and
-  what you started on Dropout's Roku or Android app, in one row, most recent
-  first.
-- **Picks up where you left off.** An episode you stopped halfway starts where
-  you stopped, with a short "Resumed at 12:04" note; *Start Over* in the
-  playback settings goes back to the beginning.
-- **Browse, My List and the lists drawn for a TV** (Trending, New Releases, a
-  show's new episodes…): Leanback's own screen, like Home, with the page's
-  name at the top and its shows or episodes five across; more arrive as you
-  get near the end. Dropout's own top bar and footer are hidden on every page
-  you browse or watch.
-- **An icon rail** down the left of Home, Browse, My List, Search and
-  Dropout 24/7: Search, Home, Browse, My List, Dropout 24/7, and Leanback's
-  settings.
-- **Search drawn for a TV**: Leanback's own search box, large, with
-  Dropout's filters (All, Videos, Collections) under it and the results as
-  Home's cards, five across beside the rail.
-- **A show's page drawn for a TV**, like Home: the show's wide picture and
-  name, a button that picks the show up where you left it (*Resume S9 E3*,
-  *Play S9 E4*), a row of seasons, newest first, and the season's episodes
-  five across, each marked watched or in progress. A show opens on its
-  newest season, with the selection on the episode to watch next, near the
-  top. Specials (a stand-up set, a film) are drawn the same way.
-- **An episode's page drawn for a TV**: out of the full-window player, the
-  video carries on in a large picture at the top left, with the episode
-  beside it (the show, the title, the season and episode, the description,
-  *Play*, *Episodes*, *My List*) and the rest of the season under it.
-- **Arrow-key navigation** on the pages Leanback does not draw: Dropout's
-  sign-in, account and help pages.
+- **Draws Dropout for a TV.** Home, Browse, My List, the lists (Trending, New
+  Releases…), search, every show's page and the episode's page are
+  Leanback's own screens, built from what Dropout puts on the page. Dropout's
+  own top bar and footer are hidden. Sign-in, account, help and legal pages
+  stay Dropout's, driven with the arrows.
+- **Continue Watching**, first on Home: what you started here and what you
+  started on Dropout's Roku or Android app, in one row.
+- **Picks up where you left off**, with *Start Over* to go back to the
+  beginning.
+- **Opens a show where you are in it**: the newest season, with the selection
+  on the episode to watch next, and a button that resumes or plays the next
+  one.
+- **Plays in the full window**, with Leanback's own control bar, the show
+  and episode over the picture, and an *Up next* card that counts down to the
+  next episode.
 - **A focus ring you can see from the sofa** — 4 px, Dropout yellow,
   configurable.
-- **Theater layout** on video pages: the player fills the window; Escape (or
-  ▼ twice) brings the episode's page back, with the video in it.
-- **Player control** without a mouse: OK plays and pauses, ◀ ▶ seek, ▼ opens
-  Leanback's own control bar, and media keys (play/pause, stop, next,
-  previous) work from anywhere on the page.
-- **While you watch**: the show and episode over the picture as it starts
-  and when you pause, ⏪ / ⏩ and the time when you skip, and an *Up next*
-  card near the end that counts down to the next episode.
-- **Settings as a TV panel**, the same wherever it opens: quality, speed,
-  captions on or off and their style, and Leanback's own settings, walked
-  with the arrows.
-- **Next episode** by key, and autoplay-next when an episode ends.
-- **Button hints**, if you want them: a bar showing the keys that matter right
-  now. Off unless turned on.
+- **One settings panel**, walked with the arrows: quality, speed, captions
+  and their style, and Leanback's own settings.
 - **Skips the marketing site**: opening `dropout.tv` lands you on Browse.
-- Toggle it off with one click when you're at a desk.
+- Turns off with one click when you're at a desk.
 
 ## Who it's for
 
@@ -91,30 +59,22 @@ launches a clean Firefox profile with the extension loaded.
 **Permanent install:** Firefox only permanently installs signed extensions.
 `web-ext build` produces a package to submit to
 [addons.mozilla.org](https://addons.mozilla.org/developers/) for signing
-(unlisted self-distribution is fine). Release-channel Firefox on a TV box
-needs the signed build; see [docs/development.md](./docs/development.md#releasing).
+(unlisted self-distribution is fine); see
+[docs/spec.md](./docs/spec.md#release-checklist).
 
 Source: https://github.com/inklikeurine/firefox-extensions/tree/main/leanback-for-dropout
 
 ## Sound on autoplay
 
 Firefox blocks autoplay with sound by default, which is why Dropout starts its
-videos muted — muted is the only way the site gets them to play at all. **No
-extension can lift that.** Firefox exposes no WebExtension API for the autoplay
-permission, and the events a content script creates carry no user activation,
-so unmuting before you have pressed anything makes Firefox stop the video.
-
-Leanback asks Firefox what the profile allows
-(`navigator.getAutoplayPolicy("mediaelement")`) and unmutes straight away when
-the answer is "allowed". Otherwise it waits for your first button press, which
-is the earliest moment Firefox permits. Grant the permission and episodes start
-with sound and no press at all.
-
-Three ways to grant it — pick by how the machine is set up:
+videos muted. **No extension can lift that**: unmuting before you have
+pressed anything makes Firefox stop the video. So Leanback turns the sound on
+at your first button press — or straight away, if the profile allows
+autoplay with sound for Dropout. Three ways to allow it:
 
 **By hand, once, on a normal install.** Settings → Privacy & Security →
 Autoplay → Settings… → add `https://watch.dropout.tv` → **Allow Audio and
-Video**. Kept in that profile.
+Video**.
 
 **In a kiosk profile**, add to `user.js` in the profile directory:
 
@@ -141,233 +101,111 @@ Linux, or `distribution/` beside the binary):
 }
 ```
 
-`Default` takes `allow-audio-video`, `block-audio` or `block-audio-video`. The
-example above leaves every other site blocked and allows only Dropout.
+`Default` takes `allow-audio-video`, `block-audio` or `block-audio-video`; the
+example allows only Dropout.
 
-**There is no command-line switch for this.** Release Firefox accepts no
-`--pref`; the setting lives in the profile or in a policy file, so a kiosk
-launcher grants it through the profile `--profile` already points at:
-
-```
-firefox --kiosk --new-instance --profile <profile-dir> https://watch.dropout.tv/browse
-```
-
-To check it took, open an episode and run
+There is no command-line switch for this: release Firefox accepts no
+`--pref`, so a kiosk launcher grants it through the profile `--profile`
+points at. To check it took, open an episode and run
 `navigator.getAutoplayPolicy("mediaelement")` in the console on the player
-frame — `"allowed"` means Leanback will unmute from the first frame.
+frame: `"allowed"` means the sound is on from the first frame.
 
 ## Usage
 
 Open `watch.dropout.tv`. You land on Home, with the ring on the featured
 banner's first button.
 
-**This extension is driven by a remote, not a keyboard.** Only the buttons a
-TV remote actually has are mapped, so nothing is hidden behind a letter key.
+**It is driven by a remote, not a keyboard.** Only the buttons a TV remote
+has are mapped, so nothing is hidden behind a letter key:
 
 | Button | Arrives as | Does |
 | --- | --- | --- |
-| ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. Nothing else, ever. In the player, ◀ ▶ move the playhead and ▼ opens the transport bar (▼ again continues to the page) |
-| OK | `Enter` | Open, play, pause; open a season; flip a setting's switch or open its values; play the next episode while the "Up next" card is up |
-| back | `BrowserBack` (also `Escape`) | Back one page — Firefox's own Back. `Escape` first closes whatever is open (a dropdown, a dialog, the settings panel, the rail, the player's bar) |
-| menu | `ContextMenu` | During playback, the **settings panel**; anywhere else, **Leanback's settings** as a panel on the page, with *Clear Continue Watching* and *Turn Leanback Off* at the foot |
+| ▲ ▼ ◀ ▶ | `Arrow*` | Move the ring. In the player, ◀ ▶ skip and ▼ opens the control bar |
+| OK | `Enter` | Open, play, pause, flip a setting |
+| back | `BrowserBack` (also `Escape`) | Back one page — Firefox's own Back. `Escape` first closes whatever is open |
+| menu | `ContextMenu` | The settings: the player's during playback, Leanback's anywhere else |
 | home | `BrowserHome` | **Reserved for your TV shell — never intercepted** |
 | volume | `AudioVolume*` | Your desktop's, never intercepted |
-| media keys | `Media*` | Play/pause, stop, seek, next/previous episode, for remotes that have them |
+| media keys | `Media*` | Play/pause, stop, skip, next/previous episode, for remotes that have them |
 
-The one keyboard exception is `/`, which opens the search field — searching
-needs typing from that point anyway. Pressing it again closes search and
-returns you where you were.
+The one keyboard exception is `/`, which opens search — searching needs
+typing anyway. Every key, everywhere: [docs/keymap.md](./docs/keymap.md).
 
-**Home** is one row per shelf, under the featured banner. ▲ ▼ go from row to
-row, and each row remembers where you were in it; ◀ ▶ move along a row and
-stop at its ends. The selected card stays in the same place and the rows move
-under it. The banner shows one featured show at a time, with Dropout's own
-buttons — *Watch now*, then a **›** button beside it (OK on it shows the next
-featured show), then *Trailer* where there is one and *My list*. Near the
-bottom, Leanback asks Dropout for more rows, just as scrolling would. Your
-My List is not a row on Home; it has its own page, on the rail.
+**Home** is the featured banner and one row per shelf. ▲ ▼ go from row to
+row, and each row remembers where you were in it; ◀ ▶ move along a row.
+The **›** beside *Watch now* shows the next featured show. More rows arrive
+as you near the bottom, and a full row ends with *View all*. Each card shows
+its running time, Dropout's badges and how far you got.
 
-Each card shows its picture — for a show, the wide picture from the show's
-own page — with the running time and Dropout's badges ("NEW EPISODE"; the New
-Releases row carries none, since its name says so). The selected card grows a
-little inside the yellow ring, and its title steps down to make room.
+**Continue Watching** is Home's first row: what you are partway through here
+in Firefox and on Dropout's Roku or Android app, most recent first, each with
+the time left.
 
-**Continue Watching** is the first row on Home. It merges two sources: how far
-you got in each video here in Firefox (Leanback keeps that itself, in this
-Firefox only), and the progress bars Dropout draws for what you watched on its
-Roku or Android app. It is the only Continue Watching row: the one Dropout
-draws for its apps is not shown, and what is on it appears here instead. The
-most recent comes first; a video counts as watched at
-95 %, or with less than 90 seconds left, and as started after a minute. Each
-card shows its progress bar and, in the corner of the picture, the time left
-to the second (*2:48 left*).
-Every card on Home shows the same progress.
+**The rail** runs down the left of every page that plays no video: ◀ from
+the left edge goes onto it, ▶ comes back to exactly where you were. It holds
+*Search*, *Home*, *Browse*, *My List* (the bookmark), *Dropout 24/7* and the
+gear for Leanback's settings. The page you are on has its icon in yellow.
 
-**The rail**: ◀ from the first card of any row, or from the banner's first
-button, moves onto the rail down the left. ▲ ▼ move along it, OK opens an entry,
-and ▶ returns you to exactly where you were. *Search*, *Home*, *Browse*,
-*My List* (the bookmark) and *Dropout 24/7* go to those pages; the gear opens
-Leanback's settings in place. The page you are on has its icon in yellow; the
-yellow box is where the selection is. The rail is on every page that does not
-play a video: Home, Browse, My List, Search, Dropout 24/7, the lists and every
-show's page; not on an episode's page or Dropout 24/7's stream.
+**Browse, My List and the lists** show their shows or episodes five across,
+the same cards as on Home; more arrive as you near the end.
 
-**Browse, My List and the lists** (Trending, New Releases, a show's new
-episodes, the trailers…) are Leanback's own screens, drawn like Home from
-what Dropout puts on the page: the page's name at the top, then its cards
-five across, the same cards as on Home with their running times, badges and
-progress. ◀ ▶ move along a row and stop at its ends, ▲ ▼ go a row up or down
-in the same column, and the selected row slides up to the same place each
-time. Near the end, Leanback presses Dropout's own *Load More*, and more cards
-join. Browse and My List have the rail beside them (◀ from the first column);
-the lists do not, as they are reached from Home's *View all*. My List starts
-on the first show you saved. Dropout's own top bar and footer are hidden
-everywhere except its sign-in, account, help and legal pages.
+**A show's page** has the show's picture and name, a yellow button that picks
+the show up where you left it (**Resume S9 E3**, or **Play S9 E4** for the
+next one), *Trailer* and *My List*. Under them, the seasons, newest first —
+OK opens one — and that season's episodes, five across: watched ones dimmed
+with a tick, one in progress with a bar. A show opens on its newest season
+(*Shows Open On* in the settings changes that), with the selection on the
+episode to watch next. A special (a stand-up set, a film) has *Watch Movie*
+and its extras.
 
-**A show's page** is Leanback's own screen too, drawn from what Dropout puts
-on the page, so it works the same way for every show. At the top, the show's
-wide picture, its name, the number of seasons and its description, with the
-show's buttons: first a yellow one that picks the show up where you left
-it, then *Trailer* and *My List* (ticked when the show is on your list).
-The yellow button says **Resume S9 E3** for the episode you were most
-recently partway through, in any season; otherwise **Play S9 E4** for the
-one after the last you finished (following Dropout's own "up next" into the
-next season); otherwise **Play** the first episode on screen. Episodes
-watched on the Roku or the Android app count too.
+**Search**: type into the large box at the top; Dropout's results appear
+below as cards as you type. ▼ goes to the filters (*All*, *Videos*,
+*Collections*), then the results.
 
-Under the buttons, a show with more than one season has a row of seasons,
-newest first: ◀ ▶ move along it and OK opens that season in place of the
-one on screen, so Back still leaves the show. The season on screen is the
-yellow one, and its full name and episode count head its episodes, five
-across. ▲ from the episodes goes to the season on screen; ▼ from the
-seasons goes back to the episode you came from; ◀ from the first column is
-the rail. A show opens on its newest season (*Shows Open On* in the settings
-switches that to the first), and the selection starts on the episode to
-watch next: Episode 1 of a season you have not started, otherwise the one
-you are partway through or the one after the last you finished. With *Shows
-Open On: Newest*, the episodes run whichever way puts that episode near the
-top: newest first once you are past the middle of the season (caught up with
-a season still coming out, the newest is at the top), Episode 1 first before
-that. Watched episodes are dimmed with a tick; one in progress has a bar
-showing how far you got.
+**Watching**: an episode fills the window. If you stopped it partway, it
+starts where you stopped ("Resumed at 12:04"). The show and episode show over
+the picture as it starts and when you pause; ◀ ▶ skip, showing the time you
+land on. ▼ opens Leanback's control bar (play/pause, position, settings,
+fullscreen); ▼ again, or Escape, brings the episode's page, with the video
+carrying on in a large picture at the top left, the episode's details and
+*Play*, *Episodes*, *My List* beside it, and the rest of the season under it.
+Dropout 24/7's stream works the same way.
 
-A special (a stand-up set, a film) is drawn the same way: its picture and
-name, *Watch Movie* (where the selection starts) and *My List*, then the
-video and its extras. A list (Trending, a show's new episodes, the trailers)
-is drawn like Browse.
+**Up next**: eight seconds before an episode ends, a card counts down to the
+next one. OK plays it now; ◀ hides it, and then nothing plays by itself.
 
-**Search** is Leanback's own screen too. The search box is at the top, with
-the selection in it, ready to type; what you type goes to Dropout's own
-search, and its results come back as Home's cards, five across, as you type.
-▼ (or OK, or Back) leaves the box for the filters — *All*, *Videos*,
-*Collections*, with Dropout's counts — and ▼ again for the results; ▲ goes
-back up into the box, and ◀ at the start of the text is the rail. OK on a
-filter shows only those results. More results arrive near the end, as on
-Browse.
+**Settings** opens from the right. During playback it holds *Start Over*
+(after a resume), Quality, Speed, Play Next Episode, Closed Captions (a
+switch; ▶ on it picks a track), Caption Style (font, background, window) and
+Leanback's settings. Anywhere else it holds Leanback's settings, the same
+list in the same words, with *Clear Continue Watching* and *Turn Leanback
+Off* at the foot. ▲ ▼ move, OK or ▶ takes an entry, ◀ or Back goes up a
+level and closes the panel from the top.
 
-**An episode's page**: the video fills the window as it plays. Escape, or ▼
-twice (once for the control bar, once more out of it), brings the episode's
-page: the video carries on in a large picture at the top left, and beside it
-the show's name, the episode's title, its season and number, its
-description and three buttons — *Play* (back into the full-window video,
-playing), *Episodes* (the season's page) and *My List*. Under them, Dropout's
-*Up Next in Season N*: the next episodes as cards. ▲ from the buttons goes
-back into the video; Escape again leaves the episode for its season.
+**Leanback's settings**: Autoplay Next Episode · Shows Open On · Seek Step ·
+Theater Layout (every video / on OK / never) · Start Videos Muted · Button
+Hints (a bar showing the keys that matter now; off unless turned on) ·
+Enlarge Selection · Ring Width · Ring Colour · Skip dropout.tv Home · Back On
+Home (does nothing / closes the tab — for kiosk setups). The options page
+(`about:addons` → Leanback for Dropout → Preferences) has the same, plus a
+ring colour of your own and *Player controls*: *The site's own player
+controls* hands the player back to Dropout, for troubleshooting.
 
-**Dropout 24/7**: the stream plays in the full window, as an episode does;
-▼ twice (or Escape) shows its page, the stream carrying on in a large
-picture at the top left beside its title and description, and *Play* back
-into it.
+*Clear Continue Watching* asks for OK twice. It forgets every video you have
+not finished, Roku progress included, until something is watched again;
+what you finished stays watched.
 
-**Picking up where you left off**: open an episode you stopped halfway and it
-starts where you stopped, with "Resumed at 12:04" along the bottom for a
-moment. *Start Over* at the top of the playback settings goes back to 0:00.
-An episode you finished, or stopped within its first minute, starts from the
-beginning.
+**Back** is Firefox's own Back, so Leanback keeps the history in the shape
+Back should follow: switching episode, season or rail section replaces the
+page instead of adding one. Back from an episode is the season you were
+watching, and from a show, Home — even after Dropout went on to the next
+episode by itself. In a tab opened straight on a page, Leanback walks up the
+site itself: episode → season → Home. Because the remote's Back always leaves
+the page, ◀ is how you close what is open on it (the settings panel, the
+rail with ▶, the control bar with ▲).
 
-**The title**: when an episode starts, the show's name (in yellow) and
-"S9 · E3 · Whodunnit" show over the top left of the picture for four
-seconds. **Pausing** brings the title back with the control bar for four
-seconds; the buttons still do what they do while watching (◀ ▶ skip, OK
-plays), and ▼ takes you into the bar. **Skipping** with ◀ ▶ shows ⏪ or ⏩
-and the time you landed on in the middle of the picture, with the bar, until
-a second after the last skip.
-
-**Up next**: eight seconds before an episode ends, a card comes up over the
-bottom right: the next episode's picture inside a ring that counts down,
-"UP NEXT · 0:08", "S9 · E4" and the show. **OK** plays it now. **◀** hides
-the card, and then nothing plays by itself when the episode ends. With
-*Autoplay Next Episode* off, the card counts nothing down and waits for OK.
-
-**The transport bar**: press ▼ while a video is playing. The bar is the
-extension's own — **play/pause · position · settings · fullscreen**, round
-buttons on a dark fade along the bottom of the picture, with the time so far
-under the start of the progress bar and the length under its end — and
-◀ ▶ walk it, OK takes a control, back closes it and gives ◀ ▶ back to seeking.
-The position is shown but never selected: seeking is ◀ ▶ whenever the bar is
-not holding a button.
-
-**Settings** opens a full-height panel from the right and pauses the picture.
-It holds the player's settings and Leanback's together: *Start Over* (after a
-video picked up where you left it), Quality, Speed, Play Next Episode, **Closed
-Captions** (a switch), **Caption Style** (font, background, window) and
-**Leanback Settings**. Quality and Speed are the player's own, and opening one
-shows what it offers. Caption Style opens *Font*, *Background* and *Window*;
-each of those lists its settings — Family, Color, Size, Opacity, Edge Style —
-with the current choice beside each, and OK on one opens its choices (*Font
-Color*: White, Yellow…), where OK picks one and goes back up. ▶ on Closed
-Captions opens the player's own captions menu, for a different track.
-
-**Leanback's settings look and work the same everywhere**: during playback
-(under Leanback Settings), on any other page (the options button, or the
-rail's gear), with the same entries in the same order and words. ▲ ▼ move.
-**OK or ▶** takes the entry under the selection: an on/off **switch** flips;
-an entry with several values (Seek Step, Shows Open On…) opens its **short
-list**, where OK picks one — it is ticked — and goes back up. **◀ or Back**
-goes back up one level, and at the top closes the panel (during playback the
-picture then starts again unless it was already paused). The ✕ in the corner
-is only a picture; the keys along the foot say the same. Under the settings
-come *Clear Continue Watching* and *Turn Leanback Off*. *Clear Continue
-Watching* asks for OK a second time before it clears. It forgets
-every video you have not finished and empties Continue Watching, Dropout's own
-progress from the Roku included, until something is watched again, here or on
-another device. What you finished stays watched. Dropout's progress bars still
-show on its cards, since they are Dropout's.
-
-**Player controls** can be handed back to the site, for troubleshooting: on
-the options page (`about:addons` → Leanback for Dropout → Preferences),
-*Player controls → The site's own player controls* leaves the player's own bar
-alone and draws nothing over the video. Use it to reach something the player
-offers that Leanback has no equivalent for, or if Leanback's bar ever breaks.
-Arrow navigation everywhere else is unaffected.
-
-**Back** is Firefox's own Back: Firefox goes back on the remote's back button
-whatever a page does, so Leanback works with it. It keeps the history in the
-shape Back should follow: moving sideways (the next episode, another season,
-another rail section) replaces the page rather than adding one, and a Back
-that lands on the previous episode — when Dropout went on to the next by
-itself — carries on to the season page. So Back from an episode is the season
-you were watching, and from a show, Home. In a tab opened straight on a page,
-with nothing behind it, Leanback walks up the site itself: episode → season →
-Home. The back button leaves the page whatever is open on it, so ◀ is the way
-out of what is open on a page: it closes the settings panel and the playback
-settings, and with the text cursor at the start of the search box it moves to
-the rail. ▼ leaves the search box for the results, and ▲ goes back into it. To
-leave the rail press ▶, to close the player's bar press ▲ (a keyboard's Escape
-closes each of them first).
-
-Full table: [docs/keymap.md](./docs/keymap.md).
-
-**The settings** (the panel never navigates your tab away): Autoplay Next
-Episode · Shows Open On (newest / first season) · Seek Step · Theater Layout
-(every video / on OK / never) · Start Videos Muted · Button Hints (off unless
-turned on) · Enlarge Selection · Ring Width · Ring Colour · Skip dropout.tv
-Home · Back On Home (does nothing / closes the tab — for kiosk setups). The
-same settings, in the same words, are on the options page (`about:addons` →
-Leanback for Dropout → Preferences), with a colour of your own for the ring,
-*Player controls* (the troubleshooting switch above) and *Clear Continue
-Watching*. The toolbar button turns the extension on and off; a keyboard
-shortcut for that can be set under *Manage Extension Shortcuts*.
+The toolbar button turns the extension on and off; a keyboard shortcut for
+that can be set under *Manage Extension Shortcuts*.
 
 ## Permissions
 
@@ -386,14 +224,12 @@ would never run — and on `*://www.dropout.tv/` and `*://www.dropout.tv/?*`
 
 Data collection: **none**. Nothing leaves the browser. The watch history —
 for each video, how far you got and when, its title and picture — is kept in
-this Firefox's extension storage, for Continue Watching and resuming, and is
-never sent anywhere; *Clear Continue Watching* deletes what you have not
-finished. The only requests the
-extension causes are for pictures: Home's cards load Dropout's own pictures
-from Dropout's image server, including a show's wide picture, which
-Dropout's own Home does not show. On Home it also presses Dropout's own *Show
-more*, which loads more rows exactly as scrolling the page would. The manifest
-declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
+this Firefox's extension storage and never sent anywhere. The only requests
+the extension causes are for Dropout's own pictures from Dropout's image
+server, including a show's wide picture, which Dropout's own Home does not
+show; and on Home it presses Dropout's own *Show more*, which loads more rows
+exactly as scrolling would. The manifest declares
+`data_collection_permissions: { required: ["none"] }`. No `tabs`,
 `webRequest` or `<all_urls>`.
 
 ## Known limitations
@@ -402,51 +238,27 @@ declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
   the markup, navigation can break until the site rules
   (`sites/dropout.json`) are updated —
   [docs/site-notes.md](./docs/site-notes.md) records what the extension
-  depends on and how to re-check it.
-- If Home cannot find Dropout's rows on the page within ten seconds (a changed
-  site, a page that failed to load), Dropout's own page is shown instead and
-  the arrows drive it directly.
+  depends on and how to re-check it. When Leanback cannot read a page, it
+  shows Dropout's own page and the arrows drive that instead.
 - A show's wide picture comes from the data Dropout's page was built from. If
   Dropout changes that, show cards fall back to the tall poster, cropped.
 - Continue Watching knows what you watched in this Firefox, and what Dropout's
   Roku and Android apps recorded for the rows Home has loaded. Watching in
   Firefox does not reach Dropout's own history, so the Roku will not show it;
   syncing between devices is planned for 1.0.
-- A show opens on its newest season by going to that season's page, so
-  opening a show loads two pages; the screen stays blank for that moment.
-- The show's yellow button knows an episode's season and number when Leanback
-  noted them from the episode's own page as it played in Firefox, or when the
-  episode is on the show's page; otherwise it says just *Resume* or *Play*.
-  The episode after a finished one is known when it is on the page, or when
-  the finished one was played in Firefox (Dropout's "up next").
-- If Leanback cannot read a show's page (Dropout has changed it), Dropout's
-  own page is shown, restyled, with the same buttons, seasons and episodes.
-- Where the selection starts on a show is worked out from the episodes
-  Dropout has put on the page. In a season longer than Dropout's first page of
-  episodes, one further down is not considered until more are loaded.
-- Login and search need a keyboard;
-  `/` opens the search field, and from there you are typing.
-- Only remote buttons are mapped, by design. If you are at a desk, the ones
-  you have are the arrow keys, Enter, Escape and the menu key — there are no
-  letter shortcuts to learn, and no feature that needs them.
+- Opening a show on its newest season loads that season's page after
+  Dropout's, so the screen stays blank for a moment.
+- The show's yellow button and the episode the selection starts on are worked
+  out from the episodes Dropout has put on the page and from what was played
+  in this Firefox. Without the numbers it says just *Resume* or *Play*.
+- Signing in and searching need a keyboard. Signing in also loads reCAPTCHA,
+  which may get in the way in a kiosk.
 - Sound on the first frame needs a profile setting Firefox will not let an
   extension make — see [Sound on autoplay](#sound-on-autoplay). Without it the
-  sound comes on at your first button press. "Start videos muted" turns the
-  whole thing off.
-- Firefox only. Uses the `browser.*` API; no other browser is supported.
-- Permanent installs need the AMO-signed build (release-channel Firefox
-  refuses unsigned extensions) — a temporary load is enough to try it.
+  sound comes on at your first button press.
+- Firefox only. Permanent installs need the AMO-signed build.
 
-## Documentation
-
-| File | Contents |
-| --- | --- |
-| [docs/spec.md](./docs/spec.md) | Product spec: goals, non-goals, functionality, settings, testing, release checklist |
-| [docs/architecture.md](./docs/architecture.md) | Components, frame relay, spatial navigation, theater layout, messages, the rules file |
-| [docs/site-notes.md](./docs/site-notes.md) | How watch.dropout.tv is built: hosts, routes, selectors — verified vs. still to check |
-| [docs/keymap.md](./docs/keymap.md) | Keys → actions → behaviour per context; what a typical air-mouse remote's buttons do |
-| [docs/targets.md](./docs/targets.md) | Running it on a TV: what a remote sends, sound, a kiosk launch recipe, checks for your setup |
-| [docs/development.md](./docs/development.md) | Running, debugging, selector drift check, test checklist, verification hand-off, releasing |
+More detail for developers: [docs/](./docs/README.md).
 
 ## AI-generated
 
