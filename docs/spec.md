@@ -22,9 +22,6 @@ The [milestones](#milestones) below are what 1.0 needs.
   `sites/dropout.json`, so a site change is a data fix. The navigation engine
   (`nav/*`) knows nothing about Dropout, so the same approach can serve another
   site later (Twitch is the obvious candidate) and other projects can borrow it.
-- **Standalone.** It is not a part of the HTPC shell's `tv-nav`; the HTPC shell
-  installs it as-is in its Dropout kiosk profile
-  ([htpc-integration.md](./htpc-integration.md)).
 
 ## Goals
 
@@ -45,30 +42,21 @@ The [milestones](#milestones) below are what 1.0 needs.
 
 - Not an ad blocker, not a downloader, not a paywall or DRM workaround. It
   needs a paid Dropout login exactly as the site does.
-- No on-screen keyboard. Search and login need a real keyboard or a phone
-  (the HTPC shell supplies its own OSK bridge). `/` opens the search field and is the
+- No on-screen keyboard. Search and login need a real keyboard or a phone. `/` opens the search field and is the
   **only** keyboard key the extension maps.
 - Not a general spatial-navigation extension — it runs only on Dropout hosts.
-- No Chromium build for now. Stay on the `browser.*` promise API so a port
+- No Chromium build. Stay on the `browser.*` promise API so a port
   remains possible.
 
 ## Who it's for
 
-1. Anyone watching Dropout on a PC connected to a TV, driving it with a
-   keyboard, an HID remote (arrows, Enter, Escape, media keys) or a gamepad
-   mapped to keys.
-2. **The bedroom HTPC** — a KDE Plasma Bigscreen appliance driven only by a
-   WeChip W1 air-mouse remote, where Dropout today runs as an Android TV app
-   inside Waydroid. Firefox + this extension is the candidate replacement.
-   Its constraints (which keys the remote actually sends, no global remaps,
-   release-channel Firefox) are in [targets.md](./targets.md).
-3. **The HTPC shell** (`~/src/htpc-shell`): its Dropout web app (ADR-0014) installs this
-   extension in the Dropout kiosk profile. The HTPC shell's spike S08 uses it for the
-   Dropout step.
+Anyone watching Dropout on a PC connected to a TV, driving it with a
+keyboard, an HID remote (arrows, Enter, Escape, media keys) or a gamepad
+mapped to keys. 
 
-Both TV setups share the rules that shape this spec: one tab opened straight
-on `/browse`, fullscreen or kiosk, no pointer in normal use, and "leaving"
-means Back at the top level closes Firefox.
+One tab opened straight on `/browse`, fullscreen or kiosk, 
+no pointer in normal use, and "leaving" means Back at the 
+top level closes Firefox.
 
 ## Core functionality
 
@@ -252,7 +240,7 @@ means Back at the top level closes Firefox.
   page (a dialog, the settings panel, the rail, the player's bar, theater). In
   a tab opened straight on a page, with nothing of the site behind it, Back
   walks up the site itself, and at Home runs the **exit hook** (setting:
-  *nothing* (default) or *close this tab* — the HTPC shell kiosk hand-off).
+  *nothing* (default) or *close this tab*, for a kiosk).
 - **Drop-downs.** A native `<select>` Leanback has not replaced (the season
   and sort controls on a page whose layout is not recognised) is a
   **two-step control**: Enter engages it, Left/Right then step its options
@@ -348,11 +336,8 @@ means Back at the top level closes Firefox.
 
 ## Optional / future functionality
 
-- Native-messaging exit hook and OSK text bridge (the HTPC shell only — stays in
-  The HTPC shell's own extension; this extension keeps the seam, not the feature).
 - Gamepad support via the Gamepad API (today: map the pad to keys outside the
   browser).
-- Selector drift check script (`tools/check-site.sh`) run in CI weekly.
 
 ## Permissions
 
@@ -373,42 +358,11 @@ means Back at the top level closes Firefox.
 
 ## Architecture overview
 
-- `background.js` (event page, `persistent: false`): settings defaults and
-  storage, relay between the page frame and the player frame (keyed by tab and
-  frame id), `commands` handler, toolbar toggle, exit hook.
-- `background.js` is also the only writer of the watch history.
-- `content/page.js` (top frame of `watch.dropout.tv`): loads
-  `sites/dropout.json`, detects the page kind from the URL, runs spatial
-  navigation, focus ring, hint bar, the rail, theater layout, back logic,
-  load-more, and starts Leanback's screen on Home, hubs and the pages it
-  draws.
-- `content/home.js`: the Home screen — reads the banner and rows off
-  Dropout's page (and a show's wide picture from the data its tile was drawn
-  from) and draws Leanback's own layer from them.
-- `content/screen.js`: the pages Leanback draws besides Home — a title or a
-  banner, a row of seasons, sections of cards — from a model its reader
-  builds; it reads collection pages itself.
-- `content/show.js`: a show's page (and specials and lists) — tells which it
-  is from the page, reads a show or special for `content/screen.js` (banner,
-  buttons, seasons, episodes, what is watched, the episode to start on), and
-  restyles Dropout's page when it cannot. `content/show.css` styles the
-  seasons and the restyle; `content/early.css`, the one stylesheet
-  loaded before the page is drawn, keeps Dropout's page blank until Leanback
-  has started, so Dropout's page never shows first.
-- `content/player.js` (every `embed.vhx.tv` frame): finds the `<video>`,
-  handles keys while the frame has focus, executes player commands, reports
-  state (`paused`, `currentTime`, `duration`, `ended`, up-next) to the page,
-  reports progress to the watch history and resumes.
-- `content/transport.js`: the transport bar and the playback settings panel.
-- `lib/history.js`: the watch history — keys, thresholds, merging, Continue
-  Watching — shared by the background, the page and the player.
-- `nav/spatial.js`, `nav/focus-ring.js`, `nav/panel.js`, `nav/rail.js`:
-  site-agnostic pieces — they only see the rules object or what they are
-  handed, never Dropout selectors — so they can be reused for another site or
-  borrowed by another project without edits.
-- `sites/dropout.json`: routes, page kinds, focusable/tile/row selectors,
-  modal selectors, player selectors, key map overrides.
-- `options/`: settings page (keyboard-operable, follows system theme).
+Two content scripts — one in the page, one in Dropout's cross-origin player
+frame — relayed by an event-page background, which is also the only writer
+of the watch history. Everything Leanback knows about Dropout is in
+`sites/dropout.json`; `nav/*` is site-agnostic. Files, messages and
+mechanisms: [architecture.md](./architecture.md).
 
 ## Settings and storage
 
@@ -581,15 +535,11 @@ Manual checklist (full version with expected results in
 - A show's wide picture comes from the data Dropout's page was built from,
   not from its markup. If Dropout changes that, show cards fall back to the
   tall poster, cropped to the card.
-- Login and search need a keyboard or the HTPC shell OSK bridge; login also loads
+- Login and search need a keyboard; login also loads
   reCAPTCHA Enterprise, which may block a kiosk login flow.
 - Firefox's autoplay policy may block autoplay-with-sound until the site has
   played once by user gesture (Enter counts) or autoplay is allowed for the
   site.
-- **Release-channel Firefox (Fedora's, Mint's) keeps only AMO-signed
-  extensions installed.** Until the first unlisted signing, the extension can
-  only be loaded temporarily — fine for development, useless on an appliance.
-  Signing is therefore an early milestone, not a release-day step.
 
 ## Milestones
 
@@ -608,7 +558,7 @@ Manual checklist (full version with expected results in
 - Run the manual test checklist in a fresh profile and in a logged-in profile.
 - `web-ext lint --warnings-as-errors`, `web-ext build`.
 - Sign on AMO as **unlisted** (needed for a permanent install on release
-  Firefox and for policy install in the HTPC shell). Check the add-on name against
+  Firefox). Check the add-on name against
   Mozilla's trademark rules before the first submission.
 
 ## Troubleshooting

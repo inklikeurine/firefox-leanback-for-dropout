@@ -1,81 +1,62 @@
-# Deployment targets
+# TV setups
 
-Two real TV setups this extension has to work in. Neither is a desktop: one
-tab, opened straight on `/browse`, fullscreen or kiosk, driven by a remote
-whose buttons arrive as ordinary key events. What they have in common is what
-the spec optimises for; what differs is listed per target, with the things
-that still need checking on the actual box.
+What running Leanback on a TV means, for any setup built that way: not a
+desktop, but one tab opened straight on `/browse`, fullscreen or kiosk,
+driven by a remote whose buttons arrive as ordinary key events. This is what
+the spec optimises for. Below: what such setups share, what a typical remote
+sends, the constraints to design for, sound, a launch recipe, and the checks
+to run on your own setup.
 
-## Common ground
+## What every TV setup shares
 
 | Fact | Consequence for the extension |
 | --- | --- |
 | Firefox from the distro's **release channel** | Only AMO-signed extensions stay installed → unlisted signing early ([development.md](./development.md#releasing)). |
-| One tab, kiosk/fullscreen, opened on `/browse` | Structural Back (no history to go back to); exit hook `close-tab` ends Firefox and returns to the shell. |
+| One tab, kiosk/fullscreen, opened on `/browse` | Structural Back (no history to go back to); exit hook `close-tab` ends Firefox and returns to the TV shell or desktop. |
 | No pointer in normal use (or one that drifts) | Focus never follows the pointer; every feature reachable by 5 keys. |
-| Remote buttons arrive as key events, some of which the browser or the desktop shell own (`BrowserBack`, `BrowserHome`, `ContextMenu`, volume) | Intercept what the page can see, design around what it can't ([keymap.md](./keymap.md#remote-example-wechip-w1-air-mouse)). |
-| Login is done once, by hand, on the box | Nothing credential-related in the extension; the profile keeps the session. |
+| Remote buttons arrive as key events, some of which the browser or the desktop own (`BrowserBack`, `BrowserHome`, `ContextMenu`, volume) | Intercept what the page can see, design around what it can't ([keymap.md](./keymap.md#keys-the-browser-or-the-desktop-own)). |
+| Login is done once, by hand, on the TV | Nothing credential-related in the extension; the profile keeps the session. |
 | The people setting it up are not programmers | Setup recipes are exact commands, one purpose each. |
 
-## Target 1 — the HTPC shell (workstation now, OptiPlex 3080 later)
+## What a remote sends
 
-gamescope session, Qt shell, Firefox started as
-`firefox --profile <dir> --kiosk --new-instance https://watch.dropout.tv/browse`
-by the HTPC shell's `appd`; extensions force-installed through `policies.json`;
-input normalised by `inputd` into the HTPC shell's action vocabulary; phone companion
-for text. Everything about this target is in
-[htpc-integration.md](./htpc-integration.md).
+A typical air-mouse remote — arrows, OK, back, home, menu, volume ±, a gyro
+pointer, often a QWERTY pad on the back — sends these. Check yours on Linux
+with `evtest`, or in Firefox with [Leanback Dev Probe](../../leanback-dev-probe/).
 
-## Target 2 — Bedroom HTPC (KDE Plasma Bigscreen + WeChip W1)
-
-Facts from that machine's own notes:
-
-| | |
-| --- | --- |
-| Box | Lenovo ThinkCentre M910q Tiny, i5-7500T, **Intel HD Graphics 630** (VAAPI decode), 7.6 GiB RAM, zram swap |
-| OS / session | Fedora 44, **KDE Plasma Bigscreen 6.7** on **Wayland**, autologin via `plasma-login-manager` (no SDDM). Firefox is the Fedora RPM (release channel). |
-| Display | HDMI to a Roku TV |
-| Input | **WeChip W1 air mouse only** — arrows, OK, back, home, menu, volume ±, a QWERTY pad, a gyro pointer. No keyboard or mouse in normal use. |
-| Dropout today | Android TV app (`com.collegehumor.chdropout`) inside **Waydroid**, launched from a Bigscreen icon through `~/waydroid-launch.sh`. Works; "sustained playback quality not yet evaluated". Waydroid stays resident (~3.2 GiB used with it up). |
-| Wish list on the box | "10-foot Firefox frontend — investigate whether a TV-usable Firefox shell exists", "other 10-foot alternatives for services with no TV-friendly client" |
-
-So Firefox + this extension is the box's own wish, and a direct comparison
-with the Waydroid app is the acceptance test: same episode, same remote,
-which one is smoother to navigate and to watch.
-
-### What the remote sends (verified on the box with `evtest`)
-
-| W1 button | Linux key | Reaches Firefox as (`event.key`) | Extension action |
+| Button | Linux key | Reaches Firefox as (`event.key`) | Extension action |
 | --- | --- | --- | --- |
 | up / down / left / right | `KEY_UP` … `KEY_RIGHT` | `ArrowUp` … `ArrowRight` | `up` `down` `left` `right` |
 | OK | `KEY_ENTER` | `Enter` | `select` (play/pause in the player) |
 | back | `KEY_BACK` (Consumer Control) | `BrowserBack` | `back` — see T2 |
-| home | `KEY_HOMEPAGE` (Consumer Control) | `BrowserHome` — **if it gets that far**: Bigscreen acts on Home globally (its issue OS-01), so Firefox probably never sees it | nothing — reserved for the shell, never mapped ([keymap.md](./keymap.md)) |
-| menu | `KEY_COMPOSE` | `ContextMenu` | `menu` (site header); the keyboard-originated `contextmenu` event is cancelled |
-| volume ± | `KEY_VOLUMEUP` / `KEY_VOLUMEDOWN` | `AudioVolumeUp` / `AudioVolumeDown` | **not intercepted** — Plasma's system volume |
-| power | nothing reaches the OS (IR only) | — | — |
-| mouse-mode toggle | nothing reaches the OS (dongle-internal) | — | pointer drift must never move the ring |
+| home | `KEY_HOMEPAGE` (Consumer Control) | `BrowserHome`, **if it gets that far**: a TV shell (such as KDE Plasma Bigscreen) may act on Home globally, so Firefox never sees it | nothing — reserved for the shell, never mapped ([keymap.md](./keymap.md)) |
+| menu | `KEY_COMPOSE` | `ContextMenu` | `menu`; the keyboard-originated `contextmenu` event is cancelled |
+| volume ± | `KEY_VOLUMEUP` / `KEY_VOLUMEDOWN` | `AudioVolumeUp` / `AudioVolumeDown` | **not intercepted** — the system volume |
+| power | often nothing reaches the OS (IR only) | — | — |
+| mouse-mode toggle | often nothing reaches the OS (handled in the dongle) | — | pointer drift must never move the ring |
 | QWERTY pad | letters, digits, Backspace, … | as typed | needed only to type a search query or log in; `/` opens the search field. No feature is behind a letter key |
 
-### Constraints the box imposes
+Some remotes send `Escape` or `GoBack` for back, and some have media keys;
+[keymap.md](./keymap.md#the-remotes-face) lists what is mapped.
 
-- **No global key remapping** (udev/hwdb/xremap ruled out there). The
-  extension is app-local by nature — it must never *require* a remap.
+## Constraints to design for
+
+- **Never require a global key remap** (udev, hwdb, xremap and the like). Many
+  setups rule them out; the extension is app-local by nature.
 - **Ask before anything system-wide.** A `policies.json` under
-  `/etc/firefox/policies/` is system-wide; the one-time alternative is
-  installing the signed `.xpi` into the Dropout profile by hand (over
-  Deskflow or the gyro pointer, once).
-- **Don't depend on the power button or on knowing whether mouse mode is
-  on.** Neither is visible to the OS.
-- The **Waydroid session stays** for Twitch even if Dropout moves to Firefox,
-  so Firefox's memory (≈ 0.5–1 GiB for one kiosk profile) is additive on an
-  8 GB box. Acceptable; note it.
-- Its issue log already contains the failure modes this spec is built to
-  avoid: a focused item scrolling off screen (its JF-05 → the keep-on-screen
-  rule), Back doing the wrong thing in some context (OS-02 → layered Back),
-  Escape not leaving playback (→ Back leaves the player first).
+  `/etc/firefox/policies/` affects every Firefox profile on the machine; the
+  one-time alternative is installing the signed `.xpi` into the TV profile by
+  hand.
+- **Don't depend on buttons the OS cannot see**, such as power or the
+  mouse-mode toggle on many remotes.
+- **Memory adds up.** One kiosk profile takes ≈ 0.5–1 GiB, on top of whatever
+  else the machine keeps running.
+- The failure modes the spec is built to avoid are the usual ones on TV
+  setups: a focused item scrolling off screen (→ the keep-on-screen rule),
+  Back doing the wrong thing in some context (→ layered Back), Escape not
+  leaving playback (→ Back leaves the player first).
 
-### Sound without a button press is a profile setting, not extension code
+## Sound without a button press is a profile setting, not extension code
 
 Firefox blocks audible autoplay by default (`media.autoplay.default = 1`,
 "block audio"). Nothing an extension can do lifts that:
@@ -112,45 +93,42 @@ its default of `0`. The `Autoplay` policy's `Default` takes exactly
 launch command is unchanged — `--profile <dir>` is what points at the profile
 holding it.
 
-Check it on the box: open an episode, and in the console on the player frame
-`navigator.getAutoplayPolicy("mediaelement")` should return `"allowed"`.
+Check it on your setup: open an episode, and in the console on the player
+frame `navigator.getAutoplayPolicy("mediaelement")` should return
+`"allowed"`.
 
-### Launch recipe (sketch — verify on the box, item T1–T8)
+## Launch recipe (sketch — check it on your setup, T1–T8)
 
-1. **Profile**: `firefox --no-remote -CreateProfile "dropout /home/Media/.mozilla/firefox/dropout"`,
+1. **Profile**: `firefox --no-remote -CreateProfile "dropout <profile-dir>"`,
    then a `user.js` in it with the kiosk-relevant preferences — hardware decode
    (`media.ffmpeg.vaapi.enabled = true`), `media.autoplay.default = 0` (see
-   above — this is what makes episodes start with sound), no
-   session restore and no first-run pages, `browser.startup.homepage =
+   above — this is what makes episodes start with sound), no session restore
+   and no first-run pages, `browser.startup.homepage =
    https://watch.dropout.tv/browse` (so a stray `BrowserHome` is harmless).
-   Same keys the HTPC shell's profile generator uses; copy them from there once S08
-   has them.
-2. **Extension**: the signed `.xpi`, installed once into that profile — or,
-   with the user's OK, force-installed system-wide through `policies.json`
-   (`ExtensionSettings`, same file the HTPC shell uses).
-3. **Login**: start the profile once *without* `--kiosk`, sign in with the
-   QWERTY pad, close.
-4. **Bigscreen icon**: a `.desktop` entry in `~/.local/share/applications/`,
-   written the way the box's `atv-icons.sh` writes its Waydroid entries
-   (`StartupNotify=false`, same categories), with
-   `Exec=firefox --kiosk --new-instance --profile /home/Media/.mozilla/firefox/dropout https://watch.dropout.tv/browse`.
+2. **Extension**: the signed `.xpi`, installed once into that profile — or
+   force-installed system-wide through `policies.json` (`ExtensionSettings`).
+3. **Login**: start the profile once *without* `--kiosk`, sign in, close.
+4. **Launcher**: an entry in the TV shell or desktop (on Linux, a `.desktop`
+   file in `~/.local/share/applications/`, written like the shell's other app
+   entries) with
+   `Exec=firefox --kiosk --new-instance --profile <profile-dir> https://watch.dropout.tv/browse`.
 5. **Leaving**: Back at `/browse` → exit hook `close-tab` → Firefox exits →
-   Bigscreen. Home → Bigscreen comes forward by itself with Firefox still
-   running behind it (verify — that is the memory-hungry way out).
+   the shell. A Home button the shell takes brings the shell forward with
+   Firefox still running behind it (check — that is the memory-hungry way
+   out).
 
-### To verify on the box
+## To check on your setup
 
 | # | Question | How | Affects |
 | --- | --- | --- | --- |
-| T1 | Does Bigscreen take `KEY_HOMEPAGE` globally while Firefox is in front? Does Firefox stay running behind? | Launch the kiosk, press home, `pgrep firefox` over SSH | exit paths, memory |
-| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? **Answered: the page sees it (`trusted=true`, capture and bubble), and `preventDefault()` does not stop the history-back — on the page and with the player focused.** | Leanback Dev Probe's Block Back, press back | Back is Firefox's: Leanback keeps the history structural instead, see [architecture.md](./architecture.md#back-contentpagejs--navtrailjs). A history entry for Firefox to land on (plan B) did not hold it on the box either |
+| T1 | Does the TV shell take `KEY_HOMEPAGE` globally while Firefox is in front? Does Firefox stay running behind? | Launch the kiosk, press home, check whether `firefox` is still running | exit paths, memory |
+| T2 | Does the page's `keydown` handler see `BrowserBack`, and does `preventDefault()` stop Firefox's own history-back? **Answered: the page sees it (`trusted=true`, capture and bubble), and `preventDefault()` does not stop the history-back — on the page and with the player focused.** | Leanback Dev Probe's Block Back, press back | Back is Firefox's: Leanback keeps the history structural instead, see [architecture.md](./architecture.md#back-contentpagejs--navtrailjs). A history entry for Firefox to land on (plan B) did not hold it either |
 | T3 | Does `ContextMenu` open a context menu in `--kiosk`? Does cancelling the `contextmenu` event suppress it outside kiosk? | Press menu on `/browse` | `menu` action |
-| T4 | Does `close-tab` in `--kiosk` end the Firefox process and drop back to Bigscreen cleanly, no restore prompt next time? | Set the exit hook, press back at `/browse` | exit hook |
-| T5 | Hardware decode active (`about:support` → Media → "Hardware decoding"), and 1080p playback smooth at TV distance? | Play an episode; compare with the Waydroid app | whether the switch is worth it |
+| T4 | Does `close-tab` in `--kiosk` end the Firefox process and drop back to the shell cleanly, with no restore prompt next time? | Set the exit hook, press back at `/browse` | exit hook |
+| T5 | Is hardware decode active (`about:support` → Media → "Hardware decoding"), and is 1080p playback smooth at TV distance? | Play an episode | whether the setup is worth it |
 | T6 | Does the Dropout login survive a reboot in that profile? | Reboot, launch | setup step 3 |
 | T7 | Pointer drift with mouse mode on: does the ring stay put, do site tooltips pop up? | Wiggle the remote | hover suppression rules |
-| T8 | Does the OK button click, or send Enter, or both, while mouse mode is on? | `evtest` on the mouse and keyboard interfaces | `select` handling |
+| T8 | Does the OK button click, send Enter, or both, while mouse mode is on? | `evtest` on the remote's mouse and keyboard interfaces | `select` handling |
 
-Findings go into this file (facts) and into the box's own notes (state of the
-box). Network details of the box (addresses, SSID, hostname) deliberately
-stay out of this public repository.
+Keep network details of your machine (addresses, SSID, hostname) out of this
+public repository.

@@ -72,11 +72,9 @@ navigate, not what you can watch.
 ## Who it's for
 
 Anyone watching Dropout on a PC connected to a TV with a keyboard, an HID
-remote or a gamepad mapped to keys. Two setups it is built against
-([docs/targets.md](./docs/targets.md)): a KDE Plasma Bigscreen appliance
-driven only by a WeChip W1 air mouse, and the HTPC shell HTPC shell, whose
-Dropout app installs this extension
-([docs/htpc-integration.md](./docs/htpc-integration.md)).
+remote or a gamepad mapped to keys. It is built for a TV driven only by a
+remote: one Firefox window, kiosk or fullscreen, no pointer in normal use
+([docs/targets.md](./docs/targets.md)).
 
 ## Installation
 
@@ -426,7 +424,7 @@ declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
 - Where the selection starts on a show is worked out from the episodes
   Dropout has put on the page. In a season longer than Dropout's first page of
   episodes, one further down is not considered until more are loaded.
-- Login and search need a keyboard (or a phone with the HTPC shell's companion);
+- Login and search need a keyboard;
   `/` opens the search field, and from there you are typing.
 - Only remote buttons are mapped, by design. If you are at a desk, the ones
   you have are the arrow keys, Enter, Escape and the menu key — there are no
@@ -446,10 +444,9 @@ declares `data_collection_permissions: { required: ["none"] }`. No `tabs`,
 | [docs/spec.md](./docs/spec.md) | Product spec: goals, non-goals, functionality, settings, testing, release checklist |
 | [docs/architecture.md](./docs/architecture.md) | Components, frame relay, spatial navigation, theater layout, messages, the rules file |
 | [docs/site-notes.md](./docs/site-notes.md) | How watch.dropout.tv is built: hosts, routes, selectors — verified vs. still to check |
-| [docs/keymap.md](./docs/keymap.md) | Keys → actions → behaviour per context; what the W1 remote's buttons do |
-| [docs/targets.md](./docs/targets.md) | The two TV setups it must work in: Bigscreen + W1 air mouse, and the HTPC shell |
+| [docs/keymap.md](./docs/keymap.md) | Keys → actions → behaviour per context; what a typical air-mouse remote's buttons do |
+| [docs/targets.md](./docs/targets.md) | Running it on a TV: what a remote sends, sound, a kiosk launch recipe, checks for your setup |
 | [docs/development.md](./docs/development.md) | Running, debugging, selector drift check, test checklist, verification hand-off, releasing |
-| [docs/htpc-integration.md](./docs/htpc-integration.md) | How this extension fits the HTPC shell HTPC shell |
 
 ## AI-generated
 

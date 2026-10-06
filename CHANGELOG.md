@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.1] — 2026-10-05
+
+### Changed
+
+- Code comments only: one comment reworded so it no longer names a
+  particular remote. No change in behaviour.
+
 ## [0.32.0] — 2026-10-03
 
 ### Changed

@@ -22,17 +22,13 @@ web-ext run --source-dir ./leanback-for-dropout \
   --firefox-profile leanback-for-dropout-dev --keep-profile-changes \
   --start-url https://watch.dropout.tv/browse
 
-# kiosk, as the HTPC shell will run it (Escape does not leave kiosk; use the exit hook or kill the process)
+# kiosk, as a TV setup runs it (Escape does not leave kiosk; use the exit hook or kill the process)
 web-ext run --source-dir ./leanback-for-dropout --firefox-profile leanback-for-dropout-dev --keep-profile-changes \
   --start-url https://watch.dropout.tv/browse --args=--kiosk
 ```
 
 Without `web-ext`: `about:debugging#/runtime/this-firefox` → **Load Temporary
 Add-on…** → `leanback-for-dropout/manifest.json`.
-
-Inside the HTPC shell dev container the same commands run as
-`dev/hx web-ext run …` from `~/src/htpc-shell` with `--source-dir` pointing at
-this folder.
 
 ## Debugging
 
@@ -125,14 +121,13 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 
 ## Verification hand-off
 
-For the HTPC shell project lead, in the format of the HTPC shell's
-`docs/verification-protocol.md`. The assistant sets everything up; the lead
+For whoever tests it on the TV. The assistant sets everything up; the tester
 only presses keys and reports.
 
 **Verification — DTV-1 — Dropout by D-pad only**
 Setup: the assistant starts the logged-in dev profile with the extension in
-kiosk mode on `/browse`, nested in gamescope on the workstation (or on the
-TV once the test box exists). Keyboard only; do not touch the mouse.
+kiosk mode on `/browse`, on the TV or the dev machine. Keyboard only; do not
+touch the mouse.
 
 1. Press Right three times, then Down → expected: a yellow ring moves tile by
    tile, then to the row below; nothing else on the page changes.
@@ -143,37 +138,11 @@ TV once the test box exists). Keyboard only; do not touch the mouse.
 4. Press Escape twice → expected: first the page around the player comes
    back, then the series page with the ring on the episode you played.
 5. Press Escape until you are on the first page, then once more → expected:
-   the window closes and you are back where you started (the HTPC shell or the
-   desktop).
+   the window closes and you are back where you started (the desktop or the
+   TV shell).
 
 Report: which step first did something unexpected, and a photo or screenshot
 of the screen at that moment. Time: ~5 minutes.
-
-**Verification — DTV-2 — Bedroom HTPC, W1 remote, against the Waydroid app**
-Setup: the assistant has installed the signed extension in a `dropout`
-Firefox profile on the box, logged in once (by hand), and added a Bigscreen
-icon ([targets.md](./targets.md#launch-recipe-sketch--verify-on-the-box-item-t1t8)).
-Remote only; mouse mode off.
-
-1. From Bigscreen, open the new Dropout icon → expected: Leanback's Home
-   fills the screen, with a yellow ring on the featured banner's *Watch now*,
-   within ~5 s.
-2. Press ▼, ▶ three times, ▼, then *back* → expected: the ring goes into the
-   first row and along it, then down a row, the rows sliding into place;
-   *back* on Home does nothing (or a notice appears).
-3. OK on a series, OK on an episode → expected: the video fills the screen
-   and plays; if not, one more OK.
-4. Press *menu* once → expected: nothing pops up over the video (if a
-   right-click-style menu appears, that is the T3 finding — report it).
-5. ◀, ▶ → expected: ~10 s back, ~10 s forward.
-6. Press *back* until Browse, then *back* once more → expected: Firefox
-   closes and Bigscreen is back.
-7. Open the same episode in the Waydroid Dropout app → expected: nothing
-   specific — this is the comparison.
-
-Report: step that misbehaved first (photo); which of the two — Firefox or
-the Waydroid app — was smoother to navigate and to watch, in one sentence.
-Time: ~10 minutes.
 
 ## Releasing
 
@@ -183,7 +152,7 @@ Time: ~10 minutes.
 3. `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors`.
 4. `web-ext build --source-dir ./leanback-for-dropout` → `web-ext-artifacts/*.zip`.
 5. Submit on [addons.mozilla.org](https://addons.mozilla.org/developers/) as
-   **unlisted** (self-distributed). The signed `.xpi` is what the HTPC shell's
+   **unlisted** (self-distributed). The signed `.xpi` is what a
    `policies.json` installs and what users can install permanently.
 6. Before the **first** submission, check the add-on name against Mozilla's
    current add-on policies on trademarks. **"Leanback for Dropout" puts the brand

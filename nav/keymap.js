@@ -16,7 +16,7 @@
 //   home      BrowserHome       RESERVED — never mapped; the shell owns it
 //   volume    AudioVolume*      never intercepted; the desktop owns it
 //
-// Media keys are kept for remotes that have them (the W1 does not). They are
+// Media keys are kept for remotes that have them (many air mice do not). They are
 // remote-class keys, not keyboard shortcuts.
 
 (function () {

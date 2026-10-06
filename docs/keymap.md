@@ -10,9 +10,9 @@ thing this extension exists to avoid.
 episode, not anything that could be mistaken for a command. A control that
 swallows an arrow key makes everything beyond it unreachable.
 
-Keys map to **actions** first (the vocabulary is the HTPC shell's Appendix A, so a
-remote, a gamepad-to-key mapper and a keyboard all look the same), then each
-context decides what an action does.
+Keys map to **actions** first (one vocabulary, so a remote, a gamepad-to-key
+mapper and a keyboard all look the same), then each context decides what an
+action does.
 
 ## The remote's face
 
@@ -25,7 +25,7 @@ context decides what an action does.
 | home | `BrowserHome` | **reserved**: never mapped, the TV shell owns it |
 | volume ± | `AudioVolumeUp` / `AudioVolumeDown` / `AudioVolumeMute` | never intercepted; the desktop owns it |
 
-Media keys are kept for remotes that have them (the W1 does not). They are
+Media keys are kept for remotes that have them (many air mice do not). They are
 remote-class keys, not keyboard shortcuts: `MediaPlayPause` / `MediaPlay` /
 `MediaPause` → `play_pause`, `MediaStop` → `stop`, `MediaTrackNext` /
 `MediaTrackPrevious` → `next` / `previous`, `MediaFastForward` /
@@ -198,14 +198,14 @@ screen.
 | Key | Who else acts on it | How it is handled |
 | --- | --- | --- |
 | `BrowserBack` (`KEY_BACK`) | Firefox: history back | **Firefox's.** Not cancelled — it cannot be (T2 below). Leanback keeps the history in the shape Back should follow instead, and acts only when there is no page of the site behind this one. |
-| `BrowserHome` (`KEY_HOMEPAGE`) | Firefox: home page; Plasma Bigscreen: global "home" | **Reserved.** Never mapped. Point the kiosk profile's home page at `/browse` so a stray press is harmless. |
-| `ContextMenu` (`KEY_COMPOSE`, the W1's *menu*) | Firefox: opens the context menu | `menu`; the keyboard-originated `contextmenu` event is cancelled, a real right-click is not. |
+| `BrowserHome` (`KEY_HOMEPAGE`) | Firefox: home page; a TV shell (such as KDE Plasma Bigscreen) may take it globally | **Reserved.** Never mapped. Point the kiosk profile's home page at `/browse` so a stray press is harmless. |
+| `ContextMenu` (`KEY_COMPOSE`, an air mouse's *menu*) | Firefox: opens the context menu | `menu`; the keyboard-originated `contextmenu` event is cancelled, a real right-click is not. |
 | `AudioVolumeUp/Down/Mute` | The desktop's volume control | Never intercepted. |
 | `Escape` | Firefox: leaves DOM fullscreen | Theater layout is CSS, not DOM fullscreen, so it stays ours. |
 
 ### T2 — Back is Firefox's
 
-The W1's back button sends `KEY_BACK` (Consumer Control), which arrives as
+A remote's back button typically sends `KEY_BACK` (Consumer Control), which arrives as
 `event.key === "BrowserBack"` (`trusted`, seen at capture and bubble).
 Cancelling it with `preventDefault()` does **not** stop Firefox's own
 history-back — on the page or with the player focused ([targets.md](./targets.md)
@@ -224,9 +224,9 @@ submenu at a time, and leaves the search box from the start of its text (▼
 leaves it for the results). The
 rail closes with ▶, the transport bar with ▲.
 
-## Remote example: WeChip W1 air mouse
+## Remote example: a typical air mouse
 
-The bedroom HTPC's only input device ([targets.md](./targets.md#target-2--bedroom-htpc-kde-plasma-bigscreen--wechip-w1)).
+An air-mouse remote as the only input device ([targets.md](./targets.md#what-a-remote-sends)).
 Every button, and what it does — the QWERTY pad on the back is needed only to
 type a search query or log in:
 
@@ -236,9 +236,9 @@ type a search query or log in:
 | OK | `Enter` | open / play | play – pause; take the control under the selection |
 | back | `BrowserBack` | Firefox's Back: the page before — Home from a show, whichever season it is on | Firefox's Back: the season page (past any episodes Dropout went on to by itself) |
 | menu | `ContextMenu` | Leanback's settings | the settings panel |
-| home | `BrowserHome` | nothing (reserved for Bigscreen) | nothing |
+| home | `BrowserHome` | nothing (reserved for the TV shell) | nothing |
 | volume ± | `AudioVolume*` | system volume | system volume |
 | QWERTY pad | — | `/` opens search; typing in search and login | — |
 
-Five buttons (▲ ▼ ◀ ▶ OK) plus *back* and *menu* do everything. The W1 has no
-media keys; the ones the extension maps are there for remotes that do.
+Five buttons (▲ ▼ ◀ ▶ OK) plus *back* and *menu* do everything. Many air mice
+have no media keys; the ones the extension maps are there for remotes that do.
