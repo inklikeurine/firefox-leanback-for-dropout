@@ -147,7 +147,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   height: calc(var(--tf-u) * 44);
   background: linear-gradient(to bottom, var(--tf-bg) 30%, rgba(11, 12, 16, 0));
 }
-/* With a row selected, the fade reaches down to its heading (home.js
+/* With a row selected, the fade reaches down to its heading (screen.js
    ROW_ANCHOR: 7 % of the height), so the row above it does not peek in. */
 .tenfoot-home[data-tenfoot-scrolled="true"] .tenfoot-home-view::after {
   height: 7vh;

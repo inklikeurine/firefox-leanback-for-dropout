@@ -1,9 +1,8 @@
-// Leanback for Dropout — the card every Leanback screen draws: Home's rows
-// (content/home.js) and the pages Leanback draws for Dropout's collection
-// pages (content/screen.js). A card is a link holding the picture, a badge,
-// the running time (or the time left) and a progress bar, with the title and
-// a subtitle under it. Also the readers both screens share for Dropout's
-// tiles. Site-agnostic: the selectors come from the caller.
+// Leanback for Dropout — the card every Leanback screen draws
+// (content/screen.js). A card is a link holding the picture, a badge, the
+// running time (or the time left) and a progress bar, with the title and a
+// subtitle under it. Also the readers for Dropout's tiles that Home and the
+// other screens share. Site-agnostic: the selectors come from the caller.
 
 (function () {
   function hrefOf(el) {

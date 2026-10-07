@@ -1,41 +1,48 @@
-// Leanback for Dropout — the screens Leanback draws for the pages that are not
-// Home. Like Home (content/home.js), the page is only read: Dropout's page
-// stays underneath, untouched, and Leanback's layer covers it, a child of
-// <html> outside the site's tree. It is drawn as Home is — the same layer, the
-// same cards (content/cards.js), the same scrolling.
+// Leanback for Dropout — the screens Leanback draws: Home and the hubs,
+// Browse, My List and the lists, a show's page, a special, search and an
+// episode's page. The page is only read: Dropout's page stays underneath,
+// untouched, and Leanback's layer covers it, a child of <html> outside the
+// site's tree, drawn with the cards of content/cards.js.
 //
 // What a screen holds comes from a reader, as a description (a "model"):
 //   head      — a plain page title (Browse, My List, a list), or
-//   hero      — a banner like Home's: picture, title, meta, description and
-//               buttons (a show's page, a special: content/show.js); on an
-//               episode's page, a place for the player (dock) in place of
-//               the picture, which page.js puts Dropout's player over;
+//   hero      — a banner: picture, kicker, title, meta, description and
+//               buttons (a show's page, a special: content/show.js); with
+//               `slides`, one of several, › stepping through them (Home's
+//               featured: content/home.js); on an episode's page, a place for
+//               the player (dock) in place of the picture, which page.js
+//               puts Dropout's player over;
 //   field     — a search box: Leanback's own, whose text is typed into
 //               Dropout's (search);
 //   pills     — a row of choices (a show's seasons, newest first; search's
 //               filters, which press Dropout's own);
-//   sections  — groups of cards, each with its own title and columns;
+//   sections  — groups of cards, each a grid of its own columns or a row
+//               that slides sideways (`layout: "row"`, Home's);
 //   empty     — what to say when there are no cards (Dropout's own words);
 //   more      — Dropout's own Load More, pressed near the end (at once and
-//               until it is gone, with loadAll: a season run newest first);
-//   start     — the key of the card or button the selection starts on.
+//               until it is gone, with loadAll: a season run newest first;
+//               with moreScroll, the page underneath scrolled to its end if
+//               that does nothing, as Home's);
+//   start     — the key of the card or button the selection starts on
+//               (waited for, with waitForStart: Home's Watch now).
 // This file reads collection pages, search and an episode's page itself
 // (readPage, searchModel, episodeModel; sites/dropout.json → screen);
-// show.js reads shows and specials.
+// show.js reads shows and specials, home.js Home.
 //
 // The selection moves over rows: the search box, the buttons, the seasons
-// or filters, then each section's cards in rows of its columns. ◀ ▶ move along a row and stop at
-// its ends ({edge: "left"} is the cue for the rail); ▲ ▼ move a row, keeping
-// the column between rows of cards, and landing where a row was left (the
-// season on screen, at first). Down to the first row of cards the screen is
-// shown from the top; each row of cards after it slides up to the same place
-// near the top, as Home's rows do.
+// or filters, then each section's cards in rows of its columns. ◀ ▶ move
+// along a row and stop at its ends ({edge: "left"} is the cue for the rail);
+// ▲ ▼ move a row, keeping the column between rows of a grid, and landing
+// where a row was left (the season on screen, at first). Each row of cards
+// slides up to the same place near the top; down to the first, the screen
+// is shown from the top (Home, scroll "rows": every row slides up).
 
 (function () {
   const LAYER_CLASS = "tenfoot-home";
   const COLUMNS = 5;
   const PREFETCH_ROWS = 2;
   const MORE_TIMEOUT_MS = 6000;
+  const MORE_SCROLL_AFTER_MS = 2500;
   const ROW_ANCHOR = 0.07; // the selected row's top, as a share of the viewport height
 
   const C = () => globalThis.TenfootCards;
@@ -184,6 +191,7 @@
    * @param {Document} doc
    * @param {{
    *   read: () => object|null,              // the model, read afresh on every refresh
+   *   home?: boolean,                       // Home's own layer: labelled "Home", no screen title
    *   title?: string,                       // in place of the model's head
    *   rail?: boolean,                       // the rail is beside it (room is left)
    *   badges?: boolean,                     // false: no badges on the cards
@@ -209,8 +217,9 @@
 
     let layer = doc.querySelector(`.${LAYER_CLASS}`);
     if (layer) layer.remove();
-    layer = el("div", `${LAYER_CLASS} tenfoot-screen`);
+    layer = el("div", o.home ? LAYER_CLASS : `${LAYER_CLASS} tenfoot-screen`);
     layer.setAttribute("role", "main");
+    if (o.home) layer.setAttribute("aria-label", "Home");
     layer.hidden = true;
     if (o.rail === false) layer.dataset.tenfootNorail = "true";
     const view = el("div", "tenfoot-home-view");
@@ -219,8 +228,9 @@
     const titleEl = el("h1", "tenfoot-screen-title");
     head.appendChild(titleEl);
     head.hidden = true;
-    // The banner, as Home's (its parts survive a redraw, so does the selection).
-    const hero = el("section", "tenfoot-hero tenfoot-screen-hero");
+    // The banner. Its parts survive a redraw, and a change of slide, so the
+    // selection on its buttons does.
+    const hero = el("section", o.home ? "tenfoot-hero" : "tenfoot-hero tenfoot-screen-hero");
     hero.hidden = true;
     const heroArt = el("img", "tenfoot-hero-art");
     heroArt.alt = "";
@@ -235,8 +245,23 @@
     const heroMeta = el("p", "tenfoot-hero-meta");
     const heroText = el("p", "tenfoot-hero-text");
     const heroActions = el("div", "tenfoot-hero-actions");
-    heroBody.append(heroKicker, heroTitle, heroMeta, heroText, heroActions);
+    // Where we are among a banner's slides (Home's featured).
+    const heroDots = el("div", "tenfoot-hero-dots");
+    heroDots.setAttribute("aria-hidden", "true");
+    heroDots.hidden = true;
+    heroBody.append(heroKicker, heroTitle, heroMeta, heroText, heroActions, heroDots);
     hero.append(heroArt, heroScrim, heroDock, heroBody);
+    // The next slide, beside the first button: OK steps on, and the selection
+    // stays on it so OK can keep going.
+    const nextSlideBtn = el("button", "tenfoot-hero-button tenfoot-hero-next");
+    nextSlideBtn.type = "button";
+    nextSlideBtn.setAttribute("aria-label", "Next featured");
+    nextSlideBtn.textContent = "›";
+    nextSlideBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      stepSlide(1);
+    });
     // The search box: Leanback's own, typed into; its text goes on to the
     // site's box, whose results come back as a change to the page.
     const fieldBox = el("div", "tenfoot-screen-field");
@@ -259,7 +284,7 @@
     const pillRow = el("div", "tenfoot-season-row tenfoot-screen-pills");
     pillRow.setAttribute("role", "list");
     pillRow.hidden = true;
-    const sectionsBox = el("div", "tenfoot-screen-sections");
+    const sectionsBox = el("div", o.home ? "tenfoot-rows" : "tenfoot-screen-sections");
     const emptyBox = el("p", "tenfoot-screen-empty");
     emptyBox.hidden = true;
     const moreBox = el("p", "tenfoot-home-more");
@@ -271,12 +296,14 @@
     doc.documentElement.appendChild(layer);
 
     let model = null;
+    let slide = 0;
     let actionEls = new Map(); // key → element
     let pillEls = new Map();
-    const sectionEls = new Map(); // key → {box, titleEl, subEl, grid, cards: Map}
+    const sectionEls = new Map(); // key → {box, layout, grid|track, cards: Map, links, items, columns}
     let rows = []; // [{key, kind: "field"|"actions"|"pills"|"cards", section, els, keys}]
     let pos = { row: 0, col: 0 };
     let started = false;
+    let awaitingStart = false; // started on a card only because model.start was not drawn yet
     const memory = new Map(); // row key → item key
     let more = null; // {count, deadline}
     let moreTimer = 0;
@@ -292,17 +319,32 @@
     }
 
     // A card's progress: what the reader says, else Leanback's own reading,
-    // else Dropout's bar (as on Home: one merged reading per video).
-    function withProgress(it) {
-      if (it.fraction !== undefined) return o.badges === false ? Object.assign({}, it, { badge: "" }) : it;
+    // else Dropout's bar (one merged reading per video).
+    function withProgress(it, section) {
+      const noBadge = o.badges === false || (section && section.badges === false);
+      if (it.fraction !== undefined) return noBadge ? Object.assign({}, it, { badge: "" }) : it;
       const s = store();
       const key = H ? H.keyOf(it.href) : null;
       const mine = key && s.entries[key] ? H.progressOf(s, key) : null;
       const pct = typeof it.percent === "number" ? it.percent : null;
       const fraction = mine !== null ? mine : pct !== null ? pct / 100 : null;
       const extra = { fraction };
-      if (o.badges === false) extra.badge = "";
+      if (noBadge) extra.badge = "";
       return Object.assign({}, it, extra);
+    }
+
+    // The banner as shown: the model's, or its slide on screen.
+    function heroView() {
+      const h = model && model.hero;
+      if (!h || !Array.isArray(h.slides)) return h || null;
+      if (!h.slides.length) return null;
+      if (slide >= h.slides.length) slide = 0;
+      return Object.assign({}, h, h.slides[slide]);
+    }
+
+    function slideCount() {
+      const h = model && model.hero;
+      return h && Array.isArray(h.slides) ? h.slides.length : 0;
     }
 
     // -- drawing --------------------------------------------------------------
@@ -311,14 +353,17 @@
       const text = o.title || (model && model.head) || "";
       setText(titleEl, text);
       head.hidden = !text || Boolean(model && model.hero);
-      setAttr(layer, "aria-label", text || (model && model.hero ? model.hero.title : null));
+      if (!o.home) setAttr(layer, "aria-label", text || (model && model.hero ? (heroView() || {}).title : null));
     }
 
     function renderHero() {
-      const h = model && model.hero;
+      const h = heroView();
       hero.hidden = !h;
       if (!h) {
+        for (const node of actionEls.values()) node.remove();
         actionEls = new Map();
+        if (nextSlideBtn.parentNode) nextSlideBtn.remove();
+        heroDots.hidden = true;
         return;
       }
       if (h.image && heroArt.getAttribute("src") !== h.image) heroArt.setAttribute("src", h.image);
@@ -333,7 +378,8 @@
       setText(heroText, h.description);
       heroText.hidden = !h.description;
       const next = new Map();
-      (h.actions || []).forEach((a, i) => {
+      const order = [];
+      (h.actions || []).forEach((a) => {
         const tag = a.href ? "A" : "BUTTON";
         let node = actionEls.get(a.key);
         if (!node || node.tagName !== tag) {
@@ -344,10 +390,12 @@
             node.addEventListener("click", (e) => {
               e.preventDefault();
               e.stopPropagation();
-              const act = model && model.hero ? (model.hero.actions || []).find((x) => x.key === node.dataset.tenfootAction) : null;
-              if (act && act.proxy) {
+              const cur = heroView();
+              const act = cur ? (cur.actions || []).find((x) => x.key === node.dataset.tenfootAction) : null;
+              const proxy = act && (typeof act.proxy === "function" ? act.proxy() : act.proxy);
+              if (proxy) {
                 try {
-                  act.proxy.click();
+                  proxy.click();
                 } catch (_err) { /* nothing to press */ }
               } else if (act && act.run && typeof o.onRun === "function") o.onRun(act.run);
             });
@@ -359,11 +407,33 @@
         setAttr(node, "data-tenfoot-listed", a.listed ? "true" : null);
         node.classList.toggle("tenfoot-hero-primary", Boolean(a.primary));
         setText(node, a.label);
-        if (heroActions.children[i] !== node) heroActions.insertBefore(node, heroActions.children[i] || null);
         next.set(a.key, node);
+        order.push(node);
       });
       for (const [k, node] of actionEls) if (!next.has(k)) node.remove();
       actionEls = next;
+      // The next slide sits right after the first button, one step from where
+      // the selection lands.
+      const n = slideCount();
+      if (n > 1 && order.length) order.splice(1, 0, nextSlideBtn);
+      else if (nextSlideBtn.parentNode) nextSlideBtn.remove();
+      // Only what is out of place moves: moving an element drops its focus.
+      order.forEach((node, k) => {
+        if (heroActions.children[k] !== node) heroActions.insertBefore(node, heroActions.children[k] || null);
+      });
+      while (heroDots.children.length > n) heroDots.lastChild.remove();
+      while (heroDots.children.length < n) heroDots.appendChild(el("span", "tenfoot-hero-dot"));
+      Array.from(heroDots.children).forEach((d, i) => d.classList.toggle("tenfoot-hero-dot--on", i === slide));
+      heroDots.hidden = n < 2;
+    }
+
+    // The banner's buttons in order, the next-slide button among them.
+    function heroButtons() {
+      return Array.from(heroActions.children);
+    }
+
+    function heroKeys() {
+      return heroButtons().map((b) => (b === nextSlideBtn ? "next-slide" : b.dataset.tenfootAction));
     }
 
     function renderPills() {
@@ -415,32 +485,60 @@
       emptyBox.hidden = !text || cardCount() > 0;
     }
 
+    // A section of cards: a grid of its columns (the default), or a row that
+    // slides sideways (Home's rows).
+    function makeSection(layout) {
+      if (layout === "row") {
+        const box = el("section", "tenfoot-row");
+        const titleBox = el("h2", "tenfoot-row-title");
+        const clip = el("div", "tenfoot-row-view");
+        const track = el("div", "tenfoot-track");
+        clip.appendChild(track);
+        box.append(titleBox, clip);
+        return { layout, box, titleBox, track, holder: track, cards: new Map(), links: [], items: [], x: 0 };
+      }
+      const box = el("section", "tenfoot-screen-section");
+      const titleBox = el("h2", "tenfoot-row-title tenfoot-screen-section-title");
+      const name = el("span", "tenfoot-screen-section-name");
+      const sub = el("span", "tenfoot-screen-section-sub");
+      titleBox.append(name, sub);
+      const grid = el("div", "tenfoot-screen-grid");
+      box.append(titleBox, grid);
+      return { layout: "grid", box, titleBox, name, sub, grid, holder: grid, cards: new Map(), links: [], items: [] };
+    }
+
     function renderSections() {
       const list = (model && model.sections) || [];
       const seen = new Set();
       let prev = null;
       for (const s of list) {
+        const layout = s.layout === "row" ? "row" : "grid";
         let sec = sectionEls.get(s.key);
+        if (sec && sec.layout !== layout) {
+          sec.box.remove();
+          sec = null;
+        }
         if (!sec) {
-          const box = el("section", "tenfoot-screen-section");
-          const titleBox = el("h2", "tenfoot-row-title tenfoot-screen-section-title");
-          const name = el("span", "tenfoot-screen-section-name");
-          const sub = el("span", "tenfoot-screen-section-sub");
-          titleBox.append(name, sub);
-          const grid = el("div", "tenfoot-screen-grid");
-          box.append(titleBox, grid);
-          sec = { box, titleBox, name, sub, grid, cards: new Map(), links: [] };
+          sec = makeSection(layout);
           sectionEls.set(s.key, sec);
         }
         seen.add(s.key);
-        sec.box.dataset.tenfootSection = s.key;
-        setText(sec.name, s.title || "");
-        setText(sec.sub, s.sub || "");
-        sec.titleBox.hidden = !s.title && !s.sub;
-        const cols = Math.max(1, s.columns || COLUMNS);
-        sec.grid.style.setProperty("--tf-cols", String(cols));
-        sec.columns = cols;
-        sec.links = C().reconcile(doc, sec.grid, sec.cards, s.items.map(withProgress));
+        if (layout === "row") {
+          setAttr(sec.box, "data-tenfoot-row", s.key);
+          setText(sec.titleBox, s.title || "");
+          sec.columns = Infinity;
+        } else {
+          sec.box.dataset.tenfootSection = s.key;
+          setText(sec.name, s.title || "");
+          setText(sec.sub, s.sub || "");
+          sec.titleBox.hidden = !s.title && !s.sub;
+          const cols = Math.max(1, s.columns || COLUMNS);
+          sec.grid.style.setProperty("--tf-cols", String(cols));
+          sec.columns = cols;
+        }
+        sec.title = s.title || "";
+        sec.badges = s.badges;
+        sec.links = C().reconcile(doc, sec.holder, sec.cards, s.items.map((it) => withProgress(it, s)));
         sec.items = s.items;
         const ref = prev ? prev.nextSibling : sectionsBox.firstChild;
         if (sec.box !== ref) sectionsBox.insertBefore(sec.box, ref);
@@ -458,38 +556,49 @@
     function buildRows() {
       const next = [];
       if (model && model.field) next.push({ key: "field", kind: "field", els: [field], keys: ["field"] });
-      if (model && model.hero && actionEls.size) {
-        next.push({ key: "actions", kind: "actions", els: Array.from(actionEls.values()), keys: Array.from(actionEls.keys()) });
-      }
+      if (model && model.hero && actionEls.size) next.push({ key: "actions", kind: "actions", els: heroButtons(), keys: heroKeys() });
       if (pillEls.size) next.push({ key: "pills", kind: "pills", els: Array.from(pillEls.values()), keys: Array.from(pillEls.keys()) });
       for (const s of (model && model.sections) || []) {
         const sec = sectionEls.get(s.key);
         if (!sec) continue;
-        for (let i = 0; i < sec.links.length; i += sec.columns) {
+        const step = Number.isFinite(sec.columns) ? sec.columns : Math.max(1, sec.links.length);
+        for (let i = 0; i < sec.links.length; i += step) {
           next.push({
-            key: `${s.key}:${i / sec.columns}`,
+            key: `${s.key}:${i / step}`,
             kind: "cards",
             section: s.key,
-            els: sec.links.slice(i, i + sec.columns),
-            keys: sec.items.slice(i, i + sec.columns).map((it) => it.key)
+            els: sec.links.slice(i, i + step),
+            keys: sec.items.slice(i, i + step).map((it) => it.key)
           });
         }
       }
       rows = next;
     }
 
+    function layoutOf(row) {
+      const sec = row && row.kind === "cards" ? sectionEls.get(row.section) : null;
+      return sec ? sec.layout : null;
+    }
+
     // -- scrolling ---------------------------------------------------------------
 
-    // The buttons, the seasons and the first row of cards stay where they
-    // are; every row of cards after that slides up to the same place near the
-    // top, as Home's rows do.
+    // Down the screen: the selected row's top goes to the same place near the
+    // top every time. With model.scroll "rows" (Home) that is every row of
+    // cards, and the banner scrolls away; otherwise the buttons, the seasons
+    // and the first row of cards stay where they are. Along a sliding row
+    // (Home's), the selected card sits at the row's left edge until the
+    // row's end is on screen.
     function applyScroll() {
       const row = rows[pos.row];
       const node = row ? row.els[pos.col] : null;
-      const firstCards = rows.findIndex((r) => r.kind === "cards");
+      const sec = row && row.kind === "cards" ? sectionEls.get(row.section) : null;
+      const anchor = Math.round((win.innerHeight || 0) * ROW_ANCHOR);
       let y = 0;
-      if (row && row.kind === "cards" && node && pos.row !== firstCards) {
-        y = Math.max(0, node.parentNode.offsetTop - Math.round((win.innerHeight || 0) * ROW_ANCHOR));
+      if (sec && node) {
+        const target = sec.layout === "row" ? sec.box : node.parentNode;
+        const firstCards = rows.findIndex((r) => r.kind === "cards");
+        if (model && model.scroll === "rows") y = Math.max(0, target.offsetTop - anchor);
+        else if (pos.row !== firstCards) y = Math.max(0, target.offsetTop - anchor);
       }
       const t = y ? `translateY(${-y}px)` : "";
       if (scroller.style.transform !== t) {
@@ -497,6 +606,14 @@
         if (typeof o.onLayout === "function") o.onLayout();
       }
       setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
+      if (sec && sec.layout === "row") {
+        const card = node ? node.parentNode : null;
+        const clip = sec.track.parentNode;
+        const maxX = Math.max(0, sec.track.scrollWidth - (clip ? clip.clientWidth : 0));
+        sec.x = card ? Math.min(Math.max(0, card.offsetLeft), maxX) : 0;
+        const tx = sec.x ? `translateX(${-sec.x}px)` : "";
+        if (sec.track.style.transform !== tx) sec.track.style.transform = tx;
+      }
       // A long row of seasons slides sideways to keep the selection in it.
       if (row && row.kind === "pills" && node) {
         const left = node.offsetLeft - pillRow.offsetLeft;
@@ -508,15 +625,34 @@
 
     // -- more ----------------------------------------------------------------------
 
+    // How much there is, to tell when Dropout has drawn more: the reader's
+    // count (Home: its rows), else the cards.
+    function moreCount() {
+      return model && typeof model.moreCount === "number" ? model.moreCount : cardCount();
+    }
+
     function wantMore() {
       const link = model && model.more;
       if (more || !link || !link.isConnected) return;
-      more = { count: cardCount(), deadline: Date.now() + MORE_TIMEOUT_MS };
+      more = { count: moreCount(), deadline: Date.now() + MORE_TIMEOUT_MS };
       moreBox.hidden = false;
       try {
         link.click();
       } catch (_err) { /* the timer below gives up */ }
-      moreTimer = win.setTimeout(endMore, MORE_TIMEOUT_MS);
+      if (!model.moreScroll) {
+        moreTimer = win.setTimeout(endMore, MORE_TIMEOUT_MS);
+        return;
+      }
+      // The page also loads more on scroll (Home). If the button did nothing,
+      // scroll the page underneath to its end, as a mouse user would.
+      moreTimer = win.setTimeout(() => {
+        moreTimer = 0;
+        if (!more || destroyed) return;
+        try {
+          win.scrollTo(0, doc.documentElement.scrollHeight);
+        } catch (_err) { /* nothing else to try */ }
+        moreTimer = win.setTimeout(endMore, Math.max(0, more.deadline - Date.now()));
+      }, MORE_SCROLL_AFTER_MS);
     }
 
     function endMore() {
@@ -547,17 +683,22 @@
       memory.set(row.kind === "cards" ? `section:${row.section}` : row.key, row.keys[pos.col]);
     }
 
-    function settle() {
+    // `entered`: the selection has just come into this row. A grid asks for
+    // more near its end on every move; a sliding row (Home's) only when it
+    // is entered.
+    function settle(entered) {
       remember();
+      const row = rows[pos.row];
       const lastCards = rows.length - 1;
-      if (rows[pos.row] && rows[pos.row].kind === "cards" && pos.row >= lastCards - PREFETCH_ROWS) wantMore();
+      if (row && row.kind === "cards" && pos.row >= lastCards - PREFETCH_ROWS && (entered || layoutOf(row) !== "row")) wantMore();
       applyScroll();
       const target = current();
       return target ? { el: target } : { edge: "none" };
     }
 
     // Where a row is entered from another: the season on screen or where the
-    // row was left; between rows of cards, the same column.
+    // row was left; between rows of a grid, the same column. A sliding row
+    // not visited yet starts at its first card.
     function entryCol(row, from) {
       if (row.kind === "cards" && from && from.kind === "cards" && from.section === row.section) {
         return Math.min(pos.col, row.els.length - 1);
@@ -565,7 +706,7 @@
       const key = memory.get(row.kind === "cards" ? `section:${row.section}` : row.key);
       let i = key ? row.keys.indexOf(key) : -1;
       if (i < 0 && row.kind === "pills") i = row.els.findIndex((b) => b.getAttribute("aria-current") === "true");
-      if (i < 0 && row.kind === "cards" && from && from.kind === "cards") i = Math.min(pos.col, row.els.length - 1);
+      if (i < 0 && row.kind === "cards" && layoutOf(row) !== "row" && from && from.kind === "cards") i = Math.min(pos.col, row.els.length - 1);
       return Math.max(0, i);
     }
 
@@ -575,6 +716,7 @@
      * enter the rail).
      */
     function move(dir) {
+      awaitingStart = false;
       const row = rows[pos.row];
       if (!row) return initial() ? settle() : { edge: "none" };
       if (dir === "left") {
@@ -599,20 +741,23 @@
         // selected there, in whichever of its rows.
         if (target.kind === "cards" && !(row.kind === "cards" && row.section === target.section)) {
           const key = memory.get(`section:${target.section}`);
-          const at = key ? find(key) : null;
-          if (at && rows[at.row].section === target.section) {
+          const at = key ? find(key, target.section) : null;
+          if (at) {
             pos = at;
-            return settle();
+            return settle(true);
           }
         }
         pos = { row: to, col: entryCol(target, row) };
-        return settle();
+        return settle(true);
       }
       return { edge: "none" };
     }
 
-    function find(key) {
+    // Where a key is, in a given section when one is named (Home has the
+    // same video on more than one row).
+    function find(key, section) {
       for (let r = 0; r < rows.length; r += 1) {
+        if (section && rows[r].section !== section) continue;
         const c = rows[r].keys.indexOf(key);
         if (c >= 0) return { row: r, col: c };
       }
@@ -620,14 +765,17 @@
     }
 
     // Where the selection starts: the model's start, else the first card,
-    // else the first row.
+    // else the first row. A start not drawn yet (Home's banner, which
+    // Dropout draws after its rows) is waited for, unless the viewer moves.
     function initial() {
+      awaitingStart = false;
       if (!rows.length) return false;
       const at = (model && model.start && find(model.start)) || null;
       if (at) pos = at;
       else {
         const firstCards = rows.findIndex((r) => r.kind === "cards");
         pos = { row: firstCards >= 0 ? firstCards : 0, col: 0 };
+        awaitingStart = Boolean(model && model.start && model.waitForStart);
       }
       started = true;
       return true;
@@ -641,6 +789,9 @@
 
     /** Point the model at an element (a click, or focus coming back). */
     function select(target) {
+      if (!target) return false;
+      // Leanback's own focus lands here too; only somewhere else is the viewer.
+      if (target !== current()) awaitingStart = false;
       for (let r = 0; r < rows.length; r += 1) {
         const c = rows[r].els.indexOf(target);
         if (c >= 0) {
@@ -656,15 +807,29 @@
       return rows.length > 0;
     }
 
+    /** The next (1) or previous (-1) slide of the banner, the selection kept on ›. */
+    function stepSlide(delta) {
+      const n = slideCount();
+      if (n < 2) return false;
+      slide = (slide + delta + n) % n;
+      const onHero = rows[pos.row] && rows[pos.row].kind === "actions";
+      renderHero();
+      buildRows();
+      const at = find("next-slide");
+      if (at && onHero) pos = at;
+      memory.set("actions", "next-slide");
+      return true;
+    }
+
     // -- refresh -------------------------------------------------------------------
 
     /**
      * Read the page again and redraw what changed. The selection stays on the
-     * same card or button (by key), or the nearest when it has gone.
+     * same card or button (by key; on the same row first), else the nearest.
      */
     function refresh() {
       if (destroyed) return null;
-      const before = rows[pos.row] ? { key: rows[pos.row].keys[pos.col], row: pos.row, col: pos.col } : null;
+      const before = rows[pos.row] ? { rowKey: rows[pos.row].key, key: rows[pos.row].keys[pos.col], row: pos.row, col: pos.col } : null;
       try {
         model = typeof o.read === "function" ? o.read() : null;
       } catch (err) {
@@ -678,14 +843,10 @@
       renderSections();
       renderEmpty();
       buildRows();
-      if (more && (cardCount() > more.count || !(model && model.more))) endMore();
+      if (more && (moreCount() > more.count || !(model && model.more))) endMore();
       if (model && model.loadAll) wantMore();
-      const at = before && before.key ? find(before.key) : null;
-      if (at) pos = at;
-      else if (before && rows.length) {
-        const r = Math.min(before.row, rows.length - 1);
-        pos = { row: r, col: Math.min(before.col, rows[r].els.length - 1) };
-      }
+      if (awaitingStart && model && model.start && find(model.start)) initial();
+      else if (before) restore(before);
       if (ready()) layer.hidden = false;
       applyScroll();
       observe();
@@ -693,16 +854,29 @@
       return current();
     }
 
-    // Tell the history what Dropout's progress bars say, once per change.
+    function restore(before) {
+      const r = rows.findIndex((x) => x.key === before.rowKey);
+      const c = r >= 0 && before.key !== undefined ? rows[r].keys.indexOf(before.key) : -1;
+      const at = (c >= 0 && { row: r, col: c }) || (before.key !== undefined && find(before.key));
+      if (at) pos = at;
+      else if (r >= 0) pos = { row: r, col: Math.max(0, Math.min(before.col, rows[r].els.length - 1)) };
+      else if (rows.length) {
+        const i = Math.min(before.row, rows.length - 1);
+        pos = { row: i, col: Math.max(0, Math.min(before.col, rows[i].els.length - 1)) };
+      }
+    }
+
+    // Tell the history what Dropout's progress bars say, once per change:
+    // every tile the reader saw (model.observed: Home's hidden rows too),
+    // else every card.
     function observe() {
       if (typeof o.onObserve !== "function" || !H || !model) return;
+      const items = Array.isArray(model.observed) ? model.observed : [].concat(...(model.sections || []).map((s) => s.items));
       const seen = [];
-      for (const s of model.sections || []) {
-        for (const it of s.items) {
-          if (typeof it.percent !== "number") continue;
-          const key = H.keyOf(it.href);
-          if (key) seen.push({ key, url: it.href, percent: it.percent, duration: it.duration, title: it.title, image: it.image });
-        }
+      for (const it of items) {
+        if (typeof it.percent !== "number") continue;
+        const key = H.keyOf(it.href);
+        if (key) seen.push({ key, url: it.href, percent: it.percent, duration: it.duration, title: it.title, image: it.image });
       }
       const sig = seen.map((i) => `${i.key}:${i.percent}`).join("|");
       if (!seen.length || sig === lastObserved) return;
@@ -716,7 +890,23 @@
       layer.remove();
     }
 
+    function homeSnapshot() {
+      const row = rows[pos.row];
+      return {
+        ready: ready(),
+        shown: !layer.hidden,
+        row: !row ? null : row.kind === "actions" ? "hero" : row.section || row.key,
+        col: pos.col,
+        slide,
+        slides: slideCount(),
+        rows: ((model && model.sections) || []).map((s) => ({ key: s.key, title: s.title, count: s.items.length, viewAll: s.items.some((it) => it.viewAll) })),
+        loading: Boolean(more),
+        more: Boolean(model && model.more)
+      };
+    }
+
     function snapshot() {
+      if (o.home) return homeSnapshot();
       const row = rows[pos.row];
       const cards = cardCount();
       const out = {
@@ -770,7 +960,7 @@
     }
 
     return Object.freeze({
-      refresh, move, select, initialTarget, destroy, snapshot,
+      refresh, move, select, initialTarget, destroy, snapshot, stepSlide,
       element: layer,
       // The player's place on an episode's page, while it is drawn.
       get dock() { return model && model.hero && model.hero.dock && !layer.hidden ? heroDock : null; },

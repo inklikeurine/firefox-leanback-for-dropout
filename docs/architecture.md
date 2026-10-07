@@ -37,8 +37,8 @@ scripts, and the background script relays between them.
 | `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `send` (a reply that is always an object). |
 | `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on `storage.local` key `progress`. |
 | `content/page.js` | Top frame of `watch.dropout.tv` | URL → page kind; keys → actions; starts and drives [Leanback's screens](#leanbacks-screens); rail, spatial navigation, ring, hints, theater, Back, load-more, next/previous episode; an episode page's details to the watch history. |
-| `content/home.js` | Top frame: Home and hubs | The [Home screen](#home-contenthomejs). |
-| `content/screen.js` | Top frame: the other pages Leanback draws | A screen drawn from a model; the readers for [collections, search](#collections-and-search) and [an episode's page](#an-episodes-page). |
+| `content/home.js` | Top frame: Home and hubs | [Home](#home-contenthomejs) read off Dropout's page: `readSite()`, `homeModel()`, `rowOverride()`. |
+| `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`); the readers for [collections, search](#collections-and-search) and [an episode's page](#an-episodes-page). |
 | `content/show.js` | Top frame: one-word addresses | [A show's page](#a-shows-page-contentshowjs): show, special or list; `readDetail()`. |
 | `content/cards.js` | Top frame | The card every screen draws, `reconcile()` by key, readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
 | `content/player.js` | Every `embed.vhx.tv` frame (`all_frames: true`) | Registers (`player:hello`); finds the `<video>`; keys while the frame has focus; `player:command`; `player:state`, `player:ended`, progress reports; resume; `startMuted` once per video; **when** the transport bar is open and what Back means then. |
@@ -207,11 +207,12 @@ scrolling is off while a screen is up.
 
 **Which screen.** `page.js` `screenKind()` gives `home` (`browse`, `hub`),
 `page` (`grid`, a `series` list), `detail` (a show or special), `search`,
-`episode` (`video`) or nothing. `startHome()` puts `TenfootHome.createHome()`
-or `TenfootScreen.createScreen()` with the matching reader into `state.home`.
-Both have the same interface, so moves, initial focus, the rail's way back
-and redraws drive every screen alike. A reader that finds nothing means no
-screen: Dropout's page is driven as it is.
+`episode` (`video`) or nothing. `startHome()` puts
+`TenfootScreen.createScreen()` with the matching reader into `state.home`
+(Home's is `TenfootHome.homeModel()`, with `home: true` for its own layer),
+so moves, initial focus, the rail's way back and redraws drive every screen
+alike. A reader that finds nothing means no screen: Dropout's page is driven
+as it is.
 
 **Showing it.** The layer shows only under
 `html[data-tenfoot="on"][data-tenfoot-home="on"]`, and not while a dialog is
@@ -235,8 +236,14 @@ another way (a click, the rail returning).
 
 **Scrolling (TV style).** The selected row's top sits at 7 % of the viewport
 height (`ROW_ANCHOR`), every time; what is above the first row of cards is
-shown from the top. Moves animate 260 ms (not under reduced motion), and the
+shown from the top (on Home, `scroll: "rows"`, every row of cards slides up,
+the banner with it). Moves animate 260 ms (not under reduced motion), and the
 ring follows while they settle.
+
+**Sections** are a grid of `columns` (the default: rows of the grid are rows
+of the selection, ▲ ▼ keep the column) or, with `layout: "row"`, one row
+that slides sideways (Home's): entered where it was left, else on its first
+card. A section may drop its cards' badges (`badges: false`).
 
 **Progress on cards**: the item's own `fraction` when the reader gave one (a
 show's episodes, already merged), else the watch history's, else Dropout's
@@ -254,6 +261,10 @@ free under each row heading, and the selected card's title and subtitle move
 down by it (`.tenfoot-scaled ~`), so neither card nor ring overlaps text.
 
 ### Home (`content/home.js`)
+
+`homeModel()` reads the page into a model `screen.js` draws; the parts below
+that are the engine's (the banner's slides, sliding rows, rows arriving) are
+model options any screen could use.
 
 **Reading.** `readSite()` reads, with the `home` rules, each featured slide
 (title, subtitle, description, picture, link, buttons: a link is copied, a
@@ -273,10 +284,13 @@ never run), only an `https://` string is used, and the result is kept per
 tile and poster (a `WeakMap`). Without one, the poster is used and a warning
 logged once per page.
 
-**The model**: the banner's buttons (row −1), Continue Watching (Home only:
+**The model**: the banner's slides (`hero.slides`), Continue Watching (Home only:
 `TenfootHistory.continueWatching()` over the page's copy of the history),
 then Dropout's rows, with a *View all* card on any row of 12 (the most
-Dropout draws). Rows are keyed by their *View all* link, cards by their link.
+Dropout draws). Rows are keyed by their *View all* link, cards by their link;
+a slide's buttons by their place (`slide-0`…), so the selection survives the
+slide changing. A row's cards are looked up in that row first after a redraw:
+the same video can be on two rows.
 
 **Row tweaks.** `home.rowOverrides` is keyed by the path of a row's *View
 all* link, `home.rowTitleOverrides` by its heading in any case (for a row
@@ -294,7 +308,7 @@ picks up its state (`home.slideListed`). **›** steps to the next slide,
 wrapping, keeping the selection so OK can repeat. The banner arrives after
 Home is up (Continue Watching is ready at once), so a start on a card waits:
 when it arrives the selection moves to *Watch now*, unless the viewer has
-moved (a key or a click).
+moved (a key or a click): `start: "slide-0"` with `waitForStart`.
 
 **Scrolling.** The rows' container moves with `translateY` (0 with the banner
 selected); each row's track with `translateX`, so the selected card sits at
@@ -305,8 +319,10 @@ it stays short, off the banner's picture.
 
 **Rows arriving.** Entering a row two from the end presses Dropout's *Show
 more* (`home.showMore`, present only while there are more). With no new rows
-after 2.5 s the page underneath is scrolled to its end, the site's other
-trigger; after 6 s the attempt ends. "Loading more…" shows meanwhile.
+(`moreCount`) after 2.5 s the page underneath is scrolled to its end, the
+site's other trigger (`moreScroll`); after 6 s the attempt ends. "Loading
+more…" shows meanwhile. Every row read, hidden ones too, reports its bars to
+the history (`observed`).
 
 **When it cannot draw**: if the page holds `home.root` but nothing can be read
 by the initial-focus deadline (10 s), `page.js` removes the layer and drives

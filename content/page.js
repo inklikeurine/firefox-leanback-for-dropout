@@ -2,7 +2,7 @@
 // Leanback for Dropout — page script, top frame of watch.dropout.tv.
 // Classifies the URL into a page kind (sites/dropout.json → routes), then
 // wires keys → actions → spatial navigation, the focus ring, the hint bar,
-// the Home screen (content/home.js), a show's page (content/show.js), the
+// Leanback's screens (content/screen.js, with home.js and show.js), the
 // icon rail, the theater layout, layered Back, load-more, the season a show
 // opens on, the episode details the watch history keeps, and the player relay
 // (the player is a cross-origin iframe; see content/player.js).
@@ -593,12 +593,12 @@
   // Leanback's screens (Home, and the pages it draws) and the rail
   // ---------------------------------------------------------------------------
   //
-  // state.home is Leanback's own screen on this page, when it draws one: Home
-  // (content/home.js) on Home and the hubs, or a screen of content/screen.js
-  // — Browse, My List and the lists (a grid of cards), a show's page and a
-  // special (a banner, the seasons, sections of cards: content/show.js reads
-  // them). Both answer the same calls, so the rest of this file treats them
-  // alike.
+  // state.home is Leanback's own screen on this page, when it draws one, a
+  // screen of content/screen.js: Home and the hubs (content/home.js reads
+  // them), Browse, My List and the lists (a grid of cards), a show's page and
+  // a special (a banner, the seasons, sections of cards: content/show.js reads
+  // them). Every screen answers the same calls, so the rest of this file
+  // treats them alike.
 
   function screenRules() {
     return (state.rules && state.rules.screen) || {};
@@ -622,17 +622,19 @@
 
   function startHome() {
     const which = screenKind();
-    if (state.home || !which) return;
+    if (state.home || !which || !Screen) return;
+    const observe = (items) => send({ type: "history:observe", items });
     if (which === "home") {
+      // Home's rows come after the page is up: the screen starts as soon as
+      // the page holds Home, and fills in as they arrive.
       if (!Home || !qs(homeRules().root)) return;
-      state.home = Home.createHome(document, {
-        rules: homeRules(),
+      state.home = Screen.createScreen(document, {
+        home: true,
+        read: () => Home.homeModel(document, homeRules(), { history: state.history, continueWatching: state.kind === "browse" }),
         history: () => state.history,
-        continueWatching: state.kind === "browse",
-        onObserve: (items) => send({ type: "history:observe", items })
+        onObserve: observe
       });
     } else {
-      if (!Screen) return;
       const readers = {
         detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href, smartOrder: state.settings.seasonStart !== "first" }),
         search: () => Screen.searchModel(document, screenRules().search),
@@ -640,13 +642,12 @@
         page: () => Screen.collectionModel(document, screenRules())
       };
       const read = readers[which];
-      // Nothing to draw from: Dropout's page stays, driven (and on a show
-      // restyled) as before.
+      // Nothing to draw from: Dropout's page stays, driven as it is.
       if (!read()) return;
       // A page the rail links to goes by the rail's name (My List); the New
       // Releases list carries no "New" badges, as its row on Home does not.
       const link = railLinks().find((l) => samePath(l.url, location.href));
-      const tweak = Home && Home.rowOverride ? Home.rowOverride(homeRules(), location.href, "") : null;
+      const tweak = Home ? Home.rowOverride(homeRules(), location.href, "") : null;
       const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
       state.home = Screen.createScreen(document, {
         read,
@@ -654,7 +655,7 @@
         rail: kinds.includes(state.kind),
         badges: !(tweak && tweak.badges === false),
         history: () => state.history,
-        onObserve: (items) => send({ type: "history:observe", items }),
+        onObserve: observe,
         onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current)),
         onFieldDone: () => leaveFieldBelow(),
         onRun: (what) => (what === "player" ? playFromScreen() : false),
