@@ -1151,14 +1151,6 @@
     return stepBack();
   }
 
-  // Back past this page. With pages of the site behind it, that is the
-  // browser's own Back — the same as the remote's BrowserBack, which Firefox
-  // acts on whatever the page does. Leanback keeps the history in the shape
-  // Back should follow (sideways moves replace the page), and a landing on a
-  // sibling carries on by itself (arrive()). With nothing behind it — a tab
-  // opened straight on this page — Back walks up the site instead, replacing
-  // this page rather than adding one: episode → its season → Home → the exit
-  // hook.
   // The newest entry of the trail below this page that is another page, or
   // -1. Only search has entries of its own page below it: one per search the
   // app recorded, which Back goes past all at once.
@@ -1168,6 +1160,14 @@
     return -1;
   }
 
+  // Back past this page. With pages of the site behind it, that is the
+  // browser's own Back — the same as the remote's BrowserBack, which Firefox
+  // acts on whatever the page does. Leanback keeps the history in the shape
+  // Back should follow (sideways moves replace the page), and a landing on a
+  // sibling carries on by itself (arrive()). With nothing behind it — a tab
+  // opened straight on this page — Back walks up the site instead, replacing
+  // this page rather than adding one: episode → its season → Home → the exit
+  // hook.
   function stepBack() {
     const j = backIndex();
     if (j >= 0) return goBackTo(j - (state.trail.length - 1), state.trail[j].url);
@@ -1462,9 +1462,7 @@
       play_pause: { cmd: "toggle" },
       stop: { cmd: "stop" },
       fast_forward: { cmd: "seek", by: 3 * step },
-      rewind: { cmd: "seek", by: -3 * step },
-      subtitle: { cmd: "captions" },
-      mute: { cmd: "mute" }
+      rewind: { cmd: "seek", by: -3 * step }
     };
     const c = commands[action];
     if (!c) return false;

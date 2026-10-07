@@ -166,9 +166,6 @@ async function handleMessage(message, sender) {
       relayToPage(tabId, { type: "player:ready", frameId, videoId: message.videoId || null, title: message.title || "" });
       return { ok: true, tabId, frameId };
     }
-    case "player:bye":
-      if (tabId !== null) await forgetPlayerFrame(tabId);
-      return { ok: true };
     case "player:command":
     case "player:focus":
     case "player:offer":

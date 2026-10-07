@@ -204,7 +204,6 @@
   },
   "player": {
     "video": "video",
-    "captionsButton": "#cc-control-bar-button, [data-cc-button], button.cc, button[aria-label*='aption'], button[aria-label*='ubtitle'], .vp-cc-button",
     "transport": ".vp-controls",
     "transportItems": [
       "button",

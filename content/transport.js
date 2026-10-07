@@ -79,11 +79,18 @@
   /**
    * @param {Document} doc         the player frame's document
    * @param {object}   opts
-   *   video()      -> the current <video>, or null
-   *   rules        -> the site rules' `player` block
-   *   settings     -> the extension settings (ring colour and width)
-   *   onClose()    -> the row closed; ◀ ▶ go back to seeking
-   *   onPageFocus()-> ▼ again: hand the focus to the page below
+   *   video()          -> the current <video>, or null
+   *   rules            -> the site rules' `player` block
+   *   settings()       -> the extension settings
+   *   wake()           -> wake the player's own controls before reading its menu
+   *   onPlayback(p)    -> the viewer paused (true) or played (false)
+   *   nextEpisode()    -> Dropout's up-next {url, title}, or null
+   *   onNext()         -> Play Next Episode
+   *   resumed()        -> the video picked up where it was left (Start Over shows)
+   *   onRestart()      -> Start Over
+   *   onSetting(patch) -> a Leanback setting changed
+   *   onAction(id)     -> "forget": Clear Continue Watching, confirmed
+   *   onClose()        -> the row closed; ◀ ▶ go back to seeking
    */
   function createTransport(doc, opts) {
     const o = opts || {};
@@ -275,10 +282,6 @@
       osdShow.hidden = !i.series;
       osdEpisode.textContent = line;
       osdEpisode.hidden = !line;
-    }
-
-    function titleShown() {
-      return !osd.hidden;
     }
 
     function showTitle(ms) {
@@ -1159,17 +1162,8 @@
     }
 
     return Object.freeze({
-      element: el,
-      panel: panelEl,
-      title: osd,
-      seekIndicator: seekEl,
       seekFeedback,
-      upNext: upEl,
       showUpNext,
-      get upNextShown() { return !upEl.hidden; },
-      get isOpen() { return open; },
-      get peeking() { return peeking; },
-      get titleShown() { return titleShown(); },
       setInfo,
       peek,
       endPeek,
@@ -1180,7 +1174,6 @@
         return true;
       },
       get panelOpen() { return Boolean(panel); },
-      get currentId() { return panel ? `panel:${panel.index}` : ids[index]; },
 
       setStyle(s) {
         if (!s) return;
@@ -1268,26 +1261,9 @@
 
       refresh() {
         if (open) schedulePaint();
-      },
-
-      destroy() {
-        for (const t of [peekTimer, titleTimer, seekTimer]) if (t) clearTimeout(t);
-        peekTimer = 0;
-        titleTimer = 0;
-        seekTimer = 0;
-        unbind(getVideo());
-        el.remove();
-        osd.remove();
-        seekEl.remove();
-        upEl.remove();
-        view.destroy();
-        open = false;
-        panel = null;
-        doc.documentElement.classList.remove("tenfoot-transport-open");
-        doc.documentElement.classList.remove("tenfoot-settings-open");
       }
     });
   }
 
-  globalThis.TenfootTransport = Object.freeze({ createTransport, clock });
+  globalThis.TenfootTransport = Object.freeze({ createTransport });
 })();

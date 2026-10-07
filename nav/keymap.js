@@ -72,7 +72,7 @@
 
   // Actions the page hands to the player frame rather than acting on itself.
   const PLAYER_ACTIONS = new Set([
-    "play_pause", "stop", "next", "previous", "fast_forward", "rewind", "subtitle", "mute"
+    "play_pause", "stop", "next", "previous", "fast_forward", "rewind"
   ]);
 
   // True for an element the user types into: our keys must not steal from it.

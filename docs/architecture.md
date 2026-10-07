@@ -53,9 +53,8 @@ scripts, and the background script relays between them.
 | `sites/dropout.json` | Fetched by the background | [All Dropout knowledge](#sitesdropoutjson). |
 | `options/options.html/.js/.css` | Options page (`open_in_tab`) | The settings form. |
 
-`nav/*` and the message protocol know nothing about Dropout: a second site
-(Twitch) would add a `sites/<site>.json` and a page kind or two, not a second
-engine.
+`nav/*` and the message protocol know nothing about Dropout; everything
+Leanback knows about Dropout's pages is in `sites/dropout.json`.
 
 ## Page kinds
 
@@ -663,8 +662,8 @@ that allows autoplay with sound never hits the revert.
 
 The site also restores a remembered mute for a video already watched,
 sometimes after `loadedmetadata`, so the preference is re-applied on
-`volumechange` for 15 s after the video appears. An explicit choice — the
-`mute` command, or anything taken on the bar — ends that at once.
+`volumechange` for 15 s after the video appears, unless Firefox has already
+refused an unmute (`autoplayBlocked`).
 
 ## Theater layout
 
@@ -699,8 +698,6 @@ directly:
 | `state` | replies with the current state; changes nothing |
 | `toggle` / `play` / `pause` | `play()` / `pause()` |
 | `seek` `{by: ±s}` | `currentTime += by`, clamped to `0…duration`, with the seek feedback |
-| `mute` | toggles `muted` |
-| `captions` | clicks `player.captionsButton`; Vimeo manages the tracks |
 | `stop` | pause, `currentTime = 0`, `page:focus {hint: "back"}` |
 
 `player:state {paused, currentTime, duration, ended, title, upNext}` goes out
@@ -718,15 +715,17 @@ says so.
 All messages are `{type, ...}` objects over `browser.runtime.sendMessage`
 (content → background) and `browser.tabs.sendMessage(tabId, msg, {frameId})`
 (background → one frame). The background records the player frame's
-`sender.frameId` per tab on `player:hello` and forgets it on `player:bye`
-(`pagehide`) and `tabs.onRemoved`.
+`sender.frameId` per tab on `player:hello` and forgets it when a relay to it
+finds no receiving end, and on `tabs.onRemoved`. The player frame sends
+nothing on `pagehide`: a message from a context being destroyed logs an
+error in the parent process.
 
 | Type | From → To | Payload | Purpose |
 | --- | --- | --- | --- |
 | `settings:get` | any → bg | — | reply: the full settings object |
 | `settings:set` | any → bg | `{patch}` | reply: the saved settings object |
 | `rules:get` | content → bg | — | reply: `{ok, rules}`, the parsed `sites/dropout.json` |
-| `player:hello` / `player:bye` | player → bg | `{videoId, title, duration, hasVideo}` | frame registry |
+| `player:hello` | player → bg | `{videoId, title, duration, hasVideo}` | frame registry |
 | `player:ready` | bg → page | `{frameId, videoId, title}` | the player frame registered; the page retries a pending hand-off |
 | `player:command` | page → bg → player | `{cmd, by?}` | [Player control](#player-control-contentplayerjs) |
 | `player:focus` | page → bg → player | — | give the player keyboard focus |

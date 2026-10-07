@@ -792,5 +792,5 @@
     });
   }
 
-  globalThis.TenfootHome = Object.freeze({ createHome, readSite, rowOverride, parseDuration, LAYER_CLASS });
+  globalThis.TenfootHome = Object.freeze({ createHome, readSite, rowOverride, LAYER_CLASS });
 })();

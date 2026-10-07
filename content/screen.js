@@ -805,5 +805,5 @@
     });
   }
 
-  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, episodeModel, typeInto, COLUMNS, LAYER_CLASS });
+  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, episodeModel });
 })();

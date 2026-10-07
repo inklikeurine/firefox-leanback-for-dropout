@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.0] — 2026-10-06
+
+### Removed
+
+- Unused code: actions no remote button sent (subtitles, mute, channel
+  up/down), the focus ring in the player frame, which was never drawn, and
+  a message nothing sent.
+
 ## [0.32.1] — 2026-10-05
 
 ### Changed

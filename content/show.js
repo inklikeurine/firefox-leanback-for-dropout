@@ -611,5 +611,5 @@
     });
   }
 
-  globalThis.TenfootShow = Object.freeze({ createShow, readDetail, layoutOf, readSeasons, seasonTarget, seasonNumber, namesSeason, labelOf, pickUpLabel });
+  globalThis.TenfootShow = Object.freeze({ createShow, readDetail, layoutOf, readSeasons, seasonTarget, seasonNumber, namesSeason, pickUpLabel });
 })();

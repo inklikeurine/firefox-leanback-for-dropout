@@ -12,24 +12,6 @@
   --tenfoot-text: #ffffff;
 }
 
-/* The ring: one fixed element over the focused target. Kept for the up-next
-   offer and anything else in the frame the bar does not own. */
-.tenfoot-ring {
-  position: fixed;
-  box-sizing: border-box;
-  pointer-events: none;
-  z-index: 2147483647;
-  border: var(--tenfoot-ring-width) solid var(--tenfoot-ring-color);
-  border-radius: 8px;
-  box-shadow: 0 0 0 2px var(--tenfoot-edge), inset 0 0 0 2px var(--tenfoot-edge);
-  transition: left 150ms ease-out, top 150ms ease-out, width 150ms ease-out, height 150ms ease-out;
-  margin: 0;
-  padding: 0;
-}
-.tenfoot-ring[hidden] {
-  display: none;
-}
-
 /* Controls that must never appear on a TV: volume (always full, never muted),
    picture-in-picture and the transcript. */
 [data-tenfoot-hide] {
@@ -389,9 +371,6 @@ html.tenfoot-settings-open .tenfoot-seek {
 
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-upnext-ring-fill {
-    transition: none;
-  }
-  .tenfoot-ring {
     transition: none;
   }
 }

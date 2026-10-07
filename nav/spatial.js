@@ -224,5 +224,5 @@
     return { candidates, rows };
   }
 
-  globalThis.TenfootSpatial = Object.freeze({ pick, rowPick, collect, isVisible, centre, EDGE_TOLERANCE, CENTRE_TOLERANCE });
+  globalThis.TenfootSpatial = Object.freeze({ pick, rowPick, collect, isVisible, EDGE_TOLERANCE });
 })();

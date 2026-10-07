@@ -21,7 +21,7 @@
   const TITLE_MS = 4000; // the title when a video starts, and the bar with it on a pause
   const SEEK_SHOW_MS = 1000; // the skip feedback, counted from the last skip
   const UP_NEXT_LEAD_S = 8; // Dropout's card comes this long before the end (OTTData.up_next.offset_seconds)
-  const DEFAULT_RULES = { video: "video", captionsButton: "button[aria-label*='aption'], button[aria-label*='ubtitle']" };
+  const DEFAULT_RULES = { video: "video" };
   const VISIBLE = (el) => Boolean(el) && Boolean(el.getClientRects && el.getClientRects().length);
 
   const root = document.documentElement;
@@ -45,8 +45,6 @@
   const Settings = globalThis.TenfootSettings;
   const Keymap = globalThis.TenfootKeymap;
   const Rules = globalThis.TenfootSiteRules;
-  const Spatial = globalThis.TenfootSpatial;
-  const Ring = globalThis.TenfootFocusRing;
   const Transport = globalThis.TenfootTransport;
   const History = globalThis.TenfootHistory;
 
@@ -59,13 +57,9 @@
     registered: false,
     upNextShowing: false,
     leaving: false,
-    ring: null,
     transport: false,
-    controls: [],
-    controlIndex: 0,
     adjusted: new WeakSet(),
     enforceMuteUntil: 0,
-    volumeTouched: false,
     bar: null,
     userPaused: false,
     autoplayBlocked: false,
@@ -276,21 +270,6 @@
     }
   }
 
-  // Matches within `scope` only. The selectors here are broad substring
-  // matches ("[class*='pip']"), so walking up past the control bar could hit
-  // an ancestor and take the whole bar with it.
-  function matchesWithin(el, list, scope) {
-    const sel = Rules.selector(list);
-    if (!sel || !el || !el.matches) return false;
-    try {
-      if (el.matches(sel)) return true;
-      const hit = el.closest(sel);
-      return Boolean(hit) && hit !== scope && scope.contains(hit);
-    } catch (_err) {
-      return false;
-    }
-  }
-
   // Stamp the controls that must never be seen, so CSS can remove them without
   // the stylesheet needing to know a single site selector. Scoped to inside
   // the control bar, and never the bar itself: a broad selector that matched
@@ -437,25 +416,17 @@
       onAction: (id) => {
         if (id === "forget") send({ type: "history:clear" });
       },
-      onClose: () => leaveTransport(),
-      onPanelFailed: (kind) => console.warn(LOG, "the player offered no", kind, "menu")
+      onClose: () => leaveTransport()
     });
     state.bar.setStyle(state.settings);
     state.bar.setInfo(state.info);
     return state.bar;
   }
 
-  function ring() {
-    if (!state.ring) state.ring = Ring.createRing(document, ringStyle(state.settings));
-    return state.ring;
-  }
-
-  function ringStyle(s) {
-    return { color: s.ringColor, width: s.ringWidth, scale: false };
-  }
-
   // ▼ on a playing video opens the row; ◀ ▶ then walk it, OK takes a control,
-  // back closes it and gives ◀ ▶ back to seeking.
+  // back closes it and gives ◀ ▶ back to seeking. Escape on the page asks
+  // this frame first (player:back), so Back closes the row before anything
+  // else.
   function enterTransport() {
     const live = state.video && state.video.isConnected ? state.video : findVideo();
     const b = live && ownChrome() ? bar() : null;
@@ -466,16 +437,13 @@
     }
     state.transport = true;
     document.documentElement.classList.add(TRANSPORT_CLASS);
-    // Back reaches the browser before this frame can cancel it. The page's
-    // guard entry absorbs that, and the page asks this frame first what Back
-    // means (player:command "back"), which closes the row.
     b.open();
     report();
     return true;
   }
 
-  // This frame keeps no history entry of its own: the page holds the one
-  // guard, and a second here would let one press pop both.
+  // The options button during playback: the bar opens with the settings
+  // panel on it.
   function openSettingsPanel() {
     const live = state.video && state.video.isConnected ? state.video : findVideo();
     const b = live && ownChrome() ? bar() : null;
@@ -501,7 +469,6 @@
     state.transport = false;
     document.documentElement.classList.remove(TRANSPORT_CLASS);
     if (state.bar) state.bar.close();
-    if (state.ring) state.ring.hide();
     const v = state.video;
     if (v) {
       try {
@@ -530,7 +497,6 @@
       upNextShowing: offerShowing(),
       upNextCard: state.upNext.shown,
       transport: state.transport,
-      transportControls: state.transport ? state.controls.length : 0,
       resumed: state.resume.resumed,
       focused: typeof document.hasFocus === "function" ? document.hasFocus() : false
     };
@@ -576,19 +542,6 @@
         const max = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : Infinity;
         v.currentTime = Math.max(0, Math.min(max, (Number(v.currentTime) || 0) + by));
         seekFeedback(by);
-        break;
-      }
-      case "mute":
-        if (!v) return noVideo();
-        // An explicit choice, so stop holding the startMuted preference — it
-        // would otherwise undo this within its enforcement window.
-        state.volumeTouched = true;
-        v.muted = !v.muted;
-        break;
-      case "captions": {
-        const b = qs(state.rules.captionsButton);
-        if (!b) return { ok: false, error: "No captions control", state: currentState() };
-        b.click();
         break;
       }
       case "stop":
@@ -655,12 +608,6 @@
       case "stop":
         execute("stop");
         return true;
-      case "subtitle":
-        execute("captions");
-        return true;
-      case "mute":
-        execute("mute");
-        return true;
       case "down":
         // Into the player's own transport row; it falls back to leaving for
         // the page when there is no control bar to be found.
@@ -669,10 +616,8 @@
         send({ type: "page:focus", hint: "back" });
         return true;
       case "next":
-      case "channel_down":
         return playNext();
       case "previous":
-      case "channel_up":
         send({ type: "page:episode", delta: -1 });
         return true;
       case "menu":
@@ -747,7 +692,6 @@
     }
     leaveTransport();
     clearStamps();
-    if (state.ring) state.ring.hide();
   }
 
   // ---------------------------------------------------------------------------
@@ -918,8 +862,6 @@
     send({ type: "player:state", state: currentState() });
   }
 
-  // The site may set muted while it is still setting the video up, so apply
-  // the preference again once the metadata is in.
   // Playback has started, which is the first moment turning the sound on can
   // work without costing the autoplay that just succeeded.
   function onPlay(e) {
@@ -929,7 +871,7 @@
       titleOnStart(v);
       if (state.bar) state.bar.endPeek("pause");
     }
-    if (v && state.unmuteWhenPlaying && !state.volumeTouched && !state.autoplayBlocked) {
+    if (v && state.unmuteWhenPlaying && !state.autoplayBlocked) {
       // A beat after playback starts, so the autoplay is established before we
       // touch the sound; unmuting in the same tick can still be refused.
       setTimeout(() => {
@@ -940,6 +882,8 @@
     report();
   }
 
+  // The site may set muted while it is still setting the video up, so apply
+  // the preference again once the metadata is in.
   function onLoadedMetadata() {
     applyResume();
     const v = state.video;
@@ -961,10 +905,6 @@
     report();
   }
 
-  // Dropout starts videos muted — Firefox blocks autoplay with sound, so the
-  // site falls back to muted autoplay. Nothing here ever muted a video; this
-  // undoes that default once per video, unless the user asked for muted.
-  // Applied once, so a deliberate mute from the transport row sticks.
   // Dropout starts videos muted because that is the only way Firefox lets them
   // autoplay. Unmuting therefore has to be done carefully: an unmute without
   // user activation makes Firefox stop the video, and if we simply insist we
@@ -1052,7 +992,7 @@
   // stick. Cheap to attempt, and does nothing once the sound is already on.
   function unmuteOnGesture() {
     const v = state.video;
-    if (!v || state.volumeTouched || Boolean(state.settings.startMuted) || !v.muted) return;
+    if (!v || Boolean(state.settings.startMuted) || !v.muted) return;
     if (v.paused || v.ended) {
       state.unmuteWhenPlaying = true; // nothing to unmute yet; when it plays
       return;
@@ -1069,16 +1009,15 @@
 
   // A video you have watched before comes back muted: the site restores its
   // own remembered preference, sometimes well after the metadata has loaded.
-  // Hold the setting for a few seconds after the video appears, then stop —
-  // anything after that is the user's doing and is left alone, as is anything
-  // they do on the transport row.
+  // Hold the setting for a few seconds after the video appears, then stop:
+  // anything after that is the user's doing and is left alone.
   function onVolumeChange() {
     const v = state.video;
     if (!v) return;
     // Re-apply while the site is still setting up (it restores a remembered
     // mute for a video you have seen before), but never while Firefox has
     // shown us it will stop playback for it.
-    if (!state.volumeTouched && !state.autoplayBlocked && Date.now() < state.enforceMuteUntil) applyMutePreference(v, true);
+    if (!state.autoplayBlocked && Date.now() < state.enforceMuteUntil) applyMutePreference(v, true);
     report();
   }
 
@@ -1199,7 +1138,6 @@
           clearStamps();
         }
       }
-      if (state.ring) state.ring.setStyle(ringStyle(s));
       if (state.bar) {
         state.bar.setStyle(s);
         state.bar.refresh();

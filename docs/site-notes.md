@@ -613,7 +613,6 @@ logged-in page is committed.
 | `series.show.actionsBox` | `.collection-actions` | 1 on a show and a special |
 | `series.show.episodeNumber` | `.media-episode` | one per episode ("Episode 1") |
 | `player.transport` | `.vp-controls` | 1 |
-| `player.captionsButton` | `#cc-control-bar-button` | 1 |
 | `player.upNextOverlay` | `.vp-outro-wrapper`, `.ott-up-next` | 1 each in the frame, near the end |
 | `player.upNextButton` | `a.ott-up-next-thumb-link` | 1 on Dropout's card: plays the next episode |
 | `player.upNextHide` | `button.ott-up-next-hide` | 1 on Dropout's card, before the play link |
