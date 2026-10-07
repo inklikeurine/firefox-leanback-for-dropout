@@ -6,7 +6,8 @@
 
 - Inside, not on screen: Home and every other screen are drawn by one
   engine, Leanback's settings list is one piece shared by the page and the
-  playback panel, and helpers that were copied between files are shared.
+  playback panel, the page script is split into four files, and helpers
+  that were copied between files are shared.
   Home, the screens and both settings panels look and behave as before.
 
 ### Removed

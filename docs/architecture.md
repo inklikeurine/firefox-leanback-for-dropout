@@ -36,7 +36,10 @@ scripts, and the background script relays between them.
 | `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`). |
 | `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `send` (a reply that is always an object). |
 | `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on `storage.local` key `progress`. |
-| `content/page.js` | Top frame of `watch.dropout.tv` | URL → page kind; keys → actions; starts and drives [Leanback's screens](#leanbacks-screens); rail, spatial navigation, ring, hints, theater, Back, load-more, next/previous episode; an episode page's details to the watch history. |
+| `content/page.js` | Top frame of `watch.dropout.tv` | The page script: URL → page kind; keys → actions; focus, spatial navigation, ring, hints, load-more, dialogs, the two-step `<select>`, the settings panel, messages, life cycle. Its three parts below install into one shared context (`P`: its `state` and the functions the parts call), each calling the others through it. |
+| `content/page-back.js` | Top frame | [Back](#back-contentpage-backjs--navtrailjs) and every navigation the page script starts; the trail. |
+| `content/page-video.js` | Top frame | An episode's page: theater, [docking](#an-episodes-page), the player hand-off, next/previous episode, the up-next offer, autoplay, media keys, the episode's details to the watch history. |
+| `content/page-screens.js` | Top frame | Which [screen](#leanbacks-screens) a page gets; starting, stopping and redrawing it; moves on it; [the rail](#the-rail-navrailjs); the season a show opens on. |
 | `content/home.js` | Top frame: Home and hubs | [Home](#home-contenthomejs) read off Dropout's page: `readSite()`, `homeModel()`, `rowOverride()`. |
 | `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`); the readers for [collections, search](#collections-and-search) and [an episode's page](#an-episodes-page). |
 | `content/show.js` | Top frame: one-word addresses | [A show's page](#a-shows-page-contentshowjs): show, special or list; `readDetail()`. |
@@ -45,7 +48,7 @@ scripts, and the background script relays between them.
 | `content/transport.js` | Every `embed.vhx.tv` frame | Draws the [transport bar, title, up-next card and settings panel](#the-transport-bar-and-the-settings-panel); drives the `<video>`. Site-agnostic apart from the `player` rules it is handed. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | With *skip marketing site* on, `/` → `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Directional focus search, row-aware moves, focus memory. |
-| `nav/trail.js` | Top frame | The trail behind [Back](#back-contentpagejs--navtrailjs); `sessionStorage` only. |
+| `nav/trail.js` | Top frame | The trail behind [Back](#back-contentpage-backjs--navtrailjs); `sessionStorage` only. |
 | `nav/rail.js` | Top frame | The [rail](#the-rail-navrailjs): its buttons, remembered position, current entry. `page.js` supplies the entries and their actions. |
 | `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). |
 | `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free. Styled by `content/panel.css`. |
@@ -96,14 +99,14 @@ screen is only redrawn.
   `player.js` focuses the `<video>` (or the player root). Out: `player.js`
   sends `page:focus` with a hint (`below` | `back`); `page.js` picks the
   target.
-- `BrowserBack` is Firefox's ([Back](#back-contentpagejs--navtrailjs));
+- `BrowserBack` is Firefox's ([Back](#back-contentpage-backjs--navtrailjs));
   `BrowserHome` is never mapped
   ([keymap.md](./keymap.md#keys-the-browser-or-the-desktop-own)).
 - Pointer: `mouseover`/`mousemove` never move focus; while Leanback is on, an
   injected rule hides the site's hover tooltips (`.tooltip`) so a drifting
   air-mouse doesn't litter the screen. Clicks are the site's.
 
-## Back (`content/page.js` + `nav/trail.js`)
+## Back (`content/page-back.js` + `nav/trail.js`)
 
 Back is the browser's Back. Leanback never cancels it or puts history entries
 in its way; it keeps the history worth following.
@@ -157,8 +160,8 @@ season never sets it, so Season 1 stays blank until the new page loads.
 
 A screen not ready when the page is set up (Home's rows come later) also sets
 `html[data-tenfoot-pending]`: `content/page.css` keeps `<body>` hidden under
-it (the theater root excepted) until `refreshHome()` finds the screen ready or
-`stopHome()` gives up.
+it (the theater root excepted) until `refreshScreen()` finds the screen ready or
+`stopScreen()` gives up.
 
 ## Spatial navigation (`nav/spatial.js`)
 
@@ -205,10 +208,10 @@ Dropout's page stays underneath, rendered and never moved, re-parented or
 rewritten; Leanback reads it, its buttons press Dropout's, and the page's
 scrolling is off while a screen is up.
 
-**Which screen.** `page.js` `screenKind()` gives `home` (`browse`, `hub`),
+**Which screen.** `page-screens.js` `screenKind()` gives `home` (`browse`, `hub`),
 `page` (`grid`, a `series` list), `detail` (a show or special), `search`,
-`episode` (`video`) or nothing. `startHome()` puts
-`TenfootScreen.createScreen()` with the matching reader into `state.home`
+`episode` (`video`) or nothing. `startScreen()` puts
+`TenfootScreen.createScreen()` with the matching reader into `state.screen`
 (Home's is `TenfootHome.homeModel()`, with `home: true` for its own layer),
 so moves, initial focus, the rail's way back and redraws drive every screen
 alike. A reader that finds nothing means no screen: Dropout's page is driven
@@ -346,7 +349,7 @@ that click Dropout's (`proxy`: *Trailer*, *My List*, which carries
 Pills are `button.tenfoot-season` in a `.tenfoot-season-row` (styled by
 the end of `content/home.css`), the current one `aria-current`, sliding sideways to
 keep the selection in view; OK on one with a `proxy` (a search filter)
-presses Dropout's, else calls `onPill` (`page.js` `onSeasonChosen()`). Each
+presses Dropout's, else calls `onPill` (`page-screens.js` `onSeasonChosen()`). Each
 section is its title (name, count) over a CSS grid of `--tf-cols` columns at
 Home's card size.
 
@@ -385,7 +388,7 @@ section is a **show**, a movie section a **special**, a collection section a
 `readDetail()` and drawn by `screen.js`.
 
 **Opening on a season.** Dropout opens every show on Season 1 at the bare
-address. Before anything else, `page.js` `openSeason()` reads the seasons
+address. Before anything else, `page-screens.js` `openSeason()` reads the seasons
 and, when the address names none, goes to the newest (`seasonStart`:
 `latest`, or `first`) with `goSideways()`. An address naming its season
 (`/<show>/season:N`) is never moved, so a picked season, or one reached by
@@ -449,7 +452,7 @@ Its hero has `dock: true`: in place of a picture, an empty 16:9 box
 (`.tenfoot-screen-player`) beside the details, exposed as the screen's
 `dock`.
 
-**Docking.** `page.js` `syncDock()` sets `html.tenfoot-docked` while the box
+**Docking.** `page-video.js` `syncDock()` sets `html.tenfoot-docked` while the box
 exists and writes its rect to `--tf-dock-x/y/w/h`; `content/page.css` makes
 the theater root (`#watch-player`) `position: fixed` there, above the layer
 (z-index 2147481500 over 2147481000), mount and frame filling it. Style only,
@@ -464,7 +467,7 @@ in `goBack()`) goes through `focusScreen()`: the screen's current button or
 card, at first *Play*. ▲ from the top row (`{edge: "up"}`) is
 `enterPlayer()`. *Play* is `playFromScreen()`: `enterPlayer()`, plus
 `player:command play` when the last state said paused. While the player has
-the keys or theater is on, a redraw never takes the focus (`refreshHome()`),
+the keys or theater is on, a redraw never takes the focus (`refreshScreen()`),
 nor is focus in the theater root (mount, frame) taken back (`onFocusIn()`).
 
 ## The rail (`nav/rail.js`)
@@ -479,7 +482,7 @@ the rail is first entered; after that the rail remembers its own position. A
 page is matched by its link before its kind: `/my-list` is a `grid` page but
 lights My List, and the rail's Browse opens Browse from it.
 
-`page.js` makes the rail a focus region with memory on both sides:
+`page-screens.js` makes the rail a focus region with memory on both sides:
 `enterRail()` stores where the selection left (`railReturn`); while
 `railActive`, ▲ ▼ move without wrapping, OK takes the entry, ◀ is absorbed,
 ▶ or Back call `leaveRail()`, which returns to `railReturn` (telling the
@@ -708,7 +711,7 @@ directly:
 on `play`/`pause`/`ended`/`durationchange` and at most every 250 ms from
 `timeupdate`; `upNext` is `OTTData.up_next`.
 
-Next/previous episode (`page.js` `goEpisode()`): next takes the site's
+Next/previous episode (`page-video.js` `goEpisode()`): next takes the site's
 up-next overlay on the page when it is up, else `upNext.url`; otherwise both
 use the episode order captured from the series page (`captureEpisodeOrder()`,
 `sessionStorage`, when the viewer came from there). With neither, a notice
@@ -770,7 +773,9 @@ The parts of `manifest.json` (MV2) that are not obvious:
   `TenfootCommon`, `TenfootHistory`, `TenfootSettingsMenu`,
   `TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
   `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootCards`,
-  `TenfootHome`, `TenfootScreen` and `TenfootShow` to `content/page.js`.
+  `TenfootHome`, `TenfootScreen`, `TenfootShow` and the page script's
+  parts (`TenfootPageBack`, `TenfootPageVideo`, `TenfootPageScreens`) to
+  `content/page.js`, which installs its parts before it starts.
 - The page's `css`: `content/page.css` (ring, hints, theater, the docked
   player), `content/panel.css` (the settings panel; also in the player
   frame's list), and `content/home.css` (the screens, the rail, the pills). All but the panel's

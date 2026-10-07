@@ -10,14 +10,6 @@
   const SCALE_VAR = "--tenfoot-zoom"; // percent; content/page.css does the maths
   const SETTLE_MS = 600; // keep following a target while smooth scroll settles
 
-  function reducedMotion(win) {
-    try {
-      return Boolean(win.matchMedia && win.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    } catch (_err) {
-      return false;
-    }
-  }
-
   /**
    * @param {Document} doc
    * @param {{color?: string, width?: number, scale?: boolean}} [style]

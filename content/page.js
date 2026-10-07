@@ -2,33 +2,30 @@
 // Leanback for Dropout — page script, top frame of watch.dropout.tv.
 // Classifies the URL into a page kind (sites/dropout.json → routes), then
 // wires keys → actions → spatial navigation, the focus ring, the hint bar,
-// Leanback's screens (content/screen.js, with home.js and show.js), the
-// icon rail, the theater layout, layered Back, load-more, the season a show
-// opens on, the episode details the watch history keeps, and the player relay
-// (the player is a cross-origin iframe; see content/player.js).
+// load-more, dialogs, the two-step <select>, Leanback's settings panel, the
+// page's messages and its life cycle. Three parts of it are files of their
+// own, installed into one shared context (P) before it starts:
+// content/page-back.js (Back and every navigation), content/page-video.js
+// (an episode's page and the player relay; the player is a cross-origin
+// iframe, see content/player.js) and content/page-screens.js (Leanback's
+// screens and the rail).
 // Idempotent: html[data-tenfoot] marks a document that is already wired.
 
 (function () {
   const API = typeof browser !== "undefined" ? browser : chrome;
   const LOG = "[leanback-for-dropout]";
   const MARK = "tenfoot";
-  const THEATER_CLASS = "tenfoot-theater";
-  const DOCK_CLASS = "tenfoot-docked";
-  const DOCK_FOLLOW_MS = 400; // how long the player follows the screen sliding
-  const EPISODES_KEY = "tenfoot.episodes";
   const MOVE_THROTTLE_MS = 80;
   const MUTATION_DEBOUNCE_MS = 100;
   const INITIAL_FOCUS_TIMEOUT_MS = 10000;
   const LOAD_MORE_TIMEOUT_MS = 6000;
-  const AUTOPLAY_DELAY_MS = 1200;
   const HINT_PLAYBACK_MS = 3000;
   const NUDGE_STEP_MS = 260;
   const MAX_NUDGES = 8;
   const ARROW_SCOPE_DEPTH = 3;
   const MENU_REFOCUS_LIMIT = 4;
-  const HOME_REFOCUS_LIMIT = 4;
+  const SCREEN_REFOCUS_LIMIT = 4;
   const NOTICE_MS = 3000;
-  const BACK_FALLBACK_MS = 800; // how long Firefox gets to act on BrowserBack before Leanback does
 
   if (window.top !== window) return;
   const root = document.documentElement;
@@ -43,21 +40,7 @@
   const Ring = globalThis.TenfootFocusRing;
   const Panel = globalThis.TenfootPanel;
   const SettingsMenu = globalThis.TenfootSettingsMenu;
-  const Rail = globalThis.TenfootRail;
-  const Home = globalThis.TenfootHome;
-  const Screen = globalThis.TenfootScreen;
   const History = globalThis.TenfootHistory;
-  const Trail = globalThis.TenfootTrail;
-  const Show = globalThis.TenfootShow;
-
-  // The rail's own entries, top to bottom. The site's links (rules →
-  // rail.links) come after Browse, and the gear sits at the foot.
-  const RAIL_ITEMS = [
-    { id: "search", label: "Search", icon: "search" },
-    { id: "home", label: "Home", icon: "home" },
-    { id: "browse", label: "Browse", icon: "grid" }
-  ];
-  const RAIL_SETTINGS = { id: "settings", label: "Leanback settings", icon: "gear", end: true };
 
   const state = {
     settings: Settings.normalize(null),
@@ -84,7 +67,7 @@
     engaged: null,
     engagedIndex: 0,
     home: null,
-    homeRefocus: 0,
+    screenRefocus: 0,
     dockUntil: 0,
     dockFrame: 0,
     historyLength: 0,
@@ -108,6 +91,54 @@
     nudgeTimer: 0
   };
 
+  // The context the page script's parts share: this file's state and the
+  // functions the others call, then each part installs its own.
+  const P = { state };
+  Object.assign(P, {
+    send, dispatch, showHints, click, firstVisible, collect, currentEl, focusEl,
+    goBack, samePath, openMenu, openSettings, leaveFieldBelow
+  });
+  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens]) part.install(P);
+  // From page-back.js.
+  const goSideways = (...a) => P.goSideways(...a);
+  const goTop = (...a) => P.goTop(...a);
+  const stepBack = (...a) => P.stepBack(...a);
+  const leaveSearch = (...a) => P.leaveSearch(...a);
+  const browserBack = (...a) => P.browserBack(...a);
+  const clearBackFallback = (...a) => P.clearBackFallback(...a);
+  const arrive = (...a) => P.arrive(...a);
+  const recordTrail = (...a) => P.recordTrail(...a);
+  const followSearchHistory = (...a) => P.followSearchHistory(...a);
+  // From page-video.js.
+  const markVideoElements = (...a) => P.markVideoElements(...a);
+  const syncDock = (...a) => P.syncDock(...a);
+  const focusScreen = (...a) => P.focusScreen(...a);
+  const setTheater = (...a) => P.setTheater(...a);
+  const enterPlayer = (...a) => P.enterPlayer(...a);
+  const leavePlayer = (...a) => P.leavePlayer(...a);
+  const captureEpisodeOrder = (...a) => P.captureEpisodeOrder(...a);
+  const sendHistoryMeta = (...a) => P.sendHistoryMeta(...a);
+  const episodeDetails = (...a) => P.episodeDetails(...a);
+  const syncUpNextOffer = (...a) => P.syncUpNextOffer(...a);
+  const goEpisode = (...a) => P.goEpisode(...a);
+  const onPlayerEnded = (...a) => P.onPlayerEnded(...a);
+  const playerAction = (...a) => P.playerAction(...a);
+  // From page-screens.js.
+  const homeRules = (...a) => P.homeRules(...a);
+  const screenKind = (...a) => P.screenKind(...a);
+  const startScreen = (...a) => P.startScreen(...a);
+  const stopScreen = (...a) => P.stopScreen(...a);
+  const refreshScreen = (...a) => P.refreshScreen(...a);
+  const moveScreen = (...a) => P.moveScreen(...a);
+  const railShown = (...a) => P.railShown(...a);
+  const railPage = (...a) => P.railPage(...a);
+  const setupRail = (...a) => P.setupRail(...a);
+  const enterRail = (...a) => P.enterRail(...a);
+  const dispatchInRail = (...a) => P.dispatchInRail(...a);
+  const openSeason = (...a) => P.openSeason(...a);
+  const setPending = (...a) => P.setPending(...a);
+  const inScreen = (...a) => P.inScreen(...a);
+
   // ---------------------------------------------------------------------------
   // helpers
   // ---------------------------------------------------------------------------
@@ -125,80 +156,6 @@
       return true;
     } catch (_err) {
       return false;
-    }
-  }
-
-  function sessionStore() {
-    try {
-      return window.sessionStorage;
-    } catch (_err) {
-      return null;
-    }
-  }
-
-  // Every page Leanback opens goes through here, and says how: "push" (one
-  // level down), "replace" (sideways). The next page reads that to keep the
-  // trail — and so the browser's history — in the shape Back should follow.
-  function navigate(url, how) {
-    let target;
-    try {
-      target = new URL(url, location.href).href;
-    } catch (_err) {
-      console.warn(LOG, "bad navigation target", url);
-      return true;
-    }
-    state.lastNavigation = target;
-    if (Trail) Trail.setIntent(sessionStore(), how, target);
-    if (how === "replace") location.replace(target);
-    else location.assign(target);
-    return true;
-  }
-
-  function go(url) {
-    return navigate(url, "push");
-  }
-
-  // Sideways: another episode, another season, another top-level page. It
-  // replaces this page in the history, so Back skips it.
-  function goSideways(url) {
-    return navigate(url, "replace");
-  }
-
-  // Back to an earlier page of the trail through the history itself, so the
-  // pages above it are left behind rather than piled on. `delta` < 0.
-  function goBackTo(delta, url) {
-    state.lastNavigation = `history:${delta}`;
-    if (Trail) Trail.setIntent(sessionStore(), "back", new URL(url, location.href).href);
-    history.go(delta);
-    return true;
-  }
-
-  function homeUrl() {
-    return new URL((state.rules && state.rules.browseUrl) || "/browse", location.href).href;
-  }
-
-  // Home: back down the history to it when it is behind this page, else open it.
-  function goHome() {
-    const j = Trail ? Trail.indexBelow(state.trail, homeUrl()) : -1;
-    if (j >= 0) return goBackTo(j - (state.trail.length - 1), homeUrl());
-    return go(homeUrl());
-  }
-
-  // A top-level page (Browse, Search, Dropout 24/7): one level down from
-  // Home, sideways from another top-level page, so Back from any of them is
-  // Home.
-  function goTop(url) {
-    if (state.kind !== "browse" && railShown()) return goSideways(url);
-    return go(url);
-  }
-
-  // The first path segment is the series: "/game-changer/season:3" and
-  // "/game-changer" are the same show.
-  function seriesSlug(url) {
-    try {
-      return new URL(url, location.href).pathname.split("/").filter(Boolean)[0] || null;
-    } catch (_err) {
-      return null;
     }
   }
 
@@ -234,14 +191,10 @@
     return { color: s.ringColor, width: s.ringWidth, zoom: s.focusZoom };
   }
 
-  function homeRules() {
-    return (state.rules && state.rules.home) || {};
-  }
-
   // Leanback's own elements: the Home screen, the rail, the options panel.
   function ownUi(el) {
     if (!el) return false;
-    return Boolean((state.home && state.home.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)));
+    return Boolean((state.screen && state.screen.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)));
   }
 
   function notice(label) {
@@ -380,19 +333,6 @@
     return null;
   }
 
-  function markVideoElements() {
-    const p = state.page;
-    const theaterRoot = qs(p.theaterRoot);
-    if (theaterRoot) theaterRoot.setAttribute("data-tenfoot-theater-root", "");
-    const mount = qs(p.playerMount);
-    if (mount) {
-      mount.setAttribute("data-tenfoot-player", "");
-      if (!mount.hasAttribute("tabindex")) mount.setAttribute("tabindex", "-1");
-    }
-    for (const sel of Rules.selectorList(p.theaterHide)) for (const el of qsa(sel)) el.setAttribute("data-tenfoot-hide", "");
-    return { theaterRoot, mount, frame: qs(p.playerFrame) };
-  }
-
   // Dropout's own top bar and footer (rules: common.chrome) are hidden on every
   // page but sign-in, account, help and legal (`other`), which keep them.
   function stampChrome() {
@@ -439,8 +379,8 @@
       state.pendingInitialFocus = 0;
       return;
     }
-    if (state.home) {
-      const target = state.home.initialTarget();
+    if (state.screen) {
+      const target = state.screen.initialTarget();
       if (target) {
         state.pendingInitialFocus = 0;
         focusEl(target, { scroll: false });
@@ -453,7 +393,7 @@
       // Nothing to draw Home from: leave Dropout's page as it is, driven the
       // ordinary way.
       console.warn(LOG, "Home found nothing to draw; showing the site's own page");
-      stopHome();
+      stopScreen();
       state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     }
     if (state.kind === "other") {
@@ -520,7 +460,7 @@
 
   function move(dir) {
     state.lastMove = performance.now();
-    if (state.home && !state.modal) return moveHome(dir);
+    if (state.screen && !state.modal) return moveScreen(dir);
     const cur = currentEl();
     const { candidates, rows } = collect();
     let target = null;
@@ -580,327 +520,9 @@
     return Boolean(a && b) && b.top < a.bottom - Spatial.EDGE_TOLERANCE && b.bottom > a.top + Spatial.EDGE_TOLERANCE;
   }
 
-  function moveHome(dir) {
-    const r = state.home.move(dir);
-    if (r && r.el) focusEl(r.el, { scroll: false });
-    else if (r && r.edge === "left") enterRail();
-    // Above an episode's page is its player.
-    else if (r && r.edge === "up" && state.kind === "video") enterPlayer();
-    return true;
-  }
-
   // ---------------------------------------------------------------------------
-  // Leanback's screens (Home, and the pages it draws) and the rail
+  // the first paint
   // ---------------------------------------------------------------------------
-  //
-  // state.home is Leanback's own screen on this page, when it draws one, a
-  // screen of content/screen.js: Home and the hubs (content/home.js reads
-  // them), Browse, My List and the lists (a grid of cards), a show's page and
-  // a special (a banner, the seasons, sections of cards: content/show.js reads
-  // them). Every screen answers the same calls, so the rest of this file
-  // treats them alike.
-
-  function screenRules() {
-    return (state.rules && state.rules.screen) || {};
-  }
-
-  // "home", "page" (a grid of cards), "detail" (a show or a special),
-  // "search", "episode" (under the player), or null for a page Leanback does
-  // not draw.
-  function screenKind() {
-    if (state.kind === "browse" || state.kind === "hub") return "home";
-    if (state.kind === "grid") return "page";
-    if (state.kind === "search") return "search";
-    if (state.kind === "video") return "episode";
-    if (state.kind === "series" && Show) {
-      const layout = Show.layoutOf(document, state.page.show);
-      if (layout === "list") return "page";
-      if (layout === "show" || layout === "special") return "detail";
-    }
-    return null;
-  }
-
-  function startHome() {
-    const which = screenKind();
-    if (state.home || !which || !Screen) return;
-    const observe = (items) => send({ type: "history:observe", items });
-    if (which === "home") {
-      // Home's rows come after the page is up: the screen starts as soon as
-      // the page holds Home, and fills in as they arrive.
-      if (!Home || !qs(homeRules().root)) return;
-      state.home = Screen.createScreen(document, {
-        home: true,
-        read: () => Home.homeModel(document, homeRules(), { history: state.history, continueWatching: state.kind === "browse" }),
-        history: () => state.history,
-        onObserve: observe
-      });
-    } else {
-      const readers = {
-        detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href, smartOrder: state.settings.seasonStart !== "first" }),
-        search: () => Screen.searchModel(document, screenRules().search),
-        episode: () => Screen.episodeModel(document, screenRules().episode),
-        page: () => Screen.collectionModel(document, screenRules())
-      };
-      const read = readers[which];
-      // Nothing to draw from: Dropout's page stays, driven as it is.
-      if (!read()) return;
-      // A page the rail links to goes by the rail's name (My List); the New
-      // Releases list carries no "New" badges, as its row on Home does not.
-      const link = railLinks().find((l) => samePath(l.url, location.href));
-      const tweak = Home ? Home.rowOverride(homeRules(), location.href, "") : null;
-      const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
-      state.home = Screen.createScreen(document, {
-        read,
-        title: link ? link.label : "",
-        rail: kinds.includes(state.kind),
-        badges: !(tweak && tweak.badges === false),
-        history: () => state.history,
-        onObserve: observe,
-        onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current)),
-        onFieldDone: () => leaveFieldBelow(),
-        onRun: (what) => (what === "player" ? playFromScreen() : false),
-        onLayout: () => syncDock()
-      });
-    }
-    root.dataset.tenfootHome = "on";
-    state.homeRefocus = 0;
-    state.home.refresh();
-  }
-
-  function stopHome() {
-    if (!state.home) return;
-    state.home.destroy();
-    state.home = null;
-    delete root.dataset.tenfootHome;
-    setPending(false);
-    syncDock();
-  }
-
-  // On an episode's page Leanback's screen has a place for the player, and
-  // Dropout's own player is put over it (content/page.css: html.tenfoot-docked)
-  // — moved by style only, as theater does, because moving the frame in the
-  // page would reload it. It follows the place while the screen slides.
-  function syncDock() {
-    const slot = state.enabled && state.home && state.kind === "video" ? state.home.dock : null;
-    root.classList.toggle(DOCK_CLASS, Boolean(slot));
-    if (!slot) {
-      for (const v of ["--tf-dock-x", "--tf-dock-y", "--tf-dock-w", "--tf-dock-h"]) root.style.removeProperty(v);
-      return;
-    }
-    const place = () => {
-      const r = slot.getBoundingClientRect();
-      root.style.setProperty("--tf-dock-x", `${Math.round(r.left)}px`);
-      root.style.setProperty("--tf-dock-y", `${Math.round(r.top)}px`);
-      root.style.setProperty("--tf-dock-w", `${Math.round(r.width)}px`);
-      root.style.setProperty("--tf-dock-h", `${Math.round(r.height)}px`);
-    };
-    place();
-    state.dockUntil = performance.now() + DOCK_FOLLOW_MS;
-    if (state.dockFrame || typeof requestAnimationFrame !== "function") return;
-    const step = () => {
-      state.dockFrame = 0;
-      if (!state.home || !state.home.dock) return;
-      place();
-      if (performance.now() < state.dockUntil) state.dockFrame = requestAnimationFrame(step);
-    };
-    state.dockFrame = requestAnimationFrame(step);
-  }
-
-  // The selection onto Leanback's screen of an episode, leaving the player.
-  function focusScreen() {
-    if (!state.home || state.kind !== "video") return false;
-    const t = state.home.started ? state.home.current : state.home.initialTarget();
-    if (!t) return false;
-    state.playerFocused = false;
-    focusEl(t, { scroll: false });
-    syncDock();
-    return true;
-  }
-
-  // Play on an episode's page: into the player (theater, as the setting
-  // says), playing.
-  function playFromScreen() {
-    enterPlayer();
-    if (state.playerState && state.playerState.paused) send({ type: "player:command", cmd: "play" });
-    return true;
-  }
-
-  function refreshHome() {
-    if (!state.home) return;
-    const before = currentEl();
-    const target = state.home.refresh();
-    if (state.home.ready) setPending(false);
-    if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || state.playerFocused || state.theater || !target) return;
-    // The card the selection was on went away, or the site took the focus:
-    // put it on the card Home now has selected.
-    if (!before || !before.isConnected || before !== target) focusEl(target, { scroll: false });
-  }
-
-  function railShown() {
-    return Boolean(state.rail) && state.rail.visible;
-  }
-
-  function railLinks() {
-    const links = state.rules && state.rules.rail && Array.isArray(state.rules.rail.links) ? state.rules.rail.links : [];
-    return links.filter((l) => l && typeof l.id === "string" && typeof l.url === "string" && typeof l.label === "string");
-  }
-
-  // The rail entry for the page on screen. A hub looks like Home but is not
-  // it, so nothing is lit there unless the rail links to it.
-  function railPage() {
-    const link = railLinks().find((l) => samePath(l.url, location.href));
-    if (link) return link.id;
-    if (state.kind === "browse") return "home";
-    if (state.kind === "grid") return "browse";
-    if (state.kind === "search") return "search";
-    return null;
-  }
-
-  function setupRail() {
-    const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
-    const on = state.enabled && kinds.includes(state.kind);
-    if (!state.rail && on && Rail) {
-      const links = railLinks().map((l) => ({ id: l.id, label: l.label, icon: l.icon || "tv" }));
-      state.rail = Rail.createRail(document, [...RAIL_ITEMS, ...links, RAIL_SETTINGS], { onActivate: onRailItem });
-    }
-    if (!state.rail) return;
-    state.rail.setCurrent(railPage());
-    // With nothing lit, entering the rail lands on Home.
-    if (!railPage()) state.rail.select(state.rail.item("home"));
-    state.rail.show(on);
-    if (on) root.dataset.tenfootRail = "on";
-    else delete root.dataset.tenfootRail;
-    if (!on) state.railActive = false;
-  }
-
-  function enterRail() {
-    if (!railShown()) return false;
-    state.railReturn = currentEl();
-    state.railActive = true;
-    const el = state.rail.current;
-    if (el) focusEl(el, { scroll: false });
-    return true;
-  }
-
-  // Back to exactly where the selection came from (H3).
-  function leaveRail() {
-    state.railActive = false;
-    const r = state.railReturn;
-    state.railReturn = null;
-    if (r && r.isConnected) {
-      if (state.home) state.home.select(r);
-      focusEl(r, { scroll: !state.home });
-      return true;
-    }
-    const target = state.home ? state.home.current || state.home.initialTarget() : null;
-    if (target) focusEl(target, { scroll: false });
-    else {
-      const { candidates } = collect();
-      if (candidates.length) focusEl(candidates[0].el);
-    }
-    return true;
-  }
-
-  function dispatchInRail(action) {
-    switch (action) {
-      case "up":
-      case "down": {
-        const el = state.rail.move(action === "up" ? -1 : 1);
-        if (el) focusEl(el, { scroll: false });
-        return true;
-      }
-      case "right":
-      case "back":
-        return leaveRail();
-      case "left":
-        return true; // the rail is the left edge
-      case "select": {
-        const id = state.rail.currentId;
-        if (id) onRailItem(id);
-        return true;
-      }
-      case "menu":
-        return openMenu();
-      case "search":
-        return goTop(state.rules.searchUrl || "/search");
-      default:
-        return false;
-    }
-  }
-
-  function onRailItem(id) {
-    const el = state.rail && state.rail.item(id);
-    if (el) state.rail.select(el);
-    const link = railLinks().find((l) => l.id === id);
-    if (link) {
-      if (samePath(link.url, location.href)) leaveRail();
-      else goTop(link.url);
-      return;
-    }
-    switch (id) {
-      case "home":
-        if (state.kind === "browse" && state.home) {
-          // Already Home: back to the top of it.
-          state.railActive = false;
-          state.railReturn = null;
-          const t = state.home.initialTarget();
-          if (t) focusEl(t, { scroll: false });
-          return;
-        }
-        goHome();
-        return;
-      case "browse":
-        // My List is a grid page too, but not Browse.
-        if (railPage() === "browse") {
-          leaveRail();
-          return;
-        }
-        goTop(state.rules.gridUrl || "/series");
-        return;
-      case "search":
-        if (state.kind === "search") {
-          leaveRail();
-          return;
-        }
-        goTop(state.rules.searchUrl || "/search");
-        return;
-      case "settings":
-        state.menuReturn = el || currentEl();
-        openSettings();
-        return;
-      default:
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // a show's page (content/show.js)
-  // ---------------------------------------------------------------------------
-
-  // A show opens on the season the settings ask for, newest or first; Dropout
-  // opens every show on Season 1. Only an address that names no season is
-  // moved: one that does was chosen (a season picked, Back from an episode).
-  // Replacing the page keeps Back where it was.
-  function openSeason() {
-    if (!Show || state.kind !== "series" || Show.namesSeason(location.pathname)) return false;
-    const rules = state.page.show;
-    if (Show.layoutOf(document, rules) !== "show") return false;
-    const url = Show.seasonTarget(Show.readSeasons(document, rules, location.href), state.settings.seasonStart);
-    if (!url) return false;
-    goSideways(url);
-    return true;
-  }
-
-  // OK on a season: its page, replacing this one, so Back leaves the show
-  // rather than stepping back through the seasons. The season already on
-  // screen takes the selection down to its episodes instead.
-  function onSeasonChosen(url, current) {
-    if (!current) {
-      goSideways(url);
-      return;
-    }
-    const t = state.home ? state.home.initialTarget() : null;
-    if (t) focusEl(t, { scroll: false });
-  }
 
   // content/early.css keeps a show's page blank until this is set, so Season 1
   // never flashes up before openSeason() moves on from it.
@@ -908,68 +530,9 @@
     root.setAttribute("data-tenfoot-ready", "");
   }
 
-  // A screen Leanback is still building keeps Dropout's page hidden under it
-  // (content/page.css), so Dropout's page never shows first. Lifted when the
-  // screen is up, or when it is given up (stopHome).
-  function setPending(on) {
-    if (on) root.setAttribute("data-tenfoot-pending", "");
-    else root.removeAttribute("data-tenfoot-pending");
-  }
-
   // ---------------------------------------------------------------------------
-  // watch history: what the episode page knows
+  // the two-step <select>
   // ---------------------------------------------------------------------------
-
-  function sendHistoryMeta() {
-    if (state.kind !== "video" || !History || state.metaSent === location.href) return;
-    const key = History.keyOf(location.href);
-    if (!key) return;
-    state.metaSent = location.href;
-    const img = qs(state.page.videoImage);
-    const d = episodeDetails();
-    send(Object.assign({
-      type: "history:meta",
-      key,
-      url: location.href,
-      title: d.title,
-      series: d.series,
-      image: img ? img.getAttribute("content") || "" : ""
-    }, episodeInfo()));
-  }
-
-  // The episode page's own words: its title and the show's name, with the
-  // season and episode numbers.
-  function episodeDetails() {
-    const text = (el) => (el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "");
-    const info = episodeInfo();
-    return {
-      title: text(qs(state.page.videoTitle)),
-      series: text(qs(state.page.seriesLink)),
-      season: info.season === undefined ? null : info.season,
-      episode: info.episode === undefined ? null : info.episode
-    };
-  }
-
-  // Which show, season and episode this is. Dropout links the season as
-  // "Season 2, Episode 1" even at /videos/<slug>, and its canonical address
-  // names the show and season too.
-  function episodeInfo() {
-    const out = {};
-    for (const a of qsa(Rules.selector(state.page.episodeInfo))) {
-      const m = /Episode\s+(\d+)/i.exec(a.textContent || "");
-      const season = History.seasonOf(a.href);
-      if (!m || season === null) continue;
-      out.show = seriesSlug(a.href);
-      out.season = season;
-      out.episode = Number(m[1]);
-      break;
-    }
-    const canonical = qs(state.page.canonical);
-    const url = canonical ? canonical.getAttribute("content") || "" : "";
-    if (!out.show && History.showOf(url)) out.show = History.showOf(url);
-    if (out.season === undefined && History.seasonOf(url) !== null) out.season = History.seasonOf(url);
-    return out;
-  }
 
   // A <select> is a two-step control on a remote: Enter engages it, Left/Right
   // then change the value, Enter commits and Escape puts the old value back.
@@ -1082,73 +645,6 @@
     return stepBack();
   }
 
-  // The newest entry of the trail below this page that is another page, or
-  // -1. Only search has entries of its own page below it: one per search the
-  // app recorded, which Back goes past all at once.
-  function backIndex() {
-    if (!Trail) return -1;
-    for (let j = state.trail.length - 2; j >= 0; j--) if (!Trail.same(state.trail[j].url, location.href)) return j;
-    return -1;
-  }
-
-  // Back past this page. With pages of the site behind it, that is the
-  // browser's own Back — the same as the remote's BrowserBack, which Firefox
-  // acts on whatever the page does. Leanback keeps the history in the shape
-  // Back should follow (sideways moves replace the page), and a landing on a
-  // sibling carries on by itself (arrive()). With nothing behind it — a tab
-  // opened straight on this page — Back walks up the site instead, replacing
-  // this page rather than adding one: episode → its season → Home → the exit
-  // hook.
-  function stepBack() {
-    const j = backIndex();
-    if (j >= 0) return goBackTo(j - (state.trail.length - 1), state.trail[j].url);
-    if (state.kind === "browse") {
-      exit();
-      return true;
-    }
-    return goSideways(structuralParent());
-  }
-
-  // Firefox goes back on the remote's BrowserBack whatever the page does with
-  // the key (T2), so Leanback lets it. Only when there is no page of the site
-  // behind this one can Firefox have nowhere to go; then, if the page is still
-  // here a moment later, Leanback does what Back means itself.
-  function browserBack() {
-    if (Trail && Trail.depth(state.trail) > 0) return;
-    clearBackFallback();
-    state.backFallback = setTimeout(() => {
-      state.backFallback = 0;
-      if (state.leaving || state.unloading || !state.enabled) return;
-      if (dispatch("back", {})) showHints();
-    }, BACK_FALLBACK_MS);
-  }
-
-  function clearBackFallback() {
-    if (!state.backFallback) return;
-    clearTimeout(state.backFallback);
-    state.backFallback = 0;
-  }
-
-  function structuralParent() {
-    if (state.kind === "video") {
-      const a = qs(state.page.seriesLink);
-      if (a && a.href) {
-        // The series link drops the season, so prefer the season page we came
-        // from when it is the same show.
-        const stored = readEpisodeOrder();
-        const slug = seriesSlug(a.href);
-        if (stored && stored.href && slug && seriesSlug(stored.href) === slug) return stored.href;
-        return a.href;
-      }
-    }
-    return state.rules.browseUrl || "/browse";
-  }
-
-  async function exit() {
-    const r = await send({ type: "exit" });
-    if (!r || r.action !== "close-tab") state.hints.show([{ keys: "Back", label: "Nothing to go back to" }], 2000, true);
-  }
-
   // -- Leanback's settings, in the panel (nav/panel.js) ------------------------
   //
   // The menu is nav/settings-menu.js, the same as in the playback panel;
@@ -1229,14 +725,6 @@
     renderSettings();
   }
 
-  // "/" is a toggle: it opens search, and on the search page it closes it and
-  // puts you back where you were.
-  function leaveSearch() {
-    const j = backIndex();
-    if (j >= 0) return goBackTo(j - (state.trail.length - 1), state.trail[j].url);
-    return goHome();
-  }
-
   // ◀ with the text cursor at the start of a field: out of it, to whatever is
   // on its left. On the search page that is the rail.
   function leaveField() {
@@ -1256,7 +744,7 @@
     const el = document.activeElement;
     if (!el || el === document.body) return false;
     if (inScreen(el)) {
-      const r = state.home.move("down");
+      const r = state.screen.move("down");
       if (!r || !r.el) return false;
       focusEl(r.el, { scroll: false });
       return true;
@@ -1268,10 +756,6 @@
     return true;
   }
 
-  function inScreen(el) {
-    return Boolean(el && state.home && !state.modal && state.home.contains(el));
-  }
-
   function blurField() {
     const el = document.activeElement;
     if (el && el.blur) el.blur();
@@ -1279,23 +763,6 @@
     const t = candidates.find((c) => c.el !== el);
     if (t) focusEl(t.el);
     else state.ring.hide();
-    return true;
-  }
-
-  function playerAction(action) {
-    if (state.kind !== "video") return false;
-    if (action === "next") return goEpisode(1);
-    if (action === "previous") return goEpisode(-1);
-    const step = state.settings.seekStep;
-    const commands = {
-      play_pause: { cmd: "toggle" },
-      stop: { cmd: "stop" },
-      fast_forward: { cmd: "seek", by: 3 * step },
-      rewind: { cmd: "seek", by: -3 * step }
-    };
-    const c = commands[action];
-    if (!c) return false;
-    send(Object.assign({ type: "player:command" }, c));
     return true;
   }
 
@@ -1382,153 +849,6 @@
     if (btn) click(btn);
     // No close control (a consent dialog): Back is absorbed; the user picks a button.
     return true;
-  }
-
-  // ---------------------------------------------------------------------------
-  // video page and player relay
-  // ---------------------------------------------------------------------------
-
-  // Theater is not a history entry of its own: Back from an episode is the
-  // browser's Back, and one more entry would make it take two presses.
-  function setTheater(on) {
-    const want = Boolean(on) && state.kind === "video";
-    if (state.theater === want) return;
-    state.theater = want;
-    root.classList.toggle(THEATER_CLASS, want);
-    if (want) {
-      state.hints.hide();
-      state.ring.hide();
-    } else {
-      state.ring.refresh();
-    }
-    syncDock();
-  }
-
-  function enterPlayer() {
-    const v = markVideoElements();
-    if (!v.frame) {
-      state.pendingPlayerFocus = true;
-      if (v.mount) focusEl(v.mount, { scroll: false });
-      return true;
-    }
-    state.pendingPlayerFocus = false;
-    if (state.settings.theater !== "off") setTheater(true);
-    try {
-      v.frame.focus();
-    } catch (_err) { /* the frame will still get keys once the user clicks it */ }
-    state.playerFocused = true;
-    state.hints.hide();
-    if (v.mount) state.lastFocus = v.mount;
-    if (state.theater) state.ring.hide();
-    else if (v.mount) state.ring.follow(v.mount);
-    send({ type: "player:focus" }).then((r) => {
-      if (!r || !r.ok) state.pendingPlayerFocus = !state.playerReady;
-    });
-    return true;
-  }
-
-  function leavePlayer(hint) {
-    state.playerFocused = false;
-    if (hint === "back") return goBack();
-    // "below": the page must be visible for the ring to mean anything.
-    setTheater(false);
-    // Leanback's screen of the episode: its Play button, or where the
-    // selection was left on it.
-    if (focusScreen()) return true;
-    // The link back to the show is what someone leaving the player wants far
-    // more often than whatever markup sits closest under the video (the
-    // metadata tags do), so it wins over the geometric pick.
-    const series = firstVisible(Rules.selector(state.page.seriesLink));
-    if (series) {
-      focusEl(series);
-      return true;
-    }
-    const mount = qs(state.page.playerMount);
-    const { candidates } = collect();
-    const others = candidates.filter((c) => c.el !== mount);
-    const t = mount ? Spatial.pick("down", Ring.unscaledRect(mount), others) : others[0];
-    if (t) focusEl(t.el);
-    else if (mount) focusEl(mount);
-    return true;
-  }
-
-  // Remember the series page exactly as it was — season and sort included —
-  // so Back from an episode returns there rather than to the series' default
-  // season, and so next/previous know the running order.
-  function captureEpisodeOrder() {
-    const urls = qsa(Rules.selector(state.page.episodeLinks)).map((a) => a.href).filter(Boolean);
-    if (!urls.length) return;
-    try {
-      sessionStorage.setItem(EPISODES_KEY, JSON.stringify({ series: location.pathname, href: location.href, urls }));
-    } catch (_err) { /* storage disabled: next/previous falls back to up-next only */ }
-  }
-
-  function readEpisodeOrder() {
-    try {
-      const v = JSON.parse(sessionStorage.getItem(EPISODES_KEY) || "null");
-      return v && Array.isArray(v.urls) ? v : null;
-    } catch (_err) {
-      return null;
-    }
-  }
-
-  function episodeUrl(delta) {
-    const up = state.playerState && state.playerState.upNext;
-    if (delta > 0 && up && typeof up.url === "string" && up.url) return up.url;
-    const list = readEpisodeOrder();
-    if (!list) return null;
-    const i = list.urls.findIndex((u) => samePath(u, location.href));
-    if (i < 0) return null;
-    return list.urls[i + delta] || null;
-  }
-
-  // The site's own "up next" card, when the page renders it rather than the
-  // player frame. Taking it is better than navigating: it keeps the site's
-  // own resume behaviour.
-  function pageUpNext() {
-    const sel = Rules.selector(state.page.upNextOverlay);
-    if (!sel) return null;
-    for (const el of qsa(sel)) {
-      if (Spatial.isVisible(el, window)) return el;
-    }
-    return null;
-  }
-
-  function takePageUpNext() {
-    const overlay = pageUpNext();
-    if (!overlay) return false;
-    const control = qsa("a[href], button, [role='button']", overlay).find((el) => Spatial.isVisible(el, window));
-    return click(control || overlay);
-  }
-
-  function syncUpNextOffer() {
-    if (state.kind !== "video") return;
-    const showing = Boolean(pageUpNext());
-    if (showing === state.offerShowing) return;
-    state.offerShowing = showing;
-    send({ type: "player:offer", showing });
-  }
-
-  function goEpisode(delta) {
-    if (delta > 0 && takePageUpNext()) return true;
-    const url = episodeUrl(delta);
-    if (!url) {
-      state.hints.show([{ keys: delta > 0 ? "▶▶" : "◀◀", label: delta > 0 ? "No next episode" : "No previous episode" }], 2500, true);
-      return true;
-    }
-    return goSideways(url);
-  }
-
-  // The viewer hid the up-next card (`dismissed`): nothing plays by itself.
-  function onPlayerEnded(msg) {
-    const upNext = msg && msg.upNext ? msg.upNext : state.playerState && state.playerState.upNext;
-    state.playerState = Object.assign({}, state.playerState, { ended: true, paused: true, upNext: upNext || null });
-    if (!state.settings.autoplayNext || (msg && msg.dismissed === true)) return;
-    const href = location.href;
-    setTimeout(() => {
-      // The site may advance on its own (up-next overlay); only act if it did not.
-      if (location.href === href && state.enabled) goEpisode(1);
-    }, AUTOPLAY_DELAY_MS);
   }
 
   // ---------------------------------------------------------------------------
@@ -1632,17 +952,17 @@
     }
     if (state.playerFocused) state.playerFocused = false;
     if (state.engaged && t !== state.engaged) cancelEngaged();
-    if (state.home && !state.modal && !state.menu.isOpen) {
-      if (state.home.contains(t)) {
+    if (state.screen && !state.modal && !state.menu.isOpen) {
+      if (state.screen.contains(t)) {
         // A click, or the focus coming back: the model follows.
-        state.home.select(t);
-        state.homeRefocus = 0;
+        state.screen.select(t);
+        state.screenRefocus = 0;
       } else if (!ownUi(t) && !(state.kind === "video" && t.closest("[data-tenfoot-theater-root]"))) {
         // Dropout's page is underneath and still moves the focus about.
         // Take it back — a bounded number of times, never a tug of war.
-        if (state.homeRefocus < HOME_REFOCUS_LIMIT && state.home.current) {
-          state.homeRefocus += 1;
-          focusEl(state.home.current, { scroll: false });
+        if (state.screenRefocus < SCREEN_REFOCUS_LIMIT && state.screen.current) {
+          state.screenRefocus += 1;
+          focusEl(state.screen.current, { scroll: false });
         }
         return;
       }
@@ -1683,87 +1003,14 @@
     if (location.href !== state.href) onNavigate(true);
   }
 
-  // ---------------------------------------------------------------------------
-  // the trail (nav/trail.js)
-  // ---------------------------------------------------------------------------
-
-  // The search app adds a step to the tab's history for every search it runs
-  // (history.pushState), without a page load. The trail follows: an entry
-  // for each new step, cut back to the step Firefox's Back returned to, the
-  // top's address updated otherwise — so going back down to Home counts
-  // every step.
-  function followSearchHistory(popped) {
-    if (!Trail || !state.trail.length) return;
-    const href = location.href;
-    let t = state.trail.slice();
-    const top = t[t.length - 1];
-    if (popped) {
-      let j = -1;
-      for (let i = t.length - 2; i >= 0; i--) if (t[i].url === href) { j = i; break; }
-      if (j >= 0) t = t.slice(0, j + 1);
-      else t[t.length - 1] = Object.assign({}, top, { url: href });
-    } else if (history.length > state.historyLength) {
-      t.push(Object.assign({}, top, { url: href }));
-    } else {
-      t[t.length - 1] = Object.assign({}, top, { url: href });
-    }
-    state.historyLength = history.length;
-    state.trail = t;
-    Trail.save(sessionStore(), t);
-  }
-
-  // Where this page sits in the tab's history. Returns true when it was
-  // reached by Back and is only a sibling of the page left — the previous
-  // episode, after Dropout went on to the next by itself — in which case Back
-  // carries on past it to the page before the siblings.
-  function arrive(persisted, allowSkip) {
-    if (!Trail) return false;
-    const store = sessionStore();
-    let type = persisted ? "back_forward" : "navigate";
-    if (!persisted) {
-      try {
-        const nav = performance.getEntriesByType("navigation")[0];
-        if (nav && nav.type) type = nav.type;
-      } catch (_err) { /* treated as a new page */ }
-    }
-    const r = Trail.arrive(Trail.load(store), location.href, type, Trail.takeIntent(store));
-    state.trail = r.trail;
-    Trail.save(store, r.trail);
-    const delta = allowSkip && r.left ? Trail.skipSiblings(r.trail, r.left) : null;
-    if (!delta) return false;
-    const to = r.trail[r.trail.length - 1 + delta];
-    Trail.setIntent(store, "back", to.url);
-    state.leaving = true;
-    history.go(delta);
-    return true;
-  }
-
-  // What this page is, kept on its trail entry: its kind, the show it
-  // belongs to (episodes and seasons of one show are siblings), and the page
-  // Back leads to when nothing is behind it.
-  function recordTrail() {
-    if (!Trail || !state.trail.length) return;
-    let group = null;
-    if (state.kind === "video") {
-      const a = qs(state.page.seriesLink);
-      group = a && a.href ? seriesSlug(a.href) : null;
-    } else if (state.kind === "series") group = seriesSlug(location.href);
-    state.trail = Trail.describe(state.trail, {
-      kind: state.kind,
-      group,
-      parent: state.kind === "browse" ? null : structuralParent()
-    });
-    Trail.save(sessionStore(), state.trail);
-  }
-
   function onNavigate(popped) {
     if (!state.enabled) return;
     // The search app puts the words in the address as you type: the same
     // page, the same screen, the selection left in the box.
-    if (state.kind === "search" && state.home && Rules.classify(state.rules, location.pathname) === "search") {
+    if (state.kind === "search" && state.screen && Rules.classify(state.rules, location.pathname) === "search") {
       followSearchHistory(Boolean(popped));
       state.href = location.href;
-      refreshHome();
+      refreshScreen();
       return;
     }
     setTheater(false);
@@ -1779,7 +1026,7 @@
       return;
     }
     syncModal();
-    refreshHome();
+    refreshScreen();
     stampChrome();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
@@ -1788,7 +1035,7 @@
       syncUpNextOffer();
       if (state.pendingPlayerFocus && qs(state.page.playerFrame)) enterPlayer();
     }
-    if (state.lastFocus && !state.lastFocus.isConnected && !state.playerFocused && !state.home) {
+    if (state.lastFocus && !state.lastFocus.isConnected && !state.playerFocused && !state.screen) {
       state.lastFocus = null;
       state.pendingInitialFocus = Date.now() + 2000;
       tryInitialFocus();
@@ -1858,8 +1105,8 @@
       zoomed: cur ? computedTransform(cur) : null,
       ring: Boolean(state.ring) && !state.ring.element.hidden,
       hints: Boolean(state.hints) && state.hints.visible,
-      home: state.home ? state.home.snapshot() : null,
-      show: (state.home && state.home.snapshot().show) || null,
+      home: state.screen ? state.screen.snapshot() : null,
+      show: (state.screen && state.screen.snapshot().show) || null,
       rail: railShown() ? { active: state.railActive, item: state.rail.currentId, page: railPage() } : null
     };
   }
@@ -1951,15 +1198,15 @@
     }
     state.railActive = false;
     state.railReturn = null;
-    if (screenKind()) startHome();
-    else stopHome();
+    if (screenKind()) startScreen();
+    else stopScreen();
     setupRail();
     recordTrail();
     syncModal();
     // Dropout's page shows from here on (content/early.css), unless a screen
     // of Leanback's is still to come; and it must, before anything in it can
     // take the focus.
-    setPending(Boolean(state.home && !state.home.ready));
+    setPending(Boolean(state.screen && !state.screen.ready));
     markReady();
     tryInitialFocus();
     if (!state.theater && !state.playerFocused) showHints();
@@ -1974,7 +1221,7 @@
       state.ring.hide();
       state.hints.hide();
       setTheater(false);
-      stopHome();
+      stopScreen();
       setupRail();
       state.pendingInitialFocus = 0;
       markReady();
@@ -2020,7 +1267,7 @@
       state.history = await History.load(API);
       History.watch(API, (store) => {
         state.history = store;
-        refreshHome();
+        refreshScreen();
       });
     }
     installSiteStyle();

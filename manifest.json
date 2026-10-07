@@ -56,6 +56,9 @@
         "content/home.js",
         "content/screen.js",
         "content/show.js",
+        "content/page-back.js",
+        "content/page-video.js",
+        "content/page-screens.js",
         "content/page.js"
       ],
       "css": [
