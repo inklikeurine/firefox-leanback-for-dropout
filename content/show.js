@@ -16,23 +16,10 @@
   const LABEL_MAX = 40;
   const NAME_MAX = 120;
 
-  function qs(sel, scope) {
-    if (!sel) return null;
-    try {
-      return scope.querySelector(sel);
-    } catch (_err) {
-      return null;
-    }
-  }
-
-  function qsa(sel, scope) {
-    if (!sel) return [];
-    try {
-      return Array.from(scope.querySelectorAll(sel));
-    } catch (_err) {
-      return [];
-    }
-  }
+  const Common = globalThis.TenfootCommon;
+  // Only ever inside the scope given: no scope, no match.
+  const qs = (sel, scope) => (scope ? Common.qs(sel, scope) : null);
+  const qsa = (sel, scope) => (scope ? Common.qsa(sel, scope) : []);
 
   function clean(text, max) {
     return String(text || "").replace(/\s+/g, " ").trim().slice(0, max);
@@ -222,14 +209,6 @@
     return first ? { action: "first", url: first.url, season: first.season, episode: first.episode, title: first.title } : null;
   }
 
-  function safeMatches(el, sel) {
-    try {
-      return Boolean(sel) && el.matches(sel);
-    } catch (_err) {
-      return false;
-    }
-  }
-
   // A tile as a card for the screen: picture, title, "Episode 3", running
   // time; a tick when watched, a bar when partway.
   function tileItem(li, rules, state) {
@@ -292,7 +271,7 @@
     const trailer = qs(r.trailerAction, doc);
     if (trailer) actions.push({ key: "trailer", label: clean(trailer.textContent, LABEL_MAX) || "Trailer", proxy: trailer });
     const list = qs(r.listAction, doc);
-    if (list) actions.push({ key: "mylist", label: "My List", proxy: list, listed: safeMatches(list, r.listed) });
+    if (list) actions.push({ key: "mylist", label: "My List", proxy: list, listed: Common.matches(list, r.listed) });
     const sections = [];
     let start = null;
     let newestFirst = false;

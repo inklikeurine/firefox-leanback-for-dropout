@@ -80,23 +80,7 @@
     resume: { video: null, at: null, pending: false, resumed: false, told: false }
   };
 
-  function qs(sel, scope) {
-    if (!sel) return null;
-    try {
-      return (scope || document).querySelector(sel);
-    } catch (_err) {
-      return null;
-    }
-  }
-
-  async function send(msg) {
-    try {
-      const r = await API.runtime.sendMessage(msg);
-      return r === undefined ? { ok: false, error: "No reply" } : r;
-    } catch (err) {
-      return { ok: false, error: err && err.message ? err.message : String(err) };
-    }
-  }
+  const { qs, qsa, matches, send } = globalThis.TenfootCommon;
 
   // What the site's embed shell knows about this video (window.OTTData in the
   // page world). Read through the Xray wrapper; copy only plain fields.
@@ -140,16 +124,7 @@
   // verified (site-notes U7), so everything here degrades to "not found".
   // ".ott-up-next" matches several elements, only one of which is on screen.
   function upNextOverlay() {
-    const sel = state.rules.upNextOverlay;
-    if (!sel) return null;
-    let els;
-    try {
-      els = document.querySelectorAll(sel);
-    } catch (_err) {
-      return null;
-    }
-    for (const el of els) if (VISIBLE(el)) return el;
-    return null;
+    return qsa(state.rules.upNextOverlay).find(VISIBLE) || null;
   }
 
   // The offer may be rendered by the page rather than inside this frame; the
@@ -169,8 +144,7 @@
       const b = qs(state.rules.upNextButton, overlay);
       if (VISIBLE(b)) return b;
     }
-    for (const c of overlay.querySelectorAll("a[href]")) if (VISIBLE(c)) return c;
-    return null;
+    return qsa("a[href]", overlay).find(VISIBLE) || null;
   }
 
   // Dropout's own Hide, on its card.
@@ -278,13 +252,7 @@
   // to hide would miss any button it does not know, and the transcript button
   // has no class to know it by.
   function hideUnwantedControls(container) {
-    const itemSel = Rules.selector(state.rules.transportItems) || "button";
-    let items;
-    try {
-      items = Array.from(container.querySelectorAll(itemSel));
-    } catch (_err) {
-      return;
-    }
+    const items = qsa(state.rules.transportItems || "button", container);
     const keep = Rules.selector(state.rules.transportKeep);
     const menu = Rules.selector(state.rules.transportMenu);
     // The gear's popover lives *inside* the control bar, so its entries look
@@ -305,7 +273,7 @@
       // Vimeo's gear button carries no label of its own — the label is on a
       // child — so a button counts as wanted if it or anything inside it
       // matches; otherwise the gear itself would be hidden.
-      const wanted = keep ? (matchesSafe(el, keep) || Boolean(safeQuery(el, keep))) : true;
+      const wanted = keep ? (matches(el, keep) || Boolean(qs(keep, el))) : true;
       if (wanted) kept.push(el);
     }
     // A keep list that matches nothing is a keep list that is wrong about this
@@ -318,31 +286,9 @@
     }
     // Anything explicitly listed goes too, keep list or not.
     for (const sel of Rules.selectorList(state.rules.transportHide)) {
-      let els;
-      try {
-        els = container.querySelectorAll(sel);
-      } catch (_err) {
-        continue;
-      }
-      for (const el of els) {
+      for (const el of qsa(sel, container)) {
         if (el !== container && !el.contains(container) && !inMenu(el)) el.setAttribute("data-tenfoot-hide", "");
       }
-    }
-  }
-
-  function matchesSafe(el, sel) {
-    try {
-      return el.matches(sel);
-    } catch (_err) {
-      return false;
-    }
-  }
-
-  function safeQuery(el, sel) {
-    try {
-      return el.querySelector(sel);
-    } catch (_err) {
-      return null;
     }
   }
 
@@ -362,13 +308,7 @@
     // use — the control bar, and the overlay play button, which sits outside
     // the bar and would stay on screen if only the bar were hidden.
     for (const sel of Rules.selectorList(state.rules.chrome)) {
-      let els;
-      try {
-        els = document.querySelectorAll(sel);
-      } catch (_err) {
-        continue;
-      }
-      for (const el of els) el.setAttribute("data-tenfoot-bar", "");
+      for (const el of qsa(sel)) el.setAttribute("data-tenfoot-bar", "");
     }
     const container = qs(state.rules.transport);
     if (!container) return;

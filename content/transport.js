@@ -67,14 +67,8 @@
     return svg;
   }
 
-  function clock(seconds) {
-    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-    const s = Math.floor(seconds % 60);
-    const m = Math.floor(seconds / 60) % 60;
-    const h = Math.floor(seconds / 3600);
-    const mm = h ? String(m).padStart(2, "0") : String(m);
-    return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
-  }
+  const Common = globalThis.TenfootCommon;
+  const { clock, textOf } = Common;
 
   /**
    * @param {Document} doc         the player frame's document
@@ -307,27 +301,9 @@
     const panelEl = view.element;
 
     // -- selectors ----------------------------------------------------------
-    const Rules = globalThis.TenfootSiteRules;
     const Settings = globalThis.TenfootSettings;
-    const sel = (v) => (Rules && Rules.selector ? Rules.selector(v) : (Array.isArray(v) ? v.join(", ") : v)) || null;
-    function qs(value, scope) {
-      const s = sel(value);
-      if (!s) return null;
-      try {
-        return (scope || doc).querySelector(s);
-      } catch (_err) {
-        return null;
-      }
-    }
-    function qsa(value, scope) {
-      const s = sel(value);
-      if (!s) return [];
-      try {
-        return Array.from((scope || doc).querySelectorAll(s));
-      } catch (_err) {
-        return [];
-      }
-    }
+    const qs = (value, scope) => Common.qs(value, scope || doc);
+    const qsa = (value, scope) => Common.qsa(value, scope || doc);
 
     const settings = () => (typeof o.settings === "function" ? o.settings() : {}) || {};
     const nextEpisode = () => (typeof o.nextEpisode === "function" ? o.nextEpisode() : null);
@@ -393,10 +369,6 @@
     // button. Collapsed accordions keep their options in the DOM marked
     // `hidden`, and group headings ("Color", "Size") sit outside the options,
     // named by each radio group's aria-labelledby.
-
-    function textOf(node) {
-      return (node && node.textContent ? node.textContent : "").replace(/\s+/g, " ").trim();
-    }
 
     function isShown(node, menu) {
       for (let n = node; n && n !== menu; n = n.parentElement) {

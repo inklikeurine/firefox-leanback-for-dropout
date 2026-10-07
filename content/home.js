@@ -27,26 +27,14 @@
   // reading the site
   // ---------------------------------------------------------------------------
 
-  function qs(sel, scope) {
-    if (!sel || !scope) return null;
-    try {
-      return scope.querySelector(sel);
-    } catch (_err) {
-      return null;
-    }
-  }
+  // Only ever inside the scope given: no scope, no match.
+  const qs = (sel, scope) => (scope ? Common.qs(sel, scope) : null);
+  const qsa = (sel, scope) => (scope ? Common.qsa(sel, scope) : []);
 
-  function qsa(sel, scope) {
-    if (!sel || !scope) return [];
-    try {
-      return Array.from(scope.querySelectorAll(sel));
-    } catch (_err) {
-      return [];
-    }
-  }
-
+  const Common = globalThis.TenfootCommon;
   const C = globalThis.TenfootCards;
-  const { textOf, hrefOf, parseDuration, tidyDuration, percentOf, clock } = C;
+  const { textOf, clock } = Common;
+  const { hrefOf, parseDuration, tidyDuration, percentOf } = C;
 
   // -- the data a tile was drawn from ---------------------------------------
   //
@@ -146,7 +134,7 @@
           label,
           href,
           ariaLabel: el.getAttribute("aria-label") || label,
-          listed: Boolean(rules.slideListed && el.matches && safeMatches(el, rules.slideListed))
+          listed: Common.matches(el, rules.slideListed)
         };
       }).filter((b) => b.label);
       if (!title && !buttons.length) return;
@@ -199,14 +187,6 @@
     });
     out.more = Boolean(qs(rules.showMore, doc));
     return out;
-  }
-
-  function safeMatches(el, sel) {
-    try {
-      return el.matches(sel);
-    } catch (_err) {
-      return false;
-    }
   }
 
   // Per-row adjustments from the rules: a heading of Leanback's own, no

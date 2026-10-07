@@ -36,6 +36,7 @@
   root.dataset[MARK] = "init";
 
   const Settings = globalThis.TenfootSettings;
+  const Common = globalThis.TenfootCommon;
   const Keymap = globalThis.TenfootKeymap;
   const Rules = globalThis.TenfootSiteRules;
   const Spatial = globalThis.TenfootSpatial;
@@ -111,23 +112,7 @@
   // helpers
   // ---------------------------------------------------------------------------
 
-  function qs(sel, scope) {
-    if (!sel) return null;
-    try {
-      return (scope || document).querySelector(sel);
-    } catch (_err) {
-      return null;
-    }
-  }
-
-  function qsa(sel, scope) {
-    if (!sel) return [];
-    try {
-      return Array.from((scope || document).querySelectorAll(sel));
-    } catch (_err) {
-      return [];
-    }
-  }
+  const { qs, qsa, clock } = Common;
 
   function firstVisible(sel, scope) {
     return qsa(sel, scope).find((el) => Spatial.isVisible(el, window)) || null;
@@ -259,26 +244,13 @@
     return Boolean((state.home && state.home.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)));
   }
 
-  function clockText(seconds) {
-    const s = Math.max(0, Math.floor(Number(seconds) || 0));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const ss = String(s % 60).padStart(2, "0");
-    return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
-  }
-
   function notice(label) {
     state.hints.show([{ keys: "", label }], NOTICE_MS, true);
   }
 
-  async function send(msg) {
-    if (state.leaving) return { ok: false, error: "Page is unloading" };
-    try {
-      const r = await API.runtime.sendMessage(msg);
-      return r === undefined ? { ok: false, error: "No reply" } : r;
-    } catch (err) {
-      return { ok: false, error: err && err.message ? err.message : String(err) };
-    }
+  function send(msg) {
+    if (state.leaving) return Promise.resolve({ ok: false, error: "Page is unloading" });
+    return Common.send(msg);
   }
 
   // ---------------------------------------------------------------------------
@@ -2024,7 +1996,7 @@
         reply({ ok: true });
         return false;
       case "player:resumed":
-        if (state.enabled && Number(msg.at) > 0) notice(`Resumed at ${clockText(msg.at)}`);
+        if (state.enabled && Number(msg.at) > 0) notice(`Resumed at ${clock(msg.at)}`);
         reply({ ok: true });
         return false;
       case "page:focus":

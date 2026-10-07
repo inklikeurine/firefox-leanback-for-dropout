@@ -39,24 +39,11 @@
   const ROW_ANCHOR = 0.07; // the selected row's top, as a share of the viewport height
 
   const C = () => globalThis.TenfootCards;
-
-  function qs(sel, scope) {
-    if (!sel || !scope) return null;
-    try {
-      return scope.querySelector(sel);
-    } catch (_err) {
-      return null;
-    }
-  }
-
-  function qsa(sel, scope) {
-    if (!sel || !scope) return [];
-    try {
-      return Array.from(scope.querySelectorAll(sel));
-    } catch (_err) {
-      return [];
-    }
-  }
+  const Common = globalThis.TenfootCommon;
+  const { textOf } = Common;
+  // Only ever inside the scope given: no scope, no match.
+  const qs = (sel, scope) => (scope ? Common.qs(sel, scope) : null);
+  const qsa = (sel, scope) => (scope ? Common.qsa(sel, scope) : []);
 
   /**
    * What a collection page holds: its title, its tiles in page order (one per
@@ -66,7 +53,7 @@
    */
   function readPage(doc, R) {
     const rules = R || {};
-    const { textOf, hrefOf, tidyDuration, parseDuration, percentOf } = C();
+    const { hrefOf, tidyDuration, parseDuration, percentOf } = C();
     const root = qs(rules.root, doc);
     const out = { root: Boolean(root), title: textOf(qs(rules.title, doc)), items: [], more: false };
     if (!root) return out;
@@ -104,15 +91,10 @@
     const rules = R || {};
     const input = qs(rules.input, doc);
     if (!input) return null;
-    const { textOf } = C();
     const page = readPage(doc, rules);
-    const filters = qsa(rules.filter, doc).map((b, i) => {
-      let current = false;
-      try {
-        current = Boolean(rules.filterSelected) && b.matches(rules.filterSelected);
-      } catch (_err) { /* a bad selector marks none */ }
-      return { key: b.getAttribute("data-filter-type") || `filter-${i}`, label: textOf(b), current, proxy: b };
-    }).filter((f) => f.label);
+    const filters = qsa(rules.filter, doc).map((b, i) => (
+      { key: b.getAttribute("data-filter-type") || `filter-${i}`, label: textOf(b), current: Common.matches(b, rules.filterSelected), proxy: b }
+    )).filter((f) => f.label);
     return {
       kind: "search",
       head: "",
@@ -155,20 +137,14 @@
    */
   function episodeModel(doc, R) {
     const rules = R || {};
-    const { textOf, hrefOf } = C();
+    const { hrefOf } = C();
     const title = textOf(qs(rules.title, doc));
     if (!title) return null;
     const actions = [{ key: "play", label: "Play", run: "player", primary: true }];
     const back = hrefOf(qs(rules.season, doc)) || hrefOf(qs(rules.show, doc));
     if (back) actions.push({ key: "episodes", label: "Episodes", href: back });
     const list = qs(rules.listAction, doc);
-    if (list) {
-      let listed = false;
-      try {
-        listed = Boolean(rules.listed) && list.matches(rules.listed);
-      } catch (_err) { /* a bad selector: not listed */ }
-      actions.push({ key: "mylist", label: "My List", proxy: list, listed });
-    }
+    if (list) actions.push({ key: "mylist", label: "My List", proxy: list, listed: Common.matches(list, rules.listed) });
     const page = readPage(doc, rules);
     return {
       kind: "episode",

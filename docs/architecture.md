@@ -34,6 +34,7 @@ scripts, and the background script relays between them.
 | --- | --- | --- |
 | `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; toolbar toggle and badge; `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
 | `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`). |
+| `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `send` (a reply that is always an object). |
 | `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on `storage.local` key `progress`. |
 | `content/page.js` | Top frame of `watch.dropout.tv` | URL → page kind; keys → actions; starts and drives [Leanback's screens](#leanbacks-screens); rail, spatial navigation, ring, hints, theater, Back, load-more, next/previous episode; an episode page's details to the watch history. |
 | `content/home.js` | Top frame: Home and hubs | The [Home screen](#home-contenthomejs). |
@@ -746,9 +747,10 @@ The parts of `manifest.json` (MV2) that are not obvious:
   rest of that site is untouched.
 - `embed.vhx.tv` needs `all_frames: true`, or the player script never runs:
   that host only ever appears as an iframe.
-- Each `js` list starts with `lib/settings.js`, then `lib/history.js` where
-  needed. Files in one list share a global, which is how `lib/*`, `nav/*` and
-  the content modules publish `TenfootSettings`, `TenfootHistory`,
+- Each `js` list starts with `lib/settings.js`, then `lib/common.js` and
+  `lib/history.js` where needed. Files in one list share a global, which is
+  how `lib/*`, `nav/*` and the content modules publish `TenfootSettings`,
+  `TenfootCommon`, `TenfootHistory`,
   `TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
   `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootCards`,
   `TenfootHome`, `TenfootScreen` and `TenfootShow` to `content/page.js`.

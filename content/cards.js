@@ -6,10 +6,6 @@
 // tiles. Site-agnostic: the selectors come from the caller.
 
 (function () {
-  function textOf(el) {
-    return el ? (el.textContent || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim() : "";
-  }
-
   function hrefOf(el) {
     if (!el) return "";
     const h = el.href || el.getAttribute("href") || "";
@@ -33,15 +29,6 @@
     if (!bar) return null;
     const w = parseFloat((bar.style && bar.style.width) || "");
     return Number.isFinite(w) ? Math.min(100, Math.max(0, w)) : null;
-  }
-
-  // A time in the style of the running times on the cards: "2:48", "1:12:05".
-  function clock(seconds) {
-    const s = Math.max(0, Math.floor(seconds || 0));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const ss = String(s % 60).padStart(2, "0");
-    return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
   }
 
   function setText(node, v) {
@@ -150,6 +137,6 @@
   }
 
   globalThis.TenfootCards = Object.freeze({
-    makeCard, updateCard, reconcile, textOf, hrefOf, parseDuration, tidyDuration, percentOf, clock, setText, setAttr
+    makeCard, updateCard, reconcile, hrefOf, parseDuration, tidyDuration, percentOf, setText, setAttr
   });
 })();
