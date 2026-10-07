@@ -974,20 +974,25 @@
       return buttons[id];
     }
 
+    // Firefox refuses without a gesture, or without allowfullscreen on the
+    // frame — by rejecting the promise, or in older code paths by throwing;
+    // the player's own button is the fallback either way.
     function toggleFullscreen() {
-      try {
-        if (doc.fullscreenElement) doc.exitFullscreen();
-        else doc.documentElement.requestFullscreen();
-      } catch (_err) {
-        // Firefox refuses without a gesture, or without allowfullscreen on the
-        // frame; the player's own button is the fallback.
+      const fallback = () => {
         const b = qs(rules.fullscreenButton);
         if (b) {
           try {
             b.click();
-          } catch (_err2) { /* nothing more to try */ }
+          } catch (_err) { /* nothing more to try */ }
         }
+      };
+      let asked = null;
+      try {
+        asked = doc.fullscreenElement ? doc.exitFullscreen() : doc.documentElement.requestFullscreen();
+      } catch (_err) {
+        fallback();
       }
+      if (asked && typeof asked.catch === "function") asked.catch(fallback);
       setTimeout(schedulePaint, 120);
     }
 

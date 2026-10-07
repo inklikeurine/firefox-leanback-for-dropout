@@ -10,6 +10,12 @@
   that were copied between files are shared.
   Home, the screens and both settings panels look and behave as before.
 
+### Fixed
+
+- **Full screen from the bar falls back to the player's own button** when
+  Firefox refuses the request, as it was meant to; before, a refusal did
+  nothing.
+
 ### Removed
 
 - **The restyled pages Leanback fell back on when it could not read
