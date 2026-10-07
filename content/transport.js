@@ -301,15 +301,11 @@
     const panelEl = view.element;
 
     // -- selectors ----------------------------------------------------------
-    const Settings = globalThis.TenfootSettings;
     const qs = (value, scope) => Common.qs(value, scope || doc);
     const qsa = (value, scope) => Common.qsa(value, scope || doc);
 
     const settings = () => (typeof o.settings === "function" ? o.settings() : {}) || {};
     const nextEpisode = () => (typeof o.nextEpisode === "function" ? o.nextEpisode() : null);
-    function saveSetting(id, value) {
-      if (typeof o.onSetting === "function") o.onSetting({ [id]: value });
-    }
 
     // -- live state ---------------------------------------------------------
     function paint() {
@@ -586,23 +582,10 @@
       return found;
     }
 
-    // Leanback's own settings: the one list (lib/settings.js), then Clear
-    // Continue Watching (OK twice) and Turn Leanback Off.
-    function leanbackEntries(lvl) {
-      const s = settings();
-      const rows = (Settings && Settings.ROWS) || [];
-      const entries = rows.map((r) => (r.kind === "toggle"
-        ? { id: r.id, label: r.label, kind: "toggle", on: Boolean(s[r.id]) }
-        : { id: r.id, label: r.label, kind: "choice", value: Settings.valueText(r, s[r.id]) }));
-      entries.push({ id: "forget", label: "Clear Continue Watching", kind: "action", value: lvl && lvl.armed ? "OK again to clear" : lvl && lvl.cleared ? "Cleared" : "", separator: true });
-      entries.push({ id: "disable", label: "Turn Leanback Off", kind: "action" });
-      return entries;
-    }
-
     // -- panel rendering ----------------------------------------------------
     // The panel is the top-level rows plus a stack of levels: Leanback's own
-    // settings, a setting's choices, or as many levels of the player's menu
-    // as it has.
+    // settings (nav/settings-menu.js, which keeps its own levels), or as many
+    // levels of the player's menu as it has.
     const level = () => (panel && panel.stack.length ? panel.stack[panel.stack.length - 1] : null);
 
     // A level of the player's menu as the panel lists it. A set of options
@@ -654,11 +637,6 @@
 
     function entriesOf(lvl) {
       if (!lvl) return panel.rows.map(rowEntry);
-      if (lvl.kind === "leanback") return leanbackEntries(lvl);
-      if (lvl.kind === "choice") {
-        const cur = settings()[lvl.row.id];
-        return lvl.values.map((v) => ({ id: String(v), label: Settings.valueText(lvl.row, v), kind: "option", checked: v === cur }));
-      }
       if (lvl.kind === "pick") return choicesOf(lvl).map((it) => ({ label: it.label, kind: "option", checked: it.checked }));
       return vendorView(lvl.items).map((v) => v.entry);
     }
@@ -666,6 +644,10 @@
     function renderPanel() {
       if (!panel) return;
       const lvl = level();
+      if (lvl && lvl.kind === "leanback") {
+        view.render(lvl.menu.view());
+        return;
+      }
       view.render({ title: lvl ? lvl.title : "Settings", index: lvl ? lvl.index : panel.index, entries: entriesOf(lvl) });
     }
 
@@ -807,7 +789,15 @@
       const row = panel.rows[panel.index];
       if (!row) return false;
       if (row.kind === "leanback") {
-        panel.stack.push({ title: row.label, kind: "leanback", index: 0 });
+        const menu = globalThis.TenfootSettingsMenu.create({
+          settings,
+          save: (patch) => { if (typeof o.onSetting === "function") o.onSetting(patch); },
+          onClear: () => { if (typeof o.onAction === "function") o.onAction("forget"); },
+          onDisable: () => { if (typeof o.onSetting === "function") o.onSetting({ enabled: false }); },
+          showCleared: true
+        });
+        menu.open();
+        panel.stack.push({ kind: "leanback", menu });
         renderPanel();
         return true;
       }
@@ -855,33 +845,6 @@
       return true;
     }
 
-    // OK (or ▶, which never runs an action) in Leanback's own settings: an
-    // on/off flips, a choice opens its values.
-    function takeLeanback(lvl, byRight) {
-      const entry = leanbackEntries(lvl)[lvl.index];
-      if (!entry) return false;
-      const row = Settings && Settings.rowOf(entry.id);
-      lvl.armed = lvl.armed && entry.id === "forget";
-      if (row && row.kind === "toggle") {
-        saveSetting(row.id, !settings()[row.id]);
-      } else if (row && row.kind === "choice") {
-        const values = Settings.choicesOf(row, settings()[row.id]);
-        panel.stack.push({ title: row.label, kind: "choice", row, values, index: Math.max(0, values.indexOf(settings()[row.id])) });
-      } else if (!byRight && entry.id === "forget") {
-        // Clearing cannot be undone, so it takes OK twice.
-        if (lvl.armed) {
-          lvl.armed = false;
-          lvl.cleared = true;
-          if (typeof o.onAction === "function") o.onAction("forget");
-        } else lvl.armed = true;
-      } else if (!byRight && entry.id === "disable") {
-        saveSetting("enabled", false);
-        return true;
-      }
-      renderPanel();
-      return true;
-    }
-
     // A set's or an accordion's own level: its choices, titled with the
     // panel it is on ("Font Color").
     function openChoices(lvl, act) {
@@ -910,13 +873,6 @@
     function takeSubItem(byRight) {
       const lvl = level();
       if (!lvl) return false;
-      if (lvl.kind === "leanback") return takeLeanback(lvl, byRight);
-      if (lvl.kind === "choice") {
-        saveSetting(lvl.row.id, lvl.values[lvl.index]);
-        panel.stack.pop();
-        renderPanel();
-        return true;
-      }
       if (lvl.kind === "pick") {
         // The player's own option is pressed; its level is read again and
         // the panel goes back to it, on the set just changed.
@@ -957,8 +913,6 @@
       if (lvl) {
         const n = entriesOf(lvl).length;
         lvl.index = Math.min(n - 1, Math.max(0, lvl.index + delta));
-        if (lvl.kind === "leanback") lvl.cleared = false;
-        if (lvl.kind === "leanback" && leanbackEntries(lvl)[lvl.index].id !== "forget") lvl.armed = false;
       } else {
         panel.index = Math.min(panel.rows.length - 1, Math.max(0, panel.index + delta));
       }
@@ -994,7 +948,10 @@
     function pickEntry(i) {
       if (!panel) return;
       const lvl = level();
-      if (lvl) {
+      if (lvl && lvl.kind === "leanback") {
+        lvl.menu.pick(i);
+        renderPanel();
+      } else if (lvl) {
         lvl.index = i;
         step(() => takeSubItem(false));
       } else {
@@ -1194,6 +1151,15 @@
         if (echoing) return true;
         if (panel) {
           const lvl = level();
+          // Leanback's own settings: its menu takes the keys, and ◀ or Back
+          // from its top come back up to the panel's rows.
+          if (lvl && lvl.kind === "leanback") {
+            if (busy) return true;
+            const r = lvl.menu.key(action);
+            if (r === "out") return leaveSub();
+            if (r && panel) renderPanel();
+            return Boolean(r);
+          }
           switch (action) {
             case "up": return movePanel(-1);
             case "down": return movePanel(1);

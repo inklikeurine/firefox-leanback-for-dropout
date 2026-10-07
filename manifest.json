@@ -49,6 +49,7 @@
         "nav/spatial.js",
         "nav/focus-ring.js",
         "nav/panel.js",
+        "nav/settings-menu.js",
         "nav/rail.js",
         "nav/trail.js",
         "content/cards.js",
@@ -75,6 +76,7 @@
         "nav/keymap.js",
         "nav/site-rules.js",
         "nav/panel.js",
+        "nav/settings-menu.js",
         "content/transport.js",
         "content/player.js"
       ],

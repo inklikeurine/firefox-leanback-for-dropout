@@ -42,6 +42,7 @@
   const Spatial = globalThis.TenfootSpatial;
   const Ring = globalThis.TenfootFocusRing;
   const Panel = globalThis.TenfootPanel;
+  const SettingsMenu = globalThis.TenfootSettingsMenu;
   const Rail = globalThis.TenfootRail;
   const Home = globalThis.TenfootHome;
   const Screen = globalThis.TenfootScreen;
@@ -79,7 +80,7 @@
     menu: null,
     menuReturn: null,
     offerShowing: false,
-    levels: [], // the settings panel's stack: the list, then a choice's values
+    settingsMenu: null,
     engaged: null,
     engagedIndex: 0,
     home: null,
@@ -92,7 +93,6 @@
     railReturn: null,
     history: { entries: {} },
     metaSent: null,
-    forgetArmed: false,
     pendingInitialFocus: 0,
     initialFocusTimer: 0,
     menuRefocus: 0,
@@ -1150,46 +1150,16 @@
 
   // -- Leanback's settings, in the panel (nav/panel.js) ------------------------
   //
-  // The list is the one every settings panel shows (lib/settings.js → ROWS),
-  // then Clear Continue Watching and Turn Leanback Off. ▲ ▼ move; OK or ▶ take
-  // an entry: an on/off flips, a choice opens its short list, where OK picks
-  // one (ticked) and goes back up; ◀ or Back go back out, and at the top close
-  // the panel. state.levels is the stack: the list, then a choice's values.
-
-  function topEntries() {
-    const s = state.settings;
-    const entries = Settings.ROWS.map((r) => (r.kind === "toggle"
-      ? { id: r.id, label: r.label, kind: "toggle", on: Boolean(s[r.id]) }
-      : { id: r.id, label: r.label, kind: "choice", value: Settings.valueText(r, s[r.id]) }));
-    entries.push({ id: "forget", label: "Clear Continue Watching", kind: "action", value: state.forgetArmed ? "OK again to clear" : "", separator: true });
-    entries.push({ id: "disable", label: "Turn Leanback Off", kind: "action" });
-    return entries;
-  }
-
-  function levelView(level) {
-    if (level.kind === "choice") {
-      const cur = state.settings[level.row.id];
-      return {
-        title: level.row.label,
-        index: level.index,
-        entries: level.values.map((v) => ({ id: String(v), label: Settings.valueText(level.row, v), kind: "option", checked: v === cur }))
-      };
-    }
-    return { title: "Leanback Settings", index: level.index, entries: topEntries() };
-  }
-
-  function currentLevel() {
-    return state.levels[state.levels.length - 1] || null;
-  }
+  // The menu is nav/settings-menu.js, the same as in the playback panel;
+  // this page draws it, hands it the keys, and closes the panel when ◀ or
+  // Back leave its top. A clear is confirmed with a notice.
 
   function renderSettings() {
-    const level = currentLevel();
-    if (level) state.menu.render(levelView(level));
+    if (state.menu.isOpen) state.menu.render(state.settingsMenu.view());
   }
 
   function openSettings() {
-    state.forgetArmed = false;
-    state.levels = [{ kind: "top", index: 0 }];
+    state.settingsMenu.open();
     // Open, then draw: drawing moves the focus into the panel, and a panel
     // that is not open yet would let the rail think the selection left it.
     state.menu.open();
@@ -1216,8 +1186,6 @@
 
   function closeMenu() {
     if (!state.menu.close()) return false;
-    state.levels = [];
-    state.forgetArmed = false;
     if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
     else if (state.playerFocused || state.theater) enterPlayer();
     state.menuReturn = null;
@@ -1226,108 +1194,38 @@
   }
 
   function dispatchInMenu(action) {
-    const level = currentLevel();
-    if (!level) return closeMenu();
-    switch (action) {
-      case "up":
-      case "down": {
-        const n = levelView(level).entries.length;
-        const next = Math.min(n - 1, Math.max(0, level.index + (action === "up" ? -1 : 1)));
-        if (next !== level.index) {
-          level.index = next;
-          state.forgetArmed = false;
-          renderSettings();
-        }
-        return true;
+    if (action === "menu") return closeMenu();
+    const r = state.settingsMenu.key(action);
+    if (r === "out") return closeMenu();
+    if (r) renderSettings();
+    return Boolean(r);
+  }
+
+  function saveSetting(patch) {
+    if (Object.keys(patch).every((k) => state.settings[k] === patch[k])) return;
+    state.settings = Object.assign({}, state.settings, patch);
+    send({ type: "settings:set", patch });
+  }
+
+  function createSettingsMenu() {
+    return SettingsMenu.create({
+      settings: () => state.settings,
+      save: saveSetting,
+      onClear: () => {
+        send({ type: "history:clear" });
+        notice("Continue Watching cleared");
+      },
+      onDisable: () => {
+        closeMenu();
+        send({ type: "settings:set", patch: { enabled: false } });
       }
-      case "select":
-        return takeSetting(level, false);
-      case "right":
-        return takeSetting(level, true);
-      case "back":
-      case "left":
-        // ◀ is the way out, as Back is: one level, then the panel.
-        if (state.levels.length > 1) {
-          state.levels.pop();
-          renderSettings();
-          return true;
-        }
-        return closeMenu();
-      case "menu":
-        return closeMenu();
-      default:
-        return false;
-    }
-  }
-
-  // OK (and ▶, which never runs an action) on the entry under the selection.
-  function takeSetting(level, byRight) {
-    if (level.kind === "choice") {
-      const v = level.values[level.index];
-      saveSetting(level.row.id, v);
-      state.levels.pop();
-      renderSettings();
-      return true;
-    }
-    const entry = topEntries()[level.index];
-    if (!entry) return true;
-    const row = Settings.rowOf(entry.id);
-    if (row && row.kind === "toggle") {
-      saveSetting(row.id, !state.settings[row.id]);
-      renderSettings();
-      return true;
-    }
-    if (row && row.kind === "choice") {
-      const values = Settings.choicesOf(row, state.settings[row.id]);
-      state.levels.push({ kind: "choice", row, values, index: Math.max(0, values.indexOf(state.settings[row.id])) });
-      renderSettings();
-      return true;
-    }
-    if (byRight) return true;
-    onMenuItem(entry.id);
-    return true;
-  }
-
-  function saveSetting(id, value) {
-    if (state.settings[id] === value) return;
-    state.settings = Object.assign({}, state.settings, { [id]: value });
-    send({ type: "settings:set", patch: { [id]: value } });
+    });
   }
 
   // A click on an entry (a mouse): the same as moving there and pressing OK.
   function onPanelPick(i) {
-    const level = currentLevel();
-    if (!level) return;
-    level.index = i;
-    takeSetting(level, false);
-  }
-
-  // Clearing cannot be undone, so it takes OK twice.
-  function forgetHistory() {
-    if (!state.forgetArmed) {
-      state.forgetArmed = true;
-      renderSettings();
-      return;
-    }
-    state.forgetArmed = false;
+    state.settingsMenu.pick(i);
     renderSettings();
-    send({ type: "history:clear" });
-    notice("Continue Watching cleared");
-  }
-
-  // The actions at the foot of the list.
-  function onMenuItem(id) {
-    switch (id) {
-      case "forget":
-        forgetHistory();
-        return;
-      case "disable":
-        closeMenu();
-        send({ type: "settings:set", patch: { enabled: false } });
-        return;
-      default:
-        closeMenu();
-    }
   }
 
   // "/" is a toggle: it opens search, and on the search page it closes it and
@@ -2116,6 +2014,7 @@
     state.ring = Ring.createRing(document, ringStyle());
     state.hints = Ring.createHintBar(document, { enabled: settings.hintBar });
     state.menu = Panel.createPanel(document, { label: "Leanback settings", onPick: onPanelPick });
+    state.settingsMenu = createSettingsMenu();
     if (History) {
       state.history = await History.load(API);
       History.watch(API, (store) => {

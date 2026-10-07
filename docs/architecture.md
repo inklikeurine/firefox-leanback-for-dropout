@@ -48,7 +48,8 @@ scripts, and the background script relays between them.
 | `nav/trail.js` | Top frame | The trail behind [Back](#back-contentpagejs--navtrailjs); `sessionStorage` only. |
 | `nav/rail.js` | Top frame | The [rail](#the-rail-navrailjs): its buttons, remembered position, current entry. `page.js` supplies the entries and their actions. |
 | `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). |
-| `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free: `page.js` and `transport.js` own the levels and keys. Styled by `content/panel.css`. |
+| `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free. Styled by `content/panel.css`. |
+| `nav/settings-menu.js` | Top frame and player frame | Leanback's settings as a menu (`ROWS`, Clear Continue Watching, Turn Leanback Off): its levels and keys, `view()` for `nav/panel.js`. `page.js` and `transport.js` each draw it; the player's own menu levels are `transport.js`'s. |
 | `nav/keymap.js` | Both content scripts | Keys → actions per context (page / player / typing). Pure. |
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
 | `sites/dropout.json` | Fetched by the background | [All Dropout knowledge](#sitesdropoutjson). |
@@ -750,7 +751,7 @@ The parts of `manifest.json` (MV2) that are not obvious:
 - Each `js` list starts with `lib/settings.js`, then `lib/common.js` and
   `lib/history.js` where needed. Files in one list share a global, which is
   how `lib/*`, `nav/*` and the content modules publish `TenfootSettings`,
-  `TenfootCommon`, `TenfootHistory`,
+  `TenfootCommon`, `TenfootHistory`, `TenfootSettingsMenu`,
   `TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
   `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootCards`,
   `TenfootHome`, `TenfootScreen` and `TenfootShow` to `content/page.js`.
