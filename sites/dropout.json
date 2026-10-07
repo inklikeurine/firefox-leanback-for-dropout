@@ -71,20 +71,14 @@
     },
     "series": {
       "focusable": [
-        "[data-tenfoot-resume]",
         "a.custom-btn-action-primary",
         "a.custom-btn-action-trailer",
         "button.custom-btn-action-my-list",
         "select.js-switch-season",
         "select.js-sort-items"
       ],
-      "rows": "[data-tenfoot-seasons]",
-      "rowItem": "[data-tenfoot-season]",
       "tile": ".browse-item-card",
-      "target": [
-        "a.browse-item-link",
-        "[data-tenfoot-season]"
-      ],
+      "target": "a.browse-item-link",
       "loadMore": "a.js-load-more-link, [data-load-more]",
       "episodeLinks": ".episode-container .browse-item-card a.browse-item-link",
       "initialFocus": [
@@ -98,20 +92,15 @@
           "list": "section.collection-container"
         },
         "seasonSelect": "select.js-switch-season",
-        "seasonControls": ".season-controls",
         "episodeCount": ".season-controls .content-label",
         "episodes": "section.episode-container",
         "episode": "li.js-collection-item",
         "episodeLink": "a.browse-item-link",
-        "episodeArt": ".browse-image-container",
         "episodeProgress": ".percentage-bar",
-        "episodeText": ".padding-small",
         "episodeNumber": ".media-episode",
         "episodeTitle": ".browse-item-title",
         "episodeImage": ".browse-image-container img",
         "episodeDuration": ".duration-container",
-        "actionsBox": ".collection-actions",
-        "actions": ".collection-actions > .btn",
         "heroTitle": "h1.collection-title",
         "heroStats": "h2.collection-stats",
         "heroDescription": ".collection-description",
@@ -123,18 +112,7 @@
         "extrasSection": "section.extras-container",
         "sectionTitle": "h2.collection-title, .extras-header",
         "more": "a.js-load-more-link",
-        "primaryAction": ".custom-btn-action-primary",
-        "omit": {
-          "all": [
-            "a.custom-btn-action-share",
-            ".browse-item-card button.my-list"
-          ],
-          "show": [
-            ".season-controls",
-            ".browse-item-card .play-outer-circle",
-            ".browse-item-card .percentage-bar-container"
-          ]
-        }
+        "primaryAction": ".custom-btn-action-primary"
       }
     },
     "video": {
@@ -182,15 +160,7 @@
         "input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button'])",
         "textarea",
         "[contenteditable='true']"
-      ],
-      "tvGrid": {
-        "container": ".Search-module__content-container",
-        "wrap": ".SearchResults-module__search-results-container",
-        "grid": "ul.SearchResults-module__search-results",
-        "item": "li.SearchResults-module__search-result",
-        "title": ".subtext-container .truncate",
-        "subtitle": ".browse-item-subtext"
-      }
+      ]
     },
     "other": {
       "focusable": [

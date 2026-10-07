@@ -59,8 +59,7 @@
       "css": [
         "content/page.css",
         "content/panel.css",
-        "content/home.css",
-        "content/show.css"
+        "content/home.css"
       ],
       "run_at": "document_idle"
     },

@@ -86,7 +86,6 @@
     dockUntil: 0,
     dockFrame: 0,
     historyLength: 0,
-    show: null,
     rail: null,
     railActive: false,
     railReturn: null,
@@ -434,26 +433,6 @@
     }
   }
 
-  // A page whose results the site lays out for a desktop (search: a narrow
-  // centred column of small pictures) is marked so content/home.css can
-  // spread it across a television: rules → pages.<kind>.tvGrid.
-  const TV_GRID_PARTS = {
-    container: "data-tenfoot-grid-container",
-    wrap: "data-tenfoot-grid-wrap",
-    grid: "data-tenfoot-grid",
-    item: "data-tenfoot-grid-item",
-    title: "data-tenfoot-grid-title",
-    subtitle: "data-tenfoot-grid-sub"
-  };
-
-  function stampTvGrid() {
-    const g = state.page && state.page.tvGrid;
-    if (!g || typeof g !== "object") return;
-    for (const [part, attr] of Object.entries(TV_GRID_PARTS)) {
-      for (const el of qsa(Rules.selector(g[part]))) if (!el.hasAttribute(attr)) el.setAttribute(attr, "");
-    }
-  }
-
   // One deferred retry at the deadline, so a page that stops mutating still
   // gets a focused element rather than none.
   function clearInitialFocusTimer() {
@@ -511,9 +490,7 @@
       if (a && a !== document.body && a !== root) state.ring.follow(a);
       return;
     }
-    // A show starts on the episode to watch next (content/show.js).
-    let target = state.show ? state.show.startEpisode() : null;
-    if (!target) target = firstVisible(Rules.selector(state.page.initialFocus));
+    let target = firstVisible(Rules.selector(state.page.initialFocus));
     if (!target && Rules.selector(state.page.initialFocus) && Date.now() <= state.pendingInitialFocus) {
       // The search field is rendered after the framework starts, and the
       // fallback below would spend our one shot on whatever nav link happened
@@ -940,25 +917,6 @@
     return true;
   }
 
-  function startShow() {
-    if (!Show || state.kind !== "series" || state.show) return;
-    state.show = Show.createShow(document, {
-      rules: state.page.show,
-      history: () => state.history,
-      onSeason: onSeasonChosen
-    });
-    // Coming up into the seasons lands on the one on screen.
-    const row = state.show.row;
-    const cur = state.show.currentSeason;
-    if (row && cur) state.memory.set(row, cur);
-  }
-
-  function stopShow() {
-    if (!state.show) return;
-    state.show.destroy();
-    state.show = null;
-  }
-
   // OK on a season: its page, replacing this one, so Back leaves the show
   // rather than stepping back through the seasons. The season already on
   // screen takes the selection down to its episodes instead.
@@ -967,8 +925,8 @@
       goSideways(url);
       return;
     }
-    const t = state.show ? state.show.startEpisode() : state.home ? state.home.initialTarget() : null;
-    if (t) focusEl(t, { scroll: !state.home });
+    const t = state.home ? state.home.initialTarget() : null;
+    if (t) focusEl(t, { scroll: false });
   }
 
   // content/early.css keeps a show's page blank until this is set, so Season 1
@@ -1951,8 +1909,6 @@
     }
     syncModal();
     refreshHome();
-    if (state.show) state.show.refresh();
-    stampTvGrid();
     stampChrome();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
@@ -2032,7 +1988,7 @@
       ring: Boolean(state.ring) && !state.ring.element.hidden,
       hints: Boolean(state.hints) && state.hints.visible,
       home: state.home ? state.home.snapshot() : null,
-      show: state.show ? state.show.snapshot() : (state.home && state.home.snapshot().show) || null,
+      show: (state.home && state.home.snapshot().show) || null,
       rail: railShown() ? { active: state.railActive, item: state.rail.currentId, page: railPage() } : null
     };
   }
@@ -2113,7 +2069,6 @@
     state.href = location.href;
     state.historyLength = history.length;
     clearBackFallback();
-    stopShow();
     if (openSeason()) return;
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     if (state.kind === "series") captureEpisodeOrder();
@@ -2127,9 +2082,7 @@
     state.railReturn = null;
     if (screenKind()) startHome();
     else stopHome();
-    if (state.kind === "series" && !state.home) startShow();
     setupRail();
-    stampTvGrid();
     recordTrail();
     syncModal();
     // Dropout's page shows from here on (content/early.css), unless a screen
@@ -2151,7 +2104,6 @@
       state.hints.hide();
       setTheater(false);
       stopHome();
-      stopShow();
       setupRail();
       state.pendingInitialFocus = 0;
       markReady();
@@ -2197,7 +2149,6 @@
       History.watch(API, (store) => {
         state.history = store;
         refreshHome();
-        if (state.show) state.show.refresh();
       });
     }
     installSiteStyle();

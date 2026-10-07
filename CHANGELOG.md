@@ -4,6 +4,10 @@
 
 ### Removed
 
+- **The restyled pages Leanback fell back on when it could not read
+  Dropout's page.** A show page or search page Leanback cannot read (only
+  possible if Dropout changes its site) is now Dropout's own page, still
+  driven with the remote and the yellow ring, instead of a restyled one.
 - Unused code: actions no remote button sent (subtitles, mute, channel
   up/down), the focus ring in the player frame, which was never drawn, and
   a message nothing sent.

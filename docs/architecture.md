@@ -38,7 +38,7 @@ scripts, and the background script relays between them.
 | `content/page.js` | Top frame of `watch.dropout.tv` | URL → page kind; keys → actions; starts and drives [Leanback's screens](#leanbacks-screens); rail, spatial navigation, ring, hints, theater, Back, load-more, next/previous episode; an episode page's details to the watch history. |
 | `content/home.js` | Top frame: Home and hubs | The [Home screen](#home-contenthomejs). |
 | `content/screen.js` | Top frame: the other pages Leanback draws | A screen drawn from a model; the readers for [collections, search](#collections-and-search) and [an episode's page](#an-episodes-page). |
-| `content/show.js` | Top frame: one-word addresses | [A show's page](#a-shows-page-contentshowjs): show, special or list; `readDetail()`; the `createShow()` restyle when it cannot read one. |
+| `content/show.js` | Top frame: one-word addresses | [A show's page](#a-shows-page-contentshowjs): show, special or list; `readDetail()`. |
 | `content/cards.js` | Top frame | The card every screen draws, `reconcile()` by key, readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
 | `content/player.js` | Every `embed.vhx.tv` frame (`all_frames: true`) | Registers (`player:hello`); finds the `<video>`; keys while the frame has focus; `player:command`; `player:state`, `player:ended`, progress reports; resume; `startMuted` once per video; **when** the transport bar is open and what Back means then. |
 | `content/transport.js` | Every `embed.vhx.tv` frame | Draws the [transport bar, title, up-next card and settings panel](#the-transport-bar-and-the-settings-panel); drives the `<video>`. Site-agnostic apart from the `player` rules it is handed. |
@@ -65,9 +65,9 @@ What each key does on each: [keymap.md](./keymap.md).
 | `browse` | `/browse` | Home, with the rail | the banner's first button | nothing to draw within 10 s → row-aware navigation over Dropout's rows (`pages.browse`) |
 | `hub` | a one-segment path whose page holds `home.root` (`/dimension-20`, `/dropout-24-7`) | Home without Continue Watching; the rail (Dropout 24/7's entry lit on `/dropout-24-7`, none on other hubs) | as Home | as Home |
 | `grid` | `/series`, `/collections/...`, `/my-list` | `screen.js`, with the rail | the first card | geometric navigation over Dropout's tiles; ▼ past the last row clicks Load More |
-| `series` | `/<slug>[/season:N]`, not a hub | show or special: `show.js` + `screen.js`; list: `screen.js`. With the rail | show: the episode to watch next; special: *Watch Movie*; list: the first card | show: restyled (`createShow()`); unrecognised layout: Dropout's season and sort `<select>`s stay |
+| `series` | `/<slug>[/season:N]`, not a hub | show or special: `show.js` + `screen.js`; list: `screen.js`. With the rail | show: the episode to watch next; special: *Watch Movie*; list: the first card | Dropout's page, geometric navigation; its season and sort `<select>`s are two-step controls |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (Dropout 24/7's stream) | `screen.js` round the [docked player](#an-episodes-page); theater when `theater` is `auto` | the player frame | no title to read: ▼ from the player → the series link, else the first focusable below |
-| `search` | `/search` | `screen.js`, with the rail | the search box | no Dropout search box: geometric navigation, results four across (`tvGrid`) |
+| `search` | `/search` | `screen.js`, with the rail | the search box | no Dropout search box: geometric navigation over Dropout's page |
 | `other` | login, account, legal | Dropout | none: the ring follows the page's focus | — (arrows move among `pages.other.focusable`) |
 
 The search app changing the address as you type is not a new page: the
@@ -174,8 +174,7 @@ are dropped), and only inside the topmost open `modal` when there is one.
    projections overlap on the orthogonal axis (axis-aligned overlap beats
    distance). Lowest wins; none → no move, no wrap.
 3. **Entering a row** by a geometric move lands on that row's remembered
-   target if it has one. A show's row of seasons starts out remembering the
-   season on screen, so ▲ from the episodes lands there.
+   target if it has one.
 4. **The rail**: where it is shown, ◀ goes only to a candidate level with the
    selection (vertical extents overlap); otherwise ◀ enters the rail.
 5. **Keep on screen**: `focus({preventScroll: true})`, then
@@ -210,7 +209,7 @@ scrolling is off while a screen is up.
 or `TenfootScreen.createScreen()` with the matching reader into `state.home`.
 Both have the same interface, so moves, initial focus, the rail's way back
 and redraws drive every screen alike. A reader that finds nothing means no
-screen: Dropout's page is driven as it is (a show restyled).
+screen: Dropout's page is driven as it is.
 
 **Showing it.** The layer shows only under
 `html[data-tenfoot="on"][data-tenfoot-home="on"]`, and not while a dialog is
@@ -251,7 +250,6 @@ wide at a zoom of 10 % or less, 2000 px at 25 %. `--tf-reach` (half the zoom,
 `--tenfoot-zoom`, on each side plus the ring's offset, width + 2 px) is left
 free under each row heading, and the selected card's title and subtitle move
 down by it (`.tenfoot-scaled ~`), so neither card nor ring overlaps text.
-`--tf-grid-u` (no 0.8) sizes the `tvGrid` fallback.
 
 ### Home (`content/home.js`)
 
@@ -328,7 +326,7 @@ keyed `data-tenfoot-action`: links (`href`, followed like a card) or proxies
 that click Dropout's (`proxy`: *Trailer*, *My List*, which carries
 `data-tenfoot-listed`, a tick, while Dropout's says the show is listed).
 Pills are `button.tenfoot-season` in a `.tenfoot-season-row` (styled by
-`content/show.css`), the current one `aria-current`, sliding sideways to
+the end of `content/home.css`), the current one `aria-current`, sliding sideways to
 keep the selection in view; OK on one with a `proxy` (a search filter)
 presses Dropout's, else calls `onPill` (`page.js` `onSeasonChosen()`). Each
 section is its title (name, count) over a CSS grid of `--tf-cols` columns at
@@ -394,7 +392,7 @@ Back, stays. The page stays blank meanwhile
 - Watched or in progress (`tileStateOf()`): the watch history merged with
   Dropout's `.percentage-bar` on the tile (a Roku play).
 
-A page with no name in its header is not read, and is restyled.
+A page with no name in its header is not read: it stays Dropout's page.
 
 **The order** (`smartOrder`, while *Shows Open On* is not `first`): newest
 first when the start episode (below) is past the middle of what is on the
@@ -421,18 +419,6 @@ are unknown. It is a link, yellow and first: OK follows it, like a card.
 page order, among the tiles drawn, that is watched or in progress. None:
 Episode 1. In progress: that one. Watched: the next unwatched after it, else
 Episode 1. A special starts on *Watch Movie*.
-
-**When a show cannot be read** (`createShow()`), Dropout's page is restyled.
-`refresh()` (at start, on each batch of mutations, on each history change)
-stamps `data-tenfoot-omit` on what the rules hide, `data-tenfoot-action` on
-the header's buttons (`primary` for *Watch Movie*) and, on a show, the episode
-grid's parts (`data-tenfoot-ep-grid`, `-ep`, `-ep-link`, `-ep-art`,
-`-ep-text`): all that `content/show.css` targets, its button rules scoped to
-`<body>` so Leanback's own are left alone. The seasons become a
-`<div data-tenfoot-seasons>` where `.season-controls` was, the main button an
-`<a data-tenfoot-resume>` first among the header's buttons, and each tile
-gets a tick or bar in its picture. Only changes are written, so the observer
-is not woken for nothing; `destroy()` removes it all (Leanback turned off).
 
 ### An episode's page
 
@@ -768,8 +754,7 @@ The parts of `manifest.json` (MV2) that are not obvious:
   `TenfootHome`, `TenfootScreen` and `TenfootShow` to `content/page.js`.
 - The page's `css`: `content/page.css` (ring, hints, theater, the docked
   player), `content/panel.css` (the settings panel; also in the player
-  frame's list), `content/home.css` (the screens, the rail) and
-  `content/show.css` (seasons, a restyled show's page). All but the panel's
+  frame's list), and `content/home.css` (the screens, the rail, the pills). All but the panel's
   are gated on `html[data-tenfoot="on"]`; the panel only exists while open.
 - A second `watch.dropout.tv` entry, at `document_start`, holds only
   `content/early.css`: content-script stylesheets arrive with their scripts'
@@ -792,9 +777,8 @@ The only file that knows Dropout. Which selectors are verified:
 | `browseUrl`, `gridUrl`, `searchUrl` | where the rail's own entries go |
 | `common` | the header, Dropout's `chrome`, loose `focusable`s, `modals`, `modalClose`, the hover tooltips (`hoverSuppress`) |
 | `pages.<kind>` | `rows`/`rowItem` (row-wise moves; `scrollNext`/`scrollPrev` on `browse`), `tile`/`target` (one focus per tile), `focusable`, `loadMore`, `initialFocus` (a list; the first match in page order wins) |
-| `pages.series` | also `episodeLinks` (next/previous order) and `show`, what `show.js` reads: `layouts`, the season control and its surroundings, the episode section and a tile's parts, the header and its buttons, a special's movie and *Extras*, *Load More*, and `omit` (hidden everywhere, `all`; on a show, `show`) |
+| `pages.series` | also `episodeLinks` (next/previous order) and `show`, what `show.js` reads: `layouts`, the season control and the episode count, the episode section and a tile's parts, the header and its buttons, a special's movie and *Extras*, *Load More* |
 | `pages.video` | `theaterRoot`, `playerMount`, `playerFrame`, `theaterHide`, `upNextOverlay`, `seriesLink`; for the history `videoTitle`, `videoImage`, `episodeInfo`, `canonical` |
-| `pages.search.tvGrid` | the parts of Dropout's results grid (container, wrap, grid, item, title, subtitle), which `content/home.css` lays out four across beside the rail when Leanback cannot draw search |
 | `player` | the selectors inside the player frame: `<video>`, captions, chrome and transport keep/hide lists, the up-next card, the gear and fullscreen buttons, the settings menu and its parts |
 | `home` | what Home reads: `root`, a slide, a row and a tile with their parts, `rowPageSize`, `showMore`, `rowOverrides`, `rowTitleOverrides` |
 | `rail` | `kinds` (the page kinds with the rail), `links` (id, label, icon, url) |

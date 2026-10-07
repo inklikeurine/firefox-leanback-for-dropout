@@ -331,9 +331,8 @@ previous results on screen after an address change. On `/search` itself it is
 ```
 
 So at 1280–1920 px a result picture is about 150–250 px wide in a centred
-column. Leanback normally draws its own search screen from these parts
-(`screen.search`, below); when it cannot, it marks them (`tvGrid`) and lays
-Dropout's grid out four across, beside the rail. The React tile's link has no
+column. Leanback draws its own search screen from these parts
+(`screen.search`, below). The React tile's link has no
 class, so the rules' `target` for search is `a.browse-item-link, a[href]`.
 `h3.BlankSearchResults-module__no-results` ("Start typing to see results",
 2026-09-27 capture) is the empty state: with nothing typed, the filters, the

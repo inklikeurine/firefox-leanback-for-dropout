@@ -57,8 +57,8 @@ use ([targets.md](./targets.md)).
   Dropout renders there — same links, pictures and titles — with Dropout's
   page left underneath, untouched; Leanback's buttons press Dropout's own.
   Dropout's top bar and footer are hidden on every page but sign-in, account,
-  help and legal. A screen that cannot be read leaves Dropout's page, driven
-  with the arrows (a show: restyled, below).
+  help and legal. A page Leanback cannot read is Dropout's own, driven with
+  the arrows and the ring.
 - **Home (`/browse`).** The banner's buttons, then one row per shelf.
   Hubs such as `/dimension-20` get the same screen without Continue Watching.
   - **TV-style scrolling.** The selected row always sits at the same height
@@ -148,8 +148,6 @@ use ([targets.md](./targets.md)).
     (where the selection starts) and *My List*, then the movie and its Extras.
   - Not drawn: Share, the season drop-down and sort control, and the My List
     button Dropout puts on each episode for a mouse.
-  - **A show Leanback cannot read** (no name in its header) is Dropout's page
-    restyled, with the same buttons, row of seasons and episode marks.
 - **Search** (`/search`): Leanback's own box at the top, as wide as five
   cards, large text, ringed but not grown; what is typed goes into Dropout's
   box, and Dropout's results come back as Home's cards, five across. Under
