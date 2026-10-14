@@ -2,7 +2,7 @@
 
 What the extension relies on, checked against logged-out fetches (commands at
 the end) and against captures of the logged-in site made with
-[Leanback Dev Probe](../../leanback-dev-probe/). The class names are Vimeo
+Leanback Dev Probe (a private development tool). The class names are Vimeo
 OTT's and are shared by every Vimeo OTT site, which makes them more stable than
 Dropout-specific markup would be.
 
@@ -584,7 +584,7 @@ curl -sL -A "$UA" "$bundle" | grep -oE 'className:"[^"]+"|"data-testid":"[^"]+"'
 The bundle file names carry a content hash and change with every deploy; read
 them from the page rather than hard-coding.
 
-**Logged in**, load [Leanback Dev Probe](../../leanback-dev-probe/) and browse:
+**Logged in**, load Leanback Dev Probe and browse:
 it saves each page as drawn on screen, the player included, with the account's
 details blanked. "Save Page As" and view-source give only the server's shell,
 without anything React draws. The captures stay private; nothing from a
