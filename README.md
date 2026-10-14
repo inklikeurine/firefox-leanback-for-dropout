@@ -46,14 +46,15 @@ remote: one Firefox window, kiosk or fullscreen, no pointer in normal use
 
 ## Installation
 
-There is no build step — the folder is loadable as-is.
+There is no build step — clone the repository
+(`git clone https://github.com/inklikeurine/firefox-leanback-for-dropout`); its folder loads as-is.
 
 **Temporary install (for trying it out):** open `about:debugging#/runtime/this-firefox`,
 click **Load Temporary Add-on…** and select `manifest.json` inside this folder.
 The extension is removed when Firefox restarts.
 
 **With `web-ext` (for development):**
-`web-ext run --source-dir ./leanback-for-dropout --start-url https://watch.dropout.tv/browse`
+`web-ext run --source-dir . --start-url https://watch.dropout.tv/browse`
 launches a clean Firefox profile with the extension loaded.
 
 **Permanent install:** Firefox only permanently installs signed extensions.
@@ -62,7 +63,7 @@ launches a clean Firefox profile with the extension loaded.
 (unlisted self-distribution is fine); see
 [docs/spec.md](./docs/spec.md#release-checklist).
 
-Source: https://github.com/inklikeurine/firefox-extensions/tree/main/leanback-for-dropout
+Source: https://github.com/inklikeurine/firefox-leanback-for-dropout
 
 ## Sound on autoplay
 
@@ -267,4 +268,14 @@ provided as-is and used at your own risk; read the source before installing.
 
 ## License
 
-Public domain under [The Unlicense](../UNLICENSE).
+AI code generators are trained on enormous pools of public code, released under
+every license imaginable — permissive, copyleft, and non-commercial alike. The
+origin of any individual generated line is untraceable. Output built from that
+pool cannot honestly be owned by anyone.
+
+My position: code built from the commons belongs to the commons. Since no one
+can know which licenses any given line was originally released under,
+AI-generated code should be treated as unlicensable — public domain by default.
+
+Accordingly, all code in this repository is released into the public domain
+under the [Unlicense](UNLICENSE).

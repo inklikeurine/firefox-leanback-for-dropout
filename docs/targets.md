@@ -22,7 +22,7 @@ to run on your own setup.
 
 A typical air-mouse remote — arrows, OK, back, home, menu, volume ±, a gyro
 pointer, often a QWERTY pad on the back — sends these. Check yours on Linux
-with `evtest`, or in Firefox with [Leanback Dev Probe](../../leanback-dev-probe/).
+with `evtest`, or in Firefox with Leanback Dev Probe (a private development tool).
 
 | Button | Linux key | Reaches Firefox as (`event.key`) | Extension action |
 | --- | --- | --- | --- |

@@ -196,7 +196,7 @@ A remote's back button sends `KEY_BACK`, which arrives as a trusted
 `BrowserBack`. Cancelling it with `preventDefault()` does **not** stop
 Firefox's own history-back, on the page or with the player focused, and an
 extra history entry for it to land on does not hold it either (checked with
-[Leanback Dev Probe](../../leanback-dev-probe/)'s Block Back). So Leanback
+Leanback Dev Probe's Block Back). So Leanback
 keeps the history in the shape Back should follow
 ([architecture.md](./architecture.md#back-contentpage-backjs--navtrailjs)): sideways
 moves replace the page, a Back that lands on the previous episode carries on

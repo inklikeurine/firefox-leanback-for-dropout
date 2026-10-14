@@ -14,7 +14,7 @@ the milestones for 1.0. The user-facing description is the extension's
 [README](../README.md).
 
 The headless suites, fixtures and verification journal live in the private
-workspace (`.dev/tests/leanback-for-dropout/`, `.dev/fixtures/leanback-for-dropout/`,
-`.dev/review/leanback-for-dropout/`) and are not part of the published extension. The rules AI coding
+workspace (`_workshop/tests/leanback-for-dropout/`, `_workshop/fixtures/leanback-for-dropout/`,
+`_workshop/review/leanback-for-dropout/`) and are not part of the published extension. The rules AI coding
 agents follow for every extension in this repository are in the root
-[`AGENTS.md`](../../AGENTS.md).
+[`AGENTS.md`](../AGENTS.md).
