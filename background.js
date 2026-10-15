@@ -167,6 +167,7 @@ async function handleMessage(message, sender) {
       return { ok: true, tabId, frameId };
     }
     case "player:command":
+    case "player:hold":
     case "player:focus":
     case "player:offer":
     case "player:back":

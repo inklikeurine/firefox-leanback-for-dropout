@@ -36,15 +36,16 @@ scripts, and the background script relays between them.
 | `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`). |
 | `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `send` (a reply that is always an object). |
 | `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on `storage.local` key `progress`. |
-| `content/page.js` | Top frame of `watch.dropout.tv` | The page script: URL → page kind; keys → actions; focus, spatial navigation, ring, hints, load-more, dialogs, the two-step `<select>`, the settings panel, messages, life cycle. Its three parts below install into one shared context (`P`: its `state` and the functions the parts call), each calling the others through it. |
+| `content/page.js` | Top frame of `watch.dropout.tv` | The page script: URL → page kind; keys → actions; focus, spatial navigation, ring, hints, load-more, dialogs, the two-step `<select>`, the settings panel, messages, life cycle. Its four parts below install into one shared context (`P`: its `state` and the functions the parts call), each calling the others through it. |
 | `content/page-back.js` | Top frame | [Back](#back-contentpage-backjs--navtrailjs) and every navigation the page script starts; the trail. |
-| `content/page-video.js` | Top frame | An episode's page: theater, [docking](#an-episodes-page), the player hand-off, next/previous episode, the up-next offer, autoplay, media keys, the episode's details to the watch history. |
+| `content/page-video.js` | Top frame | [An episode's page](#an-episodes-page): its details page or the video playing (`state.watch`), the hold on the player, the full window, the player hand-off, next/previous episode, the up-next offer, autoplay, media keys, the episode's details to the watch history. |
+| `content/page-live.js` | Top frame | [Dropout 24/7 in place](#dropout-247-in-place): a live stream's player read from its page and played over the page it was chosen on. |
 | `content/page-screens.js` | Top frame | Which [screen](#leanbacks-screens) a page gets; starting, stopping and redrawing it; moves on it; [the rail](#the-rail-navrailjs); the season a show opens on. |
 | `content/home.js` | Top frame: Home and hubs | [Home](#home-contenthomejs) read off Dropout's page: `readSite()`, `homeModel()`, `rowOverride()`. |
-| `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`); the readers for [collections, search](#collections-and-search) and [an episode's page](#an-episodes-page). |
+| `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`); the readers for [collections, search](#collections-and-search) and [an episode's details page](#an-episodes-page). |
 | `content/show.js` | Top frame: one-word addresses | [A show's page](#a-shows-page-contentshowjs): show, special or list; `readDetail()`. |
 | `content/cards.js` | Top frame | The card every screen draws, `reconcile()` by key, readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
-| `content/player.js` | Every `embed.vhx.tv` frame (`all_frames: true`) | Registers (`player:hello`); finds the `<video>`; keys while the frame has focus; `player:command`; `player:state`, `player:ended`, progress reports; resume; `startMuted` once per video; **when** the transport bar is open and what Back means then. |
+| `content/player.js` | Every `embed.vhx.tv` frame (`all_frames: true`) | Registers (`player:hello`); finds the `<video>`; holds it behind the details page (`player:hold`); keys while the frame has focus; `player:command`; `player:state`, `player:ended`, progress reports; resume; `startMuted` once per video; **when** the transport bar is open and what Back means then. |
 | `content/transport.js` | Every `embed.vhx.tv` frame | Draws the [transport bar, title, up-next card and settings panel](#the-transport-bar-and-the-settings-panel); drives the `<video>`. Site-agnostic apart from the `player` rules it is handed. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | With *skip marketing site* on, `/` → `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Directional focus search, row-aware moves, focus memory. |
@@ -69,9 +70,9 @@ What each key does on each: [keymap.md](./keymap.md).
 | --- | --- | --- | --- | --- |
 | `browse` | `/browse` | Home, with the rail | the banner's first button | nothing to draw within 10 s → row-aware navigation over Dropout's rows (`pages.browse`) |
 | `hub` | a one-segment path whose page holds `home.root` (`/dimension-20`, `/dropout-24-7`) | Home without Continue Watching; the rail (Dropout 24/7's entry lit on `/dropout-24-7`, none on other hubs) | as Home | as Home |
-| `grid` | `/series`, `/collections/...`, `/my-list` | `screen.js`, with the rail | the first card | geometric navigation over Dropout's tiles; ▼ past the last row clicks Load More |
+| `grid` | `/series`, `/collections/...`, `/my-list`, `/movies`, `/continue-watching` | `screen.js`, with the rail | the first card | geometric navigation over Dropout's tiles; ▼ past the last row clicks Load More |
 | `series` | `/<slug>[/season:N]`, not a hub | show or special: `show.js` + `screen.js`; list: `screen.js`. With the rail | show: the episode to watch next; special: *Watch Movie*; list: the first card | Dropout's page, geometric navigation; its season and sort `<select>`s are two-step controls |
-| `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (Dropout 24/7's stream) | `screen.js` round the [docked player](#an-episodes-page); theater when `theater` is `auto` | the player frame | no title to read: ▼ from the player → the series link, else the first focusable below |
+| `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (Dropout 24/7's stream) | `screen.js`: the [details page](#an-episodes-page), with the rail; the video playing in the full window | details: *Watch* (or *Resume*); playing: the player frame | no title to read: Dropout's page, playing at once; ▼ from the player → the series link, else the first focusable below |
 | `search` | `/search` | `screen.js`, with the rail | the search box | no Dropout search box: geometric navigation over Dropout's page |
 | `other` | login, account, legal | Dropout | none: the ring follows the page's focus | — (arrows move among `pages.other.focusable`) |
 
@@ -108,8 +109,10 @@ screen is only redrawn.
 
 ## Back (`content/page-back.js` + `nav/trail.js`)
 
-Back is the browser's Back. Leanback never cancels it or puts history entries
-in its way; it keeps the history worth following.
+Back is the browser's Back. Leanback never cancels it; it keeps the history
+worth following. Firefox's Back also passes over an entry nobody interacted
+with (`browser.navigation.requireUserInteraction`, on by default), so an entry
+pushed as a page loads cannot hold it.
 
 1. **The trail** (`sessionStorage` `tenfoot.trail`): every load records the
    site's pages behind this one, each with its page kind, `group` (the series
@@ -132,14 +135,26 @@ in its way; it keeps the history worth following.
    trail, else opens it. Leanback's own Back (and `/` on Search) goes to the
    newest trail entry that is another page (`backIndex()`), past all of
    search's steps at once.
-3. **Siblings are skipped.** Reaching a page by Back from its sibling (same
+3. **A video playing is a step of its own** above its details page, at the
+   same address (`pushPlay()`: `history.pushState({tenfootPlay: true})`, and
+   a trail entry with `play: true`). *Watch* pushes it during the key press,
+   so the details page has been interacted with and Firefox's Back stops
+   there: a popstate, not a load (`followPlay()`). A video that starts by
+   itself (the next episode) pushes it as the page loads; when
+   Firefox's Back then passes over its untouched details page and lands on
+   an earlier page, that page's `arrive()` sees it (`Trail.passedOver()`)
+   and goes forward to the details page, which arrives as a reload of the
+   trail's top. Landing on an episode by Back, `history.state` says whether
+   it is the step or the page, so the trail is cut at the right entry.
+4. **Siblings are skipped.** Reaching a page by Back from its sibling (same
    kind and show: the previous episode, after Dropout's up-next went on to
    the next) carries on past every sibling at once, before anything is set
    up.
-4. **Escape** runs the layered Back — dialog, settings panel, rail, the player
-   frame's bar and panel (asked first, `player:back`), theater — then
-   `history.go(-1)`, the same step as the remote's BrowserBack.
-5. **Nothing behind** (a tab opened straight on the page: the kiosk case):
+5. **Escape** runs the layered Back — dialog, settings panel, rail, the player
+   frame's bar and panel (asked first, `player:back`), the video playing (off
+   its step: `history.go(-1)`) — then `history.go(-1)`, the same step as the
+   remote's BrowserBack.
+6. **Nothing behind** (a tab opened straight on the page: the kiosk case):
    Escape walks up the site with `goSideways()`, so the history never gains a
    page above: an episode → the season page it was opened from if the same
    show, else the show's page (`structuralParent()`); any other page → Home;
@@ -160,7 +175,7 @@ season never sets it, so Season 1 stays blank until the new page loads.
 
 A screen not ready when the page is set up (Home's rows come later) also sets
 `html[data-tenfoot-pending]`: `content/page.css` keeps `<body>` hidden under
-it (the theater root excepted) until `refreshScreen()` finds the screen ready or
+it (a video playing in the full window excepted) until `refreshScreen()` finds the screen ready or
 `stopScreen()` gives up.
 
 ## Spatial navigation (`nav/spatial.js`)
@@ -233,8 +248,7 @@ is written, which keeps the `MutationObserver` quiet.
 **The selection** is rows and columns, not geometry. ◀ ▶ step along a row and
 stop at its ends; ▲ ▼ change row and land where that row was left (memory by
 key), else on its first item. A move off the model returns an edge:
-`{edge: "left"}` enters the rail; on an episode's page `{edge: "up"}` enters
-the player. `select(el)` points the model at an element the focus reached
+`{edge: "left"}` enters the rail. `select(el)` points the model at an element the focus reached
 another way (a click, the rail returning).
 
 **Scrolling (TV style).** The selected row's top sits at 7 % of the viewport
@@ -443,32 +457,106 @@ Episode 1. A special starts on *Watch Movie*.
 
 ### An episode's page
 
-`episodeModel()` reads the page under the player with `screen.episode`: the
-title (none, no model), the show's name (the banner's yellow kicker), the
-season line (`h5.badges-container`, "•" shown as "·"), the description, the
-buttons — *Play* (`run: "player"`), *Episodes* (the season link, else the
-show link), *My List* (`proxy`) — and *Up Next in Season N* as one section.
-Its hero has `dock: true`: in place of a picture, an empty 16:9 box
-(`.tenfoot-screen-player`) beside the details, exposed as the screen's
-`dock`.
+An episode's page is in one of two states, `state.watch` (`page-video.js`):
+`"details"`, Leanback's details page over Dropout's page, the player loaded
+underneath and held; or `"playing"`, the video in the full window
+([Theater layout](#theater-layout)). `setupWatch()` picks one on the way in:
+playing when `history.state` is the step of a video playing (a reload, or
+Forward), and when the episode before was playing and went on to this one
+(`playingThrough()`: the trail entry the page was reached from going
+forward has `play` and the same show); else the details page. With no
+details to read (no title), Dropout's own page plays at once, with no rail
+and no step: ▼ out of the player is that page, and Back from the video shows
+it under the video before leaving.
 
-**Docking.** `page-video.js` `syncDock()` sets `html.tenfoot-docked` while the box
-exists and writes its rect to `--tf-dock-x/y/w/h`; `content/page.css` makes
-the theater root (`#watch-player`) `position: fixed` there, above the layer
-(z-index 2147481500 over 2147481000), mount and frame filling it. Style only,
-as theater is: moving the frame in the page would reload it.
-`html.tenfoot-theater` wins over docking. The rect is rewritten after every
-redraw and move (`onLayout`), on `resize`, on each theater change, and every
-animation frame for 400 ms after each, so the player follows the screen
-sliding. Leanback off, or no screen, removes the class and variables.
+**The details page.** `episodeModel()` reads the page with
+`screen.episode` and the watch history: the title (none, no model), the
+show's name (the yellow kicker), the season line (`h5.badges-container`, "•"
+shown as "·"), the synopsis, and the buttons — *Watch* (`run: "watch"`), or
+*Resume* (`run: "resume"`) and *Start Over* (`run: "restart"`) when
+`TenfootHistory.resumePoint()` has a point, the same the player resumes from;
+*Add to My List* / *Remove from My List* (`proxy`: Dropout's own button, the
+label from its `listed` class); *Episodes* (the season link, else the show
+link). The first button keeps the key `watch` whatever it says, so the
+selection stays on it when *Watch* becomes *Resume*. The hero has a
+`picture` in place of a banner image: `og:image` (rule `image`), else the
+history's picture, with the progress bar and "15:00 left" drawn as a card
+draws them, in a 16:9 box on the right (`.tenfoot-screen-hero[data-tenfoot-layout="details"]`,
+`content/home.css`). The stream has *Watch* only. The rail is beside it
+(`rail.kinds` has `video`; `setupRail()` only with a screen).
 
-**Focus.** Leaving the player (`leavePlayer("below")`, or Back out of theater
-in `goBack()`) goes through `focusScreen()`: the screen's current button or
-card, at first *Play*. ▲ from the top row (`{edge: "up"}`) is
-`enterPlayer()`. *Play* is `playFromScreen()`: `enterPlayer()`, plus
-`player:command play` when the last state said paused. While the player has
-the keys or theater is on, a redraw never takes the focus (`refreshScreen()`),
-nor is focus in the theater root (mount, frame) taken back (`onFocusIn()`).
+**The hold.** The page tells the frame `player:hold` `{on: true}` on the
+details page, and `{on: false, play: true}` to play — with `restart` for
+*Start Over*, and `gesture` when a press of the remote started it — on every
+change and on `player:ready`; the frame also asks (`page:info` → `hold`)
+from the moment it starts, every 250 ms until the page answers (5 s at
+most; a page that says it is not an episode page holds nothing). Until it
+knows, it holds: a start of the player's own is paused straight back
+(`holdBack()`, not the viewer's pause, so no title or bar), so nothing is
+heard first. The resume point is applied while held, ready for *Resume*;
+Start Over before the video exists wins over it. `gesture` lets the frame
+try the sound as the video starts (Firefox lets the page's press count in
+the player's frame; refused, the sound waits for the next press there).
+Each word carries `seq`, and the frame ignores one older than the last it
+applied, so a late *hold* never undoes a newer *play*; if 2.5 s after
+*Watch* the frame still reports holding (`player:state` → `held`), the page
+says it again, twice at most (`armPlayCheck()`).
+
+**Starting for certain** (`player.js`). A start the page asked for stays
+wanted (`playWanted`) until the video has played 1.5 s: if the player
+pauses it meanwhile — not the viewer (`notePlayback()`), not the settings
+panel — it is started again 300 ms later, five times at most. A `play()`
+Firefox refuses with the sound on (`NotAllowedError`) is made muted, the
+sound coming at the next press. In the frame one press of OK is one: a
+repeat (`event.repeat`), or OK within 400 ms of the frame's window gaining
+focus — the press of *Watch* reaching the player too — is taken and does
+nothing, rather than pausing what it started.
+
+**Watching.** *Watch*, *Resume* or *Start Over* (or play/pause on the
+details page) is `startWatching()`: the step above the details page
+(`pushPlay()`), the full window, the focus into the frame (`enterPlayer()`),
+`player:hold` off with play, and "Resumed at 12:04" for *Resume* (the
+frame's own word on it is not shown again, `ownResumeNotice`). Back while
+playing (`goBack()`, after the frame's bar and panel) is `leavePlay()`:
+`history.go(-1)`, which the popstate turns into `showDetails()`: the frame
+holds the video where it is, the full window goes, the details page is read
+again (*Resume*, now) and the selection is on its first button. The
+remote's BrowserBack is the same step, taken by Firefox. ▼ past the
+transport bar does nothing on a drawn page. Next and previous episode, and
+the end with autoplay, replace the page (`goSideways()`): from the video
+playing, the next page plays through; from the details page, it is that
+episode's details page. The settings key opens the playback panel only
+while playing; on the details page, Leanback's settings.
+
+**Focus.** While the video plays a redraw never takes the focus
+(`refreshScreen()`), nor is focus in the theater root (mount, frame) taken
+back (`onFocusIn()`). On the details page the frame taking the focus is
+given it back, a bounded number of times.
+
+### Dropout 24/7 in place
+
+Dropout 24/7's page (`/dropout-24-7`, a hub: one *Live now* banner) is where
+the rail goes; its *Watch* links to the stream's page. Firefox lets the
+sound on only for a press on the page the player is in, so following the
+link would leave the stream muted until another press. Instead
+(`page-live.js`), `activate()` on a link whose path matches `live.path` is
+`playInPlace()`: the stream's page is read with the page's own fetch
+(`window.wrappedJSObject.fetch`, credentials included: same origin, the
+viewer's sign-in; a content script's own fetch would be the extension's),
+parsed with `DOMParser`, and its player frame (`live.player`) gives the
+address — only an `https://embed.vhx.tv` one is taken — and the title
+(`live.title`). The player goes in a frame of Leanback's own over the page
+(`.tenfoot-inplace`, full window, `allow="autoplay; fullscreen;
+encrypted-media"`), with a history step (`pushPlay()`), the keys in it.
+Its `player.js` registers as any player frame does; on `player:ready` the
+page says `player:hold` off with play and `gesture`, then `player:focus`;
+its `page:info` answer is not held, with the stream's name. Keys, the
+control bar, the settings panel and media keys (no next or previous) work
+as for a video playing. Back — the popstate off the step, Escape, or the
+player handing Back to the page — is `closeInPlace()`: the frame removed,
+the selection back on the screen (*Watch*). Leanback turned off, or the
+page changing, closes it too. No player address to read: the link is
+followed (`go()`), the stream's own page as before.
 
 ## The rail (`nav/rail.js`)
 
@@ -674,9 +762,10 @@ refused an unmute (`autoplayBlocked`).
 
 ## Theater layout
 
-CSS, not the Fullscreen API: that needs a fresh user gesture, exits on Escape
-before the extension sees it, and adds nothing in an already-fullscreen kiosk
-window.
+The video playing fills the window (`html.tenfoot-theater`, set by
+`setTheater()`). CSS, not the Fullscreen API: that needs a fresh user
+gesture, exits on Escape before the extension sees it, and adds nothing in
+an already-fullscreen kiosk window.
 
 `content/page.css` holds **no site selectors**: `page.js` stamps what the
 rules name (`theaterRoot` → `data-tenfoot-theater-root`, `playerMount` →
@@ -690,9 +779,9 @@ html.tenfoot-theater body { overflow: hidden; }
 html.tenfoot-theater [data-tenfoot-hide] { display: none; }
 ```
 
-Enter: on a `video` page load with `theater: "auto"`, or OK on the player
-with `manual`. Leave: Back while the player has focus, which also
-neutralises the site's sticky mini-player if it engages.
+On whenever an episode plays (`state.watch` `"playing"`); off on its details
+page, which also neutralises the site's sticky mini-player if it engages.
+Under it the details page stays drawn, so Back shows it at once.
 
 ## Player control (`content/player.js`)
 
@@ -733,20 +822,21 @@ error in the parent process.
 | `settings:set` | any → bg | `{patch}` | reply: the saved settings object |
 | `rules:get` | content → bg | — | reply: `{ok, rules}`, the parsed `sites/dropout.json` |
 | `player:hello` | player → bg | `{videoId, title, duration, hasVideo}` | frame registry |
-| `player:ready` | bg → page | `{frameId, videoId, title}` | the player frame registered; the page retries a pending hand-off |
+| `player:ready` | bg → page | `{frameId, videoId, title}` | the player frame registered; the page says again whether it holds the video, and retries a pending hand-off |
 | `player:command` | page → bg → player | `{cmd, by?}` | [Player control](#player-control-contentplayerjs) |
 | `player:focus` | page → bg → player | — | give the player keyboard focus |
+| `player:hold` | page → bg → player | `{on, play?, restart?, gesture?, seq}` | the details page holds the video (`on`), or lets it play: `play` starts it, `restart` from the beginning, `gesture` a press of the remote did; `seq` orders the words. Also sent off when Leanback is turned off |
 | `player:settings` | page → bg → player | — | open the settings panel (options button during playback); reply `{ok}`; on `false` the page opens its own |
 | `player:back` | page → bg → player | — | Escape on the page during playback: the frame closes what it can; reply `{consumed}`; on `false` the page walks its own layers |
 | `player:offer` | page → bg → player | `{showing}` | the site's up-next overlay is on the page, so OK in the player takes it |
 | `player:state` | player → bg → page | state object | hint bar, autoplay-next, up-next offer (`upNextShowing`; `upNextCard` when it is Leanback's card, which ◀ hides) |
 | `player:ended` | player → bg → page | `{upNext, dismissed}` | autoplay next, unless the viewer hid the up-next card |
 | `player:resumed` | player → bg → page | `{at}` | picked up at `at` seconds: show the notice |
-| `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player |
+| `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player: `back` is Back (the details page); `below` only goes anywhere on Dropout's own page |
 | `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
 | `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`search`, `menu`, …); `browser-back` is BrowserBack pressed in the player frame |
-| `page:info` | player → bg → page | — | reply `{ok, series, title, season, episode}` for the title over the video; `ok: false` off an episode page |
-| `page:state` | harness → page | — | reply: a snapshot (page kind, theater, focused element and rect, ring/hints, the screen's model, the show page, the rail). Tests only |
+| `page:info` | player → bg → page | — | reply `{ok, hold, series, title, season, episode}`: whether the details page holds the video, and the title over it (Dropout 24/7 in place: not held, the stream's name); `ok: false` off an episode page |
+| `page:state` | harness → page | — | reply: a snapshot (page kind, `watch`, theater, focused element and rect, ring/hints, the screen's model, the show page, the rail). Tests only |
 | `history:progress` | player → bg | `{key, url, title, position, duration, ended, next}` | where the video is; `next` is Dropout's up-next `{url, title}`, or null |
 | `history:meta` | page → bg | `{key, url, title, series, image, show?, season?, episode?}` | what the episode page knows |
 | `history:observe` | page → bg | `{items: [{key, url, percent, duration, title, image}]}` | Dropout's progress bars on screen |
@@ -774,10 +864,11 @@ The parts of `manifest.json` (MV2) that are not obvious:
   `TenfootKeymap`, `TenfootSiteRules`, `TenfootSpatial`, `TenfootFocusRing`,
   `TenfootPanel`, `TenfootRail`, `TenfootTrail`, `TenfootCards`,
   `TenfootHome`, `TenfootScreen`, `TenfootShow` and the page script's
-  parts (`TenfootPageBack`, `TenfootPageVideo`, `TenfootPageScreens`) to
+  parts (`TenfootPageBack`, `TenfootPageVideo`, `TenfootPageScreens`,
+  `TenfootPageLive`) to
   `content/page.js`, which installs its parts before it starts.
-- The page's `css`: `content/page.css` (ring, hints, theater, the docked
-  player), `content/panel.css` (the settings panel; also in the player
+- The page's `css`: `content/page.css` (ring, hints, the video in the full
+  window), `content/panel.css` (the settings panel; also in the player
   frame's list), and `content/home.css` (the screens, the rail, the pills). All but the panel's
   are gated on `html[data-tenfoot="on"]`; the panel only exists while open.
 - A second `watch.dropout.tv` entry, at `document_start`, holds only
@@ -802,11 +893,12 @@ The only file that knows Dropout. Which selectors are verified:
 | `common` | the header, Dropout's `chrome`, loose `focusable`s, `modals`, `modalClose`, the hover tooltips (`hoverSuppress`) |
 | `pages.<kind>` | `rows`/`rowItem` (row-wise moves; `scrollNext`/`scrollPrev` on `browse`), `tile`/`target` (one focus per tile), `focusable`, `loadMore`, `initialFocus` (a list; the first match in page order wins) |
 | `pages.series` | also `episodeLinks` (next/previous order) and `show`, what `show.js` reads: `layouts`, the season control and the episode count, the episode section and a tile's parts, the header and its buttons, a special's movie and *Extras*, *Load More* |
-| `pages.video` | `theaterRoot`, `playerMount`, `playerFrame`, `theaterHide`, `upNextOverlay`, `seriesLink`; for the history `videoTitle`, `videoImage`, `episodeInfo`, `canonical` |
+| `pages.video` | `theaterRoot`, `playerMount`, `playerFrame`, `theaterHide`, `upNextOverlay`, `seriesLink`, `live` (Dropout 24/7's stream); for the history `videoTitle`, `videoImage`, `episodeInfo`, `canonical` |
 | `player` | the selectors inside the player frame: `<video>`, captions, chrome and transport keep/hide lists, the up-next card, the gear and fullscreen buttons, the settings menu and its parts |
 | `home` | what Home reads: `root`, a slide, a row and a tile with their parts, `rowPageSize`, `showMore`, `rowOverrides`, `rowTitleOverrides` |
+| `live` | `path` (a live stream's page: Dropout 24/7's), `player` (its player frame on that page), `title` |
 | `rail` | `kinds` (the page kinds with the rail), `links` (id, label, icon, url) |
-| `screen` | what `screen.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` the page under the player (title, show, season line, description, My List, the Up Next tiles) |
+| `screen` | what `screen.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` an episode's details page (title, show, season line, description, My List, its picture) |
 
 Two rules the file has to keep:
 

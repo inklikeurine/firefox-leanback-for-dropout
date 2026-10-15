@@ -2,7 +2,7 @@
 
 | Document | Read this when… |
 | --- | --- |
-| [architecture.md](./architecture.md) | You're implementing or changing anything: components, why there are two content scripts, the message relay, the spatial-navigation algorithm, the screens Leanback draws (Home, collections, search, a show's page, an episode's page), the rail, the watch history, the transport bar and settings panel, theater layout, the manifest and `sites/dropout.json`. |
+| [architecture.md](./architecture.md) | You're implementing or changing anything: components, why there are two content scripts, the message relay, the spatial-navigation algorithm, the screens Leanback draws (Home, collections, search, a show's page, an episode's details page), the rail, the watch history, the transport bar and settings panel, the video in the full window, the manifest and `sites/dropout.json`. |
 | [site-notes.md](./site-notes.md) | Navigation broke or you're changing a selector: what each page's markup looks like, the player and its settings menu, what is still unknown, and how to check the site again. |
 | [keymap.md](./keymap.md) | You're adding a key or changing what one does in some context (Home, the rail, a page, the player), or need to know how a typical remote's buttons map. |
 | [targets.md](./targets.md) | You're setting it up on a TV driven by a remote and need what the remote sends, the constraints, a launch recipe and the checks to run on your setup (T1–T8). |

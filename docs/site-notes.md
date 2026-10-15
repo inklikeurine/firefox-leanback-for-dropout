@@ -31,13 +31,15 @@ it is matched by the `Name_module_` prefix.
 | --- | --- | --- |
 | `/browse` | Home: a banner and rows (React) | `browse` — Leanback draws its own Home from it |
 | `/series` | All series, a server-rendered grid with Show More | `grid` |
+| `/movies`, `/continue-watching` | All movies (19 in a logged-out read, 2026-10-14); Dropout's Continue Watching in full (Roku and Android progress). Both a collection like a list's | `grid` |
+| `/products` | Dropout's subscription store (packages as tiles) | `series` by the catch-all, and not drawn: deliberately out of scope, a poor fit for a TV UI |
 | `/new-releases`, `/trending`, `/<row>-new`, `/collections/…` | A collection (Dropout calls it a category): a server-rendered grid of episodes, of shows, or of both shows and specials. Every Home row's *View all* leads to one | `grid` for `/collections/…`; the others fall to `series`, where `content/show.js` sees a **list**; both are drawn by `content/screen.js` |
 | `/dimension-20`, `/dropout-24-7` | A hub: a small Home-style page with its own rows | `hub` — a one-segment address whose page holds `#browse-component`; drawn like Home |
-| `/<hub>/events/<slug>` | A live event, with the live player (Dropout 24/7: `/dropout-247/events/dropout-24-7`) | `video` — the player in `section#live-event` (theater root), the page under it drawn by `content/screen.js` |
+| `/<hub>/events/<slug>` | A live event, with the live player (Dropout 24/7: `/dropout-247/events/dropout-24-7`) | `video` — the player in `section#live-event` (theater root, and `pages.video.live`: the stream, not an episode), its details page drawn by `content/screen.js` |
 | `/<series-slug>` | A show: details, season and sort selects, episode grid, opened on Season 1 | `series` — a **show**, read by `content/show.js` and drawn by `content/screen.js`; Leanback moves on to the newest season |
 | `/<series-slug>/season:<n>` | Same page, another season (`?sort=alphabetical\|release_date` also seen) | `series` — a **show** |
 | `/<special-slug>` | A special (stand-up, a film): *Watch Movie*, the video and its Extras | `series` — a **special**, read by `content/show.js` and drawn by `content/screen.js` |
-| `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` — the player, then the page under it drawn by `content/screen.js` |
+| `/<series-slug>/season:<n>/videos/<episode-slug>` | Episode page | `video` — its details page drawn by `content/screen.js` over Dropout's page, the player held underneath until *Watch* |
 | `/<series-slug>/videos/<slug>`, `/videos/<slug>`, `/featured/videos/<slug>` | Trailer or standalone video | `video` |
 | `/search` | One React app that changes the address without reloading; `document.title` is empty | `search` — drawn by `content/screen.js`, with the rail |
 | `/my-list` | Loaded fresh: a server-rendered collection grid (`li.js-collection-item › .browse-item-card a.browse-item-link`, Dropout's *Remove from my list* button inside the link). Reached from `/search` inside the React app, the address changes and the search results can stay on screen | `grid` (with the rail); the rail opens it with a fresh load |
@@ -277,8 +279,13 @@ meta[property="og:image"][content]                   ← the episode's picture (
     a.close-reveal-modal
 ```
 
-Leanback draws the page under the player from these parts (`screen.episode`
-in the rules) and docks `#watch-player` over its own screen by style.
+Leanback draws the episode's details page from these parts (`screen.episode`
+in the rules: the title, the show, the season line, the description, My List
+and `og:image`); the share tools, the Up Next tiles and the related items are
+not drawn. The player stays where Dropout put it, under Leanback's layer,
+until the video plays in the full window. Its address asks for autoplay
+(`autoplay=1`): on the details page Leanback's player script pauses that
+start straight back.
 `window.VHX.config.embed_url` holds the player URL; `window.COMMENTABLE_ID` is
 the video id. The history keeps the episode's `.video-title`, the
 `.series-title` text and `og:image`, keyed by the slug after `/videos/`, which
@@ -291,6 +298,10 @@ is the same in this address, in Home's tile links and in the player's
 
 Dropout 24/7's stream (2026-10-03 capture). The hub page `/dropout-24-7`
 holds a single *Live now* banner and no rows; its *Watch* opens this page.
+Leanback reads this page when *Watch* is pressed on the hub and plays its
+player there (`live` in the rules: the address pattern, the player frame,
+the title). The player's address carries the viewer's token
+(`auth-user-token`), which is why it is read afresh each time.
 
 ```text
 section#live-event.top-container                     ← THEATER ROOT
@@ -609,6 +620,10 @@ logged-in page is committed.
 | `video.focusable` | `#watch-info a[href]`, `a[data-similar-items-site]` | many |
 | `video.episodeInfo` | `#watch-info a[href*='/season:']` | 2: "Season N" and "Season N, Episode M"; the one with an episode is used |
 | `video.canonical` | `meta[property='og:url']` | 1 |
+| `video.live` | `#live-event` | 1 on Dropout 24/7's stream, 0 on an episode |
+| `live.player` | `#live-event iframe[src*='embed.vhx.tv']` | 1 on the stream's page, read from its HTML |
+| `live.title` | `#watch-info .live-event-title` | 1 ("Dropout 24/7") |
+| `screen.episode.image` | `meta[property='og:image']` | 1 (its `content`: the episode's picture) |
 | `series.show.actionsBox` | `.collection-actions` | 1 on a show and a special |
 | `series.show.episodeNumber` | `.media-episode` | one per episode ("Episode 1") |
 | `player.transport` | `.vp-controls` | 1 |

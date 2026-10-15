@@ -10,7 +10,7 @@
     },
     {
       "kind": "grid",
-      "path": "^/(series|collections|my-list)(/|$)"
+      "path": "^/(series|collections|my-list|movies|continue-watching)(/|$)"
     },
     {
       "kind": "video",
@@ -122,6 +122,7 @@
       "seriesLink": ".series-title a.context-link",
       "videoTitle": "#watch-info .video-title",
       "videoImage": "meta[property='og:image']",
+      "live": "#live-event",
       "episodeInfo": "#watch-info a[href*='/season:']",
       "canonical": "meta[property='og:url']",
       "focusable": [
@@ -239,13 +240,19 @@
     "menuLabel": "[class*='MenuItem_module_label'], [class*='MenuOptionListItem_module_text'], [class*='ButtonRow_module_label']",
     "menuValue": "[class*='MenuItem_module_value']"
   },
+  "live": {
+    "path": "^/[^/]+/events/[^/]+/?$",
+    "player": "#live-event iframe[src*='embed.vhx.tv']",
+    "title": "#watch-info .live-event-title"
+  },
   "rail": {
     "kinds": [
       "browse",
       "hub",
       "grid",
       "search",
-      "series"
+      "series",
+      "video"
     ],
     "links": [
       {
@@ -298,16 +305,7 @@
       "description": "#watch-info .read-more-wrap > p, #watch-info .live-event-description > p",
       "listAction": "#watch-info .video-content-actions button.custom-btn-action-my-list",
       "listed": ".icon-watchlist-remove",
-      "upNextTitle": "#watch-info h3.head.secondary",
-      "root": "#watch-info",
-      "item": "li.js-collection-item",
-      "itemLink": "a.browse-item-link",
-      "itemImage": ".browse-image-container img",
-      "itemTitle": ".browse-item-title",
-      "itemSubtext": ".browse-item-subtext",
-      "itemDuration": ".duration-container",
-      "itemProgress": ".percentage-bar",
-      "itemBadge": "[data-testid^='thumbnail-badge-']"
+      "image": "meta[property='og:image']"
     }
   },
   "home": {

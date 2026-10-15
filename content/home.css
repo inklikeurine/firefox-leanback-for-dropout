@@ -262,18 +262,21 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   color: #1a1a05;
   font-weight: 800;
 }
-/* The › and a proxied My list are buttons, which Dropout colours on hover and
-   focus (see the rail); they keep their own background whatever the state. */
+/* The ›, a proxied My list and an episode's Watch are buttons, which Dropout
+   colours on hover and focus (see the rail: a blue background, white text);
+   they keep their own colours whatever the state. */
 .tenfoot-home button.tenfoot-hero-button:hover,
 .tenfoot-home button.tenfoot-hero-button:focus,
 .tenfoot-home button.tenfoot-hero-button:active {
   background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
   transition: none !important;
 }
 .tenfoot-home button.tenfoot-hero-primary:hover,
 .tenfoot-home button.tenfoot-hero-primary:focus,
 .tenfoot-home button.tenfoot-hero-primary:active {
   background: #feea3b !important;
+  color: #1a1a05 !important;
 }
 /* Dropout colours every link (a:link, a:visited: teal) and underlines some;
    these are Leanback's links, so their colours are held against it. */
@@ -495,43 +498,58 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   font-size: max(22px, calc(var(--tf-u) * 52));
   line-height: 1.1;
 }
-/* An episode's page: the player's place on the left (Dropout's player is
-   docked over it: content/page.css), the episode beside it. */
-.tenfoot-screen-hero[data-tenfoot-dock] {
+/* An episode's details page: the show, the title, the season line, the
+   synopsis and the buttons on the left, the episode's picture on the right
+   (its progress and time left drawn as a card's), the two in the middle of
+   the screen. */
+.tenfoot-screen-hero[data-tenfoot-layout="details"] {
   display: grid;
-  grid-template-columns: calc(var(--tf-u) * 1100) minmax(0, 1fr);
-  column-gap: calc(var(--tf-u) * 56);
+  grid-template-columns: minmax(0, 1fr) calc(var(--tf-u) * 900);
+  column-gap: calc(var(--tf-u) * 64);
   align-items: center;
+  box-sizing: border-box;
   height: auto;
+  min-height: calc(100vh - var(--tf-u) * 72);
+  margin-bottom: 0;
   overflow: visible;
   border-radius: 0;
   background: none;
 }
-.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-art,
-.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-scrim {
+.tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-art,
+.tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-scrim {
   display: none;
 }
-.tenfoot-screen-player {
+.tenfoot-screen-picture {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
   aspect-ratio: 16 / 9;
+  overflow: hidden;
   border-radius: calc(var(--tf-u) * 16);
-  background: #000;
+  background: var(--tf-raised);
 }
-.tenfoot-screen-player[hidden],
+.tenfoot-screen-picture .tenfoot-card-time {
+  font-size: max(13px, calc(var(--tf-u) * 22));
+}
+.tenfoot-screen-picture[hidden],
 .tenfoot-hero-label[hidden] {
   display: none;
 }
-.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-body {
+.tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-body {
   position: static;
+  grid-column: 1;
+  grid-row: 1;
   max-width: none;
 }
-.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-title {
+.tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-title {
   font-size: max(22px, calc(var(--tf-u) * 56));
   line-height: 1.05;
 }
-.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-text {
-  -webkit-line-clamp: 4;
+.tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-text {
+  -webkit-line-clamp: 6;
+  margin-bottom: calc(var(--tf-u) * 36);
 }
-.tenfoot-screen-hero[data-tenfoot-dock] .tenfoot-hero-actions {
+.tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-actions {
   flex-wrap: wrap;
   row-gap: calc(var(--tf-u) * 14);
 }

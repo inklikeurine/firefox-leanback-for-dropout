@@ -1,5 +1,79 @@
 # Changelog
 
+## [0.35.0] — 2026-10-14
+
+### Added
+
+- **Dropout 24/7 plays on its own page.** The rail's Dropout 24/7 opens
+  Dropout's 24/7 page again, with its *Live now* banner and picture; *Watch*
+  there plays the stream right on that page, in the full window with
+  Leanback's controls, and the sound comes on with that press. Back closes
+  it and leaves you on the 24/7 page. To do that, Leanback reads the
+  stream's page from Dropout when you press *Watch*, as opening it would; if
+  that page holds no player to play, *Watch* opens it as before.
+
+### Changed
+
+- The rail's Dropout 24/7 opens Dropout's 24/7 page, not the stream's own
+  page, which had no picture. The stream's page, opened some other way, is
+  still its details page.
+- All movies (`/movies`) and Dropout's Continue Watching in full
+  (`/continue-watching`) are list pages by their address, drawn as Browse is
+  with Browse's icon lit, rather than recognised as lists from what the page
+  holds.
+
+## [0.34.0] — 2026-10-14
+
+### Added
+
+- **A details page before every video**, as on Dropout's Roku app. Choosing
+  an episode — any card, Continue Watching, a show's yellow Resume/Play
+  button, *Watch Movie* or an extra — opens the episode's details page:
+  the show's name, the title, "Season 2, Episode 1 · 28-Feb-2020" and the
+  synopsis on the left, the episode's picture on the right, and one row of
+  buttons: *Watch*, or *Resume* with *Start Over* beside it when the episode
+  was left partway; *Add to My List* or *Remove from My List*; *Episodes*.
+  Nothing plays until *Watch* or *Resume*. A part-watched episode's picture
+  has its progress bar and the time left.
+- **The rail is on the details page**, as on every page that plays no
+  video.
+- **Play/pause on the remote is Watch** on the details page.
+
+### Changed
+
+- **Back while a video plays brings its details page back**, now saying
+  *Resume*; Back again goes to wherever you came from.
+- **The rail's Dropout 24/7 opens the stream's own page**, a details page —
+  "Dropout 24/7", its description, *Watch*, the rail with its icon lit — in
+  place of Dropout's page with the *Live now* banner. *Watch* plays it, so
+  the sound comes on with that press rather than at the next one.
+- **The next episode plays straight away** — from the *Up next* card, the
+  next-episode key or Dropout's own countdown — without stopping at its
+  details page; Back from it is its details page.
+- **▼ in the player's control bar stays on the bar**: there is no page
+  below the video any more.
+- A reload while a video plays carries on playing.
+
+### Fixed
+
+- The selection ring follows a button that changes size in place (*Watch*
+  becoming *Resume*, *Add to My List* becoming *Remove from My List*).
+- *Watch* and *Resume* keep their black text on yellow when selected;
+  Dropout's own button style turned it white.
+- *Watch* or *Resume* sometimes left the video stopped: a held OK, or the
+  same press reaching the player too, paused what it had just started; and
+  a start the player itself stopped again was not retried. One press of OK
+  is now one in the player, a start Leanback asked for is made again if the
+  player stops it (never after a pause of yours), and one Firefox refuses
+  with the sound on starts muted, the sound coming at the next press.
+
+### Removed
+
+- **The episode page with the video playing small at the top left** (▼ ▼
+  during playback): the details page takes its place.
+- **The *Theater Layout* setting**: videos always fill the window. A value
+  saved by an earlier version is ignored.
+
 ## [0.33.0] — 2026-10-06
 
 ### Changed

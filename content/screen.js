@@ -1,6 +1,6 @@
 // Leanback for Dropout — the screens Leanback draws: Home and the hubs,
 // Browse, My List and the lists, a show's page, a special, search and an
-// episode's page. The page is only read: Dropout's page stays underneath,
+// episode's details page. The page is only read: Dropout's page stays underneath,
 // untouched, and Leanback's layer covers it, a child of <html> outside the
 // site's tree, drawn with the cards of content/cards.js.
 //
@@ -9,9 +9,9 @@
 //   hero      — a banner: picture, kicker, title, meta, description and
 //               buttons (a show's page, a special: content/show.js); with
 //               `slides`, one of several, › stepping through them (Home's
-//               featured: content/home.js); on an episode's page, a place for
-//               the player (dock) in place of the picture, which page.js
-//               puts Dropout's player over;
+//               featured: content/home.js); with `picture`, an episode's
+//               details: the words and buttons on the left, the episode's
+//               picture on the right with its progress;
 //   field     — a search box: Leanback's own, whose text is typed into
 //               Dropout's (search);
 //   pills     — a row of choices (a show's seasons, newest first; search's
@@ -25,7 +25,7 @@
 //               that does nothing, as Home's);
 //   start     — the key of the card or button the selection starts on
 //               (waited for, with waitForStart: Home's Watch now).
-// This file reads collection pages, search and an episode's page itself
+// This file reads collection pages, search and an episode's details itself
 // (readPage, searchModel, episodeModel; sites/dropout.json → screen);
 // show.js reads shows and specials, home.js Home.
 //
@@ -134,30 +134,49 @@
   }
 
   /**
-   * An episode's page, under its player, as a screen model: the player's
-   * place with the episode beside it — the show, the title, "Season 2,
-   * Episode 1 · 28-Feb-2020", the description, and Play, Episodes and My
-   * List — then Dropout's "Up Next in Season N" as cards. Null when the page
-   * has no title to show.
+   * An episode's page as its details page: the show, the title, "Season 2,
+   * Episode 1 · 28-Feb-2020", the synopsis and the buttons on the left —
+   * Watch (Resume when it was left partway, with Start Over beside it), Add
+   * to or Remove from My List, Episodes — and the episode's picture on the
+   * right, with how far it got and the time left. Dropout 24/7's stream has
+   * Watch only. Null when the page has no title to show.
    * @param {Document} doc
    * @param {object} R — the rules' "screen.episode" object
+   * @param {{history?: object, href?: string, live?: boolean}} ctx — the
+   *   watch history, this page's address, and whether it is the stream
    */
-  function episodeModel(doc, R) {
+  function episodeModel(doc, R, ctx) {
     const rules = R || {};
+    const c = ctx || {};
     const { hrefOf } = C();
+    const H = globalThis.TenfootHistory;
     const title = textOf(qs(rules.title, doc));
     if (!title) return null;
-    const actions = [{ key: "play", label: "Play", run: "player", primary: true }];
+    const store = c.history && c.history.entries ? c.history : { entries: {} };
+    const key = H && !c.live && c.href ? H.keyOf(c.href) : null;
+    const entry = key ? store.entries[key] : null;
+    const at = key ? H.resumePoint(store, key) : null;
+    const actions = [{ key: "watch", label: at ? "Resume" : "Watch", run: at ? "resume" : "watch", primary: true }];
+    if (at) actions.push({ key: "restart", label: "Start Over", run: "restart" });
+    const list = qs(rules.listAction, doc);
+    if (list) {
+      const listed = Common.matches(list, rules.listed);
+      actions.push({ key: "mylist", label: listed ? "Remove from My List" : "Add to My List", proxy: list });
+    }
     const back = hrefOf(qs(rules.season, doc)) || hrefOf(qs(rules.show, doc));
     if (back) actions.push({ key: "episodes", label: "Episodes", href: back });
-    const list = qs(rules.listAction, doc);
-    if (list) actions.push({ key: "mylist", label: "My List", proxy: list, listed: Common.matches(list, rules.listed) });
-    const page = readPage(doc, rules);
+    const reading = at && H ? H.reading(entry) : null;
+    const length = reading && reading.duration ? reading.duration : 0;
+    const image = qs(rules.image, doc);
     return {
       kind: "episode",
       head: "",
       hero: {
-        dock: true,
+        picture: {
+          image: (image && image.getAttribute("content")) || (entry && entry.image) || "",
+          fraction: at && length ? at / length : null,
+          left: at && length ? `${Common.clock(length - at)} left` : ""
+        },
         kicker: textOf(qs(rules.show, doc)),
         title,
         meta: textOf(qs(rules.info, doc)).replace(/\s*•\s*/g, " · "),
@@ -166,9 +185,9 @@
         actions
       },
       pills: null,
-      sections: page.items.length ? [{ key: "upnext", title: textOf(qs(rules.upNextTitle, doc)) || "Up Next", sub: "", columns: COLUMNS, items: page.items }] : [],
+      sections: [],
       more: null,
-      start: "play"
+      start: "watch"
     };
   }
 
@@ -199,8 +218,7 @@
    *   onObserve?: (items: object[]) => void,// Dropout's progress bars, for the history
    *   onPill?: (pill: object) => void,      // OK on a pill (a season); a pill with a proxy presses it instead
    *   onFieldDone?: () => void,             // Enter in the search box
-   *   onRun?: (what: string) => void,       // OK on a button that runs something ("player")
-   *   onLayout?: () => void                 // the screen moved (the player's place with it)
+   *   onRun?: (what: string) => void       // OK on a button that runs something (an episode's "watch")
    * }} opts
    */
   function createScreen(doc, opts) {
@@ -235,10 +253,17 @@
     const heroArt = el("img", "tenfoot-hero-art");
     heroArt.alt = "";
     const heroScrim = el("div", "tenfoot-hero-scrim");
-    // Where the player goes on an episode's page: an empty box the size of
-    // the video, which page.js puts Dropout's own player over.
-    const heroDock = el("div", "tenfoot-screen-player");
-    heroDock.hidden = true;
+    // An episode's picture, on the right of its details, with the progress
+    // bar and the time left a card has.
+    const heroPicture = el("div", "tenfoot-screen-picture");
+    heroPicture.hidden = true;
+    const pictureArt = el("img", "tenfoot-card-art");
+    pictureArt.alt = "";
+    const pictureLeft = el("span", "tenfoot-card-time");
+    const pictureBar = el("span", "tenfoot-card-progress");
+    const pictureFill = el("span", "tenfoot-card-progress-fill");
+    pictureBar.appendChild(pictureFill);
+    heroPicture.append(pictureArt, pictureLeft, pictureBar);
     const heroBody = el("div", "tenfoot-hero-body");
     const heroKicker = el("p", "tenfoot-hero-label");
     const heroTitle = el("h1", "tenfoot-hero-title");
@@ -250,7 +275,7 @@
     heroDots.setAttribute("aria-hidden", "true");
     heroDots.hidden = true;
     heroBody.append(heroKicker, heroTitle, heroMeta, heroText, heroActions, heroDots);
-    hero.append(heroArt, heroScrim, heroDock, heroBody);
+    hero.append(heroArt, heroScrim, heroPicture, heroBody);
     // The next slide, beside the first button: OK steps on, and the selection
     // stays on it so OK can keep going.
     const nextSlideBtn = el("button", "tenfoot-hero-button tenfoot-hero-next");
@@ -368,8 +393,7 @@
       }
       if (h.image && heroArt.getAttribute("src") !== h.image) heroArt.setAttribute("src", h.image);
       if (!h.image) setAttr(heroArt, "src", null);
-      setAttr(hero, "data-tenfoot-dock", h.dock ? "true" : null);
-      heroDock.hidden = !h.dock;
+      renderPicture(h.picture);
       setText(heroKicker, h.kicker || "");
       heroKicker.hidden = !h.kicker;
       setText(heroTitle, h.title);
@@ -425,6 +449,20 @@
       while (heroDots.children.length < n) heroDots.appendChild(el("span", "tenfoot-hero-dot"));
       Array.from(heroDots.children).forEach((d, i) => d.classList.toggle("tenfoot-hero-dot--on", i === slide));
       heroDots.hidden = n < 2;
+    }
+
+    function renderPicture(pic) {
+      setAttr(hero, "data-tenfoot-layout", pic ? "details" : null);
+      heroPicture.hidden = !pic;
+      if (!pic) return;
+      if (pic.image && pictureArt.getAttribute("src") !== pic.image) pictureArt.setAttribute("src", pic.image);
+      if (!pic.image) setAttr(pictureArt, "src", null);
+      setText(pictureLeft, pic.left || "");
+      pictureLeft.hidden = !pic.left;
+      const f = typeof pic.fraction === "number" && pic.fraction > 0 ? Math.min(1, pic.fraction) : null;
+      pictureBar.hidden = f === null;
+      const w = f === null ? "" : `${Math.round(f * 1000) / 10}%`;
+      if (pictureFill.style.width !== w) pictureFill.style.width = w;
     }
 
     // The banner's buttons in order, the next-slide button among them.
@@ -601,10 +639,7 @@
         else if (pos.row !== firstCards) y = Math.max(0, target.offsetTop - anchor);
       }
       const t = y ? `translateY(${-y}px)` : "";
-      if (scroller.style.transform !== t) {
-        scroller.style.transform = t;
-        if (typeof o.onLayout === "function") o.onLayout();
-      }
+      if (scroller.style.transform !== t) scroller.style.transform = t;
       setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
       if (sec && sec.layout === "row") {
         const card = node ? node.parentNode : null;
@@ -850,7 +885,6 @@
       if (ready()) layer.hidden = false;
       applyScroll();
       observe();
-      if (typeof o.onLayout === "function") o.onLayout();
       return current();
     }
 
@@ -935,12 +969,14 @@
         const actions = model.hero.actions || [];
         const resume = actions.find((a) => a.key === "resume") || null;
         if (model.kind === "episode") {
+          const pic = model.hero.picture || {};
           out.episode = {
             show: model.hero.kicker || null,
             title: model.hero.title,
             meta: model.hero.meta || null,
             actions: actions.map((a) => a.label),
-            upNext: model.sections[0] ? model.sections[0].title : null
+            image: pic.image || null,
+            left: pic.left || null
           };
         }
         out.show = {
@@ -962,8 +998,6 @@
     return Object.freeze({
       refresh, move, select, initialTarget, destroy, snapshot, stepSlide,
       element: layer,
-      // The player's place on an episode's page, while it is drawn.
-      get dock() { return model && model.hero && model.hero.dock && !layer.hidden ? heroDock : null; },
       get current() { return current(); },
       get ready() { return ready(); },
       get started() { return started; },

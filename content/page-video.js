@@ -1,23 +1,36 @@
-// Leanback for Dropout — an episode's page, for content/page.js: the player's
-// marks, theater, the player docked in Leanback's screen, the hand-off into
-// and out of the player frame, next and previous episode, the site's up-next
-// offer, autoplay, media keys, and what the page tells the watch history.
-// Installed into the page script's shared context.
+// Leanback for Dropout — an episode's page, for content/page.js: its details
+// page and the video held behind it until Watch, the video playing in the
+// full window, the hand-off into and out of the player frame, next and
+// previous episode, the site's up-next offer, autoplay, media keys, and what
+// the page tells the watch history. Installed into the page script's shared
+// context.
+//
+// An episode's page is in one of two states (state.watch):
+//   "details" — Leanback's details page of the episode; Dropout's player is
+//               loaded underneath and held, so nothing plays;
+//   "playing" — the video in the full window. Starting it adds a step to the
+//               history (page-back.js pushPlay), so Back is the details page.
+// Arriving from an episode that was playing (the next one, by the up-next
+// card, the next-episode key or Dropout's own countdown) and a reload while
+// playing go straight to "playing". Dropout 24/7's stream is an episode like
+// any other here: its details page first, so the press of Watch can bring the
+// sound. A page with nothing to draw the details from is Dropout's own,
+// playing as it comes.
 
 (function () {
   function install(P) {
     const { state } = P;
     const THEATER_CLASS = "tenfoot-theater";
-    const DOCK_CLASS = "tenfoot-docked";
-    const DOCK_FOLLOW_MS = 400; // how long the player follows the screen sliding
     const EPISODES_KEY = "tenfoot.episodes";
     const AUTOPLAY_DELAY_MS = 1200;
+    const PLAY_CHECK_MS = 2500; // after Watch, the frame still saying it holds the video: say play again…
+    const PLAY_CHECKS = 2; // …this many times
     const root = document.documentElement;
     const Rules = globalThis.TenfootSiteRules;
     const Spatial = globalThis.TenfootSpatial;
     const Ring = globalThis.TenfootFocusRing;
     const History = globalThis.TenfootHistory;
-    const { qs, qsa } = globalThis.TenfootCommon;
+    const { qs, qsa, clock } = globalThis.TenfootCommon;
 
     // From the rest of the page script.
     const send = (...a) => P.send(...a);
@@ -29,6 +42,11 @@
     const goSideways = (...a) => P.goSideways(...a);
     const samePath = (...a) => P.samePath(...a);
     const seriesSlug = (...a) => P.seriesSlug(...a);
+    const showHints = (...a) => P.showHints(...a);
+    const notice = (...a) => P.notice(...a);
+    const onPlayEntry = (...a) => P.onPlayEntry(...a);
+    const pushPlay = (...a) => P.pushPlay(...a);
+    const notePlay = (...a) => P.notePlay(...a);
 
     function markVideoElements() {
       const p = state.page;
@@ -43,53 +61,133 @@
       return { theaterRoot, mount, frame: qs(p.playerFrame) };
     }
 
-    // On an episode's page Leanback's screen has a place for the player, and
-    // Dropout's own player is put over it (content/page.css: html.tenfoot-docked)
-    // — moved by style only, as theater does, because moving the frame in the
-    // page would reload it. It follows the place while the screen slides.
-    function syncDock() {
-      const slot = state.enabled && state.screen && state.kind === "video" ? state.screen.dock : null;
-      root.classList.toggle(DOCK_CLASS, Boolean(slot));
-      if (!slot) {
-        for (const v of ["--tf-dock-x", "--tf-dock-y", "--tf-dock-w", "--tf-dock-h"]) root.style.removeProperty(v);
+    // Dropout 24/7's stream, rather than an episode.
+    function isLive() {
+      return Boolean(qs(state.page.live));
+    }
+
+    // The episode before this one was playing when it went on to this one —
+    // the up-next card, the next-episode key, Dropout's own countdown — so
+    // this one plays straight away too. Read once, on the way in.
+    function playingThrough() {
+      const from = state.arrivedFrom;
+      state.arrivedFrom = null;
+      if (!from || !from.play || from.kind !== "video" || samePath(from.url, location.href)) return false;
+      const top = state.trail[state.trail.length - 1];
+      return Boolean(top && top.group && top.group === from.group);
+    }
+
+    // On the way in: the details page, or the video playing.
+    function setupWatch() {
+      state.watch = null;
+      if (state.kind !== "video") return;
+      const through = playingThrough();
+      if (!state.screen) {
+        // Nothing to draw the details from: Dropout's page, playing.
+        state.watch = "playing";
+        setTheater(true);
+      } else if (onPlayEntry() || through) {
+        pushPlay();
+        state.watch = "playing";
+        setTheater(true);
+      } else {
+        state.watch = "details";
+      }
+      syncPlayer();
+    }
+
+    // Tell the player frame what the page is showing: the details page holds
+    // the video; playing starts it (from the beginning, after Start Over).
+    // Sent on every change and when the frame first reports in; the frame also
+    // asks for itself (page:info), so whichever is first wins.
+    // Each word is numbered, so the frame can tell a late one from the latest.
+    function syncPlayer() {
+      if (state.kind !== "video" || !state.watch) return;
+      clearPlayCheck();
+      state.holdSeq += 1;
+      if (state.watch === "details") {
+        send({ type: "player:hold", on: true, seq: state.holdSeq });
         return;
       }
-      const place = () => {
-        const r = slot.getBoundingClientRect();
-        root.style.setProperty("--tf-dock-x", `${Math.round(r.left)}px`);
-        root.style.setProperty("--tf-dock-y", `${Math.round(r.top)}px`);
-        root.style.setProperty("--tf-dock-w", `${Math.round(r.width)}px`);
-        root.style.setProperty("--tf-dock-h", `${Math.round(r.height)}px`);
-      };
-      place();
-      state.dockUntil = performance.now() + DOCK_FOLLOW_MS;
-      if (state.dockFrame || typeof requestAnimationFrame !== "function") return;
-      const step = () => {
-        state.dockFrame = 0;
-        if (!state.screen || !state.screen.dock) return;
-        place();
-        if (performance.now() < state.dockUntil) state.dockFrame = requestAnimationFrame(step);
-      };
-      state.dockFrame = requestAnimationFrame(step);
+      const msg = { type: "player:hold", on: false, play: true, restart: state.restartPending, gesture: state.watchGesture, seq: state.holdSeq };
+      send(msg).then((r) => {
+        if (!r || !r.ok) return; // the frame is not up yet: player:ready sends it again
+        if (msg.restart) state.restartPending = false;
+        state.watchGesture = false;
+      });
+      armPlayCheck();
     }
 
-    // The selection onto Leanback's screen of an episode, leaving the player.
-    function focusScreen() {
-      if (!state.screen || state.kind !== "video") return false;
-      const t = state.screen.started ? state.screen.current : state.screen.initialTarget();
-      if (!t) return false;
-      state.playerFocused = false;
-      focusEl(t, { scroll: false });
-      syncDock();
-      return true;
+    // Watch said, and a moment later the frame still reports holding the
+    // video (a word lost on the way): say it again, a bounded number of times.
+    function armPlayCheck() {
+      if (state.playChecks >= PLAY_CHECKS) return;
+      state.playCheckTimer = setTimeout(() => {
+        state.playCheckTimer = 0;
+        const ps = state.playerState;
+        if (state.watch !== "playing" || !state.enabled || !ps || ps.held !== true) return;
+        state.playChecks += 1;
+        syncPlayer();
+      }, PLAY_CHECK_MS);
     }
 
-    // Play on an episode's page: into the player (theater, as the setting
-    // says), playing.
-    function playFromScreen() {
+    function clearPlayCheck() {
+      if (!state.playCheckTimer) return;
+      clearTimeout(state.playCheckTimer);
+      state.playCheckTimer = 0;
+    }
+
+    // Where this episode was left, when it picks up there.
+    function resumeAt() {
+      if (!History) return null;
+      return History.resumePoint(state.history, History.keyOf(location.href));
+    }
+
+    // Watch, Resume or Start Over on the details page (and play/pause on the
+    // remote there): the video, in the full window. A press of the remote is
+    // what lets Firefox turn the sound on, so the frame is told it was one.
+    function startWatching(restart) {
+      if (state.kind !== "video" || state.watch !== "details") return false;
+      const at = restart ? null : resumeAt();
+      pushPlay();
+      state.watch = "playing";
+      state.restartPending = Boolean(restart);
+      state.watchGesture = true;
+      state.playChecks = 0;
+      // The page says where it picked up; the frame's own word on it would
+      // come a second time.
+      state.ownResumeNotice = true;
+      setTheater(true);
       enterPlayer();
-      if (state.playerState && state.playerState.paused) send({ type: "player:command", cmd: "play" });
+      syncPlayer();
+      // After the key's own hints, which would cover it.
+      if (at) setTimeout(() => notice(`Resumed at ${clock(at)}`), 0);
       return true;
+    }
+
+    // Back while playing: the details page, now saying Resume.
+    function showDetails() {
+      if (state.watch !== "playing" || !state.screen) return false;
+      state.watch = "details";
+      state.restartPending = false;
+      state.watchGesture = false;
+      notePlay(false);
+      syncPlayer();
+      setTheater(false);
+      state.playerFocused = false;
+      state.screen.refresh();
+      const t = state.screen.initialTarget();
+      if (t) focusEl(t, { scroll: false });
+      showHints();
+      return true;
+    }
+
+    // The history moved between the details page and the step above it, at
+    // the same address (Back, or Forward again).
+    function followPlay() {
+      if (state.kind !== "video" || !state.screen) return;
+      if (onPlayEntry()) startWatching(false);
+      else showDetails();
     }
 
     function sendHistoryMeta() {
@@ -143,8 +241,8 @@
       return out;
     }
 
-    // Theater is not a history entry of its own: Back from an episode is the
-    // browser's Back, and one more entry would make it take two presses.
+    // The video in the full window (content/page.css: html.tenfoot-theater),
+    // by style only: moving the frame in the page would reload it.
     function setTheater(on) {
       const want = Boolean(on) && state.kind === "video";
       if (state.theater === want) return;
@@ -156,7 +254,6 @@
       } else {
         state.ring.refresh();
       }
-      syncDock();
     }
 
     function enterPlayer() {
@@ -167,29 +264,32 @@
         return true;
       }
       state.pendingPlayerFocus = false;
-      if (state.settings.theater !== "off") setTheater(true);
+      setTheater(true);
       try {
         v.frame.focus();
       } catch (_err) { /* the frame will still get keys once the user clicks it */ }
       state.playerFocused = true;
       state.hints.hide();
       if (v.mount) state.lastFocus = v.mount;
-      if (state.theater) state.ring.hide();
-      else if (v.mount) state.ring.follow(v.mount);
+      state.ring.hide();
       send({ type: "player:focus" }).then((r) => {
         if (!r || !r.ok) state.pendingPlayerFocus = !state.playerReady;
       });
       return true;
     }
 
+    // The player hands the keys back: Back, or ▼ past its control bar. On
+    // the details page's episode there is nothing below the video; on
+    // Dropout's own page there is the page.
     function leavePlayer(hint) {
-      state.playerFocused = false;
-      if (hint === "back") return goBack();
+      if (hint === "back") {
+        state.playerFocused = false;
+        return goBack();
+      }
+      if (state.screen) return true;
       // "below": the page must be visible for the ring to mean anything.
+      state.playerFocused = false;
       setTheater(false);
-      // Leanback's screen of the episode: its Play button, or where the
-      // selection was left on it.
-      if (focusScreen()) return true;
       // The link back to the show is what someone leaving the player wants far
       // more often than whatever markup sits closest under the video (the
       // metadata tags do), so it wins over the geometric pick.
@@ -264,8 +364,11 @@
       send({ type: "player:offer", showing });
     }
 
+    // Another episode, in place of this one. From the video playing it plays
+    // straight away (playingThrough); from the details page it is that
+    // episode's details page.
     function goEpisode(delta) {
-      if (delta > 0 && takePageUpNext()) return true;
+      if (delta > 0 && state.watch === "playing" && takePageUpNext()) return true;
       const url = episodeUrl(delta);
       if (!url) {
         state.hints.show([{ keys: delta > 0 ? "▶▶" : "◀◀", label: delta > 0 ? "No next episode" : "No previous episode" }], 2500, true);
@@ -278,18 +381,23 @@
     function onPlayerEnded(msg) {
       const upNext = msg && msg.upNext ? msg.upNext : state.playerState && state.playerState.upNext;
       state.playerState = Object.assign({}, state.playerState, { ended: true, paused: true, upNext: upNext || null });
-      if (!state.settings.autoplayNext || (msg && msg.dismissed === true)) return;
+      if (state.watch !== "playing" || !state.settings.autoplayNext || (msg && msg.dismissed === true)) return;
       const href = location.href;
       setTimeout(() => {
         // The site may advance on its own (up-next overlay); only act if it did not.
-        if (location.href === href && state.enabled) goEpisode(1);
+        if (location.href === href && state.enabled && state.watch === "playing") goEpisode(1);
       }, AUTOPLAY_DELAY_MS);
     }
 
+    // Media keys on the page. On the details page play/pause is Watch (or
+    // Resume), and next/previous go to that episode's details page; there is
+    // nothing playing to stop or skip.
     function playerAction(action) {
-      if (state.kind !== "video") return false;
+      if (state.kind !== "video" && !state.inPlace) return false;
+      if (state.inPlace && (action === "next" || action === "previous")) return true; // a stream has no episodes
       if (action === "next") return goEpisode(1);
       if (action === "previous") return goEpisode(-1);
+      if (state.watch === "details") return action === "play_pause" ? startWatching(false) : true;
       const step = state.settings.seekStep;
       const commands = {
         play_pause: { cmd: "toggle" },
@@ -304,10 +412,10 @@
     }
 
     Object.assign(P, {
-      markVideoElements, syncDock, focusScreen, playFromScreen, sendHistoryMeta, episodeDetails,
-      episodeInfo, setTheater, enterPlayer, leavePlayer, captureEpisodeOrder, readEpisodeOrder,
-      episodeUrl, pageUpNext, takePageUpNext, syncUpNextOffer, goEpisode, onPlayerEnded,
-      playerAction
+      markVideoElements, isLive, setupWatch, syncPlayer, startWatching, showDetails, followPlay,
+      sendHistoryMeta, episodeDetails, episodeInfo, setTheater, enterPlayer, leavePlayer,
+      captureEpisodeOrder, readEpisodeOrder, episodeUrl, pageUpNext, takePageUpNext, syncUpNextOffer,
+      goEpisode, onPlayerEnded, playerAction
     });
   }
 

@@ -110,50 +110,42 @@ html.tenfoot-theater body {
   overflow: hidden !important;
 }
 
-/* Docked: on an episode's page out of theater, the player sits over the place
-   Leanback's screen keeps for it (content/screen.js), above that screen;
-   page.js sets the place (--tf-dock-*) and keeps it up to date. */
-html.tenfoot-docked:not(.tenfoot-theater) [data-tenfoot-theater-root] {
-  position: fixed !important;
-  left: var(--tf-dock-x, 0) !important;
-  top: var(--tf-dock-y, 0) !important;
-  width: var(--tf-dock-w, 0) !important;
-  height: var(--tf-dock-h, 0) !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 2147481500 !important;
-  overflow: hidden !important;
-  border-radius: calc(100vw / 1920 * 0.8 * 16);
-  background: #000 !important;
-}
-html.tenfoot-docked:not(.tenfoot-theater) [data-tenfoot-theater-root] [data-tenfoot-player],
-html.tenfoot-docked:not(.tenfoot-theater) [data-tenfoot-theater-root] iframe {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-}
 html.tenfoot-theater [data-tenfoot-hide] {
   display: none !important;
 }
 
+/* A live stream played on its page (content/page-live.js): its player over
+   the page in the full window, as a video playing is. */
+.tenfoot-inplace {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #000 !important;
+}
+.tenfoot-inplace iframe {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+}
+html.tenfoot-inplace-on body {
+  overflow: hidden !important;
+}
+
 /* While a screen of Leanback's is being built (Home's rows come after the
    page), Dropout's page stays hidden under it, so it never shows first;
-   page.js lifts this as soon as the screen is up, or gives up on it. */
+   page.js lifts this as soon as the screen is up, or gives up on it. A video
+   playing in the full window shows meanwhile. */
 html[data-tenfoot="on"][data-tenfoot-pending] {
   background-color: #0b0c10 !important;
 }
 html[data-tenfoot="on"][data-tenfoot-pending] body {
   visibility: hidden !important;
 }
-html[data-tenfoot="on"][data-tenfoot-pending] [data-tenfoot-theater-root] {
+html.tenfoot-theater[data-tenfoot="on"][data-tenfoot-pending] [data-tenfoot-theater-root] {
   visibility: visible !important;
 }
 

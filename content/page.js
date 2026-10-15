@@ -6,9 +6,10 @@
 // page's messages and its life cycle. Three parts of it are files of their
 // own, installed into one shared context (P) before it starts:
 // content/page-back.js (Back and every navigation), content/page-video.js
-// (an episode's page and the player relay; the player is a cross-origin
-// iframe, see content/player.js) and content/page-screens.js (Leanback's
-// screens and the rail).
+// (an episode's details page, the video playing and the player relay; the
+// player is a cross-origin iframe, see content/player.js),
+// content/page-screens.js (Leanback's screens and the rail) and
+// content/page-live.js (Dropout 24/7 played on its own page).
 // Idempotent: html[data-tenfoot] marks a document that is already wired.
 
 (function () {
@@ -54,6 +55,19 @@
     lastFocus: null,
     lastMove: -Infinity,
     theater: false,
+    // An episode's page: "details" or "playing" (content/page-video.js).
+    watch: null,
+    restartPending: false,
+    watchGesture: false,
+    ownResumeNotice: false,
+    arrivedFrom: null,
+    // The words to the player frame, numbered; the check after Watch.
+    holdSeq: 0,
+    playChecks: 0,
+    playCheckTimer: 0,
+    // A live stream played over this page (content/page-live.js).
+    inPlace: null,
+    inPlaceLoading: false,
     playerFocused: false,
     playerReady: false,
     playerState: null,
@@ -68,8 +82,6 @@
     engagedIndex: 0,
     home: null,
     screenRefocus: 0,
-    dockUntil: 0,
-    dockFrame: 0,
     historyLength: 0,
     rail: null,
     railActive: false,
@@ -95,10 +107,10 @@
   // functions the others call, then each part installs its own.
   const P = { state };
   Object.assign(P, {
-    send, dispatch, showHints, click, firstVisible, collect, currentEl, focusEl,
+    send, dispatch, showHints, notice, click, firstVisible, collect, currentEl, focusEl,
     goBack, samePath, openMenu, openSettings, leaveFieldBelow
   });
-  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens]) part.install(P);
+  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageLive]) part.install(P);
   // From page-back.js.
   const goSideways = (...a) => P.goSideways(...a);
   const goTop = (...a) => P.goTop(...a);
@@ -109,10 +121,13 @@
   const arrive = (...a) => P.arrive(...a);
   const recordTrail = (...a) => P.recordTrail(...a);
   const followSearchHistory = (...a) => P.followSearchHistory(...a);
+  const leavePlay = (...a) => P.leavePlay(...a);
   // From page-video.js.
   const markVideoElements = (...a) => P.markVideoElements(...a);
-  const syncDock = (...a) => P.syncDock(...a);
-  const focusScreen = (...a) => P.focusScreen(...a);
+  const setupWatch = (...a) => P.setupWatch(...a);
+  const syncPlayer = (...a) => P.syncPlayer(...a);
+  const showDetails = (...a) => P.showDetails(...a);
+  const followPlay = (...a) => P.followPlay(...a);
   const setTheater = (...a) => P.setTheater(...a);
   const enterPlayer = (...a) => P.enterPlayer(...a);
   const leavePlayer = (...a) => P.leavePlayer(...a);
@@ -138,6 +153,14 @@
   const openSeason = (...a) => P.openSeason(...a);
   const setPending = (...a) => P.setPending(...a);
   const inScreen = (...a) => P.inScreen(...a);
+  // From page-live.js.
+  const isLiveLink = (...a) => P.isLiveLink(...a);
+  const playInPlace = (...a) => P.playInPlace(...a);
+  const syncInPlace = (...a) => P.syncInPlace(...a);
+  const closeInPlace = (...a) => P.closeInPlace(...a);
+  const backInPlace = (...a) => P.backInPlace(...a);
+  const followInPlace = (...a) => P.followInPlace(...a);
+  const inPlaceInfo = (...a) => P.inPlaceInfo(...a);
 
   // ---------------------------------------------------------------------------
   // helpers
@@ -226,6 +249,10 @@
     state.playerState = null;
     state.pendingPlayerFocus = false;
     state.pendingLoadMore = null;
+    state.watch = null;
+    state.restartPending = false;
+    state.watchGesture = false;
+    state.ownResumeNotice = false;
   }
 
   function modalRules() {
@@ -370,12 +397,13 @@
         if (state.kind !== "other") console.warn(LOG, "no initial focus target on page kind", state.kind);
       }
     };
-    if (state.kind === "video") {
+    // An episode playing: the selection is the player. Its details page is
+    // a screen like any other.
+    if (state.kind === "video" && state.watch !== "details") {
       const v = markVideoElements();
       if (!v.mount) return giveUp();
       // enterPlayer() parks the ring on the mount until the frame exists.
-      if (state.settings.theater === "auto") enterPlayer();
-      else focusEl(v.mount, { scroll: false });
+      enterPlayer();
       state.pendingInitialFocus = 0;
       return;
     }
@@ -618,6 +646,8 @@
     if (!cur) return move("down");
     if (state.kind === "video" && cur.hasAttribute("data-tenfoot-player")) return enterPlayer();
     if (cur.tagName === "SELECT") return engageSelect(cur);
+    // Dropout 24/7's Watch: the stream played on this page.
+    if (cur.tagName === "A" && isLiveLink(cur.href)) return playInPlace(cur.href);
     click(cur);
     return true;
   }
@@ -626,21 +656,28 @@
   // Back (Escape) arrives here the frame gets first refusal. Only what it
   // cannot close is a layer for this page to walk.
   function askPlayerFirst() {
-    if (state.kind !== "video" || !qs(state.page.playerFrame)) return goBack();
+    const playing = state.inPlace || (state.kind === "video" && state.watch === "playing" && qs(state.page.playerFrame));
+    if (!playing) return goBack();
     send({ type: "player:back" }).then((r) => {
       if (!r || !r.consumed) goBack();
     });
     return true;
   }
 
+  // Back while an episode plays is its details page: Back off the step the
+  // video added to the history (the popstate calls showDetails). On
+  // Dropout's own page, the page under the video.
   function goBack() {
     if (state.modal) return closeModal();
-    if (state.kind === "video" && state.theater) {
-      setTheater(false);
-      if (focusScreen()) return true;
-      const mount = qs(state.page.playerMount);
-      if (mount) focusEl(mount);
-      return true;
+    if (state.inPlace) return backInPlace();
+    if (state.kind === "video" && state.watch === "playing") {
+      if (leavePlay() || showDetails()) return true;
+      if (state.theater) {
+        setTheater(false);
+        const mount = qs(state.page.playerMount);
+        if (mount) focusEl(mount);
+        return true;
+      }
     }
     return stepBack();
   }
@@ -667,12 +704,13 @@
 
   function openMenu() {
     if (state.menu.isOpen) return closeMenu();
-    // On a video the options button belongs to the player's settings panel,
-    // which holds its settings and Leanback's together. Everywhere else, and
-    // when the player does not answer, it opens Leanback's settings here.
-    // Remember where the ring was, so closing whatever opens puts it back.
+    // While a video plays the options button belongs to the player's
+    // settings panel, which holds its settings and Leanback's together.
+    // Everywhere else — an episode's details page too — and when the player
+    // does not answer, it opens Leanback's settings here. Remember where the
+    // ring was, so closing whatever opens puts it back.
     state.menuReturn = state.playerFocused ? null : currentEl();
-    if (state.kind === "video" && qs(state.page.playerFrame)) {
+    if (state.inPlace || (state.kind === "video" && state.watch === "playing" && qs(state.page.playerFrame))) {
       send({ type: "player:settings" }).then((r) => {
         if (!r || !r.ok) openSettings();
       });
@@ -858,23 +896,16 @@
   function hintItems() {
     const step = state.settings.seekStep;
     if (state.modal) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Select" }, { keys: "Back", label: "Close" }];
-    if (state.kind === "video") {
-      if (state.playerFocused) {
-        const offering = state.playerState && state.playerState.upNextShowing;
-        // With Leanback's up-next card up, ◀ hides it rather than skipping.
-        const card = state.playerState && state.playerState.upNextCard;
-        return [
-          { keys: "OK", label: offering ? "Play next episode" : "Play / pause" },
-          card ? { keys: "◀", label: "Hide up next" } : { keys: "◀ ▶", label: `−${step} s / +${step} s` },
-          { keys: "▼", label: "Player controls" },
-          { keys: "Menu", label: "Settings" },
-          { keys: "Back", label: state.theater ? "Leave" : "Back" }
-        ];
-      }
+    if ((state.kind === "video" || state.inPlace) && state.playerFocused) {
+      const offering = state.playerState && state.playerState.upNextShowing;
+      // With Leanback's up-next card up, ◀ hides it rather than skipping.
+      const card = state.playerState && state.playerState.upNextCard;
       return [
-        { keys: "▲ ▼", label: "Move" },
-        { keys: "OK", label: "Open" },
-        { keys: "Back", label: state.theater ? "Leave" : "Back" }
+        { keys: "OK", label: offering ? "Play next episode" : "Play / pause" },
+        card ? { keys: "◀", label: "Hide up next" } : { keys: "◀ ▶", label: `−${step} s / +${step} s` },
+        { keys: "▼", label: "Player controls" },
+        { keys: "Menu", label: "Settings" },
+        { keys: "Back", label: "Back" }
       ];
     }
     if (state.menu.isOpen) {
@@ -899,7 +930,7 @@
   // sofa. Playback is the exception: nothing covers the picture, so there it
   // appears on a keypress and goes away again.
   function showHints() {
-    const playing = state.theater || state.playerFocused;
+    const playing = state.theater || state.playerFocused || Boolean(state.inPlace);
     state.hints.show(hintItems(), playing ? HINT_PLAYBACK_MS : 0);
   }
 
@@ -944,9 +975,16 @@
     const t = e.target;
     if (!t || t === document.body || t === root) return;
     if (t.tagName === "IFRAME") {
-      if (state.kind === "video") {
+      if (state.kind === "video" && state.watch === "details") {
+        // The player is held behind the details page; the selection stays
+        // on the page (bounded, as below).
+        if (state.screen && state.screenRefocus < SCREEN_REFOCUS_LIMIT && state.screen.current) {
+          state.screenRefocus += 1;
+          focusEl(state.screen.current, { scroll: false });
+        }
+      } else if (state.kind === "video" || state.inPlace) {
         state.playerFocused = true;
-        if (state.theater) state.ring.hide();
+        if (state.theater || state.inPlace) state.ring.hide();
       }
       return;
     }
@@ -957,7 +995,7 @@
         // A click, or the focus coming back: the model follows.
         state.screen.select(t);
         state.screenRefocus = 0;
-      } else if (!ownUi(t) && !(state.kind === "video" && t.closest("[data-tenfoot-theater-root]"))) {
+      } else if (!ownUi(t) && !(state.kind === "video" && state.watch === "playing" && t.closest("[data-tenfoot-theater-root]"))) {
         // Dropout's page is underneath and still moves the focus about.
         // Take it back — a bounded number of times, never a tug of war.
         if (state.screenRefocus < SCREEN_REFOCUS_LIMIT && state.screen.current) {
@@ -996,11 +1034,15 @@
     if (!state.theater && !state.playerFocused) showHints();
   }
 
-  // The site changing its address without a page load (the search app).
+  // The site changing its address without a page load (the search app), or
+  // the history moving between an episode's details page and the step its
+  // video added above it.
   function onPopState() {
     if (state.leaving || !state.enabled) return;
     clearBackFallback();
     if (location.href !== state.href) onNavigate(true);
+    else if (state.inPlace) followInPlace();
+    else if (state.kind === "video") followPlay();
   }
 
   function onNavigate(popped) {
@@ -1013,6 +1055,7 @@
       refreshScreen();
       return;
     }
+    closeInPlace();
     setTheater(false);
     classifyPage();
     setupPage();
@@ -1091,6 +1134,7 @@
       ok: true,
       enabled: state.enabled,
       kind: state.kind,
+      watch: state.watch,
       theater: state.theater,
       playerFocused: state.playerFocused,
       playerReady: state.playerReady,
@@ -1124,6 +1168,10 @@
     switch (msg.type) {
       case "player:ready":
         state.playerReady = true;
+        if (state.enabled) {
+          syncPlayer();
+          syncInPlace();
+        }
         if (state.enabled && state.pendingPlayerFocus) enterPlayer();
         reply({ ok: true });
         return false;
@@ -1142,7 +1190,9 @@
         reply({ ok: true });
         return false;
       case "player:resumed":
-        if (state.enabled && Number(msg.at) > 0) notice(`Resumed at ${clock(msg.at)}`);
+        // Resume on the details page says so itself (page-video.js); held
+        // behind it, the video picking up is not news yet.
+        if (state.enabled && state.watch === "playing" && !state.ownResumeNotice && Number(msg.at) > 0) notice(`Resumed at ${clock(msg.at)}`);
         reply({ ok: true });
         return false;
       case "page:focus":
@@ -1156,8 +1206,15 @@
         reply(snapshot());
         return false;
       case "page:info":
-        // The player asks what the episode page knows, for its title.
-        reply(state.kind === "video" && state.rules ? Object.assign({ ok: true }, episodeDetails()) : { ok: false, error: "Not an episode page" });
+        // The player asks what the episode page knows, for its title, and
+        // whether the details page is holding it.
+        if (state.inPlace) {
+          reply(inPlaceInfo());
+          return false;
+        }
+        reply(state.kind === "video" && state.rules
+          ? Object.assign({ ok: true, hold: state.enabled && state.watch === "details" }, episodeDetails())
+          : { ok: false, error: "Not an episode page" });
         return false;
       case "page:action": {
         // BrowserBack pressed while the player had the keys: the same as on
@@ -1193,15 +1250,17 @@
     stampChrome();
     if (state.kind === "video") {
       markVideoElements();
-      if (state.settings.theater === "auto") setTheater(true);
       sendHistoryMeta();
     }
     state.railActive = false;
     state.railReturn = null;
     if (screenKind()) startScreen();
     else stopScreen();
-    setupRail();
+    // The page described on its trail entry before an episode playing adds
+    // its own above it.
     recordTrail();
+    setupWatch();
+    setupRail();
     syncModal();
     // Dropout's page shows from here on (content/early.css), unless a screen
     // of Leanback's is still to come; and it must, before anything in it can
@@ -1216,11 +1275,18 @@
     state.enabled = Boolean(on);
     root.dataset[MARK] = state.enabled ? "on" : "off";
     if (!state.enabled) {
+      closeInPlace();
       clearInitialFocusTimer();
       state.menu.close();
       state.ring.hide();
       state.hints.hide();
       setTheater(false);
+      // Dropout's player is its own again: nothing holds it.
+      if (state.kind === "video") {
+        state.holdSeq += 1;
+        send({ type: "player:hold", on: false, seq: state.holdSeq });
+      }
+      state.watch = null;
       stopScreen();
       setupRail();
       state.pendingInitialFocus = 0;
@@ -1275,7 +1341,6 @@
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
     window.addEventListener("popstate", onPopState);
-    window.addEventListener("resize", () => syncDock());
     window.addEventListener("beforeunload", () => {
       state.unloading = true;
       clearBackFallback();

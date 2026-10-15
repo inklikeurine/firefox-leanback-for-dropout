@@ -10,9 +10,9 @@ The product spec: what Leanback does, exactly. What each key does is in
 
 - A Firefox extension that makes **watch.dropout.tv** usable from the couch
   with the buttons a TV remote has. Leanback is a TV shell: Home, Browse, My
-  List, the lists, a show's page, a special, search and the episode's page are
-  Leanback's own screens; only sign-in, account, help and legal pages are
-  Dropout's.
+  List, the lists, a show's page, a special, search and an episode's details
+  page are Leanback's own screens; only sign-in, account, help and legal
+  pages are Dropout's.
 - Dropout runs on **Vimeo OTT**. The player is a **cross-origin iframe from
   `embed.vhx.tv`**, so there are two content scripts — one for the page, one
   for the player frame — talking through the background script.
@@ -39,6 +39,8 @@ The product spec: what Leanback does, exactly. What each key does is in
 - No on-screen keyboard. Search and login need a real keyboard or a phone;
   `/` opens search and is the **only** keyboard key the extension maps.
 - Not a general spatial-navigation extension — it runs only on Dropout hosts.
+- Not the store: Dropout's subscription store (`/products`) is deliberately
+  not drawn or linked — a poor fit for a TV UI.
 
 ## Who it's for
 
@@ -97,17 +99,19 @@ use ([targets.md](./targets.md)).
   Dropout's bars included — until something is watched again, here or
   elsewhere. Watched videos stay watched; Dropout's bars still show on cards.
 - **Resume.** A video in progress starts where it was left, with "Resumed at
-  12:04" for a moment; *Start Over* heads the playback settings after a
+  12:04" for a moment: *Resume* on its details page, or straight away when
+  it plays without one (the next episode, a reload). *Start Over* is beside
+  *Resume* on the details page and heads the playback settings after a
   resume. Resuming never changes whether the video is playing or muted.
 - **The rail.** On every page that plays no video — Home, hubs, Browse
   (`/series`), My List (`/my-list`), Search, the lists, every show and
-  special — an icon rail down the left: Search, Home, Browse, My List (a
+  special, an episode's details page — an icon rail down the left: Search, Home, Browse, My List (a
   bookmark), Dropout 24/7 (`/dropout-24-7`), and a gear for Leanback's
   settings in place. The current page's icon is yellow; the ring is the only
   mark of the selection. Entered on the current page's entry, or the one last
   used; leaving returns to exactly where the selection came from.
 - **Browse, My List, collections and lists** (Trending, New Releases, a
-  show's new episodes…): the page's name (My List named as on the rail), then
+  show's new episodes, all movies, Continue Watching in full): the page's name (My List named as on the rail), then
   Home's cards five across, the selected row sliding to the same place, more
   loaded through Dropout's *Load More* near the end. My List's selection
   starts on the first show. New Releases shows no "New" badges.
@@ -172,23 +176,52 @@ use ([targets.md](./targets.md)).
   should follow. Sideways moves — another episode, another season, one rail
   section to another — replace the page; a Back that lands on a sibling (the
   previous episode, after Dropout's up-next went on to the next) carries on
-  past it. So Back walks episode → the season page you came from → Home.
+  past it. A video playing is a step of its own above its details page, at
+  the same address. So Back walks the video → its details page → the season
+  page you came from → Home.
   `Escape` does the same after closing what is open. In a tab opened straight
   on a page, with nothing behind it, Leanback walks up the site itself, and at
   Home runs the **exit hook** (*Back On Home*: does nothing (default), or
   closes the tab — in a kiosk, that ends Firefox).
-- **Video pages.** On load: theater layout (the player fills the window;
-  *Theater Layout*: every video / on OK / never) and focus in the player. The
-  seek step is 10 s by default; media keys work from anywhere on the page.
-- **The episode's page** (also Dropout 24/7's stream): out of theater, the
-  player — moved by style only, as moving the frame would reload it — sits in
-  a large 16:9 place at the top left and keeps playing; beside it the show's
-  name (yellow capitals), the episode's title, "Season 2, Episode 1 ·
-  28-Feb-2020", the description (four lines), and *Play* (yellow: back into
-  the video, playing), *Episodes* (the season's page, else the show's) and
-  *My List*. Under them Dropout's *Up Next in Season N* as Home's cards. The
-  selection lands on *Play*. A page with no title to read is driven as
-  Dropout draws it.
+- **An episode's details page**, as on Dropout's Roku app. Every way
+  to an episode — any card, Continue Watching, the show's main button,
+  *Watch Movie*, an extra — opens it; nothing plays until *Watch*. Dropout's
+  player is loaded underneath and held: a start of its own is taken straight
+  back. On the left: the show's name (yellow capitals), the episode's title,
+  "Season 2, Episode 1 · 28-Feb-2020", the synopsis (six lines), then one
+  row of buttons: *Watch* (yellow), or *Resume* with *Start Over* beside it
+  when the episode is in progress (the same reading the player resumes
+  from); *Add to My List* / *Remove from My List* (Dropout's own button,
+  pressed); *Episodes* (the season's page, else the show's). On the right
+  the episode's picture (`og:image`, else the history's), with the progress
+  bar and the time left ("15:00 left") when in progress. The selection lands
+  on *Watch* or *Resume*; ▲ ▼ do nothing; ◀ from the first button is the
+  rail. Play/pause is *Watch*; next/previous open that episode's details
+  page. A page with no title to read is driven as Dropout draws it, playing
+  at once.
+- **Watching.** *Watch*, *Resume* or *Start Over*: the video fills the window
+  (CSS, not the Fullscreen API) with the focus in the player, and the press
+  is passed on as the viewer's, so the sound may come on with it. Back is the
+  details page again, the video held where it stopped, the button now
+  *Resume*. The next or previous episode, by the up-next card, the media
+  keys or Dropout's own countdown, plays straight away (its details page is
+  under it), as does a reload while a video plays. Dropout 24/7's stream
+  opened at its own address is an episode here: its details page, with
+  *Watch* only, then the stream.
+  In the player one press of OK is one: a held OK, and the press of *Watch*
+  arriving there too (within 0.4 s of the keys coming), do nothing. A start
+  the player stops by itself is made again (five times at most, never after
+  the viewer's pause); one Firefox refuses with the sound on starts muted. The seek step is 10 s by default;
+  media keys work from anywhere on the page.
+- **Dropout 24/7 in place.** On Dropout 24/7's page (a hub: the *Live now*
+  banner and *Watch*), *Watch* — any link to a live stream's page
+  (`live.path`) — reads that page with the page's own fetch, takes its
+  player's address (`live.player`, only `https://embed.vhx.tv`) and title,
+  and puts the player over the page in the full window, a history step of
+  its own; the press was on this page, so the sound can come on. The
+  player's keys, control bar and settings work as for a video playing; Back
+  (Escape, the remote's) closes it, the selection back on *Watch*. No player
+  to read: the link is followed.
 - **Next / previous episode.** The site's up-next when present; otherwise the
   episode order from the show's page. **Autoplay next** on `ended` is a
   setting (default on).
@@ -250,7 +283,8 @@ use ([targets.md](./targets.md)).
 
 What each permission is for, and what data collection the manifest declares:
 the README's [Permissions](../README.md#permissions). The images Leanback
-shows come from Dropout's image server (`vhx.imgix.net`). **Not** requested:
+shows come from Dropout's image server (`vhx.imgix.net`); the one page it
+reads is a live stream's, when *Watch* is pressed on Dropout 24/7's page. **Not** requested:
 `tabs` (the background closes the sending tab via `sender.tab.id` without
 it), `webRequest`, `nativeMessaging`, `<all_urls>`. A new permission is
 explained in the README and here.
@@ -276,7 +310,6 @@ default rather than throwing):
 | `ringWidth` | `4` | px, 2–12 |
 | `focusZoom` | `5` | how much bigger the selected item gets, in percent (0–25); 0 turns it off |
 | `hintBar` | `false` | show button hints |
-| `theater` | `"auto"` | `auto` on every video page, `manual` (OK on the player), `off` |
 | `playerChrome` | `"leanback"` | `leanback` or `site`: the site's own player controls, for troubleshooting. On the options page only |
 | `seekStep` | `10` | seconds per ◀ ▶ press in the player: 5, 10, 15, 30, 60, 120 or 300 |
 | `autoplayNext` | `true` | play the next episode when one ends |
@@ -367,23 +400,23 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 17 | Leanback settings: *Shows Open On*, OK, ▼ to *First season*, OK; open a show | The list shows both, the newest ticked; afterwards the row reads *First season*; the show opens on Season 1 |
 | 18 | Down repeatedly past the last episode | Each row slides up to the same place; more episodes appear before the end; ring continues |
 | 19 | Open a special (a stand-up set) | Its picture and name, *Watch Movie* yellow with the ring on it, *My List*; Down to the movie, then its extras |
-| 20 | Enter on an episode | Theater layout; playback starts, or Enter starts it |
+| 20 | Enter on an episode | Its details page: the show's name, the title, the season line, the synopsis, *Watch* (yellow, ringed), *Add to My List*, *Episodes*; the picture on the right; the rail on the left; nothing plays and nothing is heard. Enter on *Watch*: the video fills the window and plays |
 | 21 | In the player: Enter, Enter, Right, Left; then Right ×5 quickly while playing | Play: the show's name and "S… · E… · title" top left for four seconds. Pause: the title and the bar come up, no button ringed; Right, Left skip +10 s, −10 s with the bar still up; after four seconds both go. Right ×5: ⏩ and the new time in the middle, the bar up, steady, gone a second after the last press |
-| 22 | Down, then Down again; then Up | The transport bar opens; then the episode's page: the video at the top left, the show, title, season line and description beside it, the ring on a yellow *Play*, *Up Next in Season …* under it. Up: back in the full-window video |
-| 23 | Escape, Escape | The episode's page as in 22; then the season page |
-| 24 | From Home, open a show, an episode, let it play into the next (or press Next); then the remote's Back, twice | The season page (not the previous episode), then Home |
+| 22 | Down, then Down again; then Up | The transport bar opens; Down again stays on it; Up closes it |
+| 23 | After a minute or more: the remote's Back, Back | The details page, the video stopped; the button says *Resume* with *Start Over* beside it, and the picture shows the progress and the time left; then the season page |
+| 24 | From Home, open a show, an episode, *Watch*, let it play into the next (or press Next); then the remote's Back, three times | The next episode plays without stopping at its details page; Back: its details page, then the season page (not the previous episode), then Home |
 | 25 | On the season row, switch season, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
 | 26 | Watch an episode for a moment, then the remote's Back, Back; on each page, press ◀ ▶ | Every page answers the remote straight away; no page needs a reload |
 | 27 | Open any page from the rail, watching the screen as it loads | A dark screen, then Leanback's; Dropout's own page never shows first |
 | 28 | `/search`: type a query | Leanback's box at the top, ringed, not grown; letters appear in it and Dropout's results arrive as cards five across; ▼ the filters (*All (…)* yellow), ▼ the results; OK on *Videos* shows only videos. In the box, Left moves the text cursor and at the start of the text reaches the rail; Right returns. Up from the first row of results reaches the filters, then the box |
 | 29 | Search: type a word, wait, type another; then ◀ to the rail, Home, OK | Home opens; Escape from the results instead leaves Search in one step |
-| 30 | Rail → Dropout 24/7 → its *Watch* | Full window like an episode; ▼ ▼ shows its page with the stream at the top left, "Dropout 24/7", its description and *Play*; ▲ back into the stream |
-| 31 | On a video page, press MediaPlayPause with focus on the page | Player toggles |
+| 30 | Rail → Dropout 24/7; *Watch*; then Back, Back | Dropout's 24/7 page: its banner picture, "Dropout 24/7", *Watch* ringed, the 24/7 icon yellow; then the stream in the full window, with sound, the address still the 24/7 page's; Back: the 24/7 page, *Watch* ringed; Back: where you were |
+| 31 | On a details page, press MediaPlayPause; then again | The video starts as with *Watch*; then pauses |
 | 32 | Let an episode end (or seek near the end) | Eight seconds before the end, the "Up next" card: picture, ring counting down, "UP NEXT · 0:08", "S… · E…", the show, *OK Play now · ◀ Hide*; the next episode starts at the end. Again with OK: it starts at once. Again with ◀: the card goes and nothing plays by itself |
 | 33 | Press the keyboard's *Menu* key on Home | Leanback's settings slide in from the right: the title and a ✕, the keys along the foot, the selected entry yellow with no ring; switches for on/offs, a value and › for the rest; no context menu; hovering turns nothing blue |
 | 34 | In that panel: ▼ to *Seek Step*, OK, ▼, OK; then *Start Videos Muted*, OK; then Left | *Seek Step*'s values open with 10 s ticked; OK on 15 s picks it and goes back up. The switch flips. Left closes the panel and the ring is back where it was |
 | 35 | In that panel: *Clear Continue Watching*, Enter, Enter | The first Enter asks; the second clears: Continue Watching disappears (Roku items included); Dropout's bars still show on cards; finished episodes keep their tick |
-| 36 | On an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
+| 36 | Playing an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
 | 37 | In the panel: Closed Captions, OK, OK; then Caption Style, OK, Font, OK, Color, OK, Yellow, OK; then Left | Captions come on and go off. Caption Style shows Font, Background, Window; Font lists Family, Color, Size, Opacity, Edge Style with their choices; *Font Color* opens, OK on Yellow goes back up with Color showing Yellow (and the captions yellow); Left goes up one level, and from Caption Style straight back to the top |
 | 38 | During playback: settings → Leanback Settings | The same entries, in the same order and words, as on Home |
 | 39 | Fresh profile, first visit | The cookie dialog is reachable by arrows and closable by Enter, above Home |
@@ -406,11 +439,11 @@ of episodes one further down is not considered until more are loaded.
 
 ### 1.0
 
-- **Watch history syncs between devices.** Leanback's own watch history
-  (Continue Watching, resume points, watched marks) stays in this Firefox
-  until then. It will not sync through a Firefox account. The approach
-  — for example writing into Dropout's own history, so the Roku and Android
-  apps see what was watched here — is decided when the work starts.
+- **Watch history syncs between devices that have Leanback.** Leanback's own
+  watch history (Continue Watching, resume points, watched marks) is shared
+  by every Firefox with Leanback installed; until then it stays in this
+  Firefox. Syncing with Dropout's Roku and Android apps is not the goal. How
+  the installs share it is decided when the work starts.
 
 ## Release checklist
 

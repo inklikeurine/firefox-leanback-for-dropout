@@ -32,9 +32,8 @@
     const goHome = (...a) => P.goHome(...a);
     const goSideways = (...a) => P.goSideways(...a);
     const goTop = (...a) => P.goTop(...a);
-    const enterPlayer = (...a) => P.enterPlayer(...a);
-    const playFromScreen = (...a) => P.playFromScreen(...a);
-    const syncDock = (...a) => P.syncDock(...a);
+    const startWatching = (...a) => P.startWatching(...a);
+    const isLive = (...a) => P.isLive(...a);
 
     // The rail's own entries, top to bottom. The site's links (rules →
     // rail.links) come after Browse, and the gear sits at the foot.
@@ -54,8 +53,8 @@
     }
 
     // "home", "page" (a grid of cards), "detail" (a show or a special),
-    // "search", "episode" (under the player), or null for a page Leanback does
-    // not draw.
+    // "search", "episode" (an episode's details page), or null for a page
+    // Leanback does not draw.
     function screenKind() {
       if (state.kind === "browse" || state.kind === "hub") return "home";
       if (state.kind === "grid") return "page";
@@ -87,7 +86,7 @@
         const readers = {
           detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href, smartOrder: state.settings.seasonStart !== "first" }),
           search: () => Screen.searchModel(document, screenRules().search),
-          episode: () => Screen.episodeModel(document, screenRules().episode),
+          episode: () => Screen.episodeModel(document, screenRules().episode, { history: state.history, href: location.href, live: isLive() }),
           page: () => Screen.collectionModel(document, screenRules())
         };
         const read = readers[which];
@@ -107,8 +106,8 @@
           onObserve: observe,
           onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current)),
           onFieldDone: () => leaveFieldBelow(),
-          onRun: (what) => (what === "player" ? playFromScreen() : false),
-          onLayout: () => syncDock()
+          // An episode's Watch (or Resume) and Start Over.
+          onRun: (what) => startWatching(what === "restart")
         });
       }
       root.dataset.tenfootHome = "on";
@@ -122,7 +121,6 @@
       state.screen = null;
       delete root.dataset.tenfootHome;
       setPending(false);
-      syncDock();
     }
 
     function refreshScreen() {
@@ -130,18 +128,18 @@
       const before = currentEl();
       const target = state.screen.refresh();
       if (state.screen.ready) setPending(false);
-      if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || state.playerFocused || state.theater || !target) return;
+      if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || state.playerFocused || state.theater || state.inPlace || !target) return;
       // The card the selection was on went away, or the site took the focus:
-      // put it on the card Home now has selected.
+      // put it on the card Home now has selected. Still there, it may have
+      // changed size (Watch becoming Resume): the ring follows.
       if (!before || !before.isConnected || before !== target) focusEl(target, { scroll: false });
+      else state.ring.refresh();
     }
 
     function moveScreen(dir) {
       const r = state.screen.move(dir);
       if (r && r.el) focusEl(r.el, { scroll: false });
       else if (r && r.edge === "left") enterRail();
-      // Above an episode's page is its player.
-      else if (r && r.edge === "up" && state.kind === "video") enterPlayer();
       return true;
     }
 
@@ -165,9 +163,11 @@
       return null;
     }
 
+    // An episode's page has the rail beside its details page, and not when
+    // it is Dropout's own page.
     function setupRail() {
       const kinds = state.rules.rail && Array.isArray(state.rules.rail.kinds) ? state.rules.rail.kinds : [];
-      const on = state.enabled && kinds.includes(state.kind);
+      const on = state.enabled && kinds.includes(state.kind) && (state.kind !== "video" || Boolean(state.screen));
       if (!state.rail && on && Rail) {
         const links = railLinks().map((l) => ({ id: l.id, label: l.label, icon: l.icon || "tv" }));
         state.rail = Rail.createRail(document, [...RAIL_ITEMS, ...links, RAIL_SETTINGS], { onActivate: onRailItem });

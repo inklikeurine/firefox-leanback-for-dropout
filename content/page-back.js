@@ -1,14 +1,16 @@
 // Leanback for Dropout — Back and the ways Leanback leaves a page, for
 // content/page.js: every navigation it starts (push, sideways, back down the
 // history, Home, a top-level page), the trail behind the page (nav/trail.js),
-// Back past the page, the remote's BrowserBack, the structural parent and the
-// exit hook. Installed into the page script's shared context.
+// the step an episode playing adds above its details page, Back past the
+// page, the remote's BrowserBack, the structural parent and the exit hook.
+// Installed into the page script's shared context.
 
 (function () {
   function install(P) {
     const { state } = P;
     const LOG = "[leanback-for-dropout]";
     const BACK_FALLBACK_MS = 800; // how long Firefox gets to act on BrowserBack before Leanback does
+    const PLAY_STATE = "tenfootPlay"; // marks the history entry of an episode playing
     const Trail = globalThis.TenfootTrail;
     const { qs } = globalThis.TenfootCommon;
 
@@ -207,10 +209,26 @@
           if (nav && nav.type) type = nav.type;
         } catch (_err) { /* treated as a new page */ }
       }
-      const r = Trail.arrive(Trail.load(store), location.href, type, Trail.takeIntent(store));
+      const before = Trail.load(store);
+      const r = Trail.arrive(before, location.href, type, Trail.takeIntent(store), { play: onPlayEntry() });
       state.trail = r.trail;
+      state.arrivedFrom = r.from;
       Trail.save(store, r.trail);
-      const delta = allowSkip && r.left ? Trail.skipSiblings(r.trail, r.left) : null;
+      if (!allowSkip || !r.left) return false;
+      const here = r.trail.length - 1;
+      // Firefox's Back passed over the details page of a video that started
+      // by itself (nobody had interacted with it): on to it. The history's
+      // own steps are not passed over, and it arrives as a reload of the
+      // trail's top: the details page, not playing.
+      const ahead = Trail.passedOver(before, here);
+      if (ahead !== null) {
+        state.trail = before.slice(0, ahead + 1);
+        Trail.save(store, state.trail);
+        state.leaving = true;
+        history.go(ahead - here);
+        return true;
+      }
+      const delta = Trail.skipSiblings(r.trail, r.left);
       if (!delta) return false;
       const to = r.trail[r.trail.length - 1 + delta];
       Trail.setIntent(store, "back", to.url);
@@ -237,10 +255,44 @@
       Trail.save(sessionStore(), state.trail);
     }
 
+    // An episode playing is a step of its own in the history, above its
+    // details page and at the same address, so the remote's Back — which
+    // Firefox always acts on — brings the details page back rather than
+    // leaving. The trail keeps the step too (Trail.play).
+    function onPlayEntry() {
+      const s = history.state;
+      return Boolean(s && typeof s === "object" && s[PLAY_STATE] === true);
+    }
+
+    function pushPlay() {
+      if (onPlayEntry()) return;
+      try {
+        history.pushState({ [PLAY_STATE]: true }, "", location.href);
+      } catch (_err) {
+        return; // no step: Back leaves the episode, as it would anyway
+      }
+      notePlay(true);
+    }
+
+    // The trail following the history onto (or off) the step.
+    function notePlay(on) {
+      if (!Trail || !state.trail.length) return;
+      state.trail = Trail.play(state.trail, on);
+      Trail.save(sessionStore(), state.trail);
+    }
+
+    // Back off the step, to the details page: the history's own Back, which
+    // the page sees as a popstate (followPlay).
+    function leavePlay() {
+      if (!onPlayEntry()) return false;
+      history.go(-1);
+      return true;
+    }
+
     Object.assign(P, {
       sessionStore, navigate, go, goSideways, goBackTo, homeUrl, goHome, goTop, seriesSlug,
       backIndex, stepBack, browserBack, clearBackFallback, structuralParent, exit, leaveSearch,
-      followSearchHistory, arrive, recordTrail
+      followSearchHistory, arrive, recordTrail, onPlayEntry, pushPlay, notePlay, leavePlay
     });
   }
 

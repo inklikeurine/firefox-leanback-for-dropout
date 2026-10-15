@@ -5,6 +5,8 @@
 // registers with the background (player:hello), finds the <video>, handles
 // keys while the frame has focus, executes player:command messages and
 // reports state changes back to the page through the background relay.
+// While the page shows an episode's details page it holds the video: nothing
+// plays until the page says Watch (player:hold).
 // Idempotent: html[data-tenfoot-player] marks a document already wired.
 
 (function () {
@@ -21,6 +23,12 @@
   const TITLE_MS = 4000; // the title when a video starts, and the bar with it on a pause
   const SEEK_SHOW_MS = 1000; // the skip feedback, counted from the last skip
   const UP_NEXT_LEAD_S = 8; // Dropout's card comes this long before the end (OTTData.up_next.offset_seconds)
+  const HOLD_ASK_MS = 250; // asking the page whether its details page holds the video…
+  const HOLD_ASK_TRIES = 20; // …until it answers, or for this many tries
+  const PLAY_RETRY_MS = 300; // the player stopping a start the page asked for: start it again…
+  const PLAY_RETRIES = 5; // …this many times at most
+  const PLAY_SETTLED_MS = 1500; // playing this long, the start has held
+  const ENTER_GUARD_MS = 400; // OK this soon after the keys came here is the press that sent them
   const DEFAULT_RULES = { video: "video" };
   const VISIBLE = (el) => Boolean(el) && Boolean(el.getClientRects && el.getClientRects().length);
 
@@ -77,7 +85,23 @@
     upNext: { shown: false, dismissed: false, siteHidden: false },
     // Picking up where the viewer left off: the point, whether it is still to
     // be applied, and whether it was (which is what offers Start Over).
-    resume: { video: null, at: null, pending: false, resumed: false, told: false }
+    resume: { video: null, at: null, pending: false, resumed: false, told: false },
+    // The details page: holding the video (true), letting it play (false), or
+    // not known yet (null), which holds it too, so nothing is heard first.
+    // `holdSeq`: the page's latest word, so an older one arriving late is
+    // ignored. `blocked`: a start was held back before the page answered;
+    // `playWanted`: the page said Watch and the video is to play until it has
+    // been playing a moment (`playingSince`, `playTries`); `restart`: from
+    // the beginning, even before the video is there.
+    hold: null,
+    holdSeq: 0,
+    blocked: false,
+    playWanted: false,
+    playTries: 0,
+    playingSince: 0,
+    restart: false,
+    // When the keys last came to this frame.
+    focusedAt: -Infinity
   };
 
   const { qs, qsa, matches, send } = globalThis.TenfootCommon;
@@ -322,9 +346,11 @@
   // <video>; this file owns when it is open and what Back means while it is.
   // ---------------------------------------------------------------------------
 
-  // Remembering who paused: the viewer, or Firefox taking the sound away.
+  // Remembering who paused: the viewer, or Firefox taking the sound away. A
+  // pause of the viewer's also ends a start the page asked for.
   function notePlayback(paused) {
     state.userPaused = Boolean(paused);
+    if (paused) state.playWanted = false;
   }
 
   function bar() {
@@ -438,6 +464,7 @@
       upNextCard: state.upNext.shown,
       transport: state.transport,
       resumed: state.resume.resumed,
+      held: held(),
       focused: typeof document.hasFocus === "function" ? document.hasFocus() : false
     };
   }
@@ -508,10 +535,7 @@
       if (b && b.dispatch(action)) return true;
       switch (action) {
         case "down":
-          // The row sits at the bottom of the video, so carrying on down
-          // continues past it to the page — video → row → page.
-          leaveTransport();
-          send({ type: "page:focus", hint: "below" });
+          // The row sits at the bottom of the video: nothing below it.
           return true;
         case "back":
         case "up":
@@ -585,6 +609,14 @@
     if (!action) return;
     state.gesture = true;
     unmuteOnGesture();
+    // One press of OK is one: a held button repeats, and the press of Watch
+    // that brought the keys here must not arrive a second time and pause
+    // what it started.
+    if ((action === "select" || action === "play_pause") && (e.repeat || performance.now() - state.focusedAt < ENTER_GUARD_MS)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
     // Firefox goes back on the remote's BrowserBack whatever this frame does
     // with it (T2). The page decides whether that needs any help.
     if (action === "back" && e.key === "BrowserBack") {
@@ -676,6 +708,10 @@
   function onTimeUpdate() {
     syncUpNext();
     const v = state.video;
+    if (v && state.playWanted && !v.paused) {
+      if (!state.playingSince) state.playingSince = Date.now();
+      else if (Date.now() - state.playingSince >= PLAY_SETTLED_MS) state.playWanted = false;
+    }
     if (!v || v.paused || Date.now() - state.lastSave < SAVE_EVERY_MS) return;
     saveProgress(false);
   }
@@ -689,6 +725,12 @@
     const b = state.bar;
     const v = state.video;
     if (b && v && state.userPaused && !v.ended && !b.panelOpen && ownChrome() && state.settings.enabled) b.peek(TITLE_MS, true, "pause");
+    // A start the page asked for, stopped by the player itself (Dropout's own
+    // autoplay giving up as it is held back, say), not by the viewer: again.
+    if (v && state.playWanted && !state.userPaused && !held() && !v.ended && !(b && b.panelOpen) && state.playTries < PLAY_RETRIES) {
+      state.playTries += 1;
+      setTimeout(playIfWanted, PLAY_RETRY_MS);
+    }
   }
 
   // A skip from the remote: ⏪ / ⏩ with the new time, and the bar, for a
@@ -710,6 +752,7 @@
     const fallback = { title: d && d.video ? d.video.title : "" };
     state.info = fallback;
     state.infoLoad = send({ type: "page:info" }).then((r) => {
+      if (r && r.ok && state.hold === null) setHold({ on: r.hold === true });
       if (state.video !== v) return;
       const has = (n) => typeof n === "number" && Number.isFinite(n);
       state.info = r && r.ok ? {
@@ -741,8 +784,13 @@
   }
 
   // Look up where this video was left, then go there once the player can seek.
+  // Start Over pressed before the video was there wins.
   async function prepareResume(v) {
     state.resume = { video: v, at: null, pending: false, resumed: false, told: false };
+    if (state.restart) {
+      state.restart = false;
+      return;
+    }
     const t = watchTarget();
     if (!t || !History) return;
     const store = await History.load(API);
@@ -782,11 +830,12 @@
     if (!v.paused) r.pending = false;
   }
 
-  // "Start Over" in the playback panel.
+  // "Start Over" in the playback panel, and on the details page.
   function startOver() {
     const v = state.video;
     state.resume.pending = false;
     state.resume.resumed = false;
+    state.restart = !v;
     if (v) {
       try {
         v.currentTime = 0;
@@ -797,16 +846,114 @@
     return true;
   }
 
+  // ---------------------------------------------------------------------------
+  // the details page
+  //
+  // The page draws an episode's details page over Dropout's, and the player
+  // is loaded underneath: held, so nothing plays (or is heard) until Watch.
+  // ---------------------------------------------------------------------------
+
+  function held() {
+    return Boolean(state.settings.enabled) && state.hold !== false;
+  }
+
+  // A start while held — Dropout's autoplay — is taken straight back.
+  function holdBack(v) {
+    if (state.hold === null) state.blocked = true;
+    state.userPaused = false; // not the viewer's pause: no title, no bar
+    try {
+      v.pause();
+    } catch (_err) { /* it will be paused on the next start */ }
+  }
+
+  // The page's word (player:hold, or its answer to page:info):
+  //   on       — hold the video (the details page is up);
+  //   play     — Watch: play it, from the beginning with `restart`;
+  //   gesture  — that was a press of the remote, so the sound may come on.
+  // Off without play (a page that does not hold) lets a start that was held
+  // back while asking go on.
+  function setHold(msg) {
+    const m = msg || {};
+    if (typeof m.seq === "number") {
+      if (m.seq < state.holdSeq) return true; // an older word, arriving late
+      state.holdSeq = m.seq;
+    }
+    const was = state.hold;
+    const v = state.video;
+    state.hold = Boolean(m.on);
+    if (state.hold) {
+      state.playWanted = false;
+      leaveTransport();
+      if (v && !v.paused) holdBack(v);
+      report();
+      return true;
+    }
+    if (m.gesture) state.gesture = true;
+    if (m.restart) startOver();
+    if (m.play || (was === null && state.blocked)) {
+      state.playWanted = true;
+      state.playTries = 0;
+      state.playingSince = 0;
+    }
+    state.blocked = false;
+    playIfWanted();
+    report();
+    return true;
+  }
+
+  // Start what the page asked for. Firefox refusing it with the sound on:
+  // muted, then, and the next press turns the sound on.
+  function playIfWanted() {
+    const v = state.video;
+    if (!v || !state.playWanted || held() || !v.paused) return;
+    notePlayback(false);
+    let p;
+    try {
+      p = v.play();
+    } catch (err) {
+      console.warn(LOG, "play() threw:", err && err.message);
+      return;
+    }
+    if (!p || typeof p.catch !== "function") return;
+    p.catch((err) => {
+      if (!err || err.name !== "NotAllowedError" || v.muted || state.video !== v) return;
+      state.autoplayBlocked = true;
+      state.unmuteWhenPlaying = true;
+      v.muted = true;
+      play(v);
+    });
+  }
+
+  // Whether the page holds the video, asked as soon as this frame is up. The
+  // page may not be listening yet, so ask again until it answers; a page that
+  // never does (no Leanback there) holds nothing. Once the page has said so
+  // itself (player:hold), its word stands.
+  function askHold(tries) {
+    if (state.hold !== null || !state.settings.enabled) return;
+    send({ type: "page:info" }).then((r) => {
+      if (state.hold !== null) return;
+      if (r && r.ok) setHold({ on: r.hold === true });
+      else if ((r && r.error === "Not an episode page") || tries >= HOLD_ASK_TRIES) setHold({ on: false });
+      else setTimeout(() => askHold(tries + 1), HOLD_ASK_MS);
+    });
+  }
+
   function report() {
     if (state.leaving) return;
     send({ type: "player:state", state: currentState() });
   }
 
   // Playback has started, which is the first moment turning the sound on can
-  // work without costing the autoplay that just succeeded.
+  // work without costing the autoplay that just succeeded. Held behind the
+  // details page, it is stopped instead.
   function onPlay(e) {
-    applyResume();
     const v = state.video;
+    if (v && held()) {
+      holdBack(v);
+      return;
+    }
+    if (e && e.type === "playing" && state.playWanted) state.playingSince = Date.now();
+    applyResume();
     if (v && e && e.type === "play") {
       titleOnStart(v);
       if (state.bar) state.bar.endPeek("pause");
@@ -833,6 +980,7 @@
       // that has not started, which would stop the autoplay.
       applyMutePreference(v, true);
     }
+    playIfWanted();
     report();
   }
 
@@ -914,7 +1062,7 @@
   // stopped, and resuming that one made every button press restart playback.
   function revertIfStopped(v) {
     if (!v.isConnected || !v.paused || v.ended || v.muted) return;
-    if (state.userPaused) return;
+    if (state.userPaused || held()) return;
     // Firefox stopped it because we turned the sound on without a gesture.
     const resume = v.play();
     if (resume && typeof resume.then === "function") {
@@ -982,6 +1130,8 @@
     if (state.bar) state.bar.showUpNext(null);
     loadInfo(v);
     prepareResume(v);
+    if (held() && !v.paused) holdBack(v);
+    playIfWanted();
     report();
   }
 
@@ -1038,6 +1188,9 @@
       case "player:focus":
         sendResponse({ ok: focusPlayer(), state: currentState() });
         return false;
+      case "player:hold":
+        sendResponse({ ok: setHold(msg), state: currentState() });
+        return false;
       case "player:offer":
         state.offerFromPage = Boolean(msg.showing);
         sendResponse({ ok: true, state: currentState() });
@@ -1084,6 +1237,7 @@
       }
       syncUpNext();
       if (s.enabled !== was) applyEnabled(s.enabled);
+      if (s.enabled && !was) askHold(0);
     });
     API.runtime.onMessage.addListener(onMessage);
     window.addEventListener("keydown", onKeyDown, true);
@@ -1091,6 +1245,7 @@
     // this, Firefox's own menu would open over the video.
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("focus", () => { state.focusedAt = performance.now(); });
     // No message on pagehide: a query from a context that is being destroyed
     // is what logs "Actor 'Conduits' destroyed before query 'RuntimeMessage'
     // was resolved" in the parent process. The registry heals itself — the
@@ -1128,6 +1283,7 @@
       }, MUTATION_DEBOUNCE_MS);
     });
     state.observer.observe(root, { childList: true, subtree: true });
+    askHold(0);
     await hello();
   }
 
