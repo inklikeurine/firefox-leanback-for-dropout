@@ -72,8 +72,10 @@ extension cannot do it: [architecture.md](./architecture.md#sound-and-the-autopl
    above — this is what makes episodes start with sound), no session restore
    and no first-run pages, `browser.startup.homepage =
    https://watch.dropout.tv/browse` (so a stray `BrowserHome` is harmless).
-2. **Extension**: the signed `.xpi`, installed once into that profile — or
-   force-installed system-wide through `policies.json` (`ExtensionSettings`).
+2. **Extension**: the signed `.xpi` from the newest release
+   (`releases/latest/download/leanback-for-dropout.xpi`), installed once into
+   that profile — or force-installed system-wide through `policies.json`
+   (`ExtensionSettings`, with that link as `install_url`).
 3. **Login**: start the profile once *without* `--kiosk`, sign in, close.
 4. **Launcher**: an entry in the TV shell or desktop (on Linux, a `.desktop`
    file in `~/.local/share/applications/`, written like the shell's other app

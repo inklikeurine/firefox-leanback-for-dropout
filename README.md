@@ -62,9 +62,12 @@ The extension is removed when Firefox restarts.
 launches a clean Firefox profile with the extension loaded.
 
 **Permanent install:** Firefox only permanently installs signed extensions.
-`web-ext build` produces a package to submit to
-[addons.mozilla.org](https://addons.mozilla.org/developers/) for signing
-(unlisted self-distribution is fine); see
+Every [release](https://github.com/inklikeurine/firefox-leanback-for-dropout/releases)
+carries a build signed by Mozilla (unlisted, not on the add-ons site);
+the newest is always at
+<https://github.com/inklikeurine/firefox-leanback-for-dropout/releases/latest/download/leanback-for-dropout.xpi>.
+Open that link in Firefox to install it, or use it as the `install_url` in a
+`policies.json`. How releases are signed:
 [docs/spec.md](./docs/spec.md#release-checklist).
 
 Source: https://github.com/inklikeurine/firefox-leanback-for-dropout

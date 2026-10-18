@@ -455,13 +455,15 @@ of episodes one further down is not considered until more are loaded.
 3. Run the [Testing](#testing) checklist in a fresh profile and in a
    logged-in profile.
 4. `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors`.
-5. `web-ext build --source-dir ./leanback-for-dropout` → `web-ext-artifacts/*.zip`.
-6. Submit on [addons.mozilla.org](https://addons.mozilla.org/developers/) as
-   **unlisted** (self-distributed). The signed `.xpi` is what a
-   `policies.json` installs and what users can install permanently.
-7. Before the **first** submission, check the add-on name against Mozilla's
-   current add-on policies on trademarks. "Leanback for Dropout" is the
-   "X for <brand>" form the policies most clearly allow; confirm it before
-   the name is locked, because the extension ID cannot change after the
-   first release. The listing and the README say it is unofficial and not
-   affiliated with Dropout.
+5. Publish a GitHub release tagged `v<version>` (the manifest's `version`)
+   from `main`. The **Sign release** workflow
+   (`.github/workflows/release.yml`) submits it to
+   [addons.mozilla.org](https://addons.mozilla.org/developers/) as
+   **unlisted** (self-distributed) with the repository secrets
+   `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`, and attaches the signed
+   `leanback-for-dropout.xpi` to the release. That file is what a
+   `policies.json` installs and what users can install permanently;
+   `releases/latest/download/leanback-for-dropout.xpi` is always the newest.
+   A pre-release is skipped by that link.
+6. The README says the extension is unofficial and not affiliated with
+   Dropout.
