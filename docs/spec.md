@@ -631,15 +631,65 @@ of episodes one further down is not considered until more are loaded.
 
 ## Milestones
 
-0.37.0 is the accessibility options. The theming milestones (0.39.0–0.41.0,
-and import and export in 1.0) are described in full, with the lessons they
-rest on, in [theming.md](./theming.md#milestones).
+0.37.0 is sign-in robustness, ease and the in-UI keyboard. 0.38.0 is the
+accessibility options. The theming milestones (0.39.0–0.41.0, and import and
+export in 1.0) are described in full, with the lessons they rest on, in
+[theming.md](./theming.md#milestones).
 
-### 0.37.0 — accessibility options
+### 0.37.0 — sign-in robustness, ease and the in-UI keyboard
 
-The owner's list, as given. Where Leanback already has something close, it
-is said beside the item: the milestone builds on it, and what exactly
-changes is settled when the work starts.
+Signing in on a TV is hard because of the typing. 0.37.0 takes the typing
+away where it can (a saved password fills the boxes) and makes it easier
+where it can't (a keyboard on the screen, or the phone). Throughout,
+Leanback passes the password to Dropout's own form on the page and never
+keeps, logs or sends it, and it asks for no new permission.
+
+- **Leanback-drawn sign-in screen**, one screen with an *Email* and a
+  *Password* box, *Sign in*, *Forgot password?* and the policies. *Sign in*
+  goes through Dropout's own form, so its checks and its invisible
+  reCAPTCHA work unchanged. Dropout's error messages are shown on
+  Leanback's screen.
+- **Filled by a saved password.** The boxes are ordinary sign-in boxes, so
+  Firefox's own saved passwords (synced through a Mozilla account) and any
+  password app's add-on can fill them. When they are filled, the selection
+  moves to *Sign in* and one press of OK signs in. No code for any one
+  password app.
+- **Leanback-drawn password reset screen**: the email (carried over from
+  sign-in), *Send reset email*, and what to do next in plain words.
+- **An on-screen keyboard** of Leanback's own. **OK on a text box opens
+  it**, and a real keyboard or a phone keyboard app still types without it.
+  It works on sign-in (with `@` and `.com` keys on the email box and
+  *Show* / *Hide* on the password), the password reset, search, a
+  profile's name and, if Leanback can reach it, a profile's PIN (digits
+  first).
+- **Back to where you were** after signing in, through Dropout's
+  `return_to`.
+- **"Dropout signed you out."** When this TV was signed in and a page loads
+  signed out, Leanback says so and offers *Sign in*, rather than leaving a
+  Home whose videos won't play.
+- **When something goes wrong**: Dropout not answering (a message, never a
+  spinner left turning), Google's "are you a person" puzzle (Leanback steps
+  back and says to use the pointer), and an account with no active
+  subscription (renew on a phone or computer).
+- **One My List button**: *+ My List* when not in the list and *✓ My List*
+  when it is, on Home's banner, a show's page and an episode's page alike.
+- **Typing with a phone, and saved passwords**: a setup section in
+  [targets.md](./targets.md).
+- **A list of the things that don't match** across Leanback's screens, for
+  the 0.39.0 theming foundations to fix.
+
+Not in 0.37.0: a phone sign-in page reached by a QR code. A browser add-on
+can't run a server, so it needs a small helper program installed on the TV
+computer, and it is left for later. Dropout's own TV code
+(`dropout.tv/activate`) works only for Dropout's official apps, and its
+emailed sign-in link signs in whichever device opens it, so neither helps
+here.
+
+### 0.38.0 — accessibility options
+
+Where Leanback already has something close, it is said beside the item: the
+milestone builds on it, and what exactly changes is settled when the work
+starts.
 
 - **Colour-blind-safe colours.** May be done here or in the theming
   releases below. The player's *Color Filter (Experimental)* already
@@ -655,7 +705,6 @@ changes is settled when the work starts.
   milestone takes it further.
 - **Adjustable hold and repeat timing** for the remote's buttons (today an
   arrow held down moves at most once every 80 ms).
-- **An on-screen keyboard** of Leanback's own, for typing with the remote.
 
 ### 0.39.0 — theming foundations, in the refactor
 
