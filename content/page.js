@@ -2,14 +2,16 @@
 // Leanback for Dropout — page script, top frame of watch.dropout.tv.
 // Classifies the URL into a page kind (sites/dropout.json → routes), then
 // wires keys → actions → spatial navigation, the focus ring, the hint bar,
-// load-more, dialogs, the two-step <select>, Leanback's settings panel, the
-// page's messages and its life cycle. Three parts of it are files of their
-// own, installed into one shared context (P) before it starts:
-// content/page-back.js (Back and every navigation), content/page-video.js
-// (an episode's details page, the video playing and the player relay; the
-// player is a cross-origin iframe, see content/player.js),
-// content/page-screens.js (Leanback's screens and the rail) and
-// content/page-live.js (Dropout 24/7 played on its own page).
+// load-more, dialogs, the two-step <select>, the page's messages and its
+// life cycle. Its other parts are files of their own, installed into one
+// shared context (P) before it starts: content/page-back.js (Back and every
+// navigation), content/page-video.js (an episode's details page, the video
+// playing and the player relay; the player is a cross-origin iframe, see
+// content/player.js), content/page-screens.js (Leanback's screens and the
+// rail), content/page-profiles.js (the profiles), content/page-live.js
+// (Dropout 24/7 played on its own page), content/page-look.js (the theme
+// and Theme This Page), content/page-forms.js (Dropout's own pages laid out
+// for the TV) and content/page-settings.js (Leanback's settings panel).
 // Idempotent: html[data-tenfoot] marks a document that is already wired.
 
 (function () {
@@ -26,10 +28,7 @@
   const ARROW_SCOPE_DEPTH = 3;
   const MENU_REFOCUS_LIMIT = 4;
   const SCREEN_REFOCUS_LIMIT = 4;
-  const LOOK_SLIDE_MS = 320; // Theme This Page: what moves slides this long
   const NOTICE_MS = 3000;
-  const SIGNIN_OFFERED = "tenfoot.signin-offered";
-  const READ_STEP = 0.6; // ▲ ▼ on a policy: this share of the window's height
 
   if (window.top !== window) return;
   const root = document.documentElement;
@@ -43,7 +42,6 @@
   const Spatial = globalThis.TenfootSpatial;
   const Ring = globalThis.TenfootFocusRing;
   const Panel = globalThis.TenfootPanel;
-  const SettingsMenu = globalThis.TenfootSettingsMenu;
   const Ask = globalThis.TenfootAsk;
   const Themes = globalThis.TenfootThemes;
   const History = globalThis.TenfootHistory;
@@ -119,10 +117,10 @@
   // functions the others call, then each part installs its own.
   const P = { state };
   Object.assign(P, {
-    send, dispatch, showHints, notice, askUser, pickPicture, pageLook, click, firstVisible, collect, currentEl, focusEl,
-    goBack, samePath, openMenu, openSettings, leaveFieldBelow, refocusPage
+    send, dispatch, showHints, notice, askUser, pickPicture, click, firstVisible, collect, currentEl, focusEl,
+    goBack, samePath, leaveFieldBelow, refocusPage, reducedMotion
   });
-  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageLive]) part.install(P);
+  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageProfiles, globalThis.TenfootPageLive, globalThis.TenfootPageLook, globalThis.TenfootPageForms, globalThis.TenfootPageSettings]) part.install(P);
   // From page-back.js.
   const goSideways = (...a) => P.goSideways(...a);
   const goTop = (...a) => P.goTop(...a);
@@ -165,6 +163,20 @@
   const openSeason = (...a) => P.openSeason(...a);
   const setPending = (...a) => P.setPending(...a);
   const inScreen = (...a) => P.inScreen(...a);
+  // From page-look.js.
+  const ringStyle = (...a) => P.ringStyle(...a);
+  const applyLook = (...a) => P.applyLook(...a);
+  // From page-forms.js.
+  const stampChrome = (...a) => P.stampChrome(...a);
+  const syncForm = (...a) => P.syncForm(...a);
+  const redirectPage = (...a) => P.redirectPage(...a);
+  const offerWelcome = (...a) => P.offerWelcome(...a);
+  const scrollReading = (...a) => P.scrollReading(...a);
+  // From page-settings.js.
+  const openMenu = (...a) => P.openMenu(...a);
+  const dispatchInMenu = (...a) => P.dispatchInMenu(...a);
+  const createSettingsMenu = (...a) => P.createSettingsMenu(...a);
+  const onPanelPick = (...a) => P.onPanelPick(...a);
   // From page-live.js.
   const isLiveLink = (...a) => P.isLiveLink(...a);
   const playInPlace = (...a) => P.playInPlace(...a);
@@ -216,153 +228,6 @@
   function rowOf(el) {
     const sel = Rules.selector(state.page.rows);
     return sel && el && el.closest ? el.closest(sel) : null;
-  }
-
-  function ringStyle() {
-    const s = lookSettings();
-    const look = Themes.lookOf(s, new Date(), window);
-    return { color: look.accent, width: s.highContrast ? Math.max(6, s.ringWidth) : s.ringWidth, zoom: s.focusZoom };
-  }
-
-  // ---------------------------------------------------------------------------
-  // the look: the theme, Theme Color, Holidays, Accessibility, Theme This Page
-  // ---------------------------------------------------------------------------
-
-  // The settings as they look now: a choice being tried in the settings
-  // panel wins over the saved one until it is picked or left.
-  function lookSettings() {
-    return state.preview ? Object.assign({}, state.settings, state.preview) : state.settings;
-  }
-
-  // Which of Theme This Page's kinds of look the page on screen is.
-  function lookKey() {
-    switch (screenKind()) {
-      case "home": return "home";
-      case "page":
-      case "search": return "lists";
-      case "detail": return "show";
-      case "episode": return "details";
-      default: return null;
-    }
-  }
-
-  function pageLook() {
-    const key = lookKey();
-    const all = lookSettings().pageLooks || {};
-    return (key && all[key]) || {};
-  }
-
-  function lookData() {
-    const d = root.dataset;
-    return [d.tenfootLookBanner, d.tenfootLookCards, d.tenfootLookPicture].join("|");
-  }
-
-  /**
-   * Write the look onto the page (lib/themes.js). When the page's own look
-   * changed (Theme This Page), its screen is drawn again, and with
-   * `animate` what moved slides from where it was to where it is now.
-   */
-  function applyLook(animate) {
-    Themes.apply(root, lookSettings(), new Date());
-    state.ring.setStyle(ringStyle());
-    const p = pageLook();
-    const before = lookData();
-    const write = () => {
-      for (const [k, v] of [["tenfootLookBanner", p.banner], ["tenfootLookCards", p.cards], ["tenfootLookPicture", p.picture]]) {
-        if (v) root.dataset[k] = v;
-        else delete root.dataset[k];
-      }
-    };
-    if (!state.screen || before === [p.banner, p.cards, p.picture].map((v) => v || "").join("|")) {
-      write();
-      return;
-    }
-    const change = () => {
-      write();
-      refreshScreen();
-    };
-    if (animate) slideLayout(change);
-    else change();
-  }
-
-  // What moves on a screen when its look changes, each sliding (and growing
-  // or shrinking) from its old box to its new one.
-  function slideLayout(change) {
-    const layer = state.screen && state.screen.element;
-    if (!layer || reducedMotion()) {
-      change();
-      return;
-    }
-    const els = Array.from(layer.querySelectorAll(".tenfoot-card, .tenfoot-hero, .tenfoot-hero-body, .tenfoot-screen-picture, .tenfoot-screen-head, .tenfoot-row-title"));
-    const first = new Map(els.map((el) => [el, el.getBoundingClientRect()]));
-    change();
-    for (const [el, a] of first) {
-      if (!el.isConnected || typeof el.animate !== "function") continue;
-      const b = el.getBoundingClientRect();
-      if (!a.width || !a.height || !b.width || !b.height) continue;
-      const dx = a.left - b.left;
-      const dy = a.top - b.top;
-      const sx = a.width / b.width;
-      const sy = a.height / b.height;
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) continue;
-      el.animate([
-        { transformOrigin: "0 0", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
-        { transformOrigin: "0 0", transform: "none" }
-      ], { duration: LOOK_SLIDE_MS, easing: "cubic-bezier(0.2, 0, 0, 1)" });
-    }
-    setTimeout(() => state.ring.refresh(), LOOK_SLIDE_MS + 20);
-  }
-
-  // Cookie Preferences (Leanback's settings): the cookie settings again,
-  // once they have been answered — by asking the page's Ketch for them, as
-  // Dropout's own "Data Preferences" link does; else by pressing Dropout's
-  // "Manage Cookie Preferences" (in its footer, hidden while Leanback is
-  // on). Null when the page has neither.
-  function cookiePreferences() {
-    const r = (state.rules.common || {}).cookiePreferences || {};
-    let page = null;
-    try {
-      page = window.wrappedJSObject || null;
-    } catch (_err) {
-      page = null;
-    }
-    const ketch = page && r.call && typeof page.ketch === "function" ? page.ketch : null;
-    const link = ketch ? null : cookieLink();
-    if (!ketch && !link) return null;
-    return () => {
-      closeMenu();
-      if (ketch) {
-        try {
-          // The options (which window) are the page's, so made in its world.
-          if (r.hint) ketch(r.call, cloneInto({ displayHint: r.hint }, window));
-          else ketch(r.call);
-          return;
-        } catch (err) {
-          console.warn(LOG, "cookie preferences did not open:", err && err.message);
-        }
-      }
-      const l = link || cookieLink();
-      if (l) l.click();
-    };
-  }
-
-  function cookieLink() {
-    const r = (state.rules.common || {}).cookiePreferences || {};
-    const bySel = Rules.selectorList(r.selector).map((sel) => qs(sel)).find(Boolean);
-    if (bySel) return bySel;
-    let re = null;
-    try {
-      re = r.text ? new RegExp(r.text, "i") : null;
-    } catch (_err) {
-      return null;
-    }
-    return re ? qsa("footer a, footer button, a, button").find((el) => re.test((el.textContent || "").trim())) || null : null;
-  }
-
-  // A look tried in the settings panel (moving through its values), or none.
-  function previewLook(patch) {
-    state.preview = patch || null;
-    applyLook(true);
   }
 
   // Leanback's own elements: the Home screen, the rail, the options panel.
@@ -546,127 +411,6 @@
       scope = scope.parentElement;
     }
     return null;
-  }
-
-  // Dropout's own top bar and footer (rules: common.chrome) are hidden on every
-  // page but account and help (`other`), which keep them.
-  function stampChrome() {
-    const want = state.enabled && state.kind !== "other";
-    for (const sel of Rules.selectorList(state.rules.common && state.rules.common.chrome)) {
-      for (const el of qsa(sel)) {
-        if (want) el.setAttribute("data-tenfoot-chrome", "");
-        else el.removeAttribute("data-tenfoot-chrome");
-      }
-    }
-  }
-
-  // A page of Dropout's laid out for the TV (content/page.css): a form — the
-  // sign-in steps and the password reset (signin), Edit Profile
-  // (profileEdit) — its box (pages.<kind>.box) centred, drawn large and in
-  // Leanback's colours ([data-tenfoot-form]); or a policy, its words
-  // (pages.legal.content) in Leanback's type ([data-tenfoot-reading]).
-  // What has no use on a TV (pages.<kind>.hide) goes. Under the sign-in
-  // box, a line on typing and the policies. When Dropout reveals the next
-  // step (the password, after the email's Next), the selection goes to it,
-  // once.
-  function syncForm() {
-    if (state.kind !== "signin" && state.kind !== "profileEdit" && state.kind !== "legal") return;
-    for (const el of qsa(Rules.selector(state.page.hide))) {
-      if (!el.hasAttribute("data-tenfoot-gone")) el.setAttribute("data-tenfoot-gone", "");
-    }
-    if (state.kind === "legal") {
-      for (const el of qsa(Rules.selector(state.page.content))) {
-        if (!el.hasAttribute("data-tenfoot-reading")) el.setAttribute("data-tenfoot-reading", "");
-      }
-      return;
-    }
-    const box = qs(state.page.box);
-    if (!box) return;
-    if (!box.hasAttribute("data-tenfoot-form")) box.setAttribute("data-tenfoot-form", state.kind);
-    if (state.kind === "signin" && (!state.formFoot || !state.formFoot.isConnected)) {
-      state.formFoot = formFoot();
-      box.appendChild(state.formFoot);
-    }
-    const next = firstVisible(Rules.selector(state.page.nextStep));
-    if (next && state.signinStep !== next) {
-      state.signinStep = next;
-      focusEl(next);
-    }
-  }
-
-  // The line under the sign-in box: typing needs a keyboard; then the
-  // privacy policy and terms (rules → legal), links the ring reaches.
-  function formFoot() {
-    const foot = document.createElement("div");
-    foot.className = "tenfoot-form-foot";
-    const note = document.createElement("p");
-    note.textContent = "Typing needs a keyboard, or a keyboard app on your phone.";
-    const links = document.createElement("p");
-    for (const l of legalLinks()) {
-      const a = document.createElement("a");
-      a.href = l.url;
-      a.textContent = l.label;
-      links.appendChild(a);
-    }
-    foot.append(note, links);
-    return foot;
-  }
-
-  function legalLinks() {
-    const list = Array.isArray(state.rules.legal) ? state.rules.legal : [];
-    return list.filter((l) => l && typeof l.url === "string" && typeof l.label === "string");
-  }
-
-  function signedOut() {
-    return Boolean(qs(state.rules.common && state.rules.common.signedOut));
-  }
-
-  // An address that is better seen as another (rules → redirects: Dropout
-  // 24/7's stream reached from My List, at an address no hub is in, goes to
-  // Dropout 24/7's page), and the welcome signed in, which is Home's.
-  function redirectPage() {
-    const list = Array.isArray(state.rules.redirects) ? state.rules.redirects : [];
-    for (const r of list) {
-      if (!r || typeof r.path !== "string" || typeof r.to !== "string") continue;
-      try {
-        if (!new RegExp(r.path).test(location.pathname)) continue;
-      } catch (_err) {
-        continue;
-      }
-      P.navigate(r.to, "replace");
-      return true;
-    }
-    if (state.kind === "welcome" && !signedOut() && state.rules.browseUrl) {
-      P.navigate(state.rules.browseUrl, "replace");
-      return true;
-    }
-    return false;
-  }
-
-  // Signed out, the first Home of the tab goes on to the welcome (Sign In,
-  // Browse, the policies), so a TV left signed out is not left on a Home
-  // whose videos will not play. Once per tab: Back from there, or its
-  // Browse, comes back to Home and stays.
-  function offerWelcome() {
-    const to = state.rules.welcomeUrl || state.rules.signinUrl;
-    if (state.kind !== "browse" || !to || !signedOut()) return false;
-    try {
-      if (sessionStorage.getItem(SIGNIN_OFFERED)) return false;
-      sessionStorage.setItem(SIGNIN_OFFERED, "1");
-    } catch (_err) {
-      return false; // no way to remember it: never risk sending Back round in a loop
-    }
-    P.navigate(to, "push");
-    return true;
-  }
-
-  // A policy (privacy, terms, cookies): Dropout's words in Leanback's type
-  // and colours (content/page.css), read by scrolling. ▲ ▼ scroll by most
-  // of a screen; nothing on it is a stop.
-  function scrollReading(dir) {
-    if (dir !== "up" && dir !== "down") return true;
-    window.scrollBy({ top: (dir === "down" ? 1 : -1) * window.innerHeight * READ_STEP, behavior: reducedMotion() ? "auto" : "smooth" });
-    return true;
   }
 
 
@@ -997,95 +741,6 @@
       }
     }
     return stepBack();
-  }
-
-  // -- Leanback's settings, in the panel (nav/panel.js) ------------------------
-  //
-  // The menu is nav/settings-menu.js, the same as in the playback panel;
-  // this page draws it, hands it the keys, and closes the panel when ◀ or
-  // Back leave its top. A clear is confirmed with a notice.
-
-  function renderSettings() {
-    if (state.menu.isOpen) state.menu.render(state.settingsMenu.view());
-  }
-
-  function openSettings() {
-    state.settingsMenu.open();
-    // Open, then draw: drawing moves the focus into the panel, and a panel
-    // that is not open yet would let the rail think the selection left it.
-    state.menu.open();
-    renderSettings();
-    showHints();
-    return true;
-  }
-
-  function openMenu() {
-    if (state.menu.isOpen) return closeMenu();
-    // While a video plays the options button belongs to the player's
-    // settings panel, which holds its settings and Leanback's together.
-    // Everywhere else — an episode's details page too — and when the player
-    // does not answer, it opens Leanback's settings here. Remember where the
-    // ring was, so closing whatever opens puts it back.
-    state.menuReturn = state.playerFocused ? null : currentEl();
-    if (state.inPlace || (state.kind === "video" && state.watch === "playing" && qs(state.page.playerFrame))) {
-      send({ type: "player:settings" }).then((r) => {
-        if (!r || !r.ok) openSettings();
-      });
-      return true;
-    }
-    return openSettings();
-  }
-
-  function closeMenu() {
-    if (!state.menu.close()) return false;
-    state.settingsMenu.close();
-    if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
-    else if (state.playerFocused || state.theater) enterPlayer();
-    else if (state.screen) {
-      // What it was on went with a change of look (Home's banner, off).
-      const t = state.screen.current || state.screen.initialTarget();
-      if (t) focusEl(t, { scroll: false });
-    }
-    state.menuReturn = null;
-    showHints();
-    return true;
-  }
-
-  function dispatchInMenu(action) {
-    if (action === "menu") return closeMenu();
-    const r = state.settingsMenu.key(action);
-    if (r === "out") return closeMenu();
-    if (r) renderSettings();
-    return Boolean(r);
-  }
-
-  function saveSetting(patch) {
-    if (Object.keys(patch).every((k) => state.settings[k] === patch[k])) return;
-    state.settings = Object.assign({}, state.settings, patch);
-    send({ type: "settings:set", patch });
-  }
-
-  function createSettingsMenu() {
-    return SettingsMenu.create({
-      settings: () => state.settings,
-      save: saveSetting,
-      pageLook: () => {
-        const key = lookKey();
-        return key ? { key, title: Settings.PAGE_LOOKS[key].title } : null;
-      },
-      preview: previewLook,
-      cookies: () => cookiePreferences(),
-      onClear: () => {
-        send({ type: "history:clear" });
-        notice("Continue Watching cleared");
-      }
-    });
-  }
-
-  // A click on an entry (a mouse): the same as moving there and pressing OK.
-  function onPanelPick(i) {
-    state.settingsMenu.pick(i);
-    renderSettings();
   }
 
   // ◀ with the text cursor at the start of a field: out of it, to whatever is

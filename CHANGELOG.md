@@ -6,7 +6,9 @@
 
 - Inside, not on screen: helpers that were copied between files (the
   icons, building elements, the reduced-motion check, the question box and
-  the picture box) are shared.
+  the picture box) are shared; the page script's look, Dropout's own pages,
+  Leanback's settings panel and the profiles are files of their own; and
+  the screens' readers are apart from the engine that draws them.
   Everything looks and behaves as in 0.36.0.
 
 ## [0.36.0] — 2026-11-01

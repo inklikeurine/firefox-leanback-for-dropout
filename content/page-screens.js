@@ -1,8 +1,9 @@
 // Leanback for Dropout — Leanback's screens and the rail, for content/page.js:
-// which screen a page gets (content/screen.js and its readers), starting,
+// which screen a page gets (content/screen.js, its models read by
+// content/readers.js, content/show.js and content/home.js), starting,
 // stopping and redrawing it, moves on it, the rail and its focus region, and
-// the season a show opens on. Installed into the page script's shared
-// context.
+// the season a show opens on (the profiles are content/page-profiles.js).
+// Installed into the page script's shared context.
 
 (function () {
   function install(P) {
@@ -17,6 +18,7 @@
     const Rail = globalThis.TenfootRail;
     const Home = globalThis.TenfootHome;
     const Screen = globalThis.TenfootScreen;
+    const Readers = globalThis.TenfootReaders;
     const Show = globalThis.TenfootShow;
     const { qs } = globalThis.TenfootCommon;
 
@@ -36,11 +38,14 @@
     const startWatching = (...a) => P.startWatching(...a);
     const clearProgress = (...a) => P.clearProgress(...a);
     const isLive = (...a) => P.isLive(...a);
-    const refocusPage = (...a) => P.refocusPage(...a);
-    const askUser = (...a) => P.askUser(...a);
-    const pickPicture = (...a) => P.pickPicture(...a);
-    const notice = (...a) => P.notice(...a);
     const pageLook = (...a) => P.pageLook(...a);
+    const formRules = (...a) => P.formRules(...a);
+    const pickerForm = (...a) => P.pickerForm(...a);
+    const editPicture = (...a) => P.editPicture(...a);
+    const cancelProfile = (...a) => P.cancelProfile(...a);
+    const deleteProfile = (...a) => P.deleteProfile(...a);
+    const syncPicker = (...a) => P.syncPicker(...a);
+    const signOut = (...a) => P.signOut(...a);
     // Theme This Page's Card Size: how many cards across a grid.
     const GRID_COLUMNS = { small: 6, medium: 5, large: 4 };
 
@@ -101,16 +106,16 @@
       } else {
         const readers = {
           detail: () => Show.readDetail(document, state.page.show, { history: state.history, href: location.href, smartOrder: state.settings.seasonStart !== "first" }),
-          search: () => Screen.searchModel(document, screenRules().search),
-          episode: () => Screen.episodeModel(document, screenRules().episode, { history: state.history, href: location.href, live: isLive() }),
-          page: () => Screen.collectionModel(document, screenRules(), {
+          search: () => Readers.searchModel(document, screenRules().search),
+          episode: () => Readers.episodeModel(document, screenRules().episode, { history: state.history, href: location.href, live: isLive() }),
+          page: () => Readers.collectionModel(document, screenRules(), {
             empty: railPage() === "my-list" ? "Nothing in My List yet. Add a show or a video to it with Add to My List on its page." : ""
           }),
           // The picker, or its Add Profile form.
-          profiles: () => Screen.profilesModel(document, screenRules().profiles, { current: state.profile, signOut, editPicture }) ||
-            Screen.profileFormModel(document, formRules().add),
-          profileForm: () => Screen.profileFormModel(document, formRules().edit),
-          welcome: () => Screen.welcomeModel(document, screenRules().welcome, {
+          profiles: () => Readers.profilesModel(document, screenRules().profiles, { current: state.profile, signOut, editPicture }) ||
+            Readers.profileFormModel(document, formRules().add),
+          profileForm: () => Readers.profileFormModel(document, formRules().edit),
+          welcome: () => Readers.welcomeModel(document, screenRules().welcome, {
             signinUrl: state.rules.signinUrl,
             browseUrl: state.rules.browseUrl,
             legal: Array.isArray(state.rules.legal) ? state.rules.legal : []
@@ -158,190 +163,6 @@
       state.screen = null;
       delete root.dataset.tenfootHome;
       setPending(false);
-    }
-
-    // The picker shows a form of its own in place of its profiles: Add
-    // Profile (a name and a picture), or a profile's PIN. Those are Dropout's,
-    // driven as they are (rules → pages.profiles); while it is only loading,
-    // nothing to press yet, the screen waits on.
-    function formRules() {
-      return screenRules().profileForm || {};
-    }
-
-    // The picker showing a form Leanback does not draw (a PIN): Dropout's
-    // own, driven as it is.
-    function pickerForm() {
-      const R = screenRules().profiles || {};
-      const app = qs(R.root);
-      if (!app || !qs("input, button", app)) return false;
-      return !Screen || (!Screen.profilesModel(document, R, { current: state.profile }) && !Screen.profileFormModel(document, formRules().add));
-    }
-
-    // Dropout's profile API, as its own pages call it: its address from the
-    // page (VHX.config.api_v2_url), the page's sign-in token (TOKEN), the
-    // site's and the account's ids, and the page's own fetch, so the call
-    // is the page's. Null on a page without them.
-    function profileApi() {
-      let page = null;
-      try {
-        page = window.wrappedJSObject || window;
-        const base = page.VHX && page.VHX.config ? page.VHX.config.api_v2_url : "";
-        const token = page.TOKEN;
-        const site = page._current_site ? page._current_site.id : null;
-        const user = page._current_user ? page._current_user.id : null;
-        if (!base || typeof token !== "string" || !token || site == null || user == null) return null;
-        const call = async (path, method, body) => {
-          const init = { method: method || "GET", headers: { Authorization: `Bearer ${token}` } };
-          if (body !== undefined) {
-            init.headers["Content-Type"] = "application/json";
-            init.body = JSON.stringify(body);
-          }
-          const url = String(base) + path.replace("{site}", String(site)).replace("{user}", String(user));
-          const res = await page.fetch(url, page !== window && typeof cloneInto === "function" ? cloneInto(init, window) : init);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const text = String(await res.text());
-          return text ? JSON.parse(text) : null;
-        };
-        return { call };
-      } catch (_err) {
-        return null;
-      }
-    }
-
-    // Manage profiles, OK on a profile's picture: its pictures in a box of
-    // Leanback's, the one it has now selected. OK on another saves it (as
-    // Dropout's Edit Profile does) and Manage profiles is drawn again with
-    // it; Back changes nothing. Without Dropout's API on the page, Dropout's
-    // own button for the profile (Edit Profile).
-    async function editPicture(button, position) {
-      const R = (state.rules && state.rules.profileApi) || {};
-      const api = profileApi();
-      if (!api || !R.profiles || !R.pictures || !R.update) {
-        if (button && button.isConnected) button.click();
-        return;
-      }
-      let profiles = [];
-      let pictures = [];
-      try {
-        const [p, q] = await Promise.all([api.call(R.profiles), api.call(R.pictures)]);
-        profiles = (p && Array.isArray(p.profiles) ? p.profiles : []).slice().sort((a, b) => a.index - b.index);
-        pictures = (q && Array.isArray(q.profile_pictures) ? q.profile_pictures : []).slice().sort((a, b) => a.position - b.position);
-      } catch (err) {
-        console.warn("[leanback-for-dropout] the profile pictures could not be read:", err && err.message);
-      }
-      const profile = profiles[position];
-      if (!profile || !pictures.length) {
-        notice("The pictures could not be loaded");
-        return;
-      }
-      const item = (pic, i) => ({ id: String(pic.id), image: String(pic.image_url || ""), label: `Picture ${i + 1}` });
-      const current = pictures.find((pic) => pic.id === profile.profile_image_id || (pic.image_url && pic.image_url === profile.profile_image_url));
-      const classics = pictures.filter((pic) => pic.site_id == null);
-      const own = pictures.filter((pic) => pic.site_id != null);
-      const chosen = await pickPicture({
-        title: `Picture for ${profile.name}`,
-        start: current ? String(current.id) : null,
-        sections: [
-          { label: "The classics", items: classics.map(item) },
-          { label: R.siteLabel || "Dropout", items: own.map((pic, i) => item(pic, classics.length + i)) }
-        ]
-      });
-      if (!chosen || (current && chosen === String(current.id))) return;
-      const pick = pictures.find((pic) => String(pic.id) === chosen);
-      try {
-        await api.call(R.update.replace("{index}", String(profile.index)), "PATCH", { profile: { name: profile.name, profile_image_id: pick ? pick.id : chosen } });
-      } catch (err) {
-        console.warn("[leanback-for-dropout] the picture could not be saved:", err && err.message);
-        notice("The picture could not be saved");
-        return;
-      }
-      // Dropout's picker draws its profiles once: drawn again, managing.
-      if (R.after) goSideways(R.after);
-    }
-
-    // Cancel on Edit Profile. With changes not saved (Dropout's Save lit),
-    // asked first in Leanback's box, Keep Editing selected; Firefox's own
-    // "leave this page?" never comes up there (page.js onBeforeUnload).
-    function cancelProfile() {
-      const R = formRules().edit || {};
-      const root = qs(R.root);
-      if (!root) return;
-      const rule = (k) => (R.buttons || []).find((b) => b.key === k);
-      const cancel = findButton(root, rule("cancel") && rule("cancel").text);
-      const save = findButton(root, rule("save") && rule("save").text);
-      if (!cancel) return;
-      if (!save || save.disabled || save.getAttribute("aria-disabled") === "true") {
-        cancel.click();
-        return;
-      }
-      askUser({
-        title: "Leave without saving?",
-        text: "The changes to this profile will not be kept.",
-        buttons: [{ id: "stay", label: "Keep Editing" }, { id: "leave", label: "Leave" }],
-        start: "stay"
-      }).then((answer) => {
-        if (answer === "leave" && cancel.isConnected) cancel.click();
-      });
-    }
-
-    // Delete Profile, on Edit Profile: asked first, Cancel selected; then
-    // Dropout's own Delete Profile, and the Delete in the box Dropout opens
-    // to ask again (or its window.confirm, answered yes for this one press).
-    function deleteProfile() {
-      const R = formRules().edit || {};
-      const root = qs(R.root);
-      const input = root ? qs(R.name, root) : null;
-      const name = input ? String(input.value || "").trim() : "";
-      askUser({
-        title: name ? `Delete ${name}?` : "Delete this profile?",
-        text: "The profile goes for good, with its My List and what it has watched.",
-        buttons: [{ id: "cancel", label: "Cancel" }, { id: "delete", label: "Delete Profile", danger: true }],
-        start: "cancel"
-      }).then((answer) => {
-        if (answer !== "delete" || !root) return;
-        const rule = (R.buttons || []).find((b) => b.key === "delete");
-        const button = findButton(root, rule && rule.text);
-        if (!button) return;
-        const page = window.wrappedJSObject;
-        const own = page ? page.confirm : null;
-        try {
-          if (page) page.confirm = exportFunction(() => true, window);
-          button.click();
-        } finally {
-          if (page) setTimeout(() => { page.confirm = own; }, 0);
-        }
-        confirmInDialog(R, Date.now() + 3000);
-      });
-    }
-
-    function findButton(scope, pattern) {
-      let re = null;
-      try {
-        re = new RegExp(pattern || "^$", "i");
-      } catch (_err) {
-        return null;
-      }
-      return Array.from(scope.querySelectorAll("button")).find((b) => re.test((b.textContent || "").trim()) && !b.disabled) || null;
-    }
-
-    // Dropout's own "Delete profile" box: its Delete, once it is there.
-    function confirmInDialog(R, until) {
-      const dialog = Array.from(document.querySelectorAll(R.dialog || "[role='dialog']")).find((d) => findButton(d, R.confirm));
-      if (dialog) {
-        findButton(dialog, R.confirm).click();
-        return;
-      }
-      if (Date.now() < until && !state.leaving) setTimeout(() => confirmInDialog(R, until), 100);
-    }
-
-    function syncPicker() {
-      const form = pickerForm();
-      if (form && state.screen) {
-        stopScreen();
-        refocusPage();
-      } else if (!form && !state.screen) {
-        startScreen();
-      }
     }
 
     function refreshScreen() {
@@ -556,33 +377,6 @@
       }
       const t = state.screen ? state.screen.initialTarget() : null;
       if (t) focusEl(t, { scroll: false });
-    }
-
-    // Sign Out (the profile picker): asked first, Cancel selected; then
-    // Dropout's own sign-out, a form sent with the page's token, as its
-    // Log out button does.
-    function signOut() {
-      const r = state.rules.signout || {};
-      askUser({
-        title: "Sign out of Dropout?",
-        text: "Signing in again needs your email and password.",
-        buttons: [{ id: "cancel", label: "Cancel" }, { id: "signout", label: "Sign Out", primary: true }],
-        start: "cancel"
-      }).then((answer) => {
-        if (answer !== "signout" || !r.url) return;
-        const meta = qs(r.token);
-        const form = document.createElement("form");
-        form.method = "post";
-        form.action = r.url;
-        form.hidden = true;
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "authenticity_token";
-        input.value = meta ? meta.getAttribute("content") || "" : "";
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-      });
     }
 
     // A screen Leanback is still building keeps Dropout's page hidden under it

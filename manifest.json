@@ -57,11 +57,16 @@
         "content/cards.js",
         "content/home.js",
         "content/screen.js",
+      "content/readers.js",
         "content/show.js",
         "content/page-back.js",
         "content/page-video.js",
         "content/page-screens.js",
+      "content/page-profiles.js",
         "content/page-live.js",
+      "content/page-look.js",
+      "content/page-forms.js",
+      "content/page-settings.js",
         "content/page.js"
       ],
       "css": [

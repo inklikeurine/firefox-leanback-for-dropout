@@ -1,0 +1,146 @@
+// Leanback for Dropout — Dropout's own pages laid out for the TV, for
+// content/page.js: the site's header and footer marked while Leanback is
+// on, the sign-in steps, the password reset and Edit Profile drawn large,
+// the policies read by scrolling, the welcome offered once signed out, and
+// the addresses better seen as another (redirects). Installed into the page
+// script's shared context.
+
+(function () {
+  function install(P) {
+    const { state } = P;
+    const SIGNIN_OFFERED = "tenfoot.signin-offered";
+    const READ_STEP = 0.6; // ▲ ▼ on a policy: this share of the window's height
+    const Rules = globalThis.TenfootSiteRules;
+    const { qs, qsa } = globalThis.TenfootCommon;
+
+    // From the rest of the page script.
+    const firstVisible = (...a) => P.firstVisible(...a);
+    const focusEl = (...a) => P.focusEl(...a);
+    const reducedMotion = (...a) => P.reducedMotion(...a);
+
+    // Dropout's own top bar and footer (rules: common.chrome) are hidden on every
+    // page but account and help (`other`), which keep them.
+    function stampChrome() {
+      const want = state.enabled && state.kind !== "other";
+      for (const sel of Rules.selectorList(state.rules.common && state.rules.common.chrome)) {
+        for (const el of qsa(sel)) {
+          if (want) el.setAttribute("data-tenfoot-chrome", "");
+          else el.removeAttribute("data-tenfoot-chrome");
+        }
+      }
+    }
+
+    // A page of Dropout's laid out for the TV (content/page.css): a form — the
+    // sign-in steps and the password reset (signin), Edit Profile
+    // (profileEdit) — its box (pages.<kind>.box) centred, drawn large and in
+    // Leanback's colours ([data-tenfoot-form]); or a policy, its words
+    // (pages.legal.content) in Leanback's type ([data-tenfoot-reading]).
+    // What has no use on a TV (pages.<kind>.hide) goes. Under the sign-in
+    // box, a line on typing and the policies. When Dropout reveals the next
+    // step (the password, after the email's Next), the selection goes to it,
+    // once.
+    function syncForm() {
+      if (state.kind !== "signin" && state.kind !== "profileEdit" && state.kind !== "legal") return;
+      for (const el of qsa(Rules.selector(state.page.hide))) {
+        if (!el.hasAttribute("data-tenfoot-gone")) el.setAttribute("data-tenfoot-gone", "");
+      }
+      if (state.kind === "legal") {
+        for (const el of qsa(Rules.selector(state.page.content))) {
+          if (!el.hasAttribute("data-tenfoot-reading")) el.setAttribute("data-tenfoot-reading", "");
+        }
+        return;
+      }
+      const box = qs(state.page.box);
+      if (!box) return;
+      if (!box.hasAttribute("data-tenfoot-form")) box.setAttribute("data-tenfoot-form", state.kind);
+      if (state.kind === "signin" && (!state.formFoot || !state.formFoot.isConnected)) {
+        state.formFoot = formFoot();
+        box.appendChild(state.formFoot);
+      }
+      const next = firstVisible(Rules.selector(state.page.nextStep));
+      if (next && state.signinStep !== next) {
+        state.signinStep = next;
+        focusEl(next);
+      }
+    }
+
+    // The line under the sign-in box: typing needs a keyboard; then the
+    // privacy policy and terms (rules → legal), links the ring reaches.
+    function formFoot() {
+      const foot = document.createElement("div");
+      foot.className = "tenfoot-form-foot";
+      const note = document.createElement("p");
+      note.textContent = "Typing needs a keyboard, or a keyboard app on your phone.";
+      const links = document.createElement("p");
+      for (const l of legalLinks()) {
+        const a = document.createElement("a");
+        a.href = l.url;
+        a.textContent = l.label;
+        links.appendChild(a);
+      }
+      foot.append(note, links);
+      return foot;
+    }
+
+    function legalLinks() {
+      const list = Array.isArray(state.rules.legal) ? state.rules.legal : [];
+      return list.filter((l) => l && typeof l.url === "string" && typeof l.label === "string");
+    }
+
+    function signedOut() {
+      return Boolean(qs(state.rules.common && state.rules.common.signedOut));
+    }
+
+    // An address that is better seen as another (rules → redirects: Dropout
+    // 24/7's stream reached from My List, at an address no hub is in, goes to
+    // Dropout 24/7's page), and the welcome signed in, which is Home's.
+    function redirectPage() {
+      const list = Array.isArray(state.rules.redirects) ? state.rules.redirects : [];
+      for (const r of list) {
+        if (!r || typeof r.path !== "string" || typeof r.to !== "string") continue;
+        try {
+          if (!new RegExp(r.path).test(location.pathname)) continue;
+        } catch (_err) {
+          continue;
+        }
+        P.navigate(r.to, "replace");
+        return true;
+      }
+      if (state.kind === "welcome" && !signedOut() && state.rules.browseUrl) {
+        P.navigate(state.rules.browseUrl, "replace");
+        return true;
+      }
+      return false;
+    }
+
+    // Signed out, the first Home of the tab goes on to the welcome (Sign In,
+    // Browse, the policies), so a TV left signed out is not left on a Home
+    // whose videos will not play. Once per tab: Back from there, or its
+    // Browse, comes back to Home and stays.
+    function offerWelcome() {
+      const to = state.rules.welcomeUrl || state.rules.signinUrl;
+      if (state.kind !== "browse" || !to || !signedOut()) return false;
+      try {
+        if (sessionStorage.getItem(SIGNIN_OFFERED)) return false;
+        sessionStorage.setItem(SIGNIN_OFFERED, "1");
+      } catch (_err) {
+        return false; // no way to remember it: never risk sending Back round in a loop
+      }
+      P.navigate(to, "push");
+      return true;
+    }
+
+    // A policy (privacy, terms, cookies): Dropout's words in Leanback's type
+    // and colours (content/page.css), read by scrolling. ▲ ▼ scroll by most
+    // of a screen; nothing on it is a stop.
+    function scrollReading(dir) {
+      if (dir !== "up" && dir !== "down") return true;
+      window.scrollBy({ top: (dir === "down" ? 1 : -1) * window.innerHeight * READ_STEP, behavior: reducedMotion() ? "auto" : "smooth" });
+      return true;
+    }
+
+    Object.assign(P, { stampChrome, syncForm, redirectPage, offerWelcome, scrollReading });
+  }
+
+  globalThis.TenfootPageForms = Object.freeze({ install });
+})();
