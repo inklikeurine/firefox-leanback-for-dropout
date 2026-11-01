@@ -631,6 +631,35 @@ of episodes one further down is not considered until more are loaded.
 
 ## Milestones
 
+The theming milestones (0.39.0–0.41.0, and import and export in 1.0) are
+described in full, with the lessons they rest on, in
+[theming.md](./theming.md#milestones).
+
+### 0.39.0 — theming foundations, in the refactor
+
+- **One list of named theme values** that every stylesheet uses — the
+  settings panel and the player frame included — with nothing written
+  directly; the four themes as data derived from a few seeds, with readable
+  text on the accent guaranteed; theme values set on Leanback's own layers.
+  Nothing looks different; every theme then reaches everything. See
+  [theming.md](./theming.md#039--the-foundations-in-the-refactor).
+
+### 0.40.0 — the theming engine
+
+- **Themes made of parts** (colours, type, shapes, decoration) as checked
+  data, one order of precedence (Accessibility always last), themes of the
+  viewer's own on the options page, holiday decorations as overlays (snow
+  for the winter holidays as a switch of its own), and *Theme This Page* on
+  every kind of signed-in page reachable from the interface, each with
+  *Reset This Page*. See
+  [theming.md](./theming.md#040--the-theming-engine).
+
+### 0.41.0 — themes that rearrange whole screens
+
+- **Layouts as modules**: a theme chooses, for each screen, one of the
+  layouts Leanback provides, and navigation follows the layout. See
+  [theming.md](./theming.md#041--themes-that-rearrange-whole-screens).
+
 ### 1.0
 
 - **Watch history syncs between devices that have Leanback.** Leanback's own
@@ -638,6 +667,9 @@ of episodes one further down is not considered until more are loaded.
   by every Firefox with Leanback installed; until then it stays in this
   Firefox. Syncing with Dropout's Roku and Android apps is not the goal. How
   the installs share it is decided when the work starts.
+- **Theme import and export**: a theme saved to a file and loaded from one,
+  as data checked against Leanback's lists. See
+  [theming.md](./theming.md#100).
 
 ## Release checklist
 
