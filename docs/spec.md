@@ -83,7 +83,7 @@ use ([targets.md](./targets.md)).
     *Show more* (and scrolls the page underneath if that does nothing). A row
     of 12 — the most Dropout draws — ends with a **View all** card.
   - **The banner** shows one slide at a time with Dropout's buttons (*Watch
-    now*, *Trailer*, *My list*); a **›** after *Watch now* steps to the next
+    now*, *Trailer*, *+ My List* / *✓ My List*); a **›** after *Watch now* steps to the next
     slide, round the end. The selection starts on its first button. If
     nothing can be read within 10 s, Dropout's page is driven instead.
 - **Continue Watching** is Home's first row: the videos in progress, from
@@ -278,8 +278,8 @@ use ([targets.md](./targets.md)).
     one Dropout's up-next named when it played here); else **Play S9 E1**, the
     first episode on screen. Leanback's history and Dropout's bars both count;
     progress from before *Clear Continue Watching* does not resume. Then
-    *Trailer*, where there is one, and *My List*, ticked while the show is on
-    the list.
+    *Trailer*, where there is one, and *My List*: *+ My List* when the show is
+    not on the list, *✓ My List* when it is.
   - **Seasons**: with more than one, a row of seasons, newest first, from
     Dropout's own season list; each says "Season N", the one on screen
     yellow. Its full name ("Season 1: All About …") and Dropout's episode
@@ -343,8 +343,8 @@ use ([targets.md](./targets.md)).
   "Season 2, Episode 1 · 28-Feb-2020", the synopsis (six lines), then one
   row of buttons: *Watch* (yellow), or *Resume* with *Start Over* beside it
   when the episode is in progress (the same reading the player resumes
-  from); *Add to My List* / *Remove from My List* (Dropout's own button,
-  pressed); *Episodes* (the season's page, else the show's); *Clear
+  from); *+ My List* / *✓ My List* (Dropout's own button, pressed; the
+  screen reader says *Add to My List* / *Remove from My List*); *Episodes* (the season's page, else the show's); *Clear
   Progress* when the history draws any progress for it, partway or watched
   (see *Clear Progress* under the watch history). On the right
   the episode's picture (`og:image`, else the history's), with the progress
@@ -562,7 +562,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 1 | Open `https://www.dropout.tv/` | Lands on `watch.dropout.tv/browse`, which shows Leanback's Home: the rail on the left, the featured banner, the ring on *Watch now* |
 | 2 | Home: Down, Right ×3, Down, Up | The ring goes into the first row and along it, the row sliding so the selected card keeps its place; each Down brings the next row to the same height, with nothing of the row above showing; Up returns to the card you left in that row. The selected card grows inside the ring, its title steps down, and neither touches the heading; the ring's corners follow the card's |
 | 3 | Home: keep pressing Down | New rows arrive before you reach the last one; a row of 12 ends with *View all*, which opens the whole collection with the ring on its first tile. Shows have wide pictures, running times read *6:03*, New Releases has no "NEW" badges, and there is no My List row |
-| 4 | Home: on the banner, Right once to **›**, Enter ×2; then Right to *My list*, Enter | **›** sits right after *Watch now*; the next featured show, then the one after; *My list* adds the show to Dropout's My List (a tick shows) and Enter again removes it. *Watch now* is black on yellow, *Trailer* white; **›** and *My list* turn no colour when selected |
+| 4 | Home: on the banner, Right once to **›**, Enter ×2; then Right to *+ My List*, Enter | **›** sits right after *Watch now*; the next featured show, then the one after; *+ My List* adds the show to Dropout's My List (it becomes *✓ My List*) and Enter again removes it (back to *+ My List*). *Watch now* is black on yellow, *Trailer* white; **›** and *My List* turn no colour when selected |
 | 5 | Home: Left from the first card of a row, Down, Down, Down, Right | The rail, on Home; then Browse; then My List; then Dropout 24/7; Right returns to the card. The current page's icon is yellow; the selected icon has the yellow box round it and no coloured square behind it (hovering with the mouse shows none either). OK on My List opens your saved shows, the bookmark yellow and the ring on the first; OK on Dropout 24/7 opens it with its icon yellow; the gear opens Leanback's settings on the spot |
 | 6 | Home: Escape (Leanback loaded from its folder) | Nothing happens (*Back On Home* not picked: does nothing on a folder copy); a notice says "Nothing to go back to" |
 | 7 | On the rail, Browse, OK; then hold ▼ | "Series" at the top, the shows five across as Home's cards, Browse's icon yellow; no Dropout top bar. ▼ moves a row and the row slides up to the same place; near the end more shows arrive; ◀ from the first column is the rail |
@@ -571,14 +571,14 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 10 | Open that episode again; then Back to its show | It starts where you stopped; "Resumed at …" shows for a moment; Back, then *Start Over* on the details page goes back to 0:00. On the show's page the yellow button says *Resume S… E…*, and OK plays it |
 | 11 | Enter on a show with several seasons that you have not watched | Leanback's screen opens on the **newest** season, with no flash of Season 1: the show's picture and name, a yellow *Play S… E1*, *Trailer* and *My List*; the seasons newest first with that one yellow; its name and episode count over the episodes, five across; ring on Episode 1; the rail on the left; no Dropout top bar, no Share, no dropdowns |
 | 12 | Up to the seasons, Right, OK; then Back | Up lands on the yellow season; Right moves along (the row slides); OK opens that season, which turns yellow; Back leaves the show for Home |
-| 13 | Up to the show's buttons, Right to *My List*, OK, OK | A tick appears on *My List*, and goes on the second OK; the button shows no blue when selected |
+| 13 | Up to the show's buttons, Right to *My List*, OK, OK | *+ My List* turns to *✓ My List*, and back on the second OK; the button shows no blue when selected |
 | 14 | On the show's buttons, *Trailer*, OK; then Escape | The trailer opens with the ring inside it; Escape closes it and the ring returns to *Trailer* |
 | 15 | A show you are partway through: open the season you are watching | Watched episodes carry a tick, the one in progress a bar, and the ring starts on the one to watch next |
 | 16 | A season you are caught up with (all watched but the newest), *Shows Open On: Newest* | The episodes run newest first; the newest is top left, selected |
 | 17 | Leanback settings: *Shows Open On*, OK, ▼ to *First season*, OK; open a show | The list shows both, the newest ticked; afterwards the row reads *First season*; the show opens on Season 1 |
 | 18 | Down repeatedly past the last episode | Each row slides up to the same place; more episodes appear before the end; ring continues |
 | 19 | Open a special (a stand-up set) | Its picture and name, *Watch Movie* yellow with the ring on it, *My List*; Down to the movie, then its extras |
-| 20 | Enter on an episode | Its details page: the show's name, the title, the season line, the synopsis, *Watch* (yellow, ringed), *Add to My List*, *Episodes*; the picture on the right; the rail on the left; nothing plays and nothing is heard. Enter on *Watch*: the video fills the window and plays |
+| 20 | Enter on an episode | Its details page: the show's name, the title, the season line, the synopsis, *Watch* (yellow, ringed), *+ My List*, *Episodes*; the picture on the right; the rail on the left; nothing plays and nothing is heard. Enter on *Watch*: the video fills the window and plays |
 | 21 | In the player: Enter, Enter, Right, Left; then Right ×5 quickly while playing | Play: the show's name and "S… · E… · title" top left for four seconds. Pause: the title and the bar come up, no button ringed, and stay while paused; Right, Left skip +10 s, −10 s with the bar still up. Right ×5: ⏩ and the new time in the middle, the bar up, steady, gone a second after the last press |
 | 22 | While playing: Down, then Down again; then Up; then Down and wait | The transport bar opens; Down again stays on it; Up closes it; opened again and left alone, it closes after three seconds |
 | 23 | After a minute or more: the remote's Back, Back | The details page, the video stopped; the button says *Resume* with *Start Over* beside it, and the picture shows the progress and the time left; then the season page |
@@ -609,7 +609,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 48 | Sign out, open Home | It goes on to the welcome; *Browse* there returns to Home and stays |
 | 49 | Picker: ▶ to *Manage Profiles*, OK; then *Add Profile*, OK; Back; then a profile's *Edit*, OK | "Manage profiles" at once: a pencil over each picture and an *Edit* button under each name, the ring on the profile watching; ▼ to its *Edit*, ▲ back; then *Add Profile* and *Done*; ▶ at the end goes round. Add Profile: Leanback's screen — the title, the picture, a large name box (ringed), *Cancel* then *Continue* (dimmed until a name is typed); OK on the picture: Dropout's chooser, dark and large, the ring on a picture. Edit: the same screen with *Save* (dimmed), *Cancel*, a red *Delete Profile*; the rail beside both |
 | 50 | On My List, a Dropout 24/7 card, OK | Dropout 24/7's page (Leanback's, *Watch* ringed), not Dropout's plain stream page |
-| 51 | A details page of an episode partway through: ▶ to *Clear Progress*, OK; then Back to Home | "Progress cleared"; the buttons are *Watch*, *Add to My List*, *Episodes*, *Watch* ringed; the picture has no bar. On Home it is gone from Continue Watching, and its card elsewhere has no bar |
+| 51 | A details page of an episode partway through: ▶ to *Clear Progress*, OK; then Back to Home | "Progress cleared"; the buttons are *Watch*, *+ My List*, *Episodes*, *Watch* ringed; the picture has no bar. On Home it is gone from Continue Watching, and its card elsewhere has no bar |
 | 52 | Signed out, a fresh profile: open a show's page (`https://watch.dropout.tv/game-changer`) | The cookie dialog has the selection, *Accept All* ringed; OK closes it and the selection is back on the show; no "too much recursion" in the console |
 | 53 | On "Who is watching?": ▶ to *Sign Out*, OK; Back; OK, ▶, OK | A box "Sign out of Dropout?", *Cancel* ringed; Back closes it with the ring back on *Sign Out*; *Sign Out*: signed out, the welcome |
 | 54 | Edit Profile of a spare profile: *Delete Profile*, OK; OK; again, ▶, OK | "Delete <name>?", *Cancel* ringed; *Cancel* deletes nothing; *Delete Profile*: the profile is gone, back on the picker |

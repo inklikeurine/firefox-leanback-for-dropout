@@ -1,9 +1,13 @@
 # Changelog
 
-## [0.36.1] — 2026-11-01
+## [0.37.0] — 2026-11-01
 
 ### Changed
 
+- **One My List button.** On Home's banner, a show's page and an episode's
+  details page the button reads *+ My List* when the show or episode is not
+  on your list and *✓ My List* when it is. An episode's page used to say
+  *Add to* or *Remove from My List*; a screen reader still does.
 - Inside, not on screen: helpers that were copied between files (the
   icons, building elements, the reduced-motion check, the question box and
   the picture box) are shared; the page script's look, Dropout's own pages,

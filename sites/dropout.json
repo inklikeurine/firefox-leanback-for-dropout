@@ -495,6 +495,7 @@
     "slideSubtitle": ".slide-subtitle",
     "slideDescription": ".slide-description",
     "slideButtons": ".slide-buttons a[href], .slide-buttons button",
+    "slideList": ".slide-button--my-list",
     "slideListed": ".icon-watchlist-remove",
     "row": ".browse-row",
     "rowTitle": ".horizontal-row-header a:not(.view-more-link)",

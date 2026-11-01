@@ -271,7 +271,10 @@
     const trailer = qs(r.trailerAction, doc);
     if (trailer) actions.push({ key: "trailer", label: clean(trailer.textContent, LABEL_MAX) || "Trailer", proxy: trailer });
     const list = qs(r.listAction, doc);
-    if (list) actions.push({ key: "mylist", label: "My List", proxy: list, listed: Common.matches(list, r.listed) });
+    if (list) {
+      const listed = Common.matches(list, r.listed);
+      actions.push({ key: "mylist", label: "My List", ariaLabel: listed ? "Remove from My List" : "Add to My List", proxy: list, listed });
+    }
     const sections = [];
     let start = null;
     let newestFirst = false;

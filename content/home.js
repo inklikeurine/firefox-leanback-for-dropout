@@ -115,14 +115,16 @@
       const link = qs(rules.slideLink, slide);
       const img = qs(rules.slideImage, slide);
       const buttons = qsa(rules.slideButtons, slide).map((el, j) => {
-        const label = textOf(el) || el.getAttribute("aria-label") || "";
+        const isList = Common.matches(el, rules.slideList);
+        const listed = isList ? Common.matches(el, rules.slideListed) : undefined;
+        const label = isList ? "My List" : textOf(el) || el.getAttribute("aria-label") || "";
         const href = el.tagName === "A" ? hrefOf(el) : "";
         return {
           index: j,
           label,
           href,
-          ariaLabel: el.getAttribute("aria-label") || label,
-          listed: Common.matches(el, rules.slideListed)
+          ariaLabel: isList ? (listed ? "Remove from My List" : "Add to My List") : el.getAttribute("aria-label") || label,
+          listed
         };
       }).filter((b) => b.label);
       if (!title && !buttons.length) return;

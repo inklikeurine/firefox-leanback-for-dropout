@@ -323,6 +323,9 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-hero-action[data-tenfoot-listed="true"]::before {
   content: "✓ ";
 }
+.tenfoot-hero-action[data-tenfoot-listed="false"]::before {
+  content: "+ ";
+}
 .tenfoot-hero-next {
   justify-content: center;
   min-width: max(36px, calc(var(--tf-u) * 64));

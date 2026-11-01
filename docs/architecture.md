@@ -340,8 +340,8 @@ Leanback's merged row replaces. A hidden row is still read, so its bars still
 reach the history.
 
 **The banner** shows one slide. A link button carries the slide button's
-address; a proxy (Dropout's *My list*) clicks the real button, and the redraw
-picks up its state (`home.slideListed`). **›** steps to the next slide,
+address; a proxy (Dropout's *My list*, found by `home.slideList`) clicks the
+real button, and the redraw picks up its state (`home.slideListed`). **›** steps to the next slide,
 wrapping, keeping the selection so OK can repeat. The banner arrives after
 Home is up (Continue Watching is ready at once), so a start on a card waits:
 when it arrives the selection moves to *Watch now*, unless the viewer has
@@ -381,7 +381,7 @@ key the selection starts on, else the first card).
 links to (*My List*). A hero (`.tenfoot-hero*`, 500 units high) has buttons
 keyed `data-tenfoot-action`: links (`href`, followed like a card) or proxies
 that click Dropout's (`proxy`: *Trailer*, *My List*, which carries
-`data-tenfoot-listed`, a tick, while Dropout's says the show is listed).
+`data-tenfoot-listed`, `true` or `false`, drawn as *✓ My List* or *+ My List* by CSS). The banner, a show's page and an episode's details page share it.
 Pills are `button.tenfoot-season` in a `.tenfoot-season-row` (styled by
 the end of `content/home.css`), the current one `aria-current`, sliding sideways to
 keep the selection in view; OK on one with a `proxy` (a search filter)
@@ -497,8 +497,7 @@ show's name (the yellow kicker), the season line (`h5.badges-container`, "•"
 shown as "·"), the synopsis, and the buttons — *Watch* (`run: "watch"`), or
 *Resume* (`run: "resume"`) and *Start Over* (`run: "restart"`) when
 `TenfootHistory.resumePoint()` has a point, the same the player resumes from;
-*Add to My List* / *Remove from My List* (`proxy`: Dropout's own button, the
-label from its `listed` class); *Episodes* (the season link, else the show
+*My List* (`proxy`: Dropout's own button; `listed` from its class, drawn as *+* or *✓*, the `aria-label` *Add to* / *Remove from My List*); *Episodes* (the season link, else the show
 link); *Clear Progress* (`run: "clear"`) when `progressOf()` has anything for
 it. That one sends `history:forget` (`page-video.js` `clearProgress`), then
 redraws the page from the history as cleared and selects *Watch*. The first button keeps the key `watch` whatever it says, so the

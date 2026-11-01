@@ -29,7 +29,7 @@ navigate, not what you can watch.
   started on Dropout's Roku or Android app, in one row.
 - **A details page before every video**, as on Dropout's Roku app: the
   episode's title, synopsis and picture, and *Watch* — or *Resume* and
-  *Start Over* when you stopped partway — with *Add to My List* and
+  *Start Over* when you stopped partway — with *+ My List* and
   *Episodes* beside it, and *Clear Progress* when you have watched some or
   all of it. Nothing plays until you press *Watch*.
 - **Picks up where you left off**, with *Start Over* to go back to the
@@ -218,8 +218,8 @@ below as cards as you type. ▼ goes to the filters (*All*, *Videos*,
 Continue Watching included, a show's yellow button, *Watch Movie* or an
 extra. On the left: the show's name, the episode's title, "Season 2,
 Episode 1 · 28-Feb-2020", the synopsis, and the buttons — *Watch* (yellow),
-or *Resume* with *Start Over* beside it when you stopped partway; *Add to My
-List* (*Remove from My List* once it is there); *Episodes*, the episode's
+or *Resume* with *Start Over* beside it when you stopped partway; *+ My
+List* (*✓ My List* once it is there); *Episodes*, the episode's
 season on its show's page; and *Clear Progress* when you have watched some
 or all of it, which makes the episode unstarted again (out of Continue
 Watching, no bar on its card) until you play it again. On the right, the

@@ -107,7 +107,7 @@
       const list = qs(rules.listAction, doc);
       if (list) {
         const listed = Common.matches(list, rules.listed);
-        actions.push({ key: "mylist", label: listed ? "Remove from My List" : "Add to My List", proxy: list });
+        actions.push({ key: "mylist", label: "My List", ariaLabel: listed ? "Remove from My List" : "Add to My List", proxy: list, listed });
       }
       const back = hrefOf(qs(rules.season, doc)) || hrefOf(qs(rules.show, doc));
       if (back) actions.push({ key: "episodes", label: "Episodes", href: back });

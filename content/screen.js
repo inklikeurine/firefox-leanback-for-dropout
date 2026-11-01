@@ -294,7 +294,7 @@
         node.dataset.tenfootAction = a.key;
         setAttr(node, "href", a.href || null);
         setAttr(node, "aria-label", a.ariaLabel || a.label);
-        setAttr(node, "data-tenfoot-listed", a.listed ? "true" : null);
+        setAttr(node, "data-tenfoot-listed", typeof a.listed === "boolean" ? String(a.listed) : null);
         node.classList.toggle("tenfoot-hero-primary", Boolean(a.primary));
         setAttr(node, "data-tenfoot-danger", a.danger ? "true" : null);
         setAttr(node, "aria-disabled", a.disabled ? "true" : null);
