@@ -6,6 +6,68 @@
 // selected when it opens is the safe one, named by `start`.
 
 (function () {
+  // The box both kinds share: a layer over the screen holding a title, a
+  // line and `body`, and the one answer it gives, once, when it closes.
+  function createBox(doc, cls, role, body) {
+    const el = (tag, c) => globalThis.TenfootCommon.el(doc, tag, c);
+    const layer = el("div", cls.layer);
+    layer.hidden = true;
+    layer.setAttribute("role", role);
+    layer.setAttribute("aria-modal", "true");
+    const box = el("div", cls.box);
+    const title = el("h2", "tenfoot-ask-title");
+    const text = el("p", "tenfoot-ask-text");
+    const content = el("div", body);
+    box.append(title, text, content);
+    layer.appendChild(box);
+    (doc.documentElement || doc.body).appendChild(layer);
+
+    let settle = null;
+
+    function finish(answer) {
+      if (layer.hidden) return;
+      layer.hidden = true;
+      const done = settle;
+      settle = null;
+      if (done) done(answer);
+    }
+
+    // A new question: its title and line, the body emptied for its buttons.
+    function show(q) {
+      finish(null);
+      title.textContent = q.title || "";
+      say(q.text || "");
+      content.textContent = "";
+    }
+
+    // Shown, until the answer.
+    function wait() {
+      layer.hidden = false;
+      return new Promise((resolve) => { settle = resolve; });
+    }
+
+    function say(words) {
+      text.textContent = words || "";
+      text.hidden = !words;
+    }
+
+    return { el, layer, content, finish, show, wait };
+  }
+
+  // What both kinds hand back.
+  function handle(box, open, key, refocus, current) {
+    return Object.freeze({
+      open,
+      key,
+      close: () => box.finish(null),
+      refocus,
+      contains: (n) => Boolean(n) && box.layer.contains(n),
+      get isOpen() { return !box.layer.hidden; },
+      get current() { return box.layer.hidden ? null : current(); },
+      element: box.layer
+    });
+  }
+
   /**
    * @param {Document} doc
    * @param {{onFocus?: (el: Element) => void}} [opts] — told of each button
@@ -13,26 +75,11 @@
    */
   function createAsk(doc, opts) {
     const o = opts || {};
-    const el = (tag, cls) => {
-      const e = doc.createElement(tag);
-      if (cls) e.className = cls;
-      return e;
-    };
-    const layer = el("div", "tenfoot-ask");
-    layer.hidden = true;
-    layer.setAttribute("role", "alertdialog");
-    layer.setAttribute("aria-modal", "true");
-    const box = el("div", "tenfoot-ask-box");
-    const title = el("h2", "tenfoot-ask-title");
-    const text = el("p", "tenfoot-ask-text");
-    const row = el("div", "tenfoot-ask-buttons");
-    box.append(title, text, row);
-    layer.appendChild(box);
-    (doc.documentElement || doc.body).appendChild(layer);
+    const box = createBox(doc, { layer: "tenfoot-ask", box: "tenfoot-ask-box" }, "alertdialog", "tenfoot-ask-buttons");
+    const { el, content: row, finish } = box;
 
     let buttons = [];
     let at = 0;
-    let settle = null;
 
     function focusAt(i) {
       at = Math.max(0, Math.min(buttons.length - 1, i));
@@ -44,14 +91,6 @@
       if (typeof o.onFocus === "function") o.onFocus(b);
     }
 
-    function finish(answer) {
-      if (layer.hidden) return;
-      layer.hidden = true;
-      const done = settle;
-      settle = null;
-      if (done) done(answer);
-    }
-
     /**
      * Ask. Resolves with the id of the button picked, or null for Back (or
      * another question replacing this one).
@@ -59,11 +98,7 @@
      * @returns {Promise<string|null>}
      */
     function open(q) {
-      finish(null);
-      title.textContent = q.title || "";
-      text.textContent = q.text || "";
-      text.hidden = !q.text;
-      row.textContent = "";
+      box.show(q);
       buttons = (q.buttons || []).map((spec) => {
         const b = el("button", "tenfoot-ask-button");
         b.type = "button";
@@ -79,15 +114,15 @@
         row.appendChild(b);
         return b;
       });
-      layer.hidden = false;
+      const answer = box.wait();
       const start = buttons.findIndex((b) => b.dataset.tenfootAsk === q.start);
       focusAt(start >= 0 ? start : 0);
-      return new Promise((resolve) => { settle = resolve; });
+      return answer;
     }
 
     /** A key, while open: true when it was the box's. */
     function key(action) {
-      if (layer.hidden) return false;
+      if (box.layer.hidden) return false;
       switch (action) {
         case "left":
         case "up":
@@ -108,16 +143,7 @@
       }
     }
 
-    return Object.freeze({
-      open,
-      key,
-      close: () => finish(null),
-      refocus: () => focusAt(at),
-      contains: (n) => Boolean(n) && layer.contains(n),
-      get isOpen() { return !layer.hidden; },
-      get current() { return layer.hidden ? null : buttons[at] || null; },
-      element: layer
-    });
+    return handle(box, open, key, () => focusAt(at), () => buttons[at] || null);
   }
 
   /**
@@ -130,27 +156,12 @@
    */
   function createPicker(doc, opts) {
     const o = opts || {};
-    const el = (tag, cls) => {
-      const e = doc.createElement(tag);
-      if (cls) e.className = cls;
-      return e;
-    };
-    const layer = el("div", "tenfoot-ask tenfoot-picker");
-    layer.hidden = true;
-    layer.setAttribute("role", "dialog");
-    layer.setAttribute("aria-modal", "true");
-    const box = el("div", "tenfoot-ask-box tenfoot-picker-box");
-    const title = el("h2", "tenfoot-ask-title");
-    const text = el("p", "tenfoot-ask-text");
-    const body = el("div", "tenfoot-picker-sections");
-    box.append(title, text, body);
-    layer.appendChild(box);
-    (doc.documentElement || doc.body).appendChild(layer);
+    const box = createBox(doc, { layer: "tenfoot-ask tenfoot-picker", box: "tenfoot-ask-box tenfoot-picker-box" }, "dialog", "tenfoot-picker-sections");
+    const { el, content: body, finish } = box;
 
     let sections = []; // [{buttons: Element[]}]
     let at = { s: 0, i: 0 };
     let columns = 7;
-    let settle = null;
 
     function button() {
       const sec = sections[at.s];
@@ -171,26 +182,15 @@
       if (typeof o.onFocus === "function") o.onFocus(b);
     }
 
-    function finish(answer) {
-      if (layer.hidden) return;
-      layer.hidden = true;
-      const done = settle;
-      settle = null;
-      if (done) done(answer);
-    }
-
     /**
      * @param {{title: string, text?: string, columns?: number, start?: string,
      *   sections: {label: string, items: {id: string, image: string, label: string}[]}[]}} q
      * @returns {Promise<string|null>} the picture's id, or null
      */
     function open(q) {
-      finish(null);
-      title.textContent = q.title || "";
-      say(q.text || "");
+      box.show(q);
       columns = q.columns || 7;
       body.style.setProperty("--tf-picker-cols", String(columns));
-      body.textContent = "";
       sections = [];
       let start = null;
       for (const sec of q.sections || []) {
@@ -222,15 +222,10 @@
         body.append(head, grid);
         sections.push({ buttons });
       }
-      layer.hidden = false;
+      const answer = box.wait();
       const first = start || { s: 0, i: 0 };
       focusAt(first.s, first.i);
-      return new Promise((resolve) => { settle = resolve; });
-    }
-
-    function say(words) {
-      text.textContent = words || "";
-      text.hidden = !words;
+      return answer;
     }
 
     function move(action) {
@@ -257,7 +252,7 @@
 
     /** A key, while open: true when it was the box's. */
     function key(action) {
-      if (layer.hidden) return false;
+      if (box.layer.hidden) return false;
       switch (action) {
         case "left":
         case "right":
@@ -278,16 +273,7 @@
       }
     }
 
-    return Object.freeze({
-      open,
-      key,
-      close: () => finish(null),
-      refocus: () => focusAt(at.s, at.i),
-      contains: (n) => Boolean(n) && layer.contains(n),
-      get isOpen() { return !layer.hidden; },
-      get current() { return layer.hidden ? null : button(); },
-      element: layer
-    });
+    return handle(box, open, key, () => focusAt(at.s, at.i), button);
   }
 
   globalThis.TenfootAsk = Object.freeze({ createAsk, createPicker });

@@ -6,6 +6,8 @@
 // other screens share. Site-agnostic: the selectors come from the caller.
 
 (function () {
+  const { el } = globalThis.TenfootCommon;
+
   function hrefOf(el) {
     if (!el) return "";
     const h = el.href || el.getAttribute("href") || "";
@@ -40,12 +42,6 @@
     if (v === null || v === undefined || v === "") {
       if (node.hasAttribute(name)) node.removeAttribute(name);
     } else if (node.getAttribute(name) !== String(v)) node.setAttribute(name, String(v));
-  }
-
-  function el(doc, tag, cls) {
-    const e = doc.createElement(tag);
-    if (cls) e.className = cls;
-    return e;
   }
 
   /**

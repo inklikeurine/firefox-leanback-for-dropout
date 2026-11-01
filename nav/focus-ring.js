@@ -67,13 +67,7 @@
 
     const now = () => (win.performance ? win.performance.now() : Date.now());
 
-    function reducedMotion() {
-      try {
-        return Boolean(win.matchMedia && win.matchMedia("(prefers-reduced-motion: reduce)").matches);
-      } catch (_err) {
-        return false;
-      }
-    }
+    const reducedMotion = () => globalThis.TenfootCommon.prefersReducedMotion(win);
 
     // The target's box as it will be once the motion under way is over: the
     // zoom grown to its full size, and the rows Leanback slides (an inline

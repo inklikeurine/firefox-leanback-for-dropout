@@ -10,7 +10,6 @@
 (function () {
   const RAIL_CLASS = "tenfoot-rail";
   const ITEM_CLASS = "tenfoot-rail-item";
-  const SVG_NS = "http://www.w3.org/2000/svg";
 
   // 24×24 stroke icons, drawn with paths only.
   const ICONS = {
@@ -28,20 +27,7 @@
   };
 
   function icon(doc, name) {
-    const svg = doc.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "2");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    for (const d of ICONS[name] || []) {
-      const p = doc.createElementNS(SVG_NS, "path");
-      p.setAttribute("d", d);
-      svg.appendChild(p);
-    }
-    return svg;
+    return globalThis.TenfootCommon.svgIcon(doc, ICONS[name] || []);
   }
 
   /**

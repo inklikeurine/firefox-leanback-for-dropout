@@ -48,23 +48,7 @@
 
   function svgIcon(doc, name) {
     const spec = ICONS[name];
-    const svg = doc.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("focusable", "false");
-    svg.setAttribute("aria-hidden", "true");
-    const path = doc.createElementNS(SVG_NS, "path");
-    path.setAttribute("d", spec.fill || spec.stroke);
-    if (spec.fill) {
-      path.setAttribute("fill", "currentColor");
-    } else {
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", "currentColor");
-      path.setAttribute("stroke-width", "2");
-      path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke-linejoin", "round");
-    }
-    svg.appendChild(path);
-    return svg;
+    return globalThis.TenfootCommon.svgIcon(doc, spec.fill || spec.stroke, { fill: Boolean(spec.fill) });
   }
 
   const Common = globalThis.TenfootCommon;

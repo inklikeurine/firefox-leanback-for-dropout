@@ -206,12 +206,7 @@
 
   // Reduce Motion (Accessibility), or the system's own setting.
   function reducedMotion() {
-    if (root.dataset.tenfootMotion === "reduce") return true;
-    try {
-      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    } catch (_err) {
-      return false;
-    }
+    return root.dataset.tenfootMotion === "reduce" || Common.prefersReducedMotion(window);
   }
 
   function viewport() {

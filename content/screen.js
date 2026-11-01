@@ -438,11 +438,7 @@
     const win = doc.defaultView || globalThis;
     const { setText, setAttr } = C();
 
-    const el = (tag, cls) => {
-      const e = doc.createElement(tag);
-      if (cls) e.className = cls;
-      return e;
-    };
+    const el = (tag, cls) => Common.el(doc, tag, cls);
 
     let layer = doc.querySelector(`.${LAYER_CLASS}`);
     if (layer) layer.remove();

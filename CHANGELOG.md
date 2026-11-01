@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.36.1] — 2026-11-01
+
+### Changed
+
+- Inside, not on screen: helpers that were copied between files (the
+  icons, building elements, the reduced-motion check, the question box and
+  the picture box) are shared.
+  Everything looks and behaves as in 0.36.0.
+
 ## [0.36.0] — 2026-11-01
 
 ### Added

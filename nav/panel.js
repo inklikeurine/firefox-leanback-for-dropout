@@ -17,7 +17,6 @@
 // focus cannot take the highlight with it.
 
 (function () {
-  const SVG_NS = "http://www.w3.org/2000/svg";
   const SLIDE_MS = 250;
   const ICONS = {
     check: "M5 13l4 4L19 7",
@@ -25,19 +24,7 @@
   };
 
   function icon(doc, name) {
-    const svg = doc.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("focusable", "false");
-    svg.setAttribute("aria-hidden", "true");
-    const path = doc.createElementNS(SVG_NS, "path");
-    path.setAttribute("d", ICONS[name]);
-    path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "currentColor");
-    path.setAttribute("stroke-width", "2.5");
-    path.setAttribute("stroke-linecap", "round");
-    path.setAttribute("stroke-linejoin", "round");
-    svg.appendChild(path);
-    return svg;
+    return globalThis.TenfootCommon.svgIcon(doc, ICONS[name], { strokeWidth: 2.5 });
   }
 
   /**
