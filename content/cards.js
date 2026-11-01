@@ -1,7 +1,8 @@
 // Leanback for Dropout — the card every Leanback screen draws
 // (content/screen.js). A card is a link holding the picture, a badge, the
 // running time (or the time left) and a progress bar, with the title and a
-// subtitle under it. Also the readers for Dropout's tiles that Home and the
+// subtitle under it; or, standing in for one of Dropout's buttons (a
+// profile), a button that presses it. Also the readers for Dropout's tiles that Home and the
 // other screens share. Site-agnostic: the selectors come from the caller.
 
 (function () {
@@ -49,8 +50,11 @@
 
   /**
    * A card for `item`: {key, href, title, subtitle, image, durationText,
-   * badge, fraction (0–1, or null), watch ("watched" for a tick), viewAll}. Returns the card's parts;
-   * `wrap` is the element to place, `link` the one that takes the selection.
+   * badge, fraction (0–1, or null), watch ("watched" for a tick), viewAll,
+   * label (a View all card's words), initial (the letter shown when there
+   * is no picture), proxy (one of Dropout's buttons, pressed in place of a
+   * link)}. Returns the card's parts; `wrap` is the element to place,
+   * `link` the one that takes the selection.
    */
   function makeCard(doc, item) {
     const wrap = el(doc, "div", "tenfoot-card");
@@ -70,8 +74,33 @@
     link.append(art, badge, time, bar, tick, label);
     const title = el(doc, "div", "tenfoot-card-title");
     const sub = el(doc, "div", "tenfoot-card-sub");
-    wrap.append(link, title, sub);
-    const card = { item, wrap, link, art, badge, time, bar, fill, tick, label, title, sub };
+    // A button under the card (a profile's Edit): a stop of its own, under
+    // the card's (screen.js puts the buttons in a row under the cards), and
+    // it does what the card does.
+    const action = el(doc, "button", "tenfoot-card-action");
+    action.type = "button";
+    action.hidden = true;
+    wrap.append(link, title, sub, action);
+    const card = { item, wrap, link, art, badge, time, bar, fill, tick, label, title, sub, action };
+    // The card: its own run (Leanback's), else Dropout's button. The button
+    // under it (byButton): always Dropout's button, as the card's would be
+    // without a run of its own.
+    const press = (e, byButton) => {
+      const run = !byButton && card.item && card.item.run;
+      if (typeof run === "function") {
+        e.preventDefault();
+        e.stopPropagation();
+        run();
+        return;
+      }
+      const proxy = card.item && card.item.proxy;
+      if (!proxy) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (proxy.isConnected) proxy.click();
+    };
+    link.addEventListener("click", (e) => press(e, false));
+    action.addEventListener("click", (e) => press(e, true));
     updateCard(card, item);
     return card;
   }
@@ -79,17 +108,26 @@
   /** Redraw a card for `item`, writing only what changed. */
   function updateCard(card, item) {
     card.item = item;
-    setAttr(card.link, "href", item.href);
+    const button = Boolean(item.proxy || typeof item.run === "function");
+    setAttr(card.link, "href", button ? null : item.href);
+    // Without an href a link takes no focus: a card that presses a button
+    // (Dropout's, or one of Leanback's own: item.run) says it is one.
+    setAttr(card.link, "tabindex", button ? "0" : null);
+    setAttr(card.link, "role", button ? "button" : null);
     setAttr(card.link, "aria-label", [item.title, item.subtitle].filter(Boolean).join(", "));
     setAttr(card.wrap, "data-tenfoot-card", item.key);
     if (item.viewAll) {
       card.wrap.dataset.tenfootViewall = "true";
-      setText(card.label, "View all");
+      delete card.wrap.dataset.tenfootInitial;
+      setText(card.label, item.label || "View all");
       setAttr(card.art, "src", null);
     } else {
       delete card.wrap.dataset.tenfootViewall;
-      setText(card.label, "");
+      const letter = !item.image && item.initial ? item.initial : "";
+      setAttr(card.wrap, "data-tenfoot-initial", letter ? "true" : null);
+      setText(card.label, letter);
       if (item.image && card.art.getAttribute("src") !== item.image) card.art.setAttribute("src", item.image);
+      if (letter) setAttr(card.art, "src", null);
     }
     setText(card.badge, item.badge || "");
     card.badge.hidden = !item.badge;
@@ -103,6 +141,10 @@
     card.tick.hidden = item.watch !== "watched";
     setText(card.title, item.viewAll ? item.subtitle : item.title);
     setText(card.sub, item.viewAll ? "" : item.subtitle);
+    card.action.hidden = !item.button;
+    setText(card.action, item.button || "");
+    setAttr(card.action, "aria-label", item.button ? `${item.button} ${item.title || ""}`.trim() : null);
+    setAttr(card.wrap, "data-tenfoot-action", item.button ? "true" : null);
   }
 
   /**

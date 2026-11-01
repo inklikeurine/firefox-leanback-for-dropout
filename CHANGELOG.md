@@ -1,5 +1,147 @@
 # Changelog
 
+## [0.36.0] — 2026-11-01
+
+### Added
+
+- **Profiles.** Signed in, the top of the rail shows your Dropout profile's
+  picture, set apart from the other icons. OK on it opens "Who is
+  watching?", drawn for the TV: the account's profiles in a row, each with
+  its picture (or its first letter) and name, the one watching marked and
+  selected. OK on a profile switches to it. *Manage Profiles* and *Sign
+  Out* end the row, and ▶ at its end goes round to its start.
+- **Sign out from the TV.** *Sign Out* on "Who is watching?" asks first,
+  *Cancel* selected, then signs out as Dropout's own *Log out* does.
+- **Manage profiles on the TV.** *Manage Profiles* turns the row into
+  Manage profiles: a pencil over each picture and an *Edit* button under
+  each name — ▼ from a profile goes down to its *Edit*, ▲ back up — then
+  *Add Profile* and *Done*. OK on a profile's picture opens a box of
+  Dropout's profile pictures right there, the profile's own selected; OK
+  on another saves it (as Dropout's Edit Profile does) and Manage profiles
+  shows it; Back changes nothing. OK on *Edit* opens Edit Profile.
+- **Leaving Edit Profile with changes not saved** asks in Leanback's own
+  box ("Leave without saving?", *Keep Editing* selected) when *Cancel* is
+  pressed, and Firefox's own "This page is asking you to confirm that you
+  want to leave" no longer comes up there. Add Profile and Edit Profile are
+  Leanback's own screens: the title, the picture (OK opens Dropout's
+  picture chooser, in Leanback's look), a large name box, and the buttons —
+  *Cancel* then *Continue* to add; *Save*, *Cancel* and *Delete Profile* to
+  edit. A button Dropout has greyed out (Continue before there is a name)
+  shows dimmed. Each presses Dropout's own, so Dropout still does the work.
+- **Delete a profile.** *Delete Profile* asks first in Leanback's own box
+  ("Delete Sam?", *Cancel* selected), then answers Dropout's own question
+  for you.
+- **Themes.** *Theme* (Dropout Dark, Midnight Blue, OLED Black, Warm Dark)
+  colours the screens, the rail and the panels.
+- **Holidays.** Off (the default), Automatic (Halloween at the end of
+  October, the winter holidays in December, New Year, Valentine's Day and
+  St. Patrick's Day each in its days), or one picked to stay: the holiday's
+  colour, and a glow of its colours along the top of the screens.
+- **Theme This Page.** In Leanback's settings, under Look, on a page that
+  has choices of its own: Home's banner (large, small or none) and card
+  size, the size of the cards on lists and shows' pages (four, five or six
+  across), and where an episode's picture goes on its details page (right,
+  left or none). Each value shows as you move to it, what moves slides to
+  its new place, and Back puts it back.
+- **Accessibility**, a menu of its own in Leanback's settings: Interface
+  Size (100, 115 or 130 %), High Contrast, Reduce Motion (as the system
+  says, on or off), Caption Size, Caption Color and Caption Background
+  (over the player's own), and an experimental Color Filter on the video for
+  red-, green- or blue-weak colour vision.
+- **The cookie box in Leanback's look**, and every window it opens
+  (*Customize Settings*, a purpose's list of cookies): dark cards, larger
+  type, the links, *Accept All* and *Confirm My Choices* in the theme's
+  colour, the other buttons outlined, the rows plain with faint lines
+  between them.
+- **Cookie Preferences** at the foot of Leanback's settings opens the
+  cookie settings again (in Leanback's look) after the cookie box has been
+  answered; Dropout's own link for it is in the footer Leanback hides.
+- **Dropout's promotion bar** ("GET 20% OFF YOUR FIRST YEAR!") is hidden
+  while Leanback is on.
+- **The rail on every page** but signing in and a video playing: the
+  profile picker and the profile pages, the policies, and Dropout's account
+  and help pages too.
+- **Each profile has its own watch history**: Continue Watching, where each
+  video was left, and the watched ticks. The history from before profiles
+  goes to the first profile used. *Clear Continue Watching* clears the
+  profile watching (on the options page: every profile).
+- **A welcome screen when signed out.** Dropout's front page
+  (watch.dropout.tv) is drawn for the TV: Dropout's logo and line, a few
+  words, then *Sign In*, *Browse*, *Privacy Policy* and *Terms of Use*.
+  Signed out, the first Home goes on to it by itself (once, so Back comes
+  back to Home), and the rail's top entry is *Sign in*.
+- **Signing in on the TV.** Dropout's sign-in and password reset pages
+  look like the rest of Leanback: the form is one of its cards in the
+  middle of a dark screen, with large boxes and the button that goes on in
+  yellow, and under it a line saying typing needs a keyboard (or a keyboard
+  app on your phone), then *Privacy Policy* and *Terms of Use*. The
+  selection starts in the email box, ▼ ▲ move between the boxes and
+  buttons, and when Dropout asks for the password the selection goes there.
+  The emailed sign-in link is left out: it signs in whatever opens it.
+- **The privacy policy, terms and cookies policy** read from the sofa:
+  large white-on-dark type with no top bar or footer, scrolled with ▲ ▼.
+- **Clear one episode's progress.** An episode's details page has *Clear
+  Progress* at the end of its buttons when the episode is partway or
+  watched. OK on it makes the episode unstarted again for the profile
+  watching: out of Continue Watching, no bar or tick on its card, *Watch*
+  from the beginning — until it is played again, here or on another device.
+- ▲ leaves a one-line text box for what is above it, as ▼ leaves it for what
+  is below.
+
+### Changed
+
+- **Ring Colour is now Theme Color**, and colours everything that was
+  Dropout yellow: the ring, the main buttons, the lit rail icon, the
+  progress bars, the panels' selection. Its colours are softer: Dropout
+  Yellow, Soft White, Sky Blue, Mint, Lavender, Peach and Rose. White,
+  Pink, Teal and Orange move to the nearest of them.
+- **Back On Home**, until you pick a value, closes the tab on the signed
+  release and does nothing on a copy loaded from its folder (for testing).
+  A value you picked stays.
+- **The yellow selection box is quicker and steady.** It goes straight to
+  where the selected card will stop, in about a tenth of a second, and
+  stays there while the row slides under it, instead of riding along with
+  the row and wobbling as it lands. A card still growing gets the box at its
+  full size at once.
+- Rows slide a little faster (0.2 s, was 0.26 s), and the selected card
+  grows in 0.12 s (was 0.15 s).
+- **The control bar while watching**: a pause keeps the bar and the title up
+  until you play again (they used to go after 4 seconds, still paused). The
+  bar opened with ▼ closes by itself 3 seconds after your last key while
+  the video plays; paused, it stays. Back takes the bar away at once. A
+  skip still shows for a second after the last press.
+- **The settings panels are easier to read**: about a third of the screen
+  wide, larger text, each value at the end of its line, and the settings
+  under headings — *Playback*, *Browsing* and *Look*. The panel during
+  playback is called *Playback Settings*, with *This episode*, *Picture*
+  and *Captions*; its selection starts on Quality, not on Play Next
+  Episode. No ✕ in the corner: Back closes.
+
+### Fixed
+
+- **An empty My List** showed a blank screen with nothing selected: it now
+  says it is empty, with the selection on the rail.
+- Dropout's own "Delete profile" box, drawn larger, had its title running
+  into the line under it: its type has room now.
+- **Edit Profile** after Dropout's redesign of its settings pages showed
+  Dropout's page unstyled: it is Leanback's own screen now.
+- A Dropout 24/7 card in My List opens Dropout 24/7's page, not a plain
+  page of the stream.
+- The cookie box coming up over a Leanback screen (a show's page, signed
+  out) no longer fights Leanback for the selection, which filled the
+  console with "too much recursion": the box keeps it until it is closed.
+  It is no longer hidden while a page loads either, which logged "Your
+  focus-trap must have at least one container…".
+
+### Removed
+
+- *Start Videos Muted* is no longer in the TV panels; it stays on the
+  options page.
+- *Turn Leanback Off* is no longer in the settings panel; the toolbar
+  button does it.
+- *Start Over* is no longer in Playback Settings; it is on the episode's
+  details page.
+
 ## [0.35.0] — 2026-10-14
 
 ### Added

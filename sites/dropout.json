@@ -3,7 +3,39 @@
   "browseUrl": "https://watch.dropout.tv/browse",
   "gridUrl": "https://watch.dropout.tv/series",
   "searchUrl": "https://watch.dropout.tv/search",
+  "signinUrl": "https://watch.dropout.tv/login",
+  "welcomeUrl": "https://watch.dropout.tv/",
+  "signout": {
+    "url": "https://watch.dropout.tv/logout",
+    "token": "meta[name='csrf-token']"
+  },
+  "profileApi": {
+    "profiles": "/v2/sites/{site}/users/{user}/profiles",
+    "pictures": "/v2/sites/{site}/profile_pictures",
+    "update": "/v2/sites/{site}/users/{user}/profiles/{index}",
+    "after": "https://watch.dropout.tv/profile/pick?edit=1"
+  },
+  "legal": [
+    {
+      "label": "Privacy Policy",
+      "url": "https://watch.dropout.tv/privacy"
+    },
+    {
+      "label": "Terms of Use",
+      "url": "https://watch.dropout.tv/tos"
+    }
+  ],
+  "redirects": [
+    {
+      "path": "^/events/dropout-24-7/?$",
+      "to": "https://watch.dropout.tv/dropout-24-7"
+    }
+  ],
   "routes": [
+    {
+      "kind": "welcome",
+      "path": "^/$"
+    },
     {
       "kind": "browse",
       "path": "^/browse/?$"
@@ -25,6 +57,22 @@
       "path": "^/search(/|$)"
     },
     {
+      "kind": "profiles",
+      "path": "^/profile/pick/?$"
+    },
+    {
+      "kind": "signin",
+      "path": "^/(login|forgot_password)/?$"
+    },
+    {
+      "kind": "legal",
+      "path": "^/(privacy|tos|cookies)/?$"
+    },
+    {
+      "kind": "profileEdit",
+      "path": "^/settings/manage/profile/?$"
+    },
+    {
       "kind": "other",
       "path": "^/(login|logout|register|signup|checkout|contact|privacy|terms|help|settings|purchases|forgot|reset|gift|redeem|profile|account|activate|billing)(/|$)"
     },
@@ -35,6 +83,7 @@
   ],
   "common": {
     "header": ".site-header",
+    "signedOut": "body.logged-out",
     "chrome": [
       ".site-header",
       "footer.footer--site"
@@ -44,17 +93,87 @@
     ],
     "modals": [
       ".reveal-modal.open",
-      "[id^='ketch-']"
+      "[id^='ketch-']",
+      "[class*='Modal-module__backdrop']",
+      "[role='dialog'][data-state='open']"
+    ],
+    "modalStart": [
+      "#ketch-purposes-modal [role='list'] button[aria-expanded]",
+      "[role='dialog'] button[aria-pressed='true']",
+      "[class*='Modal-module__panel'] button:has(img)",
+      "#ketch-banner-button-primary"
     ],
     "modalClose": [
       ".close-reveal-modal",
-      "[aria-label='Close']"
+      "[aria-label='Close']",
+      "[role='dialog'] button[aria-label='Cancel']"
+    ],
+    "cookiePreferences": {
+      "call": "showConsent",
+      "hint": "experiences.consent.modal",
+      "selector": ["a.manage-cookies-link"],
+      "text": "^Manage Cookie Preferences$"
+    },
+    "hidden": [
+      ".promo-banner"
     ],
     "hoverSuppress": [
       ".tooltip"
     ]
   },
   "pages": {
+    "signin": {
+      "box": "#login--box-container",
+      "focusable": [
+        "#login--box-container input:not([type='hidden']):not([type='checkbox'])",
+        "#login--box-container button",
+        "#login--box-container a[href]"
+      ],
+      "initialFocus": [
+        "#signin-email-input",
+        "#forgot-password-form input[type='email']"
+      ],
+      "nextStep": "#signin-password-input",
+      "hide": [
+        "#login-form-magic",
+        ".signin-flow__divider-container",
+        "#background"
+      ]
+    },
+    "legal": {
+      "content": "#customer-agreements, .primary-page-content",
+      "hide": [
+        ".promo-banner",
+        "#search-react-app"
+      ]
+    },
+    "profiles": {
+      "focusable": [
+        "#profile-picker-react-app input:not([type='hidden'])",
+        "#profile-picker-react-app button",
+        "#profile-picker-react-app a[href]"
+      ],
+      "initialFocus": [
+        "#profile-picker-react-app input:not([type='hidden'])",
+        "#profile-picker-react-app button"
+      ]
+    },
+    "profileEdit": {
+      "box": ".ProfileSettings-module__panel",
+      "focusable": [
+        ".ProfileSettings-module__panel [role='button']",
+        ".ProfileSettings-module__panel input:not([type='hidden'])",
+        ".ProfileSettings-module__panel button"
+      ],
+      "initialFocus": [
+        "#profile-name"
+      ],
+      "hide": [
+        ".SettingsNav-module__sidebar",
+        ".Header-module__site-header",
+        ".Footer-module__site-footer"
+      ]
+    },
     "browse": {
       "rows": ".horizontal-row-container, .carousel-layout-container",
       "rowItem": ".horizontal-row-item, .featured-carousel-slide",
@@ -246,13 +365,21 @@
     "title": "#watch-info .live-event-title"
   },
   "rail": {
+    "profile": {
+      "picture": ".user-actions .avatar-container .avatar-user",
+      "url": "https://watch.dropout.tv/profile/pick"
+    },
     "kinds": [
       "browse",
       "hub",
       "grid",
       "search",
       "series",
-      "video"
+      "video",
+      "profiles",
+      "profileEdit",
+      "legal",
+      "other"
     ],
     "links": [
       {
@@ -306,6 +433,57 @@
       "listAction": "#watch-info .video-content-actions button.custom-btn-action-my-list",
       "listed": ".icon-watchlist-remove",
       "image": "meta[property='og:image']"
+    },
+    "profiles": {
+      "root": "#profile-picker-react-app",
+      "title": "h1",
+      "row": "h1 + div",
+      "profile": ":scope > button",
+      "picture": "img",
+      "name": ":scope > span",
+      "add": "^Add Profile$",
+      "toggle": "h1 ~ button",
+      "done": "^Done$"
+    },
+    "profileForm": {
+      "add": {
+        "root": "#profile-picker-react-app",
+        "title": "h1",
+        "text": "h1 ~ p",
+        "picture": "button",
+        "image": "img",
+        "letter": ":scope > span",
+        "name": "input[aria-label='Profile name']",
+        "buttons": [
+          { "key": "cancel", "text": "^Cancel$", "label": "Cancel" },
+          { "key": "continue", "text": "^Continue$", "label": "Continue", "primary": true }
+        ]
+      },
+      "edit": {
+        "root": "[data-testid='settings-content-column'], .ProfileSettings-module__panel",
+        "title": "h2",
+        "text": "h2 + p",
+        "picture": "button[aria-label='Change profile picture'], [role='button'][aria-label='Change profile picture'], .ProfileSettings-module__avatar-wrapper",
+        "image": "img",
+        "letter": "span",
+        "name": "#profile-name",
+        "kid": "#profile-kid-mode, #child-mode, [role='switch']",
+        "status": "[data-sonner-toast], [role='status']",
+        "buttons": [
+          { "key": "save", "text": "^Save$", "label": "Save", "primary": true },
+          { "key": "cancel", "text": "^Cancel$", "label": "Cancel", "ask": true },
+          { "key": "delete", "text": "^Delete Profile$", "label": "Delete Profile", "danger": true, "ask": true }
+        ],
+        "dialog": "[role='dialog'], [role='alertdialog']",
+        "confirm": "^Delete( Profile)?$"
+      }
+    },
+    "welcome": {
+      "root": ".hero--container",
+      "logo": "h1.head-image img",
+      "title": "h2",
+      "text": "p.head-3",
+      "note": "To start a subscription, go to dropout.tv on a phone or a computer."
     }
   },
   "home": {

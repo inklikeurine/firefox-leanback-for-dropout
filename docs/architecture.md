@@ -33,27 +33,29 @@ scripts, and the background script relays between them.
 | File | Runs in | Owns |
 | --- | --- | --- |
 | `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; toolbar toggle and badge; `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
-| `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`). |
-| `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `send` (a reply that is always an object). |
-| `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on `storage.local` key `progress`. |
+| `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`); a row with `menu` is in a menu of its own (Accessibility), one with `look` previews as you move through its values. `PAGE_LOOKS`: Theme This Page's choices per kind of page. *Back On Home*'s default follows `development` until it is picked (`exitHookSet`). |
+| `lib/themes.js` | Page, player | [The look](#the-look-libthemesjs): themes, holiday looks by date, Accessibility's look; `apply()` writes it onto `<html>` (CSS properties, `data-tenfoot-*`), `applyPlayer()` the caption style and the video's colour filter in the player frame. |
+| `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `profileIndex` (the profile watching, from the page's `VHX.config.profile_index`), `send` (a reply that is always an object). |
+| `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on a profile's `storage.local` key, `progress:<profile>` (`keyFor`), and `claimLegacy`, which moves the history from before profiles (`progress`) to the first profile. |
 | `content/page.js` | Top frame of `watch.dropout.tv` | The page script: URL → page kind; keys → actions; focus, spatial navigation, ring, hints, load-more, dialogs, the two-step `<select>`, the settings panel, messages, life cycle. Its four parts below install into one shared context (`P`: its `state` and the functions the parts call), each calling the others through it. |
 | `content/page-back.js` | Top frame | [Back](#back-contentpage-backjs--navtrailjs) and every navigation the page script starts; the trail. |
 | `content/page-video.js` | Top frame | [An episode's page](#an-episodes-page): its details page or the video playing (`state.watch`), the hold on the player, the full window, the player hand-off, next/previous episode, the up-next offer, autoplay, media keys, the episode's details to the watch history. |
 | `content/page-live.js` | Top frame | [Dropout 24/7 in place](#dropout-247-in-place): a live stream's player read from its page and played over the page it was chosen on. |
 | `content/page-screens.js` | Top frame | Which [screen](#leanbacks-screens) a page gets; starting, stopping and redrawing it; moves on it; [the rail](#the-rail-navrailjs); the season a show opens on. |
 | `content/home.js` | Top frame: Home and hubs | [Home](#home-contenthomejs) read off Dropout's page: `readSite()`, `homeModel()`, `rowOverride()`. |
-| `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`); the readers for [collections, search](#collections-and-search) and [an episode's details page](#an-episodes-page). |
+| `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`); the readers for [collections, search](#collections-and-search), [an episode's details page](#an-episodes-page), the profile picker (`profilesModel`: one row of profile cards, each pressing Dropout's own button; Manage profiles the same row with *Add Profile* and *Done*) and the welcome (`welcomeModel`: a banner with Dropout's logo and four buttons). |
 | `content/show.js` | Top frame: one-word addresses | [A show's page](#a-shows-page-contentshowjs): show, special or list; `readDetail()`. |
-| `content/cards.js` | Top frame | The card every screen draws, `reconcile()` by key, readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
+| `content/cards.js` | Top frame | The card every screen draws (a link, or a button pressing one of Dropout's: `proxy`; a first letter when there is no picture: `initial`), `reconcile()` by key, readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
 | `content/player.js` | Every `embed.vhx.tv` frame (`all_frames: true`) | Registers (`player:hello`); finds the `<video>`; holds it behind the details page (`player:hold`); keys while the frame has focus; `player:command`; `player:state`, `player:ended`, progress reports; resume; `startMuted` once per video; **when** the transport bar is open and what Back means then. |
 | `content/transport.js` | Every `embed.vhx.tv` frame | Draws the [transport bar, title, up-next card and settings panel](#the-transport-bar-and-the-settings-panel); drives the `<video>`. Site-agnostic apart from the `player` rules it is handed. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | With *skip marketing site* on, `/` → `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Directional focus search, row-aware moves, focus memory. |
 | `nav/trail.js` | Top frame | The trail behind [Back](#back-contentpage-backjs--navtrailjs); `sessionStorage` only. |
-| `nav/rail.js` | Top frame | The [rail](#the-rail-navrailjs): its buttons, remembered position, current entry. `page.js` supplies the entries and their actions. |
-| `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). |
+| `nav/rail.js` | Top frame | The [rail](#the-rail-navrailjs): its buttons (one may show a picture: the profile watching, `start` set apart at the top), remembered position, current entry. `page.js` supplies the entries and their actions. |
+| `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). The ring is moved by transform, frame by frame: a 90 ms glide to where the target will end up once the zoom and the row's slide are over (`finalRect`), then held there. |
 | `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free. Styled by `content/panel.css`. |
-| `nav/settings-menu.js` | Top frame and player frame | Leanback's settings as a menu (`ROWS`, Clear Continue Watching, Turn Leanback Off): its levels and keys, `view()` for `nav/panel.js`. `page.js` and `transport.js` each draw it; the player's own menu levels are `transport.js`'s. |
+| `nav/settings-menu.js` | Top frame and player frame | Leanback's settings as a menu (`ROWS` under their groups, Theme This Page first under Look where the page has a look of its own, then Accessibility and Clear Continue Watching): its levels (top, a choice's values, a menu, Theme This Page and its values) and keys, `view()` for `nav/panel.js`, `preview(patch)` while moving through a look's values and `preview(null)` when it is left. `page.js` and `transport.js` each draw it; the player's own menu levels are `transport.js`'s. |
+| `nav/ask.js` | Top frame | A question in a box over the screen (Sign Out, Delete Profile): a title, a line, buttons, the safe one selected; `page.js` routes keys to it first while it is open (`askUser()`), Back answers with nothing. |
 | `nav/keymap.js` | Both content scripts | Keys → actions per context (page / player / typing). Pure. |
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
 | `sites/dropout.json` | Fetched by the background | [All Dropout knowledge](#sitesdropoutjson). |
@@ -74,7 +76,12 @@ What each key does on each: [keymap.md](./keymap.md).
 | `series` | `/<slug>[/season:N]`, not a hub | show or special: `show.js` + `screen.js`; list: `screen.js`. With the rail | show: the episode to watch next; special: *Watch Movie*; list: the first card | Dropout's page, geometric navigation; its season and sort `<select>`s are two-step controls |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (Dropout 24/7's stream) | `screen.js`: the [details page](#an-episodes-page), with the rail; the video playing in the full window | details: *Watch* (or *Resume*); playing: the player frame | no title to read: Dropout's page, playing at once; ▼ from the player → the series link, else the first focusable below |
 | `search` | `/search` | `screen.js`, with the rail | the search box | no Dropout search box: geometric navigation over Dropout's page |
-| `other` | login, account, legal | Dropout | none: the ring follows the page's focus | — (arrows move among `pages.other.focusable`) |
+| `welcome` | `/`, signed out (signed in: on to `/browse`) | `screen.js`: the welcome (`welcomeModel`), no rail | *Sign In* | no banner to read: Dropout's page, geometric navigation |
+| `profiles` | `/profile/pick`, or any address while the page holds `screen.profiles.root` | `screen.js`: the picker or Manage profiles (`profilesModel`; Sign Out, the Edit buttons), or the app's Add Profile (`profileFormModel`, `screen.profileForm.add`), with the rail; while the app shows a PIN, Dropout's | the profile watching (its Edit button, managing); Add Profile: the name box | Dropout's page, the ring over `pages.profiles.focusable` |
+| `signin` | `/login`, `/forgot_password` | Dropout's form, laid out for the TV (`[data-tenfoot-form]`, `pages.signin`) with Leanback's line and the policies under it | the email box | — |
+| `profileEdit` | `/settings/manage/profile` | `screen.js`: Edit Profile (`profileFormModel`, `screen.profileForm.edit`), with the rail; Delete Profile asks first (`deleteProfile()` in `page-screens.js`) | the name box | Dropout's form laid out for the TV (`pages.profileEdit`) |
+| `legal` | `/privacy`, `/tos`, `/cookies` | Dropout's words in Leanback's type (`[data-tenfoot-reading]`, `pages.legal`) | none: ▲ ▼ scroll | — |
+| `other` | account, help | Dropout | none: the ring follows the page's focus | — (arrows move among `pages.other.focusable`) |
 
 The search app changing the address as you type is not a new page: the
 screen is only redrawn.
@@ -171,7 +178,10 @@ Leanback's dark ground until `page.js` sets `html[data-tenfoot-ready]`: at
 the end of `setupPage()` (before the initial focus, which a hidden body
 cannot take), when Leanback is off, or when it fails to start. Failing that,
 a 3 s animation shows the page. A show's bare address moved on to its newest
-season never sets it, so Season 1 stays blank until the new page loads.
+season never sets it, so Season 1 stays blank until the new page loads. The
+cookie dialog's mount (`#lanyard_root`) stays visible meanwhile: Ketch starts
+its focus trap while the page is blank, and it throws when nothing in it can
+take the focus.
 
 A screen not ready when the page is set up (Home's rows come later) also sets
 `html[data-tenfoot-pending]`: `content/page.css` keeps `<body>` hidden under
@@ -235,7 +245,12 @@ as it is.
 **Showing it.** The layer shows only under
 `html[data-tenfoot="on"][data-tenfoot-home="on"]`, and not while a dialog is
 open (`data-tenfoot-modal`), so a cookie banner or trailer is never hidden
-behind it. `stampChrome()` stamps Dropout's top bar and footer
+behind it. Dropout's page moving the focus off the screen is taken back,
+at most four times in a row (`SCREEN_REFOCUS_LIMIT`; a focus trap answering
+inside that call, `refocus()`, does not reset the count), and never from a
+dialog: the focus landing in one before the debounced check has seen it
+open makes it the dialog (`syncModal()`) at once, so the cookie banner's
+focus trap is never fought. `stampChrome()` stamps Dropout's top bar and footer
 (`common.chrome`) `data-tenfoot-chrome`, which `page.css` hides, on every
 page kind but `other`.
 
@@ -264,7 +279,7 @@ card. A section may drop its cards' badges (`badges: false`).
 
 **Progress on cards**: the item's own `fraction` when the reader gave one (a
 show's episodes, already merged), else the watch history's, else Dropout's
-bar. Dropout's bars on screen go to the background as `history:observe`
+bar — none for a video whose progress was cleared (`clearedOf()`). Dropout's bars on screen go to the background as `history:observe`
 whenever their values change. `watched` adds a tick and dims the picture; an
 item's `watch` is stamped `data-tenfoot-watch` on its card.
 
@@ -351,7 +366,9 @@ Dropout's page with the `browse` rules.
 banner: picture, title, meta, description, buttons); a `field` (a search box:
 its words, the site's box it types into); `pills` (a row of choices: seasons,
 search's filters); `sections` (groups of cards: title, count, columns);
-`empty` (what to say with no cards); `more` (Dropout's *Load More*);
+`empty` (what to say with no cards: search's own words, or an empty list's
+line — the screen is then ready with no rows, and the selection goes to the
+rail); `more` (Dropout's *Load More*);
 `loadAll` (press *Load More* on every redraw until it is gone); `start` (the
 key the selection starts on, else the first card).
 
@@ -477,7 +494,9 @@ shown as "·"), the synopsis, and the buttons — *Watch* (`run: "watch"`), or
 `TenfootHistory.resumePoint()` has a point, the same the player resumes from;
 *Add to My List* / *Remove from My List* (`proxy`: Dropout's own button, the
 label from its `listed` class); *Episodes* (the season link, else the show
-link). The first button keeps the key `watch` whatever it says, so the
+link); *Clear Progress* (`run: "clear"`) when `progressOf()` has anything for
+it. That one sends `history:forget` (`page-video.js` `clearProgress`), then
+redraws the page from the history as cleared and selects *Watch*. The first button keeps the key `watch` whatever it says, so the
 selection stays on it when *Watch* becomes *Resume*. The hero has a
 `picture` in place of a banner image: `og:image` (rule `image`), else the
 history's picture, with the progress bar and "15:00 left" drawn as a card
@@ -558,6 +577,65 @@ the selection back on the screen (*Watch*). Leanback turned off, or the
 page changing, closes it too. No player address to read: the link is
 followed (`go()`), the stream's own page as before.
 
+### Profiles and their forms
+
+`profilesModel()` is the picker: the profiles, then *Manage Profiles*
+(Dropout's button, `proxy`) and *Sign Out* (`run`, Leanback's own: a card
+with a function runs it). Managing, each profile's item has `button:
+"Edit"`: `cards.js` puts that button under the card's name, and
+`buildRows()` makes the section's buttons a row of their own under its
+cards (`buttons: true`, keys `<card>:button`); ▼ and ▲ go straight between
+a card and its button, and a card without one goes nowhere. The section
+has `wrap`, so ▶ at the end of a row goes to its start. Managing, a
+profile's card also has a `run` (`editPicture` in `page-screens.js`): OK on
+the picture reads the account's profiles and the site's pictures from
+Dropout's API (`rules.profileApi`, through `profileApi()`: the page's
+`VHX.config.api_v2_url`, its `TOKEN` as a bearer, `_current_site.id`,
+`_current_user.id`, and the page's own `fetch`), opens `nav/ask.js`'s
+picture box (`createPicker`, `pickPicture()`) with the profile's own
+selected, and `PATCH`es the one picked (`{profile: {name,
+profile_image_id}}`), then opens `profileApi.after` (Manage profiles
+again). Without the API on the page it presses Dropout's button instead.
+The button under the card always presses Dropout's button alone. On Edit
+Profile, *Cancel* asks first when Dropout's *Save* is lit
+(`cancelProfile()`), and `onBeforeUnload` — on the window, in the capture
+phase, so before the page's own listener — keeps Dropout's
+`beforeunload` from Firefox there. `profileFormModel()` reads Add Profile (in the
+picker's app, `#/add`) and Edit Profile (`/settings/manage/profile`, Dropout's
+settings app) by `screen.profileForm`: the picture as one avatar card, the
+name as the screen's text box (typed into Dropout's, as search is), the
+buttons as the hero's actions in the rules' order, Dropout's greyed-out ones
+dimmed (`aria-disabled`); `rowOrder` puts the rows top to bottom as picture,
+name, buttons, and `showHead` keeps the title over them. A page whose
+address changes inside the app (`#/add`) keeps its screen and draws it
+afresh. *Sign Out* and *Delete Profile* ask in `nav/ask.js`'s box first.
+Dropout's picture chooser stays Dropout's dialog — its focus trap would
+fight a screen of Leanback's — restyled over Leanback's screen (`home.css`,
+the `profiles` and `profileEdit` kinds keep their screen under a dialog).
+
+## The look (`lib/themes.js`)
+
+`Themes.apply(root, settings, date)` runs on every page set-up, every
+settings change and every preview: the theme's colours as `--tf-*`
+properties (`home.css` `:root` has Dropout Dark's), the accent as
+`--tenfoot-accent` and `--tenfoot-ring-color` (the holiday's when one is on,
+else Theme Color), `--tf-scale` (Interface Size; `--tf-u` is multiplied by
+it), `--tf-glow` / `--tf-glow2` for a holiday's glow, and
+`data-tenfoot-theme`, `-holiday`, `-contrast`, `-motion` for the rules that
+need more than a colour. Every colour in the stylesheets that was Dropout's
+yellow or one of the dark greys reads these properties. Theme This Page is
+`data-tenfoot-look-banner`, `-cards` and `-picture`, written for the kind of
+page on screen (`lookKey()`); Home's reader drops the banner for `off`, and
+a standard grid takes its columns from `-cards` (`createScreen({columns})`).
+A change of these redraws the screen, and `slideLayout()` animates each
+card, the banner and the picture from its old box to its new one (Web
+Animations, `transform` only). A preview (`state.preview`) is laid over the
+saved settings until it is picked or left. In the player frame,
+`applyPlayer()` sets `data-tenfoot-caption-*` (`player.css` sizes the
+caption window by `zoom`, colours it and its box over the player's own) and
+`data-tenfoot-filter`, with the SVG `feColorMatrix` filters added to the
+frame once; the video's CSS `filter` names one.
+
 ## The rail (`nav/rail.js`)
 
 A `<nav>` of buttons appended to `<html>`: Search, Home, Browse, the site's
@@ -595,6 +673,16 @@ fresh local one; a value that **changes** is dated now (another device played
 it). Watched: 95 % or under 90 s left. In progress: more than 60 s played. At
 most 500 entries; the least recently touched go first.
 
+Each Dropout profile has its own history, under `progress:<profile>` (0 for
+the first; `History.keyFor`). The page reads its profile from the page's
+`VHX.config.profile_index` (`Common.profileIndex`) and says so first
+(`profile:current`); the background keeps tab → profile in storage.session
+(`profiles`, beside the player registry) and files every write from that
+tab under it, the player frame's included. The player frame asks for its
+tab's (`profile:get`) to resume. The history from before profiles
+(`progress`) moves to the first profile that says it is watching
+(`History.claimLegacy`).
+
 Every write goes through the background, one change at a time (read → apply →
 save), so reports arriving together never overwrite each other:
 
@@ -603,6 +691,7 @@ save), so reports arriving together never overwrite each other:
 | `player.js` | pause, seeked, ended, the frame losing focus or being hidden, every 15 s of `timeupdate` while playing. Never for a trailer or a live stream; a report under 5 s never replaces a stored position | `history:progress` |
 | `page.js` | once per episode page: address, title, show name, picture; show, season and episode from the season link ("Season 2, Episode 1", `video.episodeInfo`), else show and season from `og:url` (`video.canonical`) | `history:meta` |
 | a screen, through `page.js` | Dropout's bars on screen, when their values change | `history:observe` |
+| an episode's details page | *Clear Progress*: that video's Leanback reading goes and the entry gets its own `clearedAt`; no reading of it from before then counts, Dropout's bar included (kept, so the same bar seen again is not new) | `history:forget` |
 | a settings panel, the options page | *Clear Continue Watching* (asked twice): watched videos are kept whole; of the rest, Leanback's readings and episode-page details go, Dropout's bars stay (still shown on cards), and `clearedAt` is set: nothing unfinished read before it shows in Continue Watching or resumes | `history:clear` |
 
 **Resume.** When the player finds its `<video>` it looks up `resumePoint()`.
@@ -617,7 +706,14 @@ tops the playback panel until used.
 - The ring is one `position: fixed` `<div>` appended to `<html>` (beyond the
   site's CSS resets in `<body>`), `pointer-events: none`, very high
   `z-index`, moved to the target's `getBoundingClientRect()` on `focusin`,
-  `scroll` (capture) and `resize`, at most once per animation frame.
+  `scroll` (capture) and `resize`, at most once per animation frame. It is
+  placed by `transform` (no CSS transition): on a new target it glides over
+  90 ms (ease-out, none under reduced motion) from where it was drawn to
+  `finalRect()` — the target's box at its full zoom, with every ancestor
+  that carries an inline `translate…` (the rows Leanback slides) taken to
+  where its transition ends. So the ring goes once to where the selection
+  stops and stays while the row slides under it; for 600 ms after a move it
+  keeps re-measuring, for a page that scrolls smoothly.
 - It sits `width + 2` px outside the target, its corner radius the target's
   computed `border-top-left-radius` (enlarged by the zoom) plus that offset,
   so the curves run parallel. Style: `--tenfoot-ring-color` (`#feea3b`),
@@ -689,10 +785,10 @@ card appears. An empty end screen (Vimeo's outro) is no offer.
 
 **The settings panel** opens from the bar's gear, or the options button
 during playback, drawn by `nav/panel.js`. It pauses the picture and holds a
-stack of levels: the top (*Start Over* after a resume, Quality, Speed, Play
-Next Episode, Closed Captions, Caption Style, Leanback Settings), Leanback's
-settings (`ROWS`, Clear Continue Watching, Turn Leanback Off), a setting's
-values, or any depth of the player's menu.
+stack of levels: the top (*Playback Settings*: Play Next Episode, Quality,
+Speed, Closed Captions, Caption Style, Leanback Settings, under their
+groups), Leanback's settings (`ROWS` less `panel: false`, Clear Continue
+Watching), a setting's values, or any depth of the player's menu.
 
 - **Closed Captions** is a switch: `toggleCaptions()` opens the player's
   captions entry, clicks *Off* or its first other option, and re-reads the
@@ -840,7 +936,10 @@ error in the parent process.
 | `history:progress` | player → bg | `{key, url, title, position, duration, ended, next}` | where the video is; `next` is Dropout's up-next `{url, title}`, or null |
 | `history:meta` | page → bg | `{key, url, title, series, image, show?, season?, episode?}` | what the episode page knows |
 | `history:observe` | page → bg | `{items: [{key, url, percent, duration, title, image}]}` | Dropout's progress bars on screen |
-| `history:clear` | page / options → bg | — | *Clear Continue Watching* |
+| `history:forget` | page → bg | `{key}` | *Clear Progress* on one video's details page: the tab's profile |
+| `history:clear` | page / options → bg | — | *Clear Continue Watching*: the tab's profile; from the options page, every profile |
+| `profile:current` | page → bg | `{profile}` | the profile watching in this tab (`profile_index`); reply `{ok, profile, claimed}`, `claimed` when the history from before profiles moved to it |
+| `profile:get` | player → bg | — | reply `{ok, profile}`: the profile watching in the frame's tab (0 until the page has said) |
 | `exit` | page → bg | — | exit hook; the reply says whether the tab was closed |
 
 No `settings:changed` broadcast and no `toggle` message: every context
@@ -888,9 +987,13 @@ The only file that knows Dropout. Which selectors are verified:
 
 | Key | Holds |
 | --- | --- |
-| `routes` | URL → page kind, first match wins: `video` before the `series` catch-all, which stays last; `other` routes catch account and legal paths that would look like a series slug |
+| `routes` | URL → page kind, first match wins: `welcome` (`/`) first, `video` before the `series` catch-all, which stays last; `other` routes catch account and help paths that would look like a series slug |
+| `redirects` | `{path, to}`: an address that goes on to another, in its place in the history (Dropout 24/7's stream at `/events/dropout-24-7` → `/dropout-24-7`) |
 | `browseUrl`, `gridUrl`, `searchUrl` | where the rail's own entries go |
-| `common` | the header, Dropout's `chrome`, loose `focusable`s, `modals`, `modalClose`, the hover tooltips (`hoverSuppress`) |
+| `signinUrl`, `welcomeUrl` | the sign-in page (the rail's *Sign in*, the welcome's *Sign In*); the welcome, where a signed-out tab's first Home goes |
+| `signout` | `url` (Dropout's `/logout`) and `token` (the page's `csrf-token` meta): what *Sign Out* sends |
+| `legal` | `{label, url}`: the policies offered on the welcome and under the sign-in form |
+| `common` | `cookiePreferences` (*Cookie Preferences*: `call` and `hint` for the page's `ketch()` — `showConsent` with the modal, as Dropout's "Data Preferences" does; `showPreferences` opens Ketch's full-page centre instead — else Dropout's link by `selector` or `text`), `hidden` (never shown while Leanback is on: the promotion bar, with the hover tooltips of `hoverSuppress`, in one `<style>`), the header, Dropout's `chrome`, loose `focusable`s, `modals`, `modalStart` (where the selection starts in a dialog: the picture chosen now in a picture chooser, else its first; the cookie dialog's *Accept All*), `modalClose`, the hover tooltips (`hoverSuppress`), `signedOut` |
 | `pages.<kind>` | `rows`/`rowItem` (row-wise moves; `scrollNext`/`scrollPrev` on `browse`), `tile`/`target` (one focus per tile), `focusable`, `loadMore`, `initialFocus` (a list; the first match in page order wins) |
 | `pages.series` | also `episodeLinks` (next/previous order) and `show`, what `show.js` reads: `layouts`, the season control and the episode count, the episode section and a tile's parts, the header and its buttons, a special's movie and *Extras*, *Load More* |
 | `pages.video` | `theaterRoot`, `playerMount`, `playerFrame`, `theaterHide`, `upNextOverlay`, `seriesLink`, `live` (Dropout 24/7's stream); for the history `videoTitle`, `videoImage`, `episodeInfo`, `canonical` |
@@ -898,7 +1001,9 @@ The only file that knows Dropout. Which selectors are verified:
 | `home` | what Home reads: `root`, a slide, a row and a tile with their parts, `rowPageSize`, `showMore`, `rowOverrides`, `rowTitleOverrides` |
 | `live` | `path` (a live stream's page: Dropout 24/7's), `player` (its player frame on that page), `title` |
 | `rail` | `kinds` (the page kinds with the rail), `links` (id, label, icon, url) |
-| `screen` | what `screen.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` an episode's details page (title, show, season line, description, My List, its picture) |
+| `screen` | what `screen.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` an episode's details page (title, show, season line, description, My List, its picture); `screen.profiles` the picker (its root, title, row, a profile's parts, *Add Profile*, the Manage / Done button and the word that says Manage profiles is on); `screen.welcome` the front page's banner (logo, line, words) and the line Leanback adds; `screen.profileForm.add` / `.edit` a profile's form (root, title, line, picture and its image or letter, name box, Kid Profile, the buttons in Leanback's order — `text` the pattern of Dropout's button, `ask` for one Leanback asks about first — Dropout's toast, its dialog and its confirm button) |
+| `pages.signin`, `pages.profileEdit` | a form laid out for the TV: its `box`, `focusable`, `initialFocus`, `hide` (what has no use on a TV), and on sign-in `nextStep` (the password box, focused when Dropout shows it) |
+| `pages.legal` | a policy: its words (`content`) and what goes (`hide`) |
 
 Two rules the file has to keep:
 

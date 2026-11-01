@@ -1,6 +1,6 @@
 // Leanback for Dropout — the icon rail down the left edge. Site-agnostic: the
-// caller hands it the entries (id, label, icon) and says which one is the
-// current page. The rail is its own focus region: ◀ from the left edge of the
+// caller hands it the entries (id, label, icon, or a picture: the profile
+// watching) and says which one is the current page. The rail is its own focus region: ◀ from the left edge of the
 // content enters it, ▲ ▼ move inside it without wrapping, and ▶ or back
 // return to where the selection came from — the caller keeps that end.
 //
@@ -21,6 +21,7 @@
       "M4.5 14h4a1.5 1.5 0 0 1 1.5 1.5v4A1.5 1.5 0 0 1 8.5 21h-4A1.5 1.5 0 0 1 3 19.5v-4A1.5 1.5 0 0 1 4.5 14z",
       "M15.5 14h4a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5v-4a1.5 1.5 0 0 1 1.5-1.5z"],
     bookmark: ["M6.5 3h11A1.5 1.5 0 0 1 19 4.5V21l-7-5-7 5V4.5A1.5 1.5 0 0 1 6.5 3z"],
+    person: ["M12 4a4 4 0 1 0 0 8a4 4 0 1 0 0-8z", "M4.5 20.5c.6-3.6 3.7-6 7.5-6s6.9 2.4 7.5 6"],
     tv: ["M4.5 7h15A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-10A1.5 1.5 0 0 1 4.5 7z", "M8 3l4 4 4-4"],
     gear: ["M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z",
       "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"]
@@ -45,9 +46,11 @@
 
   /**
    * @param {Document} doc
-   * @param {{id: string, label: string, icon: string, end?: boolean}[]} entries
-   *   `end: true` pushes the entry to the foot of the rail (the gear). Icons:
-   *   search, home, grid, bookmark, tv, gear.
+   * @param {{id: string, label: string, icon: string, start?: boolean, end?: boolean, picture?: string}[]} entries
+   *   `start: true` sets the entry apart at the top (the profile), `end: true`
+   *   pushes it to the foot (the gear). `picture`: an image in place of the
+   *   icon, which stays for when there is none. Icons: search, home, grid,
+   *   bookmark, tv, gear, person.
    * @param {{onActivate: (id: string) => void}} handlers
    */
   function createRail(doc, entries, handlers) {
@@ -67,8 +70,10 @@
       b.dataset.tenfootRail = it.id;
       b.setAttribute("aria-label", it.label);
       b.title = it.label;
+      if (it.start) b.dataset.tenfootStart = "true";
       if (it.end) b.dataset.tenfootEnd = "true";
       b.appendChild(icon(doc, it.icon));
+      setPicture(b, it.picture);
       b.addEventListener("click", (e) => {
         // The site never sees this click; its handlers would move the focus.
         e.preventDefault();
@@ -119,12 +124,33 @@
 
     return Object.freeze({
       show, setCurrent, move, select, destroy, element: nav,
+      setPicture: (id, url) => setPicture(items.find((b) => b.dataset.tenfootRail === id) || null, url),
       get current() { return element(index); },
       get currentId() { const el = element(index); return el ? el.dataset.tenfootRail : null; },
       get visible() { return !nav.hidden; },
       contains: (el) => nav.contains(el),
       item: (id) => items.find((b) => b.dataset.tenfootRail === id) || null
     });
+  }
+
+  // An entry's picture (the profile's), over its icon; none: the icon.
+  function setPicture(b, url) {
+    if (!b) return;
+    let img = b.querySelector("img");
+    const src = typeof url === "string" && /^https:\/\//.test(url) ? url : "";
+    if (!src) {
+      if (img) img.remove();
+      delete b.dataset.tenfootPicture;
+      return;
+    }
+    if (!img) {
+      img = b.ownerDocument.createElement("img");
+      img.alt = "";
+      img.className = "tenfoot-rail-picture";
+      b.appendChild(img);
+    }
+    if (img.getAttribute("src") !== src) img.setAttribute("src", src);
+    b.dataset.tenfootPicture = "true";
   }
 
   globalThis.TenfootRail = Object.freeze({ createRail, RAIL_CLASS, ITEM_CLASS });

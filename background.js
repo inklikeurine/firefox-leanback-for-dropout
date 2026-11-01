@@ -1,7 +1,8 @@
 /* global browser, chrome */
 // Leanback for Dropout — background (event page, persistent: false).
-// Serves the site rules file, keeps a per-tab registry of the player frame
-// (in storage.session, so it survives the event page unloading), relays
+// Serves the site rules file, keeps per-tab registries of the player frame and
+// of the profile watching (in storage.session, so they survive the event page
+// unloading), relays
 // messages page ⇄ player, owns the toolbar toggle and its badge, the
 // keyboard command and the exit hook, and is the only writer of the watch
 // history (lib/history.js). Every message gets a reply.
@@ -10,22 +11,24 @@ const API = typeof browser !== "undefined" ? browser : chrome;
 const LOG = "[leanback-for-dropout]";
 const RULES_URL = "sites/dropout.json";
 const REGISTRY_KEY = "players";
+const PROFILES_KEY = "profiles";
 const Settings = globalThis.TenfootSettings;
 const History = globalThis.TenfootHistory;
 
 let rulesCache = null;
-const memoryRegistry = new Map(); // fallback when storage.session is unavailable
+const memoryRegistries = new Map(); // key → Map: the fallback when storage.session is unavailable
 
 // --- watch history: one writer, one write at a time ------------------------
 // The page and the player frame both report; each change is read, applied and
 // saved before the next starts, so two reports can never overwrite each other.
+// Each goes to the history of the profile watching in that tab.
 let historyQueue = Promise.resolve();
 
-function updateHistory(change) {
+function updateHistory(profile, change) {
   const run = historyQueue.then(async () => {
-    const before = await History.load(API);
+    const before = await History.load(API, profile);
     const after = change(before);
-    if (after !== before) await History.save(API, after);
+    if (after !== before) await History.save(API, after, profile);
     return after;
   });
   historyQueue = run.catch((err) => console.warn(LOG, "watch history write failed:", err && err.message));
@@ -43,36 +46,79 @@ async function loadRules() {
   return rules;
 }
 
-// --- registry: tabId → frameId of the player frame -------------------------
+// --- registries: tabId → frameId of the player frame, tabId → profile -------
 
 function sessionStore() {
   return API.storage && API.storage.session ? API.storage.session : null;
 }
 
-async function getRegistry() {
+function memoryOf(key) {
+  if (!memoryRegistries.has(key)) memoryRegistries.set(key, new Map());
+  return memoryRegistries.get(key);
+}
+
+async function getRegistry(key = REGISTRY_KEY) {
   const s = sessionStore();
-  if (!s) return Object.fromEntries(memoryRegistry);
+  if (!s) return Object.fromEntries(memoryOf(key));
   let data;
   try {
-    data = await s.get(REGISTRY_KEY);
+    data = await s.get(key);
   } catch (err) {
     console.warn(LOG, "session storage read failed:", err && err.message);
-    return Object.fromEntries(memoryRegistry);
+    return Object.fromEntries(memoryOf(key));
   }
-  const reg = data && data[REGISTRY_KEY];
+  const reg = data && data[key];
   return reg && typeof reg === "object" ? reg : {};
 }
 
-async function saveRegistry(reg) {
-  memoryRegistry.clear();
-  for (const [k, v] of Object.entries(reg)) memoryRegistry.set(k, v);
+async function saveRegistry(reg, key = REGISTRY_KEY) {
+  const mem = memoryOf(key);
+  mem.clear();
+  for (const [k, v] of Object.entries(reg)) mem.set(k, v);
   const s = sessionStore();
   if (!s) return;
   try {
-    await s.set({ [REGISTRY_KEY]: reg });
+    await s.set({ [key]: reg });
   } catch (err) {
     console.warn(LOG, "session storage write failed:", err && err.message);
   }
+}
+
+// The profile watching in a tab, as its page last said (profile:current); 0,
+// the first profile, until it has.
+async function setTabProfile(tabId, profile) {
+  const reg = await getRegistry(PROFILES_KEY);
+  reg[String(tabId)] = profile;
+  await saveRegistry(reg, PROFILES_KEY);
+}
+
+async function profileOfTab(tabId) {
+  if (tabId === null) return 0;
+  const reg = await getRegistry(PROFILES_KEY);
+  const p = reg[String(tabId)];
+  return Number.isInteger(p) && p >= 0 ? p : 0;
+}
+
+// Every profile with a history of its own (0 always).
+async function historyProfiles() {
+  const found = new Set([0]);
+  try {
+    const all = await API.storage.local.get(null);
+    for (const k of Object.keys(all || {})) {
+      const m = new RegExp(`^${History.STORAGE_KEY}:(\\d+)$`).exec(k);
+      if (m) found.add(Number(m[1]));
+    }
+  } catch (err) {
+    console.warn(LOG, "watch history list failed:", err && err.message);
+  }
+  return [...found];
+}
+
+async function forgetTabProfile(tabId) {
+  const reg = await getRegistry(PROFILES_KEY);
+  if (!(String(tabId) in reg)) return;
+  delete reg[String(tabId)];
+  await saveRegistry(reg, PROFILES_KEY);
 }
 
 async function setPlayerFrame(tabId, frameId) {
@@ -173,18 +219,42 @@ async function handleMessage(message, sender) {
     case "player:back":
     case "player:settings":
       return fromTab() || relayToPlayer(tabId, message);
+    case "profile:current": {
+      // The page says which profile is watching; the first to say so gets the
+      // history from before profiles.
+      if (tabId === null) return { ok: false, error: "Not sent from a tab" };
+      const n = Number(message.profile);
+      const profile = Number.isInteger(n) && n >= 0 && n < 1000 ? n : 0;
+      await setTabProfile(tabId, profile);
+      const claimed = await History.claimLegacy(API, profile);
+      return { ok: true, profile, claimed };
+    }
+    case "profile:get":
+      return { ok: true, profile: await profileOfTab(tabId) };
     case "history:progress":
-      await updateHistory((s) => History.applyProgress(s, message, Date.now()));
+      await updateHistory(await profileOfTab(tabId), (s) => History.applyProgress(s, message, Date.now()));
       return { ok: true };
     case "history:meta":
-      await updateHistory((s) => History.applyMeta(s, message));
+      await updateHistory(await profileOfTab(tabId), (s) => History.applyMeta(s, message));
       return { ok: true };
     case "history:observe":
-      await updateHistory((s) => History.applyObservations(s, message.items, Date.now()));
+      await updateHistory(await profileOfTab(tabId), (s) => History.applyObservations(s, message.items, Date.now()));
       return { ok: true };
-    case "history:clear":
-      await updateHistory((s) => History.forget(s, Date.now()));
+    case "history:forget": {
+      // Clear Progress on one video's details page: the tab's profile.
+      if (tabId === null) return { ok: false, error: "Not sent from a tab" };
+      const key = History.keyOf(`/videos/${message.key}`);
+      if (!key || key !== message.key) return { ok: false, error: "Not a video" };
+      await updateHistory(await profileOfTab(tabId), (s) => History.forgetOne(s, key, Date.now()));
       return { ok: true };
+    }
+    case "history:clear": {
+      // From a tab: its profile's. From the options page, which is in no
+      // tab: every profile's.
+      const all = tabId !== null ? [await profileOfTab(tabId)] : await historyProfiles();
+      for (const profile of all) await updateHistory(profile, (s) => History.forget(s, Date.now()));
+      return { ok: true };
+    }
     case "player:state":
     case "player:ended":
     case "player:resumed":
@@ -223,8 +293,23 @@ API.storage.onChanged.addListener((changes, area) => {
 
 API.tabs.onRemoved.addListener((tabId) => {
   forgetPlayerFrame(tabId).catch(() => { /* nothing to forget */ });
+  forgetTabProfile(tabId).catch(() => { /* nothing to forget */ });
 });
+
+// How Leanback was installed: from its folder (about:debugging) or signed.
+// Back On Home's default follows it (lib/settings.js).
+async function noteInstallType() {
+  try {
+    const info = await API.management.getSelf();
+    const development = Boolean(info && info.installType === "development");
+    const s = await Settings.load(API);
+    if (s.development !== development) await Settings.save(API, { development });
+  } catch (err) {
+    console.warn(LOG, "install type unknown:", err && err.message);
+  }
+}
 
 API.runtime.onInstalled.addListener(() => { updateBadge(); });
 API.runtime.onStartup.addListener(() => { updateBadge(); });
 updateBadge();
+noteInstallType();

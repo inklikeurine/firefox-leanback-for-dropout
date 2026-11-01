@@ -3,10 +3,10 @@
 // Leanback's settings are drawn the same way wherever they open. Site-agnostic
 // and logic-free: the owner hands it a level to show and decides what keys do.
 //
-//   ┌ Title ─────────────── ✕ ┐   the ✕ is a picture: Back closes
+//   ┌ Title ──────────────────┐
+//   │ GROUP                   │   a heading over a group of entries
 //   │ Label            value ›│   a choice or a submenu: its value, a chevron
 //   │ Label               (●)│   on/off: a switch
-//   │ GROUP                   │   a heading over a group of options
 //   │ Label                 ✓ │   an option: ticked when chosen
 //   ├─────────────────────────┤
 //   │ ◀ Back  ▲▼ Move  OK Change
@@ -21,8 +21,7 @@
   const SLIDE_MS = 250;
   const ICONS = {
     check: "M5 13l4 4L19 7",
-    chevron: "M9 6l6 6-6 6",
-    close: "M6 6l12 12M18 6L6 18"
+    chevron: "M9 6l6 6-6 6"
   };
 
   function icon(doc, name) {
@@ -61,11 +60,7 @@
     head.className = "tenfoot-settings-head";
     const title = doc.createElement("div");
     title.className = "tenfoot-settings-title";
-    const close = doc.createElement("span");
-    close.className = "tenfoot-settings-close";
-    close.setAttribute("aria-hidden", "true");
-    close.appendChild(icon(doc, "close"));
-    head.append(title, close);
+    head.append(title);
 
     const list = doc.createElement("div");
     list.className = "tenfoot-settings-list";
@@ -140,7 +135,8 @@
           mark.appendChild(sw);
         } else if (entry.checked) mark.appendChild(icon(doc, "check"));
         else if (kind === "choice" || kind === "drill") mark.appendChild(icon(doc, "chevron"));
-        // The name with its value under it, then the switch, chevron or tick.
+        // The name, its value at the end of the line, then the switch,
+        // chevron or tick.
         const text = doc.createElement("span");
         text.className = "tenfoot-settings-text";
         text.append(label, value);

@@ -16,7 +16,17 @@
   // a choice.
   function buildRows() {
     const box = $("rows");
+    let group = "";
     for (const row of Settings.ROWS) {
+      // Under its group's heading, as in the panel; Accessibility's own.
+      const heading = row.menu ? `Accessibility: ${row.group}` : row.group;
+      if (heading && heading !== group) {
+        const h = document.createElement("h3");
+        h.className = "group";
+        h.textContent = heading;
+        box.appendChild(h);
+        group = heading;
+      }
       const line = document.createElement(row.kind === "toggle" ? "label" : "div");
       line.className = "row";
       if (row.kind === "toggle") {
@@ -100,7 +110,10 @@
 
   async function reset() {
     try {
-      const s = await Settings.save(API, Settings.DEFAULTS);
+      // Back On Home goes back to following how Leanback was installed.
+      const patch = Object.assign({}, Settings.DEFAULTS, { exitHookSet: false, pageLooks: {} });
+      delete patch.exitHook;
+      const s = await Settings.save(API, patch);
       render(s);
       say("Defaults restored");
     } catch (err) {

@@ -10,16 +10,19 @@
   --tenfoot-text: #ffffff;
 }
 
-/* The ring: one fixed element over the focused target. */
+/* The ring: one fixed element over the focused target. nav/focus-ring.js
+   moves it by transform, frame by frame, so it has no transition of its own. */
 .tenfoot-ring {
   position: fixed;
+  left: 0;
+  top: 0;
   box-sizing: border-box;
   pointer-events: none;
   z-index: 2147483647;
   border: var(--tenfoot-ring-width) solid var(--tenfoot-ring-color);
   border-radius: 8px; /* until nav/focus-ring.js matches it to the target's */
   box-shadow: 0 0 0 2px var(--tenfoot-edge), inset 0 0 0 2px var(--tenfoot-edge);
-  transition: left 150ms ease-out, top 150ms ease-out, width 150ms ease-out, height 150ms ease-out, border-radius 150ms ease-out;
+  will-change: transform;
   margin: 0;
   padding: 0;
 }
@@ -30,7 +33,7 @@
 /* The focused target grows a little, by --tenfoot-zoom percent. */
 .tenfoot-scaled {
   transform: scale(calc(1 + var(--tenfoot-zoom, 5) / 100)) !important;
-  transition: transform 150ms ease-out !important;
+  transition: transform 120ms ease-out !important;
   z-index: 2 !important;
 }
 
@@ -74,7 +77,7 @@
   padding: 2px 10px;
   border-radius: 8px;
   background: var(--tenfoot-ring-color);
-  color: #0b0c10;
+  color: var(--tf-bg, #0b0c10);
   font: inherit;
   font-weight: 700;
   text-align: center;
@@ -140,7 +143,7 @@ html.tenfoot-inplace-on body {
    page.js lifts this as soon as the screen is up, or gives up on it. A video
    playing in the full window shows meanwhile. */
 html[data-tenfoot="on"][data-tenfoot-pending] {
-  background-color: #0b0c10 !important;
+  background-color: var(--tf-bg, #0b0c10) !important;
 }
 html[data-tenfoot="on"][data-tenfoot-pending] body {
   visibility: hidden !important;
@@ -150,9 +153,260 @@ html.tenfoot-theater[data-tenfoot="on"][data-tenfoot-pending] [data-tenfoot-thea
 }
 
 /* Dropout's own top bar and footer (rules: common.chrome), on every page but
-   sign-in, account, help and legal: the rail and Back do their jobs. */
+   account and help: the rail and Back do their jobs. */
 html[data-tenfoot="on"] [data-tenfoot-chrome] {
   display: none !important;
+}
+
+/* What has no use on a TV (rules: pages.<kind>.hide): the sign-in by
+   emailed link, Dropout's picture behind the sign-in, the settings' side
+   menu around Edit Profile. */
+html[data-tenfoot="on"] [data-tenfoot-gone] {
+  display: none !important;
+}
+
+/* A form of Dropout's laid out for the TV (content/page.js stamps its box
+   from the rules: pages.<kind>.box): sign-in, the password reset, Edit
+   Profile. Leanback's dark ground; the box one of Leanback's cards in the
+   middle of the screen, its words in Leanback's type, the fields large and
+   dark, the button that goes on yellow, the others outlined. Sizes are in
+   --tf-u (content/home.css), with pixel minimums. Dropout's form, its
+   steps and its checks are untouched; its colours, which reach every
+   button and link, are held off. */
+html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="profileEdit"]),
+html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="profileEdit"]) body {
+  background: var(--tf-bg, #0b0c10) !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  z-index: 1;
+  box-sizing: border-box !important;
+  width: min(92vw, max(440px, calc(var(--tf-u) * 900))) !important;
+  max-height: 96vh;
+  overflow-y: auto;
+  margin: 0 !important;
+  padding: max(28px, calc(var(--tf-u) * 64)) max(28px, calc(var(--tf-u) * 72)) max(24px, calc(var(--tf-u) * 48)) !important;
+  transform: translate(-50%, -50%);
+  border: 1px solid #262a33 !important;
+  border-radius: max(14px, calc(var(--tf-u) * 24)) !important;
+  background: var(--tf-surface, #15171c) !important;
+  box-shadow: 0 calc(var(--tf-u) * 32) calc(var(--tf-u) * 80) rgba(0, 0, 0, 0.6);
+  color: #f5f6f7 !important;
+  scrollbar-width: none;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] * {
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif !important;
+  letter-spacing: normal;
+  text-shadow: none !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] :is(form, section, div, p) {
+  background: transparent !important;
+  color: #d7dae0 !important;
+  max-width: none !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] :is(h1, h2) {
+  margin: 0 0 max(14px, calc(var(--tf-u) * 28)) !important;
+  color: #ffffff !important;
+  font-size: max(26px, calc(var(--tf-u) * 56)) !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  text-align: left !important;
+}
+/* The site's name over the sign-in, as the kicker over a show's title. */
+html[data-tenfoot="on"] [data-tenfoot-form] h1.site-title {
+  margin-bottom: max(8px, calc(var(--tf-u) * 12)) !important;
+  font-size: max(13px, calc(var(--tf-u) * 20)) !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] h1.site-title a {
+  color: var(--tenfoot-accent, #feea3b) !important;
+  font-size: inherit !important;
+  letter-spacing: inherit !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] :is(label, span) {
+  color: #9aa0ac !important;
+  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
+  font-weight: 700 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] :is(input[type="email"], input[type="password"], input[type="text"]) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: max(44px, calc(var(--tf-u) * 76)) !important;
+  margin: max(6px, calc(var(--tf-u) * 10)) 0 max(14px, calc(var(--tf-u) * 24)) !important;
+  padding: 0 max(12px, calc(var(--tf-u) * 24)) !important;
+  border: 2px solid #3a3d45 !important;
+  border-radius: max(8px, calc(var(--tf-u) * 12)) !important;
+  background: var(--tf-bg, #0b0c10) !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: max(17px, calc(var(--tf-u) * 28)) !important;
+  font-weight: 600 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] input::placeholder {
+  color: #6b7180 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] input[type="checkbox"] {
+  width: max(20px, calc(var(--tf-u) * 32)) !important;
+  height: max(20px, calc(var(--tf-u) * 32)) !important;
+  accent-color: var(--tenfoot-accent, #feea3b);
+}
+/* Every button: an outlined one of Leanback's; the one that goes on (Next,
+   Sign in, Reset Password, Save) yellow. Dropout's colours on hover and
+   focus are held off: the yellow box is the selection. */
+html[data-tenfoot="on"] [data-tenfoot-form] :is(button, input[type="submit"], .btn),
+html[data-tenfoot="on"] [data-tenfoot-form] :is(button, input[type="submit"], .btn):is(:hover, :focus, :active) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: max(40px, calc(var(--tf-u) * 72)) !important;
+  margin: max(6px, calc(var(--tf-u) * 10)) 0 !important;
+  padding: 0 max(16px, calc(var(--tf-u) * 34)) !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: max(8px, calc(var(--tf-u) * 12)) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  font-size: max(15px, calc(var(--tf-u) * 26)) !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  text-transform: none !important;
+  outline: none;
+  transition: none !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] :is(button[type="submit"], input[type="submit"], [class*="primary-btn"]),
+html[data-tenfoot="on"] [data-tenfoot-form] :is(button[type="submit"], input[type="submit"], [class*="primary-btn"]):is(:hover, :focus, :active) {
+  border-color: var(--tenfoot-accent, #feea3b) !important;
+  background: var(--tenfoot-accent, #feea3b) !important;
+  color: #1a1a05 !important;
+  font-weight: 800 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] :is(button, input[type="submit"]):disabled {
+  opacity: 0.45;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] [class*="danger-btn"] {
+  border-color: #ff8a80 !important;
+  color: #ff8a80 !important;
+}
+/* Sign-in's back arrow, back to the email: a small round button. */
+html[data-tenfoot="on"] [data-tenfoot-form] button.signin_flow__back-arrow,
+html[data-tenfoot="on"] [data-tenfoot-form] button.signin_flow__back-arrow:is(:hover, :focus, :active) {
+  position: absolute !important;
+  top: max(16px, calc(var(--tf-u) * 28)) !important;
+  right: max(16px, calc(var(--tf-u) * 28)) !important;
+  left: auto !important;
+  width: max(40px, calc(var(--tf-u) * 64)) !important;
+  min-height: max(40px, calc(var(--tf-u) * 64)) !important;
+  height: max(40px, calc(var(--tf-u) * 64)) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] a,
+html[data-tenfoot="on"] [data-tenfoot-form] a:is(:link, :visited, :hover, :focus, :active) {
+  color: #f5f6f7 !important;
+  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+}
+/* Dropout's message when something is wrong (a password that does not
+   match): red on the card. */
+html[data-tenfoot="on"] [data-tenfoot-form] :is(.flash-msg, [role="alert"]) {
+  color: #ff8a80 !important;
+  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
+}
+/* Leanback's line under the sign-in: what typing needs, then the
+   policies. */
+html[data-tenfoot="on"] [data-tenfoot-form] .tenfoot-form-foot {
+  margin: max(16px, calc(var(--tf-u) * 32)) 0 0 !important;
+  padding-top: max(14px, calc(var(--tf-u) * 24)) !important;
+  border-top: 1px solid #262a33;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] .tenfoot-form-foot p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: max(8px, calc(var(--tf-u) * 14)) max(18px, calc(var(--tf-u) * 36));
+  margin: 0 0 max(8px, calc(var(--tf-u) * 12)) !important;
+  color: #9aa0ac !important;
+  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
+  font-weight: 600 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-form] .tenfoot-form-foot a {
+  display: inline-block;
+  padding: max(4px, calc(var(--tf-u) * 6)) max(6px, calc(var(--tf-u) * 10));
+  border-radius: max(6px, calc(var(--tf-u) * 8));
+}
+
+/* A policy (privacy, terms, cookies), read from the sofa: Dropout's words
+   in a column of Leanback's type on its dark ground, the headings white,
+   the links yellow. ▲ ▼ scroll it (content/page.js). */
+html[data-tenfoot="on"][data-tenfoot-kind="legal"],
+html[data-tenfoot="on"][data-tenfoot-kind="legal"] body,
+html[data-tenfoot="on"][data-tenfoot-kind="legal"] body :has([data-tenfoot-reading]) {
+  background: var(--tf-bg, #0b0c10) !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] {
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: calc(var(--tf-u) * 1400) !important;
+  margin: 0 auto !important;
+  padding: calc(var(--tf-u) * 72) calc(var(--tf-u) * 64) 40vh !important;
+  background: transparent !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] * {
+  max-width: none !important;
+  background: transparent !important;
+  color: #d7dae0 !important;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif !important;
+  font-size: max(17px, calc(var(--tf-u) * 30)) !important;
+  line-height: 1.55 !important;
+  text-shadow: none !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] :is(h1, h2, h3, h4, strong, b) {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] h1 {
+  margin: 0 0 calc(var(--tf-u) * 36) !important;
+  font-size: max(28px, calc(var(--tf-u) * 64)) !important;
+  line-height: 1.1 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] h2 {
+  margin: calc(var(--tf-u) * 56) 0 calc(var(--tf-u) * 18) !important;
+  font-size: max(22px, calc(var(--tf-u) * 44)) !important;
+  line-height: 1.2 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] :is(h3, h4) {
+  margin: calc(var(--tf-u) * 40) 0 calc(var(--tf-u) * 12) !important;
+  font-size: max(19px, calc(var(--tf-u) * 34)) !important;
+  line-height: 1.25 !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] :is(p, li) {
+  margin-bottom: calc(var(--tf-u) * 20) !important;
+}
+html[data-tenfoot="on"] [data-tenfoot-reading] a,
+html[data-tenfoot="on"] [data-tenfoot-reading] a:is(:link, :visited) {
+  color: var(--tenfoot-accent, #feea3b) !important;
+  text-decoration: underline !important;
+}
+
+/* The profile picker's own forms, where Leanback draws no screen: Add
+   Profile (a name, a picture) and a profile's PIN. Dropout's dark page,
+   on Leanback's ground and drawn larger on a large screen. */
+html[data-tenfoot="on"][data-tenfoot-kind="profiles"],
+html[data-tenfoot="on"][data-tenfoot-kind="profiles"] body {
+  background: var(--tf-bg, #0b0c10) !important;
+}
+@media (min-width: 1700px) {
+  html[data-tenfoot="on"][data-tenfoot-kind="profiles"] body {
+    zoom: 1.5;
+  }
+}
+@media (min-width: 2600px) {
+  html[data-tenfoot="on"][data-tenfoot-kind="profiles"] body {
+    zoom: 2.2;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -161,3 +415,224 @@ html[data-tenfoot="on"] [data-tenfoot-chrome] {
     transition: none !important;
   }
 }
+
+/* A question in a box (nav/ask.js): over everything, the screen dimmed. */
+.tenfoot-ask {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 6, 9, 0.78);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.tenfoot-ask[hidden] {
+  display: none;
+}
+.tenfoot-ask-box {
+  box-sizing: border-box;
+  width: min(92vw, calc(var(--tf-u, 0.04vw) * 760));
+  min-width: 320px;
+  padding: max(24px, calc(var(--tf-u, 0.04vw) * 48));
+  border-radius: max(12px, calc(var(--tf-u, 0.04vw) * 24));
+  background: var(--tenfoot-surface, #15171c);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+/* Dropout's own heading and paragraph colours and type would win over the
+   box's otherwise. */
+.tenfoot-ask :is(.tenfoot-ask-title, .tenfoot-ask-text, .tenfoot-picker-label) {
+  font-family: var(--tf-font, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif) !important;
+  line-height: 1.25 !important;
+}
+.tenfoot-ask .tenfoot-ask-title {
+  color: var(--tf-text, #f5f6f7) !important;
+}
+.tenfoot-ask .tenfoot-ask-text {
+  color: var(--tf-dim, #9aa0ac) !important;
+}
+.tenfoot-ask .tenfoot-picker-label {
+  color: var(--tf-dim, #9aa0ac) !important;
+}
+.tenfoot-ask-title {
+  margin: 0 0 0.4em;
+  font-size: max(22px, calc(var(--tf-u, 0.04vw) * 44));
+  font-weight: 700;
+}
+.tenfoot-ask-text {
+  margin: 0 0 1.4em;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: max(15px, calc(var(--tf-u, 0.04vw) * 26));
+  line-height: 1.4;
+}
+.tenfoot-ask-buttons {
+  display: flex;
+  justify-content: center;
+  gap: max(12px, calc(var(--tf-u, 0.04vw) * 24));
+}
+.tenfoot-ask-button {
+  min-width: max(120px, calc(var(--tf-u, 0.04vw) * 220));
+  padding: max(10px, calc(var(--tf-u, 0.04vw) * 18)) max(18px, calc(var(--tf-u, 0.04vw) * 36));
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: max(16px, calc(var(--tf-u, 0.04vw) * 28));
+  font-weight: 600;
+  cursor: pointer;
+}
+.tenfoot-ask-button[data-tenfoot-danger="true"] {
+  border-color: #ff6b6b;
+  color: #ff8f8f;
+}
+.tenfoot-ask-button:focus {
+  outline: none;
+  border-color: var(--tenfoot-accent, #feea3b);
+  background: var(--tenfoot-accent, #feea3b);
+  color: #000;
+}
+.tenfoot-ask-button[data-tenfoot-danger="true"]:focus {
+  border-color: #ff6b6b;
+  background: #ff6b6b;
+  color: #000;
+}
+
+/* A picture to pick (nav/ask.js createPicker): the question's card, wider,
+   its pictures in a grid under each section's name; the one the profile
+   has now outlined in white. Scrolls when there are more than fit. */
+.tenfoot-picker-box {
+  width: min(92vw, calc(var(--tf-u, 0.04vw) * 1500));
+  max-height: 88vh;
+  overflow-y: auto;
+  text-align: left;
+}
+.tenfoot-picker-label {
+  margin: calc(var(--tf-u, 0.04vw) * 24) 0 calc(var(--tf-u, 0.04vw) * 16);
+  color: var(--tf-dim, #9aa0ac);
+  font-size: max(16px, calc(var(--tf-u, 0.04vw) * 28));
+  font-weight: 600;
+}
+.tenfoot-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--tf-picker-cols, 7), 1fr);
+  gap: max(10px, calc(var(--tf-u, 0.04vw) * 24));
+}
+.tenfoot-picker-item {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 20%;
+  overflow: hidden;
+  background: var(--tf-raised, #1e2128);
+  cursor: pointer;
+}
+.tenfoot-picker-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tenfoot-picker-item[aria-pressed="true"] {
+  border-color: #fff;
+}
+.tenfoot-picker-item:focus {
+  outline: none;
+}
+
+/* The cookie dialog (Ketch) in Leanback's look, and every window it opens
+   (Customize Settings, a purpose's cookies): dark cards, Leanback's type,
+   the main buttons in the theme's colour, the others outlined, the rows
+   plain with faint lines between them. Ketch's own colours come inline from
+   its theme, so these win with !important. Its switches stay its own. */
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) {
+  box-sizing: border-box !important;
+  border: none !important;
+  border-radius: max(12px, calc(var(--tf-u, 0.04vw) * 24)) !important;
+  background: var(--tf-surface, #15171c) !important;
+  color: var(--tf-text, #f5f6f7) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6) !important;
+}
+html[data-tenfoot="on"] #lanyard_root #ketch-banner {
+  max-width: min(92vw, calc(var(--tf-u, 0.04vw) * 1100)) !important;
+  padding: max(20px, calc(var(--tf-u, 0.04vw) * 40)) !important;
+}
+/* The box inside the first one is one card with it, not a second. */
+html[data-tenfoot="on"] #lanyard_root #ketch-banner [role="dialog"] {
+  width: auto !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-tenfoot="on"] #lanyard_root [role="dialog"] {
+  width: min(92vw, calc(var(--tf-u, 0.04vw) * 1100)) !important;
+  max-width: none !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :where(div, section, span, p, ul, li, h1, h2, h3, h4, header, footer, nav, strong):not(label *) {
+  background-color: transparent !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :is(p, span, div, li, strong, h1, h2, h3, h4, a, button) {
+  color: var(--tf-text, #f5f6f7) !important;
+  font-family: var(--tf-font, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif) !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) * {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :is(p, li) {
+  font-size: max(15px, calc(var(--tf-u, 0.04vw) * 24)) !important;
+  line-height: 1.45 !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :is(h1, h2, h3) {
+  font-weight: 700 !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :is(a, button[role="link"]) {
+  color: var(--tenfoot-accent, #feea3b) !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) button svg :is(path, line, polyline) {
+  stroke: currentColor;
+}
+/* The buttons that answer: pills. A purpose's row, a link and the close and
+   back arrows are not. */
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner-button-primary, #ketch-banner-button-secondary, button[aria-label]:not([aria-label*="close" i]):not([aria-label*="back" i]):not([role="link"]):not([aria-expanded])) {
+  min-height: max(36px, calc(var(--tf-u, 0.04vw) * 60)) !important;
+  padding: max(6px, calc(var(--tf-u, 0.04vw) * 12)) max(16px, calc(var(--tf-u, 0.04vw) * 30)) !important;
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--tf-text, #f5f6f7) !important;
+  font-size: max(15px, calc(var(--tf-u, 0.04vw) * 24)) !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  width: auto !important;
+  max-width: none !important;
+  flex-shrink: 0 !important;
+  box-shadow: none !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :is(#ketch-banner-button-primary, button[aria-label="Accept All"], button[aria-label="Confirm My Choices"]) {
+  border-color: var(--tenfoot-accent, #feea3b) !important;
+  background: var(--tenfoot-accent, #feea3b) !important;
+  color: #000 !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) button:focus {
+  outline: none !important;
+}
+html[data-tenfoot="on"] #lanyard_root :is(#ketch-banner, [role="dialog"]) :is(#ketch-banner-button-primary, #ketch-banner-button-secondary, button[aria-label]:not([aria-label*="close" i]):not([aria-label*="back" i]):not([role="link"]):not([aria-expanded])):focus {
+  border-color: var(--tenfoot-accent, #feea3b) !important;
+  background: var(--tenfoot-accent, #feea3b) !important;
+  color: #000 !important;
+}
+html[data-tenfoot="on"] #lanyard_root #ketch-banner button[aria-label="close banner"] {
+  width: max(36px, calc(var(--tf-u, 0.04vw) * 56)) !important;
+  height: max(36px, calc(var(--tf-u, 0.04vw) * 56)) !important;
+  padding: 0 !important;
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+}
+html[data-tenfoot="on"] #lanyard_root #ketch-banner button[aria-label="close banner"] svg :is(path, line, polygon) {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+

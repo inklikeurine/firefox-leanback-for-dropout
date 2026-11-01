@@ -42,9 +42,10 @@ do is reachable from the remote.
 While the focus is in a text field, **only the back button is ours** — even
 `/` belongs to the field — plus ◀ when the text cursor is at the very start
 with nothing selected (it leaves the field, for the rail on the search page)
-and ▼ in a one-line field such as the search box (it leaves the field for
-what is below it: the result filters, then the results; with nothing below,
-it stays the field's). In a field of several lines ▼ moves the cursor. In
+and ▼ and ▲ in a one-line field such as the search box or the sign-in
+form's (they leave the field for what is below or above it: the result
+filters, then the results; the next box or button; with nothing there, the
+key stays the field's). In a field of several lines ▼ ▲ move the cursor. In
 the search box Leanback draws, OK and Back also leave it for what is below
 (Back, with nothing below, goes back as anywhere else).
 
@@ -66,6 +67,12 @@ The `video` columns are an episode's details page (focus on the page) and
 the video playing (focus in the player). Back walks up the site — the video
 → its details page → the season page you came from → Home — rather than
 through every episode you watched: see [T2](#t2--back-is-firefoxs).
+
+A policy (`legal`: the privacy policy, terms, cookies) has nothing to
+select: ▲ ▼ scroll it by most of a screen, ◀ ▶ do nothing, Back leaves. The
+welcome, the profile picker and Manage profiles are one row of buttons or
+cards, moved along with ◀ ▶. The sign-in and Edit Profile forms are
+Dropout's: the arrows move among its boxes and buttons, as on any page.
 
 ## Home and the rail
 
@@ -111,18 +118,50 @@ It opens the settings, and which settings depends on where you are.
 **During playback** it opens the **settings panel** in the player frame (below).
 **Everywhere else** — an episode's details page too, and an episode page whose player cannot be reached —
 it opens Leanback's own settings as a panel on the page: the same list, drawn
-the same way, as under *Leanback Settings* in the playback panel. Two entries
-that are not settings sit at the foot:
+the same way, as under *Leanback Settings* in the playback panel. Three
+entries are not settings:
 
 | Entry | Does |
 | --- | --- |
+| Theme This Page (first under Look, on a page with choices of its own) | opens the page's own choices (Home's banner, card size, an episode's picture); moving through a choice's values shows each on the page at once, OK keeps one, ◀ or Back puts the saved one back |
+| Accessibility | opens its own list: Interface Size, High Contrast, Reduce Motion, the caption style, Color Filter |
+| Cookie Preferences (where the page has them) | closes the panel and opens the cookie settings (Ketch's, in Leanback's look), the selection on the first purpose |
 | Clear Continue Watching | forgets every video not finished, and empties Continue Watching; watched ones stay watched. The first OK asks, the second clears |
-| Turn Leanback Off | the site behaves as stock Firefox |
+
+Moving through the values of Theme, Theme Color, Holidays, Enlarge
+Selection, Ring Width and Interface Size shows each at once too; closing the
+panel without OK puts the saved one back.
+
+The toolbar button turns Leanback off.
 
 ▲ ▼ move, no wrapping. OK or ▶: a switch flips, an entry with several values
 opens its short list (OK picks one, ticked, and goes back up). ◀ or Back go
 up one level, and close the panel from its top. Home and Search are the
 rail's (and Back's, and `/`'s).
+
+## A question in a box
+
+*Sign Out* (the profile picker) and *Delete Profile* (Edit Profile) ask
+first, in a box over the screen, with the safe answer (*Cancel*) selected.
+◀ ▶ (and ▲ ▼) move between its buttons, OK answers, Escape answers
+*Cancel*. The remote's Back closes it as *Cancel* too, but Firefox goes
+back a page as well (T2: it cannot be stopped). Nothing else gets past it
+while it is open.
+
+## A picture to pick
+
+OK on a profile's picture in Manage profiles opens a box of pictures. ◀ ▶
+move along a row, ▲ ▼ between rows and between "The classics" and the
+site's own (keeping the column), OK picks one (saved at once), Escape or
+Back closes it with nothing changed.
+
+## The profiles row
+
+◀ ▶ move along the profiles, *Manage Profiles* (or *Add Profile* and
+*Done*) and *Sign Out*; ▶ at the end goes round to the first profile, ◀ at
+the first is the rail. Managing, the *Edit* buttons are a row of their own
+under the profiles: ▼ from a profile goes to its *Edit*, ▲ back up; ◀ ▶
+move along them too.
 
 ## The transport bar
 
@@ -159,24 +198,24 @@ index, only a single poster image ([site-notes.md](./site-notes.md)).
 
 ## The settings panel
 
-OK on **settings**, or the options button, opens a full-height panel from the
-right. It pauses the picture, and starts it again on the way out unless it was
-already paused.
+OK on **settings**, or the options button, opens *Playback Settings*, a
+full-height panel from the right. It pauses the picture, and starts it again
+on the way out unless it was already paused. The selection starts on
+Quality, the first setting.
 
 | Row | Comes from |
 | --- | --- |
-| Start Over | only after the video picked up where it was left: back to 0:00 |
+| Play Next Episode | goes to the next episode — it is a link, not a toggle |
 | Quality | the player's own menu |
 | Speed | the player's own menu |
-| Play Next Episode | goes to the next episode — it is a link, not a toggle |
 | Closed Captions | a switch: OK turns the player's first track on, or captions off; ▶ opens the player's CC/subtitles menu (its tracks, and Customize) |
 | Caption Style | the player's Customize → Font, Background, Window, each listing its settings (Family, Color, Size, Opacity, Edge Style) with the current choice; OK on one opens its choices, OK picks one and goes back up; one ◀ from Customize comes all the way back |
-| Leanback Settings | Leanback's own, the same list as on a page: Autoplay Next Episode, Shows Open On, Seek Step, Start Videos Muted, Button Hints, Enlarge Selection, Ring Width, Ring Colour, Skip dropout.tv Home, Back On Home; then Clear Continue Watching (OK twice) and Turn Leanback Off |
+| Leanback Settings | Leanback's own, the same list as on a page: Autoplay Next Episode, Seek Step, Shows Open On, Skip dropout.tv Home, Back On Home, Enlarge Selection, Ring Width, Ring Colour, Button Hints; then Clear Continue Watching (OK twice) |
 
 - ▲ ▼ move, no wrap. **OK or ▶ takes the entry**: a submenu opens; an on/off
   switch flips; an entry with several values opens its short list, where OK
-  picks one (ticked) and goes back up. ▶ never runs an action (Start Over,
-  Play Next Episode, Clear Continue Watching).
+  picks one (ticked) and goes back up. ▶ never runs an action (Play Next
+  Episode, Clear Continue Watching).
 - **◀ or Back goes up one level**; at the top they close the panel; Back
   again, the bar.
 

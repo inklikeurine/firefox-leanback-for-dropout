@@ -20,8 +20,9 @@
   const TRANSPORT_CLASS = "tenfoot-transport";
   const SAVE_EVERY_MS = 15000; // how often the watch history hears from a playing video
   const RESUME_SLACK_S = 5; // already this close to the saved point: leave it
-  const TITLE_MS = 4000; // the title when a video starts, and the bar with it on a pause
+  const TITLE_MS = 4000; // the title when a video starts
   const SEEK_SHOW_MS = 1000; // the skip feedback, counted from the last skip
+  const BAR_IDLE_MS = 3000; // the open bar over a playing video, from the last key
   const UP_NEXT_LEAD_S = 8; // Dropout's card comes this long before the end (OTTData.up_next.offset_seconds)
   const HOLD_ASK_MS = 250; // asking the page whether its details page holds the video…
   const HOLD_ASK_TRIES = 20; // …until it answers, or for this many tries
@@ -55,6 +56,7 @@
   const Rules = globalThis.TenfootSiteRules;
   const Transport = globalThis.TenfootTransport;
   const History = globalThis.TenfootHistory;
+  const Themes = globalThis.TenfootThemes;
 
   const state = {
     settings: Settings.normalize(null),
@@ -62,6 +64,7 @@
     video: null,
     observer: null,
     mutationTimer: 0,
+    barIdleTimer: 0,
     registered: false,
     upNextShowing: false,
     leaving: false,
@@ -370,8 +373,6 @@
         return u && u.url ? u : null;
       },
       onNext: () => playNext(),
-      resumed: () => state.resume.resumed,
-      onRestart: () => startOver(),
       onSetting: (patch) => {
         // Optimistic, so the panel redraws at once; the background broadcast
         // that follows is what makes it stick.
@@ -389,6 +390,12 @@
     return state.bar;
   }
 
+  // Accessibility in the player: Leanback's caption style and the video's
+  // colour filter (lib/themes.js).
+  function applyLook() {
+    if (Themes) Themes.applyPlayer(document.documentElement, state.settings);
+  }
+
   // ▼ on a playing video opens the row; ◀ ▶ then walk it, OK takes a control,
   // back closes it and gives ◀ ▶ back to seeking. Escape on the page asks
   // this frame first (player:back), so Back closes the row before anything
@@ -404,6 +411,7 @@
     state.transport = true;
     document.documentElement.classList.add(TRANSPORT_CLASS);
     b.open();
+    armBarIdle();
     report();
     return true;
   }
@@ -431,6 +439,7 @@
   }
 
   function leaveTransport() {
+    clearBarIdle();
     if (!state.transport) return false;
     state.transport = false;
     document.documentElement.classList.remove(TRANSPORT_CLASS);
@@ -577,6 +586,7 @@
         // the page when there is no control bar to be found.
         return enterTransport();
       case "back":
+        dropBar();
         send({ type: "page:focus", hint: "back" });
         return true;
       case "next":
@@ -620,10 +630,12 @@
     // Firefox goes back on the remote's BrowserBack whatever this frame does
     // with it (T2). The page decides whether that needs any help.
     if (action === "back" && e.key === "BrowserBack") {
+      dropBar();
       send({ type: "page:action", action: "browser-back" });
       return;
     }
     if (!dispatch(action)) return;
+    if (state.transport) armBarIdle();
     e.preventDefault();
     e.stopImmediatePropagation();
   }
@@ -716,15 +728,17 @@
     saveProgress(false);
   }
 
-  // A pause the viewer made brings up the title and the bar for a moment,
-  // without taking the arrows from playback. Firefox stopping an unmute, and
-  // the settings panel holding the picture, are not the viewer's pauses.
+  // A pause the viewer made brings up the title and the bar until the video
+  // plays again, without taking the arrows from playback. Firefox stopping an
+  // unmute, and the settings panel holding the picture, are not the viewer's
+  // pauses.
   function onPause() {
     report();
     saveProgress(false);
+    clearBarIdle();
     const b = state.bar;
     const v = state.video;
-    if (b && v && state.userPaused && !v.ended && !b.panelOpen && ownChrome() && state.settings.enabled) b.peek(TITLE_MS, true, "pause");
+    if (b && v && state.userPaused && !v.ended && !b.panelOpen && ownChrome() && state.settings.enabled) b.peek(0, true, "pause");
     // A start the page asked for, stopped by the player itself (Dropout's own
     // autoplay giving up as it is held back, say), not by the viewer: again.
     if (v && state.playWanted && !state.userPaused && !held() && !v.ended && !(b && b.panelOpen) && state.playTries < PLAY_RETRIES) {
@@ -734,15 +748,42 @@
   }
 
   // A skip from the remote: ⏪ / ⏩ with the new time, and the bar, for a
-  // second after the last one. On a paused video the bar stays as long as the
-  // pause's own showing.
+  // second after the last one. On a paused video the bar stays, as it does
+  // for the pause itself.
   function seekFeedback(by) {
     const v = state.video;
     if (!v || !ownChrome() || !state.settings.enabled) return;
     const b = bar();
     if (!b || b.panelOpen) return;
     const paused = v.paused && !v.ended;
-    b.seekFeedback(by, Number(v.currentTime) || 0, paused ? TITLE_MS : SEEK_SHOW_MS, paused ? "pause" : "seek");
+    b.seekFeedback(by, Number(v.currentTime) || 0, SEEK_SHOW_MS, paused ? "pause" : "seek", paused ? 0 : SEEK_SHOW_MS);
+  }
+
+  // The bar opened over a playing video closes by itself after BAR_IDLE_MS
+  // without a key; each key starts the count again. Paused, or with the
+  // settings panel open, it stays.
+  function armBarIdle() {
+    clearBarIdle();
+    const v = state.video;
+    if (!state.transport || !v || v.paused || v.ended) return;
+    state.barIdleTimer = setTimeout(() => {
+      state.barIdleTimer = 0;
+      const live = state.video;
+      if (!state.transport || !live || live.paused || live.ended || (state.bar && state.bar.panelOpen)) return;
+      leaveTransport();
+    }, BAR_IDLE_MS);
+  }
+
+  function clearBarIdle() {
+    if (state.barIdleTimer) clearTimeout(state.barIdleTimer);
+    state.barIdleTimer = 0;
+  }
+
+  // Back, whichever key: the bar and the title go at once.
+  function dropBar() {
+    clearBarIdle();
+    if (state.transport) leaveTransport();
+    if (state.bar) state.bar.endPeek();
   }
 
   // The show, season, episode and title, from the page (page:info). Without
@@ -793,7 +834,10 @@
     }
     const t = watchTarget();
     if (!t || !History) return;
-    const store = await History.load(API);
+    // The history of the profile watching in this tab, as the page told the
+    // background.
+    const who = await send({ type: "profile:get" });
+    const store = await History.load(API, who && who.ok ? who.profile : 0);
     if (state.video !== v || state.resume.video !== v) return;
     const at = History.resumePoint(store, t.key);
     if (!at) return;
@@ -957,6 +1001,7 @@
     if (v && e && e.type === "play") {
       titleOnStart(v);
       if (state.bar) state.bar.endPeek("pause");
+      if (state.transport) armBarIdle();
     }
     if (v && state.unmuteWhenPlaying && !state.autoplayBlocked) {
       // A beat after playback starts, so the autoplay is established before we
@@ -1217,12 +1262,14 @@
   async function init() {
     const [settings, rulesReply] = await Promise.all([Settings.load(API), send({ type: "rules:get" })]);
     state.settings = settings;
+    applyLook();
     const player = rulesReply && rulesReply.ok && rulesReply.rules && rulesReply.rules.player;
     if (player && typeof player === "object") state.rules = Object.assign({}, DEFAULT_RULES, player);
     Settings.watch(API, (s) => {
       const was = state.settings.enabled;
       const prevOwn = ownChrome();
       state.settings = s;
+      applyLook();
       if (prevOwn !== ownChrome()) {
         // Swapping between our chrome and the player's takes effect at once.
         if (ownChrome()) tidyControls();

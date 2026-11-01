@@ -10,9 +10,13 @@ The product spec: what Leanback does, exactly. What each key does is in
 
 - A Firefox extension that makes **watch.dropout.tv** usable from the couch
   with the buttons a TV remote has. Leanback is a TV shell: Home, Browse, My
-  List, the lists, a show's page, a special, search and an episode's details
-  page are Leanback's own screens; only sign-in, account, help and legal
-  pages are Dropout's.
+  List, the lists, a show's page, a special, search, an episode's details
+  page, the profile picker with Manage profiles, Add Profile, Edit Profile,
+  and the welcome a signed-out TV opens on are Leanback's own screens;
+  sign-in, the password reset and a profile's PIN are Dropout's own, laid
+  out for the TV; the privacy policy, terms and cookies policy are
+  Dropout's words in Leanback's type; only account and help pages are
+  Dropout's as they are (with the rail beside them).
 - Dropout runs on **Vimeo OTT**. The player is a **cross-origin iframe from
   `embed.vhx.tv`**, so there are two content scripts — one for the page, one
   for the player frame — talking through the background script.
@@ -58,8 +62,8 @@ use ([targets.md](./targets.md)).
 - **Leanback's screens.** Each is a layer over Dropout's page, drawn from what
   Dropout renders there — same links, pictures and titles — with Dropout's
   page left underneath, untouched; Leanback's buttons press Dropout's own.
-  Dropout's top bar and footer are hidden on every page but sign-in, account,
-  help and legal. A page Leanback cannot read is Dropout's own, driven with
+  Dropout's top bar and footer are hidden on every page but account, help
+  and legal. A page Leanback cannot read is Dropout's own, driven with
   the arrows and the ring.
 - **Home (`/browse`).** The banner's buttons, then one row per shelf.
   Hubs such as `/dimension-20` get the same screen without Continue Watching.
@@ -89,27 +93,174 @@ use ([targets.md](./targets.md)).
   the same merged progress.
 - **Watch history.** Leanback records how far each video has got while it
   plays here — on pause, seek, the end, the player losing focus, and every
-  15 s — in `storage.local`. A video counts as **watched** at 95 % or with
+  15 s — in `storage.local`, **one history per Dropout profile** (the page's
+  `profile_index`; see *Profiles*). A video counts as **watched** at 95 % or with
   less than 90 s left, and **in progress** once more than a minute has
   played. Trailers and live streams are not recorded. Dropout's bars carry
   no date, so a bar is dated when Leanback first sees its value; a first
   sighting never outranks Leanback's own reading.
-- **Clear Continue Watching** (OK twice) forgets every video not finished: it
+- **Clear Continue Watching** (OK twice) forgets every video not finished, for
+  the profile watching (from the options page: for every profile): it
   deletes Leanback's readings of them and empties Continue Watching —
   Dropout's bars included — until something is watched again, here or
   elsewhere. Watched videos stay watched; Dropout's bars still show on cards.
+- **Clear Progress** (an episode's details page, OK once) makes that one
+  video unstarted for the profile watching: Leanback's reading goes, and no
+  reading from before that moment counts — Dropout's bar included — so it
+  leaves Continue Watching, loses its bar and tick on cards, and is not
+  where a show picks up. The selection goes to *Watch*, and "Progress
+  cleared" shows. Playing it again, here or elsewhere (Dropout's bar
+  moving), brings it back.
+- **The look** (`lib/themes.js`, Leanback's settings under *Look*): a
+  *Theme* (Dropout Dark, Midnight Blue, OLED Black, Warm Dark) sets the
+  colours of the screens, the rail and the panels; *Theme Color* takes the
+  place of Dropout yellow everywhere — the ring, the main buttons, the lit
+  rail icon, progress bars, badges, the panels' selection, the player's
+  bar. *Holidays*: Off, Automatic (each holiday look in its days), or one
+  picked to stay; a holiday look sets the accent and a glow of its colours
+  along the top of the screens. Moving through the values of any look
+  setting shows each at once; OK keeps it, Back (or closing the panel)
+  puts the saved one back.
+- **Theme This Page** (first under *Look*, on a page with choices of its
+  own): Home — *Banner* (Large, Small without its synopsis, Off: no banner,
+  the selection starts on the first row) and *Card Size*; lists, search and
+  a list-like show page — *Card Size* (Medium: five across, Small: six,
+  Large: four); a show's page — *Card Size*; an episode's details page —
+  *Picture* (on the right, on the left, off). Kept per kind of page
+  (`pageLooks`). Changing one draws the screen again, and the cards, the
+  banner and the picture slide (and grow or shrink) from where they were
+  to where they are now, in 0.32 s (not under Reduce Motion).
+- **Accessibility** (a menu of its own in Leanback's settings): *Interface
+  Size* (100, 115, 130 %: everything Leanback draws), *High Contrast*
+  (black and white, white edges on buttons, a ring of at least 6 px),
+  *Reduce Motion* (as the system says, on, off: nothing of Leanback's
+  slides or fades), *Caption Size*, *Caption Color* and *Caption
+  Background* (in the player frame, over the player's own captions; *Player's
+  own* leaves them alone), and *Color Filter (Experimental)*: an SVG colour
+  matrix on the video that moves what red-, green- or blue-weak colour
+  vision loses into colours it keeps (daltonisation).
+- **Cookie Preferences** (Leanback's settings, at the foot, on a page that
+  has them): the cookie box comes up only until it is answered, and
+  Dropout's own way back to it is in the footer Leanback hides. The entry
+  closes the panel and asks the page's Ketch for its consent window
+  (`ketch("showConsent", {displayHint: "experiences.consent.modal"})`, as
+  Dropout's "Data Preferences" link does), else presses Dropout's "Manage
+  Cookie Preferences"; the selection starts on the first purpose.
+- **An empty list** (My List with nothing in it) keeps Leanback's screen:
+  its title and "Nothing in My List yet. Add a show or a video to it with
+  Add to My List on its page.", with the selection on the rail.
 - **Resume.** A video in progress starts where it was left, with "Resumed at
   12:04" for a moment: *Resume* on its details page, or straight away when
   it plays without one (the next episode, a reload). *Start Over* is beside
-  *Resume* on the details page and heads the playback settings after a
-  resume. Resuming never changes whether the video is playing or muted.
-- **The rail.** On every page that plays no video — Home, hubs, Browse
-  (`/series`), My List (`/my-list`), Search, the lists, every show and
-  special, an episode's details page — an icon rail down the left: Search, Home, Browse, My List (a
+  *Resume* on the details page. Resuming never changes whether the video is
+  playing or muted.
+- **The rail.** On every page but signing in (the welcome, sign-in, the
+  password reset) and a video playing — Home, hubs, Browse (`/series`), My
+  List (`/my-list`), Search, the lists, every show and special, an
+  episode's details page, the profile picker and the profile pages, the
+  policies, Dropout's account and help pages — an icon rail down the left: signed
+  in, the profile watching at the top (its picture, as in Dropout's header,
+  set apart by a gap), then Search, Home, Browse, My List (a
   bookmark), Dropout 24/7 (`/dropout-24-7`), and a gear for Leanback's
   settings in place. The current page's icon is yellow; the ring is the only
   mark of the selection. Entered on the current page's entry, or the one last
   used; leaving returns to exactly where the selection came from.
+- **Profiles.** The rail's profile entry opens Dropout's profile picker
+  (`/profile/pick`, a page added on top, so Back comes back), drawn by
+  Leanback: "Who is watching?" over the account's profiles in one row,
+  centred, each its picture (or its first letter) and its name, square with
+  round corners; the one watching says *Watching now* and the selection
+  starts on it. The rail is beside it. OK presses Dropout's own button for
+  the profile, which saves the choice and goes on to Browse (a PIN-locked
+  profile: Dropout's own PIN screen). After the profiles, *Manage Profiles*
+  presses Dropout's own button, and **Sign Out** asks "Sign out of
+  Dropout?" in Leanback's box (*Cancel* selected; Back is *Cancel*), then
+  sends Dropout's own sign-out (a form to `/logout` with the page's
+  `csrf-token`, as its *Log out* button does). ▶ at the end of the row goes
+  round to its start; ◀ at its start is the rail. *Manage Profiles* turns
+  the picker into **Manage profiles** in place (as `?edit=1` opens it, an
+  address Dropout's script then takes the `?edit=1` off): the same row,
+  each profile with a pencil over its picture and an **Edit** button under
+  its name, in a row of their own under the profiles: the selection starts
+  on the profile watching, ◀ ▶ go along the profiles, *Add Profile* and
+  *Done* (back to the picker); ▼ from a profile goes to its *Edit*, ▲ back
+  to it, and ▼ from *Add Profile* or *Done* goes nowhere. OK on *Edit*
+  presses Dropout's button for the profile (Edit Profile). OK on the
+  profile's picture opens **a box of pictures** over Manage profiles
+  ("Picture for Sam"): Dropout's profile pictures from its API, under "The
+  classics" and the site's own, the profile's own outlined and selected;
+  ◀ ▶ ▲ ▼ move, OK on another saves it through the same API Dropout's
+  pages use (a `PATCH` of the profile's picture, with the page's sign-in)
+  and opens Manage profiles again with it; Back changes nothing; a
+  failure says "The picture could not be saved". *Remember my profile* is not drawn.
+  - *Edit* on a profile: Dropout switches to that profile and opens **Edit
+    Profile** (`/settings/manage/profile`), drawn by Leanback
+    (`screen.profileForm.edit`): the title and Dropout's line under it, the
+    picture (OK: Dropout's picture chooser), a large name box typed into
+    Dropout's own, *Kid Profile* where Dropout offers it, then *Save*,
+    *Cancel* and, but for the main profile, **Delete Profile**. Delete asks
+    in Leanback's box ("Delete Sam?", *Cancel* selected), then presses
+    Dropout's own *Delete Profile* and the *Delete Profile* in the box
+    Dropout opens to ask again (or answers its `window.confirm` yes, once).
+    A button Dropout greys out (*Save* before a change) shows dimmed.
+    *Cancel* with a change not saved (*Save* lit) asks "Leave without
+    saving?" in Leanback's box, *Keep Editing* selected; and Dropout's
+    `beforeunload` warning is kept from Firefox on this page, so Firefox's
+    own "confirm that you want to leave" never shows.
+  - *Add Profile* is the picker app's own form (at `#/add`), drawn by
+    Leanback the same way (`screen.profileForm.add`): the title and line,
+    the picture, the name box, then *Cancel* and *Continue* (*Continue*
+    dimmed until there is a name). A PIN-locked profile's PIN is Dropout's
+    own: while the app shows one, Leanback draws no screen and the ring
+    moves over Dropout's buttons and boxes (`pages.profiles`).
+  - Dropout's picture chooser (both forms) is Dropout's own dialog, drawn
+    in Leanback's look over Leanback's screen — a dark card, large type,
+    large pictures — with the ring moving in it from the picture chosen now
+    (else the first); Back closes it. Its focus trap keeps the focus in it,
+    so Leanback does not draw a chooser of its own. Whichever address the
+    picker app shows, the page is the picker's by what it holds
+    (`screen.profiles.root`).
+  - **Each profile has its own watch history**: Continue Watching, resume
+    points and watched ticks. The page tells the background which profile
+    is watching (`profile:current`), so the writes from that tab, the player
+    frame's too, go to it. The history from before profiles goes to the
+    first profile that says so.
+  - The page knows a profile only by its place in the list (`profile_index`):
+    deleting a profile on Dropout's site moves the ones after it up, and
+    their histories with the place, not the person.
+- **The welcome (`/`, signed out).** Dropout's front page is drawn as
+  Leanback's welcome (`screen.welcome`): Dropout's logo, its line
+  ("Independent. Funny. Ad Free."), its words about the service and "To
+  start a subscription, go to dropout.tv on a phone or a computer.", then
+  *Sign In* (yellow, selected), *Browse* (Home, signed out), *Privacy
+  Policy* and *Terms of Use* (`legal`), in the middle of the screen; no
+  rail. Starting a subscription is not offered on the TV. Signed in, `/`
+  goes on to Home.
+- **Sign-in (`/login`, `/forgot_password`).** Dropout's own form, its steps
+  and its checks untouched, laid out for the TV (`pages.signin.box`,
+  stamped `data-tenfoot-form`): one of Leanback's cards in the middle of its
+  dark screen, "DROPOUT" in yellow over "Sign in", large dark boxes, the
+  button that goes on (*Next*, *Sign in*, *Reset Password*) yellow, the
+  others outlined; Dropout's picture behind it and the emailed sign-in link
+  (it signs in whatever device opens it) are not shown
+  (`pages.signin.hide`). Under the card's buttons: "Typing needs a
+  keyboard, or a keyboard app on your phone.", then *Privacy Policy* and
+  *Terms of Use*. No top bar, no rail. The selection starts in the email
+  box; ▼ ▲ move between the boxes, buttons and links (▲ ▼ leave any one-line
+  box), letters type; when Dropout shows the password step, the selection
+  goes to the password box, once.
+  **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
+  and the first Home of a tab goes on to the welcome by itself — once per
+  tab, so Back from it, or its *Browse*, comes back to Home and stays.
+- **The policies (`/privacy`, `/tos`, `/cookies`).** Dropout's words
+  (`pages.legal.content`, stamped `data-tenfoot-reading`) in a column of
+  Leanback's type on its dark ground, the headings white and the links
+  yellow; no top bar, footer or promotion. ▲ ▼ scroll by most of a screen;
+  nothing on the page is a stop; Back leaves.
+- **Addresses seen as others** (`redirects`): Dropout 24/7's stream at
+  `/events/dropout-24-7` (where a My List card for it leads, an address no
+  hub is in) goes on to Dropout 24/7's page, in place of it in the
+  history.
 - **Browse, My List, collections and lists** (Trending, New Releases, a
   show's new episodes, all movies, Continue Watching in full): the page's name (My List named as on the rail), then
   Home's cards five across, the selected row sliding to the same place, more
@@ -181,8 +332,9 @@ use ([targets.md](./targets.md)).
   page you came from → Home.
   `Escape` does the same after closing what is open. In a tab opened straight
   on a page, with nothing behind it, Leanback walks up the site itself, and at
-  Home runs the **exit hook** (*Back On Home*: does nothing (default), or
-  closes the tab — in a kiosk, that ends Firefox).
+  Home runs the **exit hook** (*Back On Home*: does nothing, or closes the
+  tab — in a kiosk, that ends Firefox; until it is picked, it closes the tab
+  on a signed install and does nothing on a copy loaded from its folder).
 - **An episode's details page**, as on Dropout's Roku app. Every way
   to an episode — any card, Continue Watching, the show's main button,
   *Watch Movie*, an extra — opens it; nothing plays until *Watch*. Dropout's
@@ -192,7 +344,9 @@ use ([targets.md](./targets.md)).
   row of buttons: *Watch* (yellow), or *Resume* with *Start Over* beside it
   when the episode is in progress (the same reading the player resumes
   from); *Add to My List* / *Remove from My List* (Dropout's own button,
-  pressed); *Episodes* (the season's page, else the show's). On the right
+  pressed); *Episodes* (the season's page, else the show's); *Clear
+  Progress* when the history draws any progress for it, partway or watched
+  (see *Clear Progress* under the watch history). On the right
   the episode's picture (`og:image`, else the history's), with the progress
   bar and the time left ("15:00 left") when in progress. The selection lands
   on *Watch* or *Resume*; ▲ ▼ do nothing; ◀ from the first button is the
@@ -228,12 +382,16 @@ use ([targets.md](./targets.md)).
 - **The title.** Over the top left of the picture: the show's name in yellow
   capitals, then "S9 · E3 · Whodunnit". It shows for 4 s when an episode
   first plays, and whenever the bar is up.
-- **Pause.** A pause the viewer makes brings up the title and the bar for
-  4 s, without a selection. The settings panel's own pause, and Firefox
-  stopping an unmute, show nothing.
+- **Pause.** A pause the viewer makes brings up the title and the bar,
+  without a selection, and they stay until the video plays again. The
+  settings panel's own pause, and Firefox stopping an unmute, show nothing.
 - **Skipping.** Each skip shows ⏪ / ⏩ with the new time in the middle of the
   picture, with the bar, until 1 s after the last skip, so quick presses
-  never flicker.
+  never flicker. On a paused video the bar stays, as for the pause.
+- **The bar opened with ▼** closes by itself 3 s after the last key while
+  the video plays; each key starts the 3 s again. Paused, or with the
+  settings panel open, it stays.
+- **Back** takes the bar and the title away at once, whatever is showing.
 - **Up next.** From Dropout's lead time before the end (8 s), or as soon as
   Dropout's own card is up: a card over the bottom right with the next
   episode's picture in a countdown ring, "UP NEXT · 0:08", "S9 · E4", the
@@ -245,24 +403,28 @@ use ([targets.md](./targets.md)).
   the play button larger with a yellow symbol, the time so far under the
   start of the progress bar and the length under its end. The position is
   shown, never selected. The player's own chrome stays hidden.
-- **One settings panel.** Full height from the right, narrow (310 of 1920
-  units): the title, a ✕ that is only a picture, each value on the line
-  under its name, the selected entry in yellow, a switch for each on/off, a
-  chevron and the value for an entry with several values, a tick on the
-  chosen option, the keys along the foot ("◀ Back · ▲▼ Move · OK Change").
-  It never navigates the tab (in a kiosk there would be no way back).
-  - **During playback** (the bar's gear, or menu) it pauses the picture and
-    holds *Start Over* after a resume, Quality and Speed (the player's own
-    menus), Play Next Episode, **Closed Captions** (a switch: on is the
-    player's first track; ▶ opens the player's captions menu), **Caption
-    Style** (the player's Customize: Font, Background, Window, each listing
-    Family, Color, Size, Opacity, Edge Style with the current choice) and
-    Leanback Settings.
+- **One settings panel.** Full height from the right, about a third of the
+  screen (660 of 1920 units): the title, entries under grey group headings,
+  each value at the end of its line, the selected entry a yellow pill with
+  black text, a switch for each on/off, a chevron and the value for an
+  entry with several values, a tick on the chosen option, the keys along
+  the foot ("◀ Back · ▲▼ Move · OK Change"). No ✕: Back closes it. It never
+  navigates the tab (in a kiosk there would be no way back).
+  - **During playback** (the bar's gear, or menu) it is *Playback Settings*.
+    It pauses the picture and holds, under *This episode*, Play Next
+    Episode; under *Picture*, Quality and Speed (the player's own menus);
+    under *Captions*, **Closed Captions** (a switch: on is the player's
+    first track; ▶ opens the player's captions menu) and **Caption Style**
+    (the player's Customize: Font, Background, Window, each listing Family,
+    Color, Size, Opacity, Edge Style with the current choice); then
+    Leanback Settings. The selection starts on the first setting, not on
+    Play Next Episode. *Start Over* is on the episode's details page.
   - **Everywhere else** (menu, or the rail's gear) it holds Leanback's
-    settings, then *Clear Continue Watching* and *Turn Leanback Off*.
+    settings under *Playback*, *Browsing* and *Look*, then *Clear Continue
+    Watching*.
   - Leanback's settings are one list (`lib/settings.js` → `ROWS`), the same
     entries in the same order and words in both panels and on the options
-    page.
+    page. *Start Videos Muted* is on the options page only.
 - **Button hints.** Off by default. When on, a bottom strip shows the
   buttons that matter now: always up on pages, briefly on a press during
   playback. Short notices ("No next episode") use the same strip, hints on
@@ -270,7 +432,7 @@ use ([targets.md](./targets.md)).
 - **Player controls** (options page only): *The site's own player controls*
   leaves the player's own bar alone and draws nothing over the video, for
   troubleshooting.
-- **Toggle.** The toolbar button, *Turn Leanback Off*, or a user-assigned
+- **Toggle.** The toolbar button, or a user-assigned
   shortcut (`commands`, no default binding) turns Leanback off/on for the
   site; the state persists.
 
@@ -306,20 +468,34 @@ default rather than throwing):
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `enabled` | `true` | TV navigation on for Dropout hosts |
-| `ringColor` | `"#feea3b"` | ring colour, `#rrggbb` |
+| `ringColor` | `"#feea3b"` | *Theme Color*, `#rrggbb`: the ring and everything Dropout yellow. Offered: Dropout Yellow, Soft White `#f2f2f2`, Sky Blue `#7cc6fe`, Mint `#8fe3b6`, Lavender `#b9a6ff`, Peach `#ffb38a`, Rose `#ff9eb5`; the 0.35 colours (`#ffffff`, `#ff4081`, `#41d6c3`, `#ff8a3d`) move to the nearest |
 | `ringWidth` | `4` | px, 2–12 |
 | `focusZoom` | `5` | how much bigger the selected item gets, in percent (0–25); 0 turns it off |
 | `hintBar` | `false` | show button hints |
 | `playerChrome` | `"leanback"` | `leanback` or `site`: the site's own player controls, for troubleshooting. On the options page only |
 | `seekStep` | `10` | seconds per ◀ ▶ press in the player: 5, 10, 15, 30, 60, 120 or 300 |
 | `autoplayNext` | `true` | play the next episode when one ends |
-| `startMuted` | `false` | start videos muted. Off: the extension turns the sound back on once per video |
+| `startMuted` | `false` | start videos muted. Off: the extension turns the sound back on once per video. On the options page only |
 | `skipMarketingSite` | `true` | forward `www.dropout.tv/` to `watch.dropout.tv/browse` |
-| `exitHook` | `"none"` | `none` or `close-tab` — what Back does at the top level (Home) |
+| `exitHook` | `"close-tab"` | `none` or `close-tab` — what Back does at the top level (Home). Until it is picked (`exitHookSet`), it follows the install: `none` when `development` |
+| `exitHookSet` | `false` | whether *Back On Home* was picked |
+| `development` | `false` | written by the background: Leanback loaded from its folder (`management.getSelf().installType === "development"`) |
 | `seasonStart` | `"latest"` | `latest` or `first` — the season a show opens on when its address names none |
+| `theme` | `"dropout"` | `dropout`, `midnight`, `oled`, `warm` (lib/themes.js) |
+| `holidays` | `"off"` | `off`, `auto` (by date), or one look: `newyear` (1–6 Jan), `valentines` (7–14 Feb), `stpatricks` (14–17 Mar), `halloween` (17–31 Oct), `winter` (Dec) |
+| `uiScale` | `100` | Interface Size: 100, 115 or 130 (%) |
+| `highContrast` | `false` | black and white, white edges, a ring of at least 6 px |
+| `reduceMotion` | `"system"` | `system`, `on`, `off` |
+| `captionSize` | `"default"` | `default` (the player's own), `large`, `larger`, `largest` |
+| `captionColor` | `"default"` | `default`, `white`, `yellow`, `cyan` |
+| `captionBackground` | `"default"` | `default`, `black` (a box), `none` (a shadow) |
+| `videoFilter` | `"off"` | `off`, `protanopia`, `deuteranopia`, `tritanopia`: a colour matrix on the video (experimental) |
+| `pageLooks` | each first value | Theme This Page, per kind of page: `home: {banner: large/small/off, cards}`, `lists: {cards}`, `show: {cards}`, `details: {picture: right/left/off}`; `cards` is `medium`, `small` or `large` (five, six or four across a grid) |
 
-The watch history is a separate key, `progress`, so a settings save never
-rewrites it: `{ entries: { <video slug>: { url, title, series, image,
+The watch history is a separate key per Dropout profile, `progress:<n>`
+(`progress:0` for the first), so a settings save never rewrites it and each
+profile has its own; `progress` (from before profiles) moves to the first
+profile seen. Each is `{ entries: { <video slug>: { url, title, series, image,
 duration, show, season, episode, next: { url, season, episode }, local: {
 position, at }, dropout: { percent, at } } }, clearedAt }` (`show`, `season`
 and `episode` from the episode page, `next` from Dropout's up-next),
@@ -328,7 +504,9 @@ least recently touched go first). *Clear Continue Watching* keeps every
 watched video whole; of the rest it keeps only Dropout's own readings, and
 sets `clearedAt`: nothing unfinished read before it counts for Continue
 Watching or resuming. The tab's trail for Back is in `sessionStorage`
-(`tenfoot.trail`, `tenfoot.intent`).
+(`tenfoot.trail`, `tenfoot.intent`); the background keeps, in
+`storage.session`, each tab's player frame (`players`) and the profile
+watching in it (`profiles`).
 
 ## UI requirements
 
@@ -386,11 +564,11 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 3 | Home: keep pressing Down | New rows arrive before you reach the last one; a row of 12 ends with *View all*, which opens the whole collection with the ring on its first tile. Shows have wide pictures, running times read *6:03*, New Releases has no "NEW" badges, and there is no My List row |
 | 4 | Home: on the banner, Right once to **›**, Enter ×2; then Right to *My list*, Enter | **›** sits right after *Watch now*; the next featured show, then the one after; *My list* adds the show to Dropout's My List (a tick shows) and Enter again removes it. *Watch now* is black on yellow, *Trailer* white; **›** and *My list* turn no colour when selected |
 | 5 | Home: Left from the first card of a row, Down, Down, Down, Right | The rail, on Home; then Browse; then My List; then Dropout 24/7; Right returns to the card. The current page's icon is yellow; the selected icon has the yellow box round it and no coloured square behind it (hovering with the mouse shows none either). OK on My List opens your saved shows, the bookmark yellow and the ring on the first; OK on Dropout 24/7 opens it with its icon yellow; the gear opens Leanback's settings on the spot |
-| 6 | Home: Escape | Nothing happens (*Back On Home*: does nothing); a notice says "Nothing to go back to" |
+| 6 | Home: Escape (Leanback loaded from its folder) | Nothing happens (*Back On Home* not picked: does nothing on a folder copy); a notice says "Nothing to go back to" |
 | 7 | On the rail, Browse, OK; then hold ▼ | "Series" at the top, the shows five across as Home's cards, Browse's icon yellow; no Dropout top bar. ▼ moves a row and the row slides up to the same place; near the end more shows arrive; ◀ from the first column is the rail |
 | 8 | On Home, ▼ to New Releases, ▶ to its *View all*, OK | The list drawn the same way, "New Releases" at the top, the rail beside it (no entry lit), no "New" badges; Back returns to Home |
 | 9 | Watch an episode for two minutes, go back to Home | It is first in Continue Watching with its progress bar and the time left ("2:48 left"); an episode in progress on the Roku is in the row too |
-| 10 | Open that episode again; then Back to its show | It starts where you stopped; "Resumed at …" shows for a moment; in the settings panel, *Start Over* goes back to 0:00. On the show's page the yellow button says *Resume S… E…*, and OK plays it |
+| 10 | Open that episode again; then Back to its show | It starts where you stopped; "Resumed at …" shows for a moment; Back, then *Start Over* on the details page goes back to 0:00. On the show's page the yellow button says *Resume S… E…*, and OK plays it |
 | 11 | Enter on a show with several seasons that you have not watched | Leanback's screen opens on the **newest** season, with no flash of Season 1: the show's picture and name, a yellow *Play S… E1*, *Trailer* and *My List*; the seasons newest first with that one yellow; its name and episode count over the episodes, five across; ring on Episode 1; the rail on the left; no Dropout top bar, no Share, no dropdowns |
 | 12 | Up to the seasons, Right, OK; then Back | Up lands on the yellow season; Right moves along (the row slides); OK opens that season, which turns yellow; Back leaves the show for Home |
 | 13 | Up to the show's buttons, Right to *My List*, OK, OK | A tick appears on *My List*, and goes on the second OK; the button shows no blue when selected |
@@ -401,8 +579,8 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 18 | Down repeatedly past the last episode | Each row slides up to the same place; more episodes appear before the end; ring continues |
 | 19 | Open a special (a stand-up set) | Its picture and name, *Watch Movie* yellow with the ring on it, *My List*; Down to the movie, then its extras |
 | 20 | Enter on an episode | Its details page: the show's name, the title, the season line, the synopsis, *Watch* (yellow, ringed), *Add to My List*, *Episodes*; the picture on the right; the rail on the left; nothing plays and nothing is heard. Enter on *Watch*: the video fills the window and plays |
-| 21 | In the player: Enter, Enter, Right, Left; then Right ×5 quickly while playing | Play: the show's name and "S… · E… · title" top left for four seconds. Pause: the title and the bar come up, no button ringed; Right, Left skip +10 s, −10 s with the bar still up; after four seconds both go. Right ×5: ⏩ and the new time in the middle, the bar up, steady, gone a second after the last press |
-| 22 | Down, then Down again; then Up | The transport bar opens; Down again stays on it; Up closes it |
+| 21 | In the player: Enter, Enter, Right, Left; then Right ×5 quickly while playing | Play: the show's name and "S… · E… · title" top left for four seconds. Pause: the title and the bar come up, no button ringed, and stay while paused; Right, Left skip +10 s, −10 s with the bar still up. Right ×5: ⏩ and the new time in the middle, the bar up, steady, gone a second after the last press |
+| 22 | While playing: Down, then Down again; then Up; then Down and wait | The transport bar opens; Down again stays on it; Up closes it; opened again and left alone, it closes after three seconds |
 | 23 | After a minute or more: the remote's Back, Back | The details page, the video stopped; the button says *Resume* with *Start Over* beside it, and the picture shows the progress and the time left; then the season page |
 | 24 | From Home, open a show, an episode, *Watch*, let it play into the next (or press Next); then the remote's Back, three times | The next episode plays without stopping at its details page; Back: its details page, then the season page (not the previous episode), then Home |
 | 25 | On the season row, switch season, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
@@ -413,8 +591,8 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 30 | Rail → Dropout 24/7; *Watch*; then Back, Back | Dropout's 24/7 page: its banner picture, "Dropout 24/7", *Watch* ringed, the 24/7 icon yellow; then the stream in the full window, with sound, the address still the 24/7 page's; Back: the 24/7 page, *Watch* ringed; Back: where you were |
 | 31 | On a details page, press MediaPlayPause; then again | The video starts as with *Watch*; then pauses |
 | 32 | Let an episode end (or seek near the end) | Eight seconds before the end, the "Up next" card: picture, ring counting down, "UP NEXT · 0:08", "S… · E…", the show, *OK Play now · ◀ Hide*; the next episode starts at the end. Again with OK: it starts at once. Again with ◀: the card goes and nothing plays by itself |
-| 33 | Press the keyboard's *Menu* key on Home | Leanback's settings slide in from the right: the title and a ✕, the keys along the foot, the selected entry yellow with no ring; switches for on/offs, a value and › for the rest; no context menu; hovering turns nothing blue |
-| 34 | In that panel: ▼ to *Seek Step*, OK, ▼, OK; then *Start Videos Muted*, OK; then Left | *Seek Step*'s values open with 10 s ticked; OK on 15 s picks it and goes back up. The switch flips. Left closes the panel and the ring is back where it was |
+| 33 | Press the keyboard's *Menu* key on Home | Leanback's settings slide in from the right, about a third of the screen: the title, *Playback*, *Browsing* and *Look* headings, each value at the end of its line, the keys along the foot, the selected entry a yellow pill with no ring; switches for on/offs, a value and › for the rest; no context menu; hovering turns nothing blue |
+| 34 | In that panel: ▼ to *Seek Step*, OK, ▼, OK; then *Skip dropout.tv Home*, OK; then Left | *Seek Step*'s values open with 10 s ticked; OK on 15 s picks it and goes back up. The switch flips. Left closes the panel and the ring is back where it was |
 | 35 | In that panel: *Clear Continue Watching*, Enter, Enter | The first Enter asks; the second clears: Continue Watching disappears (Roku items included); Dropout's bars still show on cards; finished episodes keep their tick |
 | 36 | Playing an episode: Down, Right to the gear, Enter | The settings panel opens and the picture pauses |
 | 37 | In the panel: Closed Captions, OK, OK; then Caption Style, OK, Font, OK, Color, OK, Yellow, OK; then Left | Captions come on and go off. Caption Style shows Font, Background, Window; Font lists Family, Color, Size, Opacity, Edge Style with their choices; *Font Color* opens, OK on Yellow goes back up with Color showing Yellow (and the captions yellow); Left goes up one level, and from Caption Style straight back to the top |
@@ -425,7 +603,23 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 42 | Change the ring colour in options, reload | New colour |
 | 43 | *Back On Home: Closes the tab*; go to Home; Escape | The tab closes (in kiosk: Firefox exits) |
 | 44 | Restart Firefox | Settings kept |
-| 45 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
+| 45 | Signed out (a fresh profile): open `https://watch.dropout.tv/` | Leanback's welcome: Dropout's logo, "INDEPENDENT. FUNNY. AD FREE.", the words and the line about starting a subscription elsewhere; *Sign In* yellow and ringed, then *Browse*, *Privacy Policy*, *Terms of Use*; no rail, nothing of Dropout's page |
+| 46 | On the welcome: *Privacy Policy*, OK; ▼ ▼ ▲; Back | The policy in large white-on-dark type, no top bar or footer; each ▼ scrolls most of a screen, ▲ back; Back returns to the welcome |
+| 47 | On the welcome: *Sign In*, OK (a fresh profile: the cookie dialog first, *Accept All* ringed; OK) | The sign-in card in the middle of a dark screen in Leanback's look: yellow "DROPOUT", "Sign in", a large email box (ringed), *Next* yellow; no picture behind it, no "Email me a sign in link"; the keyboard line and *Privacy Policy*, *Terms of Use* under it, reachable with ▼ |
+| 48 | Sign out, open Home | It goes on to the welcome; *Browse* there returns to Home and stays |
+| 49 | Picker: ▶ to *Manage Profiles*, OK; then *Add Profile*, OK; Back; then a profile's *Edit*, OK | "Manage profiles" at once: a pencil over each picture and an *Edit* button under each name, the ring on the profile watching; ▼ to its *Edit*, ▲ back; then *Add Profile* and *Done*; ▶ at the end goes round. Add Profile: Leanback's screen — the title, the picture, a large name box (ringed), *Cancel* then *Continue* (dimmed until a name is typed); OK on the picture: Dropout's chooser, dark and large, the ring on a picture. Edit: the same screen with *Save* (dimmed), *Cancel*, a red *Delete Profile*; the rail beside both |
+| 50 | On My List, a Dropout 24/7 card, OK | Dropout 24/7's page (Leanback's, *Watch* ringed), not Dropout's plain stream page |
+| 51 | A details page of an episode partway through: ▶ to *Clear Progress*, OK; then Back to Home | "Progress cleared"; the buttons are *Watch*, *Add to My List*, *Episodes*, *Watch* ringed; the picture has no bar. On Home it is gone from Continue Watching, and its card elsewhere has no bar |
+| 52 | Signed out, a fresh profile: open a show's page (`https://watch.dropout.tv/game-changer`) | The cookie dialog has the selection, *Accept All* ringed; OK closes it and the selection is back on the show; no "too much recursion" in the console |
+| 53 | On "Who is watching?": ▶ to *Sign Out*, OK; Back; OK, ▶, OK | A box "Sign out of Dropout?", *Cancel* ringed; Back closes it with the ring back on *Sign Out*; *Sign Out*: signed out, the welcome |
+| 54 | Edit Profile of a spare profile: *Delete Profile*, OK; OK; again, ▶, OK | "Delete <name>?", *Cancel* ringed; *Cancel* deletes nothing; *Delete Profile*: the profile is gone, back on the picker |
+| 55 | Empty My List (rail → My List) | "My List" and the line saying it is empty; the ring on the rail's My List; ▶ stays there |
+| 56 | Settings → *Theme Color*, OK; ▼ ▼; Back; again ▼, OK | Each colour shows at once on the ring, the buttons and the lit icon; Back puts yellow back; OK keeps the one picked |
+| 57 | Settings → *Holidays* → *Automatic* (in late October) | The selection and buttons in pumpkin orange, an orange and purple glow along the top of Home |
+| 58 | Home: Settings → *Theme This Page* → *Banner* → ▼ (Small), ▼ (Off), OK; then *Card Size* → *Large*, OK | The banner shrinks, then goes, the rows sliding up into its place; then the cards grow, sliding to their places. Closing the panel: the ring on a card |
+| 59 | Settings → *Accessibility* → *Interface Size* 130 %, *High Contrast* on | Everything larger; black and white with white edges and a thicker ring |
+| 60 | Playing, captions on: Settings → Accessibility → *Caption Size* Largest, *Caption Background* Black box; *Color Filter* Green-weak | The captions larger on a black box; the picture's colours shifted (experimental) |
+| 61 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Known limitations
 

@@ -1,15 +1,17 @@
 // Leanback for Dropout — the screens Leanback draws: Home and the hubs,
-// Browse, My List and the lists, a show's page, a special, search and an
-// episode's details page. The page is only read: Dropout's page stays underneath,
-// untouched, and Leanback's layer covers it, a child of <html> outside the
-// site's tree, drawn with the cards of content/cards.js.
+// Browse, My List and the lists, a show's page, a special, search, an
+// episode's details page, the profile picker and the welcome signed out.
+// The page is only read: Dropout's page stays underneath, untouched, and
+// Leanback's layer covers it, a child of <html> outside the site's tree,
+// drawn with the cards of content/cards.js.
 //
 // What a screen holds comes from a reader, as a description (a "model"):
 //   head      — a plain page title (Browse, My List, a list), or
-//   hero      — a banner: picture, kicker, title, meta, description and
-//               buttons (a show's page, a special: content/show.js); with
-//               `slides`, one of several, › stepping through them (Home's
-//               featured: content/home.js); with `picture`, an episode's
+//   hero      — a banner: picture (or a logo), kicker, title, meta,
+//               description and buttons (a show's page, a special:
+//               content/show.js; the welcome); with `slides`, one of
+//               several, › stepping through them (Home's featured:
+//               content/home.js); with `picture`, an episode's
 //               details: the words and buttons on the left, the episode's
 //               picture on the right with its progress;
 //   field     — a search box: Leanback's own, whose text is typed into
@@ -25,8 +27,9 @@
 //               that does nothing, as Home's);
 //   start     — the key of the card or button the selection starts on
 //               (waited for, with waitForStart: Home's Watch now).
-// This file reads collection pages, search and an episode's details itself
-// (readPage, searchModel, episodeModel; sites/dropout.json → screen);
+// This file reads collection pages, search, an episode's details, the
+// profile picker and the welcome itself (readPage, searchModel,
+// episodeModel, profilesModel, profileFormModel, welcomeModel; sites/dropout.json → screen);
 // show.js reads shows and specials, home.js Home.
 //
 // The selection moves over rows: the search box, the buttons, the seasons
@@ -137,7 +140,8 @@
    * An episode's page as its details page: the show, the title, "Season 2,
    * Episode 1 · 28-Feb-2020", the synopsis and the buttons on the left —
    * Watch (Resume when it was left partway, with Start Over beside it), Add
-   * to or Remove from My List, Episodes — and the episode's picture on the
+   * to or Remove from My List, Episodes, and Clear Progress when it has any
+   * (partway or watched) — and the episode's picture on the
    * right, with how far it got and the time left. Dropout 24/7's stream has
    * Watch only. Null when the page has no title to show.
    * @param {Document} doc
@@ -165,6 +169,8 @@
     }
     const back = hrefOf(qs(rules.season, doc)) || hrefOf(qs(rules.show, doc));
     if (back) actions.push({ key: "episodes", label: "Episodes", href: back });
+    // Any progress drawn for it, half-way or watched: cleared on OK.
+    if (key && H.progressOf(store, key) !== null) actions.push({ key: "clear", label: "Clear Progress", run: "clear" });
     const reading = at && H ? H.reading(entry) : null;
     const length = reading && reading.duration ? reading.duration : 0;
     const image = qs(rules.image, doc);
@@ -191,16 +197,220 @@
     };
   }
 
+  /**
+   * Dropout's profile picker as a screen: "Who is watching?" over the
+   * account's profiles in one row, each its picture (or its first letter)
+   * and its name, the one watching now marked and selected; OK presses
+   * Dropout's own button for it, which saves the choice and goes on to
+   * Browse. Then Manage Profiles, which presses Dropout's own: the picker
+   * turns into Manage profiles, where each profile reads Edit (OK: Dropout's
+   * Edit Profile page for it), Add Profile follows them (Dropout's form for
+   * it), and Done turns it back. Add Profile is left off the picker itself:
+   * it is under Manage Profiles. Null until Dropout has drawn the picker,
+   * and while it shows a form of its own instead (Add Profile, a PIN).
+   * @param {Document} doc
+   * @param {object} R — the rules' "screen.profiles" object
+   * @param {{current?: number, signOut?: () => void, editPicture?: (button: Element, position: number) => void}} ctx
+   *   — the profile watching now (its index); Sign Out, at the end of the
+   *   picker's row; managing, OK on a profile's picture (its Dropout button,
+   *   its place in the row)
+   */
+  function profilesModel(doc, R, ctx) {
+    const rules = R || {};
+    const c = ctx || {};
+    const root = qs(rules.root, doc);
+    if (!root) return null;
+    const row = qs(rules.row, root);
+    if (!row) return null;
+    const pattern = (src) => {
+      try {
+        return src ? new RegExp(src, "i") : null;
+      } catch (_err) {
+        return null;
+      }
+    };
+    const add = pattern(rules.add);
+    const toggle = qs(rules.toggle, root);
+    const done = pattern(rules.done);
+    const managing = Boolean(toggle && done && done.test(textOf(toggle)));
+    const items = [];
+    let addButton = null;
+    for (const b of qsa(rules.profile, row)) {
+      const name = textOf(qs(rules.name, b));
+      if (!name) continue;
+      if (add && add.test(name)) {
+        addButton = b;
+        continue;
+      }
+      const img = qs(rules.picture, b);
+      const i = items.length;
+      items.push({
+        key: `profile-${i}`,
+        href: "",
+        title: name,
+        subtitle: managing ? "" : i === c.current ? "Watching now" : "",
+        // Managing, each profile has an Edit button under it (▼ from the
+        // profile): Edit Profile. OK on the profile itself changes its
+        // picture, where the page says how.
+        button: managing ? "Edit" : "",
+        run: managing && typeof c.editPicture === "function" ? () => c.editPicture(b, i) : undefined,
+        image: img ? img.getAttribute("src") || "" : "",
+        initial: name.charAt(0).toUpperCase(),
+        proxy: b
+      });
+    }
+    if (!items.length) return null;
+    if (managing && addButton) items.push({ key: "add", href: "", title: "", subtitle: "", viewAll: true, label: "Add Profile", proxy: addButton });
+    if (managing) items.push({ key: "done", href: "", title: "", subtitle: "", viewAll: true, label: "Done", proxy: toggle });
+    else if (toggle) items.push({ key: "manage", href: "", title: "", subtitle: "", viewAll: true, label: "Manage Profiles", proxy: toggle });
+    if (!managing && typeof c.signOut === "function") items.push({ key: "signout", href: "", title: "", subtitle: "", viewAll: true, label: "Sign Out", run: c.signOut });
+    const current = items.find((it) => it.key === `profile-${c.current}`);
+    return {
+      kind: "profiles",
+      head: textOf(qs(rules.title, root)) || (managing ? "Manage profiles" : "Who is watching?"),
+      hero: null,
+      pills: null,
+      // ▶ at the end of the row goes round to its start.
+      sections: [{ key: managing ? "manage" : "profiles", title: "", sub: "", columns: items.length, avatars: true, wrap: true, items }],
+      more: null,
+      managing,
+      start: current ? current.key : items[0].key
+    };
+  }
+
+  /**
+   * A profile's form — Add Profile (the picker's own, at #/add) or Edit
+   * Profile (/settings/manage/profile) — as a screen: the title and Dropout's
+   * line under it, the profile's picture (OK: Dropout's picture chooser),
+   * the name box (typed into Dropout's own), Kid Profile where Dropout offers
+   * it, and the buttons in the rules' order, each pressing Dropout's own; a
+   * button the rules mark `ask` (Delete Profile) runs `ask:<key>` instead,
+   * for the page to ask first. Dropout's word after a press (a toast) is the
+   * line under the title. Null when the page holds no such form.
+   * @param {Document} doc
+   * @param {object} R — the rules' "screen.profileForm.add" or ".edit"
+   */
+  function profileFormModel(doc, R) {
+    const rules = R || {};
+    const root = qs(rules.root, doc);
+    if (!root) return null;
+    const input = qs(rules.name, root);
+    if (!input) return null;
+    const picture = qsa(rules.picture, root).find((b) => qs(rules.image, b) || qs(rules.letter, b)) || null;
+    const img = picture ? qs(rules.image, picture) : null;
+    const letter = picture ? textOf(qs(rules.letter, picture)) : "";
+    const name = String(input.value || "");
+    const buttons = qsa("button", root);
+    const actions = [];
+    const kid = qs(rules.kid, root);
+    if (kid && !kid.disabled && kid.getAttribute("aria-disabled") !== "true") {
+      const on = kid.checked === true || kid.getAttribute("aria-checked") === "true" || kid.getAttribute("data-state") === "checked";
+      actions.push({ key: "kid", label: `Kid Profile: ${on ? "On" : "Off"}`, proxy: kid });
+    }
+    for (const b of Array.isArray(rules.buttons) ? rules.buttons : []) {
+      let re = null;
+      try {
+        re = new RegExp(b.text, "i");
+      } catch (_err) {
+        continue;
+      }
+      const found = buttons.find((x) => re.test(textOf(x)));
+      if (!found) continue;
+      // Dropout greys out Continue until there is a name, Save until
+      // something changed: shown, dimmed, pressing nothing.
+      const off = Boolean(found.disabled) || found.getAttribute("aria-disabled") === "true";
+      const a = { key: b.key, label: b.label || textOf(found), primary: Boolean(b.primary), danger: Boolean(b.danger), disabled: off };
+      if (b.ask) a.run = `ask:${b.key}`;
+      else a.proxy = found;
+      actions.push(a);
+    }
+    const status = textOf(qs(rules.status, doc));
+    return {
+      kind: "profileForm",
+      head: textOf(qs(rules.title, root)),
+      hero: { kicker: "", title: "", meta: status, description: textOf(qs(rules.text, root)), actions },
+      field: { value: name, placeholder: rules.placeholder || "Profile name", proxy: input },
+      pills: null,
+      sections: picture ? [{
+        key: "picture",
+        title: "",
+        sub: "",
+        columns: 1,
+        avatars: true,
+        items: [{
+          key: "picture",
+          href: "",
+          title: "",
+          subtitle: "Change picture",
+          image: img ? img.getAttribute("src") || "" : "",
+          initial: letter || name.charAt(0).toUpperCase(),
+          proxy: picture
+        }]
+      }] : [],
+      // Top to bottom: the title, the picture, the name, the buttons.
+      showHead: true,
+      rowOrder: ["sections", "field", "actions"],
+      more: null,
+      start: "field"
+    };
+  }
+
+  /**
+   * Dropout's front page, signed out, as a welcome screen: Dropout's logo,
+   * its line and its words about the service, then Sign In (selected),
+   * Browse (Home, signed out), and the privacy policy and terms. Starting a
+   * subscription is left to a phone or a computer, which the last line says.
+   * Null when the page holds no such banner.
+   * @param {Document} doc
+   * @param {object} R — the rules' "screen.welcome" object
+   * @param {{signinUrl?: string, browseUrl?: string, legal?: {label: string, url: string}[]}} ctx
+   */
+  function welcomeModel(doc, R, ctx) {
+    const rules = R || {};
+    const c = ctx || {};
+    const banner = qs(rules.root, doc);
+    if (!banner) return null;
+    const logo = qs(rules.logo, banner);
+    const actions = [];
+    if (c.signinUrl) actions.push({ key: "signin", label: "Sign In", href: c.signinUrl, primary: true });
+    if (c.browseUrl) actions.push({ key: "browse", label: "Browse", href: c.browseUrl });
+    for (const l of c.legal || []) {
+      if (l && l.url && l.label) actions.push({ key: `legal-${actions.length}`, label: l.label, href: l.url });
+    }
+    if (!actions.length) return null;
+    return {
+      kind: "welcome",
+      head: "",
+      hero: {
+        logo: logo ? logo.getAttribute("src") || "" : "",
+        kicker: "",
+        title: textOf(qs(rules.title, banner)) || "Dropout",
+        meta: "",
+        description: [textOf(qs(rules.text, banner)), rules.note || ""].filter(Boolean).join(" "),
+        image: "",
+        actions
+      },
+      pills: null,
+      sections: [],
+      more: null,
+      start: actions[0].key
+    };
+  }
+
   /** A collection page as a screen model: its title over a grid of cards. */
-  function collectionModel(doc, R) {
+  function collectionModel(doc, R, ctx) {
     const page = readPage(doc, R);
     if (!page.root) return null;
+    const c = ctx || {};
     return {
       kind: "collection",
       head: page.title,
       hero: null,
       pills: null,
       sections: [{ key: "items", title: "", sub: "", columns: COLUMNS, items: page.items }],
+      // A list with nothing in it (My List, emptied) says so; the selection
+      // waits on the rail.
+      empty: page.items.length || page.more ? "" : c.empty || "Nothing here yet.",
       more: page.more ? qs(R.more, doc) : null,
       start: null
     };
@@ -218,7 +428,8 @@
    *   onObserve?: (items: object[]) => void,// Dropout's progress bars, for the history
    *   onPill?: (pill: object) => void,      // OK on a pill (a season); a pill with a proxy presses it instead
    *   onFieldDone?: () => void,             // Enter in the search box
-   *   onRun?: (what: string) => void       // OK on a button that runs something (an episode's "watch")
+   *   onRun?: (what: string) => void,      // OK on a button that runs something (an episode's "watch")
+   *   columns?: () => number|null          // a standard grid's columns, in place of the model's
    * }} opts
    */
   function createScreen(doc, opts) {
@@ -265,6 +476,9 @@
     pictureBar.appendChild(pictureFill);
     heroPicture.append(pictureArt, pictureLeft, pictureBar);
     const heroBody = el("div", "tenfoot-hero-body");
+    const heroLogo = el("img", "tenfoot-hero-logo");
+    heroLogo.alt = "";
+    heroLogo.hidden = true;
     const heroKicker = el("p", "tenfoot-hero-label");
     const heroTitle = el("h1", "tenfoot-hero-title");
     const heroMeta = el("p", "tenfoot-hero-meta");
@@ -274,7 +488,7 @@
     const heroDots = el("div", "tenfoot-hero-dots");
     heroDots.setAttribute("aria-hidden", "true");
     heroDots.hidden = true;
-    heroBody.append(heroKicker, heroTitle, heroMeta, heroText, heroActions, heroDots);
+    heroBody.append(heroLogo, heroKicker, heroTitle, heroMeta, heroText, heroActions, heroDots);
     hero.append(heroArt, heroScrim, heroPicture, heroBody);
     // The next slide, beside the first button: OK steps on, and the selection
     // stays on it so OK can keep going.
@@ -344,14 +558,15 @@
     }
 
     // A card's progress: what the reader says, else Leanback's own reading,
-    // else Dropout's bar (one merged reading per video).
+    // else Dropout's bar (one merged reading per video) — none for a video
+    // whose progress was cleared.
     function withProgress(it, section) {
       const noBadge = o.badges === false || (section && section.badges === false);
       if (it.fraction !== undefined) return noBadge ? Object.assign({}, it, { badge: "" }) : it;
       const s = store();
       const key = H ? H.keyOf(it.href) : null;
       const mine = key && s.entries[key] ? H.progressOf(s, key) : null;
-      const pct = typeof it.percent === "number" ? it.percent : null;
+      const pct = typeof it.percent === "number" && !(H && H.clearedOf(s, key)) ? it.percent : null;
       const fraction = mine !== null ? mine : pct !== null ? pct / 100 : null;
       const extra = { fraction };
       if (noBadge) extra.badge = "";
@@ -377,7 +592,7 @@
     function renderHead() {
       const text = o.title || (model && model.head) || "";
       setText(titleEl, text);
-      head.hidden = !text || Boolean(model && model.hero);
+      head.hidden = !text || Boolean(model && model.hero && !model.showHead);
       if (!o.home) setAttr(layer, "aria-label", text || (model && model.hero ? (heroView() || {}).title : null));
     }
 
@@ -394,6 +609,9 @@
       if (h.image && heroArt.getAttribute("src") !== h.image) heroArt.setAttribute("src", h.image);
       if (!h.image) setAttr(heroArt, "src", null);
       renderPicture(h.picture);
+      if (h.logo && heroLogo.getAttribute("src") !== h.logo) heroLogo.setAttribute("src", h.logo);
+      if (!h.logo) setAttr(heroLogo, "src", null);
+      heroLogo.hidden = !h.logo;
       setText(heroKicker, h.kicker || "");
       heroKicker.hidden = !h.kicker;
       setText(heroTitle, h.title);
@@ -430,6 +648,8 @@
         setAttr(node, "aria-label", a.ariaLabel || a.label);
         setAttr(node, "data-tenfoot-listed", a.listed ? "true" : null);
         node.classList.toggle("tenfoot-hero-primary", Boolean(a.primary));
+        setAttr(node, "data-tenfoot-danger", a.danger ? "true" : null);
+        setAttr(node, "aria-disabled", a.disabled ? "true" : null);
         setText(node, a.label);
         next.set(a.key, node);
         order.push(node);
@@ -514,6 +734,8 @@
       fieldBox.hidden = !f;
       if (!f) return;
       setAttr(field, "placeholder", f.placeholder || null);
+      setAttr(field, "aria-label", f.placeholder || "Search");
+      setAttr(field, "type", f.placeholder && f.placeholder !== "Search" ? "text" : "search");
       if (doc.activeElement !== field && field.value !== f.value) field.value = f.value;
     }
 
@@ -570,9 +792,13 @@
           setText(sec.name, s.title || "");
           setText(sec.sub, s.sub || "");
           sec.titleBox.hidden = !s.title && !s.sub;
-          const cols = Math.max(1, s.columns || COLUMNS);
+          // A standard grid takes Theme This Page's columns (Card Size).
+          const wanted = s.columns === COLUMNS && typeof o.columns === "function" ? o.columns() : null;
+          const cols = Math.max(1, wanted || s.columns || COLUMNS);
           sec.grid.style.setProperty("--tf-cols", String(cols));
           sec.columns = cols;
+          // Profiles: square pictures with round corners, the row centred.
+          setAttr(sec.box, "data-tenfoot-avatars", s.avatars ? "true" : null);
         }
         sec.title = s.title || "";
         sec.badges = s.badges;
@@ -593,15 +819,16 @@
     // The rows the selection moves over, top to bottom.
     function buildRows() {
       const next = [];
-      if (model && model.field) next.push({ key: "field", kind: "field", els: [field], keys: ["field"] });
-      if (model && model.hero && actionEls.size) next.push({ key: "actions", kind: "actions", els: heroButtons(), keys: heroKeys() });
-      if (pillEls.size) next.push({ key: "pills", kind: "pills", els: Array.from(pillEls.values()), keys: Array.from(pillEls.keys()) });
+      const parts = { field: [], actions: [], pills: [], sections: [] };
+      if (model && model.field) parts.field.push({ key: "field", kind: "field", els: [field], keys: ["field"] });
+      if (model && model.hero && actionEls.size) parts.actions.push({ key: "actions", kind: "actions", els: heroButtons(), keys: heroKeys() });
+      if (pillEls.size) parts.pills.push({ key: "pills", kind: "pills", els: Array.from(pillEls.values()), keys: Array.from(pillEls.keys()) });
       for (const s of (model && model.sections) || []) {
         const sec = sectionEls.get(s.key);
         if (!sec) continue;
         const step = Number.isFinite(sec.columns) ? sec.columns : Math.max(1, sec.links.length);
         for (let i = 0; i < sec.links.length; i += step) {
-          next.push({
+          parts.sections.push({
             key: `${s.key}:${i / step}`,
             kind: "cards",
             section: s.key,
@@ -609,7 +836,25 @@
             keys: sec.items.slice(i, i + step).map((it) => it.key)
           });
         }
+        // The cards' own buttons (a profile's Edit): a row under them, each
+        // reached with ▼ from its card and left with ▲ back to it.
+        const withButton = sec.items.filter((it) => it.button && sec.cards.get(it.key));
+        if (withButton.length) {
+          parts.sections.push({
+            key: `${s.key}:buttons`,
+            kind: "cards",
+            buttons: true,
+            section: s.key,
+            els: withButton.map((it) => sec.cards.get(it.key).action),
+            keys: withButton.map((it) => `${it.key}:button`)
+          });
+        }
       }
+      // The rows top to bottom: the model's order (a profile's form: the
+      // picture, the name, the buttons), else the field, the buttons, the
+      // pills, the cards.
+      const order = model && Array.isArray(model.rowOrder) ? model.rowOrder : ["field", "actions", "pills", "sections"];
+      for (const k of order) if (parts[k]) next.push(...parts[k]);
       rows = next;
     }
 
@@ -760,7 +1005,13 @@
         return settle();
       }
       if (dir === "right") {
-        if (pos.col >= row.els.length - 1) return { edge: "right" };
+        if (pos.col >= row.els.length - 1) {
+          // A row that goes round (the profiles): from its end to its start.
+          const sec = row.kind === "cards" ? (model.sections || []).find((s) => s.key === row.section) : null;
+          if (!sec || !sec.wrap || row.els.length < 2) return { edge: "right" };
+          pos.col = 0;
+          return settle();
+        }
         pos.col += 1;
         return settle();
       }
@@ -772,6 +1023,15 @@
           return { edge: "down" };
         }
         const target = rows[to];
+        // Between a card and its button under it (a profile and its Edit):
+        // straight down and up; a card with no button goes nowhere.
+        if (target.buttons || row.buttons) {
+          const key = String(row.keys[pos.col]);
+          const c = target.keys.indexOf(target.buttons ? `${key}:button` : key.replace(/:button$/, ""));
+          if (c < 0) return { edge: dir };
+          pos = { row: to, col: c };
+          return settle(true);
+        }
         // Into a section of cards from outside it: back to the card last
         // selected there, in whichever of its rows.
         if (target.kind === "cards" && !(row.kind === "cards" && row.section === target.section)) {
@@ -838,8 +1098,9 @@
       return false;
     }
 
+    // Something to show: rows, or the line saying there is nothing.
     function ready() {
-      return rows.length > 0;
+      return rows.length > 0 || isEmpty();
     }
 
     /** The next (1) or previous (-1) slide of the banner, the selection kept on ›. */
@@ -871,6 +1132,8 @@
         console.warn("[leanback-for-dropout] the page could not be read:", err && err.message);
         model = null;
       }
+      // Which screen it is, for its own layout (the profile picker, centred).
+      setAttr(layer, "data-tenfoot-screen", model && model.kind ? model.kind : null);
       renderHead();
       renderHero();
       renderField();
@@ -954,7 +1217,8 @@
         index: row && row.kind === "cards" ? rows.slice(0, pos.row).filter((r) => r.kind === "cards" && r.section === row.section).reduce((n, r) => n + r.els.length, 0) + pos.col : null,
         columns: COLUMNS,
         loading: Boolean(more),
-        more: Boolean(model && model.more)
+        more: Boolean(model && model.more),
+        empty: emptyBox.hidden ? null : emptyBox.textContent
       };
       if (model && model.field) {
         out.search = {
@@ -995,8 +1259,13 @@
       return out;
     }
 
+    // Drawn, and saying it has nothing to show (an empty list).
+    function isEmpty() {
+      return Boolean(model) && !emptyBox.hidden;
+    }
+
     return Object.freeze({
-      refresh, move, select, initialTarget, destroy, snapshot, stepSlide,
+      refresh, move, select, initialTarget, isEmpty, destroy, snapshot, stepSlide,
       element: layer,
       get current() { return current(); },
       get ready() { return ready(); },
@@ -1005,5 +1274,5 @@
     });
   }
 
-  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, episodeModel });
+  globalThis.TenfootScreen = Object.freeze({ createScreen, readPage, collectionModel, searchModel, episodeModel, profilesModel, profileFormModel, welcomeModel });
 })();

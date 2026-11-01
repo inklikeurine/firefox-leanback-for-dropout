@@ -18,14 +18,20 @@ navigate, not what you can watch.
 - **Draws Dropout for a TV.** Home, Browse, My List, the lists (Trending, New
   Releases…), search, every show's page and every episode's details page
   are Leanback's own screens, built from what Dropout puts on the page. Dropout's
-  own top bar and footer are hidden. Sign-in, account, help and legal pages
-  stay Dropout's, driven with the arrows.
+  own top bar and footer are hidden, and so is its promotion bar; the
+  cookie box and its settings are in Leanback's look. The profile picker, Manage profiles,
+  Add Profile and Edit Profile are drawn for the TV too, and so is a welcome
+  screen when you are signed out (*Sign In*, *Browse*, the privacy policy
+  and terms). Sign-in is Dropout's own form in Leanback's look; the
+  policies are in large type. Account and help pages stay Dropout's,
+  driven with the arrows, with the rail beside them.
 - **Continue Watching**, first on Home: what you started here and what you
   started on Dropout's Roku or Android app, in one row.
 - **A details page before every video**, as on Dropout's Roku app: the
   episode's title, synopsis and picture, and *Watch* — or *Resume* and
   *Start Over* when you stopped partway — with *Add to My List* and
-  *Episodes* beside it. Nothing plays until you press *Watch*.
+  *Episodes* beside it, and *Clear Progress* when you have watched some or
+  all of it. Nothing plays until you press *Watch*.
 - **Picks up where you left off**, with *Start Over* to go back to the
   beginning.
 - **Opens a show where you are in it**: the newest season, with the selection
@@ -36,6 +42,14 @@ navigate, not what you can watch.
   next episode. Back brings the details page back.
 - **A focus ring you can see from the sofa** — 4 px, Dropout yellow,
   configurable.
+- **Themes**: four dark themes, a *Theme Color* that replaces Dropout's
+  yellow everywhere (the ring, the main buttons, the lit icons), holiday
+  looks (by date, or one you pick), and *Theme This Page*, which changes
+  the page on screen — Home's banner, the size of the cards, where an
+  episode's picture goes — and shows each choice as you move to it.
+- **Accessibility**: a larger interface, high contrast, less motion,
+  caption size, colour and background, and an experimental colour filter on
+  the video for colour blindness.
 - **One settings panel**, walked with the arrows: quality, speed, captions
   and their style, and Leanback's own settings.
 - **Skips the marketing site**: opening `dropout.tv` lands you on Browse.
@@ -151,14 +165,41 @@ its running time, Dropout's badges and how far you got.
 in Firefox and on Dropout's Roku or Android app, most recent first, each with
 the time left.
 
-**The rail** runs down the left of every page that plays no video, an
-episode's details page too: ◀ from the left edge goes onto it, ▶ comes back
-to exactly where you were. It holds
-*Search*, *Home*, *Browse*, *My List* (the bookmark), *Dropout 24/7* and the
-gear for Leanback's settings. The page you are on has its icon in yellow.
+**The rail** runs down the left of every page but signing in and a video
+playing — an episode's details page, the profile pages, the policies and
+Dropout's account and help pages too: ◀ from the left edge goes onto it, ▶ comes back
+to exactly where you were. Signed in, its top entry is your profile's
+picture; under it are *Search*, *Home*, *Browse*, *My List* (the bookmark),
+*Dropout 24/7* and the gear for Leanback's settings. The page you are on has
+its icon in yellow.
 
-**Browse, My List and the lists** show their shows or episodes five across,
-the same cards as on Home; more arrive as you near the end.
+**Profiles**: the profile picture at the top of the rail opens "Who is
+watching?", the account's profiles in a row; OK on one switches to it.
+After them come *Manage Profiles* and *Sign Out* (which asks first, with
+*Cancel* selected); ▶ at the end of the row goes round to its start.
+*Manage Profiles* turns the row into Manage profiles, with a pencil over
+each picture and an *Edit* button under each name, then *Add Profile* and
+*Done*: the selection goes along the profiles, ▼ goes down to a profile's
+*Edit* and ▲ back up. OK on a profile's picture opens a box of Dropout's
+profile pictures over Manage profiles, its own selected: OK on another
+changes it there and then (Back changes nothing). OK on its *Edit* opens
+Edit Profile — its picture (OK: Dropout's picture chooser), its name,
+*Save*, *Cancel* (which asks first when something is not saved, with
+*Keep Editing* selected) and *Delete Profile*, which asks first with *Cancel*
+selected. *Add Profile* is the same screen with *Cancel* and *Continue*.
+Typing a name needs a keyboard. Each profile has its own Continue
+Watching, resume points and watched ticks; the history from before
+profiles goes to the first profile used.
+
+**Signed out**, Leanback opens on a welcome screen: *Sign In*, *Browse*,
+*Privacy Policy* and *Terms of Use*. The sign-in form is laid out for the
+TV; typing your email and password needs a keyboard, or a keyboard app on
+your phone. The privacy policy, terms and cookies policy scroll with ▲ ▼.
+
+**Browse, My List and the lists** show their shows or episodes five across
+(four or six with *Theme This Page*), the same cards as on Home; more
+arrive as you near the end. An empty list says so, and the selection
+waits on the rail.
 
 **A show's page** has the show's picture and name, a yellow button that picks
 the show up where you left it (**Resume S9 E3**, or **Play S9 E4** for the
@@ -179,8 +220,10 @@ extra. On the left: the show's name, the episode's title, "Season 2,
 Episode 1 · 28-Feb-2020", the synopsis, and the buttons — *Watch* (yellow),
 or *Resume* with *Start Over* beside it when you stopped partway; *Add to My
 List* (*Remove from My List* once it is there); *Episodes*, the episode's
-season on its show's page. On the right, the episode's picture, with how
-far you got and the time left. The selection starts on *Watch* or *Resume*;
+season on its show's page; and *Clear Progress* when you have watched some
+or all of it, which makes the episode unstarted again (out of Continue
+Watching, no bar on its card) until you play it again. On the right, the
+episode's picture, with how far you got and the time left. The selection starts on *Watch* or *Resume*;
 play/pause on the remote does the same.
 
 **Watching**: the episode fills the window. *Resume* starts where you
@@ -200,21 +243,31 @@ and leaves you on the 24/7 page.
 **Up next**: eight seconds before an episode ends, a card counts down to the
 next one. OK plays it now; ◀ hides it, and then nothing plays by itself.
 
-**Settings** opens from the right. During playback it holds *Start Over*
-(after a resume), Quality, Speed, Play Next Episode, Closed Captions (a
-switch; ▶ on it picks a track), Caption Style (font, background, window) and
-Leanback's settings. Anywhere else it holds Leanback's settings, the same
-list in the same words, with *Clear Continue Watching* and *Turn Leanback
-Off* at the foot. ▲ ▼ move, OK or ▶ takes an entry, ◀ or Back goes up a
-level and closes the panel from the top.
+**Settings** opens from the right. During playback it is *Playback
+Settings*: Play Next Episode, Quality, Speed, Closed Captions (a switch; ▶ on
+it picks a track), Caption Style (font, background, window) and Leanback's
+settings. Anywhere else it holds Leanback's settings, the same list in the
+same words, with *Clear Continue Watching* at the foot. ▲ ▼ move, OK or ▶
+takes an entry, ◀ or Back goes up a level and closes the panel from the
+top. The toolbar button turns Leanback off.
 
-**Leanback's settings**: Autoplay Next Episode · Shows Open On · Seek Step ·
-Start Videos Muted · Button Hints (a bar showing the keys that matter now; off unless turned on) ·
-Enlarge Selection · Ring Width · Ring Colour · Skip dropout.tv Home · Back On
-Home (does nothing / closes the tab — for kiosk setups). The options page
-(`about:addons` → Leanback for Dropout → Preferences) has the same, plus a
-ring colour of your own and *Player controls*: *The site's own player
-controls* hands the player back to Dropout, for troubleshooting.
+**Leanback's settings**: under *Playback*, Autoplay Next Episode · Seek
+Step; under *Browsing*, Shows Open On · Skip dropout.tv Home · Back On Home
+(does nothing / closes the tab — for kiosk setups; until you pick one it
+closes the tab, except on a copy loaded from its folder for testing, where
+it does nothing); under *Look*, Theme This Page (on pages that have
+choices of their own) · Theme · Theme Color · Holidays · Enlarge Selection
+· Ring Width · Button Hints (a bar showing the keys that matter now; off
+unless turned on). Moving through the values of a look shows each at once;
+OK keeps it, Back puts it back. Then *Accessibility*: Interface Size · High
+Contrast · Reduce Motion · Caption Size · Caption Color · Caption
+Background · Color Filter (Experimental). At the foot, *Cookie
+Preferences* opens the cookie settings again (the cookie box only comes
+up until it is answered). The options page
+(`about:addons` → Leanback for Dropout → Preferences) has the same, plus
+*Start Videos Muted*, a theme colour of your own and *Player controls*:
+*The site's own player controls* hands the player back to Dropout, for
+troubleshooting.
 
 *Clear Continue Watching* asks for OK twice. It forgets every video you have
 not finished, Roku progress included, until something is watched again;
@@ -285,8 +338,19 @@ to play its player there. The manifest declares
 - Dropout 24/7 plays on its page only while the stream's page carries its
   player's address; otherwise *Watch* opens the stream's page, where the
   sound waits for *Watch* there.
-- Signing in and searching need a keyboard. Signing in also loads reCAPTCHA,
-  which may get in the way in a kiosk.
+- Signing in and searching need a keyboard (or a keyboard app on your phone):
+  there is no on-screen keyboard. Signing in uses Dropout's invisible
+  reCAPTCHA, which normally asks nothing; if it ever shows a puzzle, it is
+  Dropout's own, and needs a pointer.
+- Each profile's watch history is kept by its place in Dropout's list of
+  profiles. Deleting a profile moves the ones after it up, and their
+  histories with them.
+- The video's colour filter is experimental: it shifts the colours a kind of
+  colour blindness loses into ones it keeps, which helps some people and
+  not others, and it may cost a slow computer smooth playback.
+- Leanback's caption style changes how Dropout's player draws captions on
+  this computer only; with *Player's own*, the player's own Caption Style
+  applies.
 - Sound on the first frame needs a profile setting Firefox will not let an
   extension make — see [Sound on autoplay](#sound-on-autoplay). Without it the
   sound comes on with *Watch* where Firefox allows that, else at your next

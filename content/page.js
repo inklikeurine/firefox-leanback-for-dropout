@@ -26,7 +26,10 @@
   const ARROW_SCOPE_DEPTH = 3;
   const MENU_REFOCUS_LIMIT = 4;
   const SCREEN_REFOCUS_LIMIT = 4;
+  const LOOK_SLIDE_MS = 320; // Theme This Page: what moves slides this long
   const NOTICE_MS = 3000;
+  const SIGNIN_OFFERED = "tenfoot.signin-offered";
+  const READ_STEP = 0.6; // ▲ ▼ on a policy: this share of the window's height
 
   if (window.top !== window) return;
   const root = document.documentElement;
@@ -41,6 +44,8 @@
   const Ring = globalThis.TenfootFocusRing;
   const Panel = globalThis.TenfootPanel;
   const SettingsMenu = globalThis.TenfootSettingsMenu;
+  const Ask = globalThis.TenfootAsk;
+  const Themes = globalThis.TenfootThemes;
   const History = globalThis.TenfootHistory;
 
   const state = {
@@ -75,6 +80,11 @@
     modal: null,
     modalReturn: null,
     menu: null,
+    ask: null, // a question in a box (nav/ask.js): Sign out?, Delete profile?
+    picker: null, // a picture to pick, in a box (nav/ask.js): a profile's picture
+    preview: null, // a look being tried in the settings panel, not yet picked
+    modalAwaitStart: false, // a dialog whose first choice has not appeared yet
+    modalOpenedAt: 0,
     menuReturn: null,
     offerShowing: false,
     settingsMenu: null,
@@ -87,10 +97,12 @@
     railActive: false,
     railReturn: null,
     history: { entries: {} },
+    profile: 0, // which of the account's profiles is watching (its history)
     metaSent: null,
     pendingInitialFocus: 0,
     initialFocusTimer: 0,
     menuRefocus: 0,
+    refocusing: false, // inside refocus(): the focus is being taken back
     trail: [],
     backFallback: 0,
     unloading: false,
@@ -107,8 +119,8 @@
   // functions the others call, then each part installs its own.
   const P = { state };
   Object.assign(P, {
-    send, dispatch, showHints, notice, click, firstVisible, collect, currentEl, focusEl,
-    goBack, samePath, openMenu, openSettings, leaveFieldBelow
+    send, dispatch, showHints, notice, askUser, pickPicture, pageLook, click, firstVisible, collect, currentEl, focusEl,
+    goBack, samePath, openMenu, openSettings, leaveFieldBelow, refocusPage
   });
   for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageLive]) part.install(P);
   // From page-back.js.
@@ -192,7 +204,9 @@
     }
   }
 
+  // Reduce Motion (Accessibility), or the system's own setting.
   function reducedMotion() {
+    if (root.dataset.tenfootMotion === "reduce") return true;
     try {
       return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     } catch (_err) {
@@ -210,14 +224,185 @@
   }
 
   function ringStyle() {
-    const s = state.settings;
-    return { color: s.ringColor, width: s.ringWidth, zoom: s.focusZoom };
+    const s = lookSettings();
+    const look = Themes.lookOf(s, new Date(), window);
+    return { color: look.accent, width: s.highContrast ? Math.max(6, s.ringWidth) : s.ringWidth, zoom: s.focusZoom };
+  }
+
+  // ---------------------------------------------------------------------------
+  // the look: the theme, Theme Color, Holidays, Accessibility, Theme This Page
+  // ---------------------------------------------------------------------------
+
+  // The settings as they look now: a choice being tried in the settings
+  // panel wins over the saved one until it is picked or left.
+  function lookSettings() {
+    return state.preview ? Object.assign({}, state.settings, state.preview) : state.settings;
+  }
+
+  // Which of Theme This Page's kinds of look the page on screen is.
+  function lookKey() {
+    switch (screenKind()) {
+      case "home": return "home";
+      case "page":
+      case "search": return "lists";
+      case "detail": return "show";
+      case "episode": return "details";
+      default: return null;
+    }
+  }
+
+  function pageLook() {
+    const key = lookKey();
+    const all = lookSettings().pageLooks || {};
+    return (key && all[key]) || {};
+  }
+
+  function lookData() {
+    const d = root.dataset;
+    return [d.tenfootLookBanner, d.tenfootLookCards, d.tenfootLookPicture].join("|");
+  }
+
+  /**
+   * Write the look onto the page (lib/themes.js). When the page's own look
+   * changed (Theme This Page), its screen is drawn again, and with
+   * `animate` what moved slides from where it was to where it is now.
+   */
+  function applyLook(animate) {
+    Themes.apply(root, lookSettings(), new Date());
+    state.ring.setStyle(ringStyle());
+    const p = pageLook();
+    const before = lookData();
+    const write = () => {
+      for (const [k, v] of [["tenfootLookBanner", p.banner], ["tenfootLookCards", p.cards], ["tenfootLookPicture", p.picture]]) {
+        if (v) root.dataset[k] = v;
+        else delete root.dataset[k];
+      }
+    };
+    if (!state.screen || before === [p.banner, p.cards, p.picture].map((v) => v || "").join("|")) {
+      write();
+      return;
+    }
+    const change = () => {
+      write();
+      refreshScreen();
+    };
+    if (animate) slideLayout(change);
+    else change();
+  }
+
+  // What moves on a screen when its look changes, each sliding (and growing
+  // or shrinking) from its old box to its new one.
+  function slideLayout(change) {
+    const layer = state.screen && state.screen.element;
+    if (!layer || reducedMotion()) {
+      change();
+      return;
+    }
+    const els = Array.from(layer.querySelectorAll(".tenfoot-card, .tenfoot-hero, .tenfoot-hero-body, .tenfoot-screen-picture, .tenfoot-screen-head, .tenfoot-row-title"));
+    const first = new Map(els.map((el) => [el, el.getBoundingClientRect()]));
+    change();
+    for (const [el, a] of first) {
+      if (!el.isConnected || typeof el.animate !== "function") continue;
+      const b = el.getBoundingClientRect();
+      if (!a.width || !a.height || !b.width || !b.height) continue;
+      const dx = a.left - b.left;
+      const dy = a.top - b.top;
+      const sx = a.width / b.width;
+      const sy = a.height / b.height;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) continue;
+      el.animate([
+        { transformOrigin: "0 0", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+        { transformOrigin: "0 0", transform: "none" }
+      ], { duration: LOOK_SLIDE_MS, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+    }
+    setTimeout(() => state.ring.refresh(), LOOK_SLIDE_MS + 20);
+  }
+
+  // Cookie Preferences (Leanback's settings): the cookie settings again,
+  // once they have been answered — by asking the page's Ketch for them, as
+  // Dropout's own "Data Preferences" link does; else by pressing Dropout's
+  // "Manage Cookie Preferences" (in its footer, hidden while Leanback is
+  // on). Null when the page has neither.
+  function cookiePreferences() {
+    const r = (state.rules.common || {}).cookiePreferences || {};
+    let page = null;
+    try {
+      page = window.wrappedJSObject || null;
+    } catch (_err) {
+      page = null;
+    }
+    const ketch = page && r.call && typeof page.ketch === "function" ? page.ketch : null;
+    const link = ketch ? null : cookieLink();
+    if (!ketch && !link) return null;
+    return () => {
+      closeMenu();
+      if (ketch) {
+        try {
+          // The options (which window) are the page's, so made in its world.
+          if (r.hint) ketch(r.call, cloneInto({ displayHint: r.hint }, window));
+          else ketch(r.call);
+          return;
+        } catch (err) {
+          console.warn(LOG, "cookie preferences did not open:", err && err.message);
+        }
+      }
+      const l = link || cookieLink();
+      if (l) l.click();
+    };
+  }
+
+  function cookieLink() {
+    const r = (state.rules.common || {}).cookiePreferences || {};
+    const bySel = Rules.selectorList(r.selector).map((sel) => qs(sel)).find(Boolean);
+    if (bySel) return bySel;
+    let re = null;
+    try {
+      re = r.text ? new RegExp(r.text, "i") : null;
+    } catch (_err) {
+      return null;
+    }
+    return re ? qsa("footer a, footer button, a, button").find((el) => re.test((el.textContent || "").trim())) || null : null;
+  }
+
+  // A look tried in the settings panel (moving through its values), or none.
+  function previewLook(patch) {
+    state.preview = patch || null;
+    applyLook(true);
   }
 
   // Leanback's own elements: the Home screen, the rail, the options panel.
   function ownUi(el) {
     if (!el) return false;
-    return Boolean((state.screen && state.screen.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)));
+    return Boolean((state.screen && state.screen.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)) || (state.ask && state.ask.contains(el)) || (state.picker && state.picker.contains(el)));
+  }
+
+  // The box open over the screen, if any: a question, or a picture to pick.
+  function overlay() {
+    if (state.ask && state.ask.isOpen) return state.ask;
+    if (state.picker && state.picker.isOpen) return state.picker;
+    return null;
+  }
+
+  // A picture to pick (nav/ask.js createPicker): its id, or null. The
+  // selection goes back where it was, as after a question.
+  function pickPicture(choice) {
+    const back = currentEl();
+    state.menuRefocus = 0;
+    return state.picker.open(choice).then((answer) => {
+      if (!overlay() && back && back.isConnected && !state.leaving) focusEl(back, { scroll: false });
+      return answer;
+    });
+  }
+
+  // A question in a box (nav/ask.js). The selection goes back where it was
+  // when it is answered, unless the answer took the viewer elsewhere.
+  function askUser(question) {
+    const back = currentEl();
+    state.menuRefocus = 0;
+    return state.ask.open(question).then((answer) => {
+      if (!state.ask.isOpen && back && back.isConnected && !state.leaving) focusEl(back, { scroll: false });
+      return answer;
+    });
   }
 
   function notice(label) {
@@ -241,6 +426,14 @@
     // A hub (/dimension-20) has a one-segment address like a show, but it is
     // drawn by the same component as Home, and gets the same screen.
     if (state.kind === "series" && qs(homeRules().root)) state.kind = "hub";
+    // The profile picker is one app whatever its address shows (Add
+    // Profile, a PIN): the picker's page, by what the page holds.
+    const picker = state.rules.screen && state.rules.screen.profiles;
+    if (picker && picker.root && qs(picker.root)) state.kind = "profiles";
+    // For content/page.css: the forms and the policies are laid out for the TV.
+    root.dataset.tenfootKind = state.kind;
+    state.signinStep = null;
+    state.formFoot = null;
     state.page = Rules.pageRules(state.rules, state.kind === "hub" ? "browse" : state.kind);
     state.href = location.href;
     state.memory = new Map();
@@ -361,7 +554,7 @@
   }
 
   // Dropout's own top bar and footer (rules: common.chrome) are hidden on every
-  // page but sign-in, account, help and legal (`other`), which keep them.
+  // page but account and help (`other`), which keep them.
   function stampChrome() {
     const want = state.enabled && state.kind !== "other";
     for (const sel of Rules.selectorList(state.rules.common && state.rules.common.chrome)) {
@@ -371,6 +564,116 @@
       }
     }
   }
+
+  // A page of Dropout's laid out for the TV (content/page.css): a form — the
+  // sign-in steps and the password reset (signin), Edit Profile
+  // (profileEdit) — its box (pages.<kind>.box) centred, drawn large and in
+  // Leanback's colours ([data-tenfoot-form]); or a policy, its words
+  // (pages.legal.content) in Leanback's type ([data-tenfoot-reading]).
+  // What has no use on a TV (pages.<kind>.hide) goes. Under the sign-in
+  // box, a line on typing and the policies. When Dropout reveals the next
+  // step (the password, after the email's Next), the selection goes to it,
+  // once.
+  function syncForm() {
+    if (state.kind !== "signin" && state.kind !== "profileEdit" && state.kind !== "legal") return;
+    for (const el of qsa(Rules.selector(state.page.hide))) {
+      if (!el.hasAttribute("data-tenfoot-gone")) el.setAttribute("data-tenfoot-gone", "");
+    }
+    if (state.kind === "legal") {
+      for (const el of qsa(Rules.selector(state.page.content))) {
+        if (!el.hasAttribute("data-tenfoot-reading")) el.setAttribute("data-tenfoot-reading", "");
+      }
+      return;
+    }
+    const box = qs(state.page.box);
+    if (!box) return;
+    if (!box.hasAttribute("data-tenfoot-form")) box.setAttribute("data-tenfoot-form", state.kind);
+    if (state.kind === "signin" && (!state.formFoot || !state.formFoot.isConnected)) {
+      state.formFoot = formFoot();
+      box.appendChild(state.formFoot);
+    }
+    const next = firstVisible(Rules.selector(state.page.nextStep));
+    if (next && state.signinStep !== next) {
+      state.signinStep = next;
+      focusEl(next);
+    }
+  }
+
+  // The line under the sign-in box: typing needs a keyboard; then the
+  // privacy policy and terms (rules → legal), links the ring reaches.
+  function formFoot() {
+    const foot = document.createElement("div");
+    foot.className = "tenfoot-form-foot";
+    const note = document.createElement("p");
+    note.textContent = "Typing needs a keyboard, or a keyboard app on your phone.";
+    const links = document.createElement("p");
+    for (const l of legalLinks()) {
+      const a = document.createElement("a");
+      a.href = l.url;
+      a.textContent = l.label;
+      links.appendChild(a);
+    }
+    foot.append(note, links);
+    return foot;
+  }
+
+  function legalLinks() {
+    const list = Array.isArray(state.rules.legal) ? state.rules.legal : [];
+    return list.filter((l) => l && typeof l.url === "string" && typeof l.label === "string");
+  }
+
+  function signedOut() {
+    return Boolean(qs(state.rules.common && state.rules.common.signedOut));
+  }
+
+  // An address that is better seen as another (rules → redirects: Dropout
+  // 24/7's stream reached from My List, at an address no hub is in, goes to
+  // Dropout 24/7's page), and the welcome signed in, which is Home's.
+  function redirectPage() {
+    const list = Array.isArray(state.rules.redirects) ? state.rules.redirects : [];
+    for (const r of list) {
+      if (!r || typeof r.path !== "string" || typeof r.to !== "string") continue;
+      try {
+        if (!new RegExp(r.path).test(location.pathname)) continue;
+      } catch (_err) {
+        continue;
+      }
+      P.navigate(r.to, "replace");
+      return true;
+    }
+    if (state.kind === "welcome" && !signedOut() && state.rules.browseUrl) {
+      P.navigate(state.rules.browseUrl, "replace");
+      return true;
+    }
+    return false;
+  }
+
+  // Signed out, the first Home of the tab goes on to the welcome (Sign In,
+  // Browse, the policies), so a TV left signed out is not left on a Home
+  // whose videos will not play. Once per tab: Back from there, or its
+  // Browse, comes back to Home and stays.
+  function offerWelcome() {
+    const to = state.rules.welcomeUrl || state.rules.signinUrl;
+    if (state.kind !== "browse" || !to || !signedOut()) return false;
+    try {
+      if (sessionStorage.getItem(SIGNIN_OFFERED)) return false;
+      sessionStorage.setItem(SIGNIN_OFFERED, "1");
+    } catch (_err) {
+      return false; // no way to remember it: never risk sending Back round in a loop
+    }
+    P.navigate(to, "push");
+    return true;
+  }
+
+  // A policy (privacy, terms, cookies): Dropout's words in Leanback's type
+  // and colours (content/page.css), read by scrolling. ▲ ▼ scroll by most
+  // of a screen; nothing on it is a stop.
+  function scrollReading(dir) {
+    if (dir !== "up" && dir !== "down") return true;
+    window.scrollBy({ top: (dir === "down" ? 1 : -1) * window.innerHeight * READ_STEP, behavior: reducedMotion() ? "auto" : "smooth" });
+    return true;
+  }
+
 
   // One deferred retry at the deadline, so a page that stops mutating still
   // gets a focused element rather than none.
@@ -389,12 +692,22 @@
     }, wait);
   }
 
+  // Dropout's page in place of a screen of Leanback's (the picker showing
+  // a form of its own): the selection goes to the page's first stop.
+  function refocusPage() {
+    state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
+    tryInitialFocus();
+  }
+
   function tryInitialFocus() {
     if (!state.enabled || !state.pendingInitialFocus) return;
+    // A dialog over the page (the cookie dialog on a first visit) keeps the
+    // selection; the page gets its first stop once the dialog has gone.
+    if (state.modal) return;
     const giveUp = () => {
       if (Date.now() > state.pendingInitialFocus) {
         state.pendingInitialFocus = 0;
-        if (state.kind !== "other") console.warn(LOG, "no initial focus target on page kind", state.kind);
+        if (state.kind !== "other" && state.kind !== "legal") console.warn(LOG, "no initial focus target on page kind", state.kind);
       }
     };
     // An episode playing: the selection is the player. Its details page is
@@ -412,6 +725,12 @@
       if (target) {
         state.pendingInitialFocus = 0;
         focusEl(target, { scroll: false });
+        return;
+      }
+      // An empty list: its screen says so, and the selection waits on the
+      // rail rather than on nothing.
+      if (state.screen.isEmpty() && enterRail()) {
+        state.pendingInitialFocus = 0;
         return;
       }
       if (Date.now() <= state.pendingInitialFocus) {
@@ -461,8 +780,10 @@
       // with none, Back as anywhere else.
       if (action === "back") return inScreen(document.activeElement) ? leaveFieldBelow() || goBack() : blurField();
       if (action === "down") return leaveFieldBelow();
+      if (action === "up") return leaveFieldAbove();
       return action === "left" ? leaveField() : false;
     }
+    if (overlay()) return overlay().key(action);
     if (state.menu.isOpen) return dispatchInMenu(action);
     if (state.engaged) return dispatchEngaged(action);
     if (state.modal) return dispatchInModal(action);
@@ -489,6 +810,7 @@
   function move(dir) {
     state.lastMove = performance.now();
     if (state.screen && !state.modal) return moveScreen(dir);
+    if (state.kind === "legal" && !state.modal) return scrollReading(dir);
     const cur = currentEl();
     const { candidates, rows } = collect();
     let target = null;
@@ -721,8 +1043,14 @@
 
   function closeMenu() {
     if (!state.menu.close()) return false;
+    state.settingsMenu.close();
     if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
     else if (state.playerFocused || state.theater) enterPlayer();
+    else if (state.screen) {
+      // What it was on went with a change of look (Home's banner, off).
+      const t = state.screen.current || state.screen.initialTarget();
+      if (t) focusEl(t, { scroll: false });
+    }
     state.menuReturn = null;
     showHints();
     return true;
@@ -746,13 +1074,15 @@
     return SettingsMenu.create({
       settings: () => state.settings,
       save: saveSetting,
+      pageLook: () => {
+        const key = lookKey();
+        return key ? { key, title: Settings.PAGE_LOOKS[key].title } : null;
+      },
+      preview: previewLook,
+      cookies: () => cookiePreferences(),
       onClear: () => {
         send({ type: "history:clear" });
         notice("Continue Watching cleared");
-      },
-      onDisable: () => {
-        closeMenu();
-        send({ type: "settings:set", patch: { enabled: false } });
       }
     });
   }
@@ -789,6 +1119,24 @@
     }
     const { candidates } = collect();
     const t = Spatial.pick("down", Ring.unscaledRect(el), candidates.filter((c) => c.el !== el));
+    if (!t) return false;
+    focusEl(t.el);
+    return true;
+  }
+
+  // ▲ from a one-line field (the email above the password): to what is
+  // above. With nothing above, the key stays the field's.
+  function leaveFieldAbove() {
+    const el = document.activeElement;
+    if (!el || el === document.body) return false;
+    if (inScreen(el)) {
+      const r = state.screen.move("up");
+      if (!r || !r.el) return false;
+      focusEl(r.el, { scroll: false });
+      return true;
+    }
+    const { candidates } = collect();
+    const t = Spatial.pick("up", Ring.unscaledRect(el), candidates.filter((c) => c.el !== el));
     if (!t) return false;
     focusEl(t.el);
     return true;
@@ -838,20 +1186,44 @@
     return null;
   }
 
+  // The dialog's own first choice where the rules name one (a picture
+  // chooser's picture chosen now, the cookie dialog's Accept All).
+  function modalStart(m) {
+    return Rules.selectorList((state.rules.common || {}).modalStart).map((sel) => m.querySelector(sel)).find((el) => el && Spatial.isVisible(el, window)) || null;
+  }
+
   function syncModal() {
     const m = findModal();
+    if (m && m === state.modal && state.modalAwaitStart) {
+      // Its first choice came after it opened (a chooser's pictures load
+      // once it is open): moved to it, unless the viewer has moved since.
+      const start = modalStart(m);
+      if (start) {
+        state.modalAwaitStart = false;
+        if (state.lastMove < state.modalOpenedAt) focusEl(start, { scroll: false });
+      }
+      return;
+    }
     if (m === state.modal) return;
     state.pendingLoadMore = null;
     if (m) root.dataset.tenfootModal = "on";
     else delete root.dataset.tenfootModal;
+    if (state.modal && state.modal.isConnected) state.modal.removeAttribute("data-tenfoot-dialog");
+    if (m) m.setAttribute("data-tenfoot-dialog", "");
     if (m) {
       state.modalReturn = currentEl();
       state.modal = m;
+      // The dialog's own first choice, else its first stop for now.
+      const start = modalStart(m);
       const { candidates } = collect();
-      if (candidates.length) focusEl(candidates[0].el, { scroll: false });
+      state.modalOpenedAt = performance.now();
+      state.modalAwaitStart = !start && Rules.selectorList((state.rules.common || {}).modalStart).length > 0;
+      if (start) focusEl(start, { scroll: false });
+      else if (candidates.length) focusEl(candidates[0].el, { scroll: false });
       showHints();
     } else {
       state.modal = null;
+      state.modalAwaitStart = false;
       const r = state.modalReturn;
       state.modalReturn = null;
       if (r && r.isConnected) focusEl(r);
@@ -919,6 +1291,7 @@
     if (state.railActive) return [{ keys: "▲ ▼", label: "Move" }, { keys: "OK", label: "Open" }, { keys: "▶", label: "Back" }];
     const cur = currentEl();
     if (cur && cur.tagName === "SELECT") return [{ keys: "OK", label: "Change this" }, { keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "Back", label: "Back" }];
+    if (state.kind === "legal") return [{ keys: "▲ ▼", label: "Scroll" }, { keys: "Back", label: "Back" }, { keys: "Menu", label: "Options" }];
     const items = [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Open" }];
     if (state.kind !== "browse") items.push({ keys: "Back", label: "Back" });
     else if (state.settings.exitHook === "close-tab") items.push({ keys: "Back", label: "Exit" });
@@ -950,6 +1323,13 @@
     const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
+      if (overlay()) {
+        // A question is answered, not left by going back a page.
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        overlay().close();
+        return;
+      }
       browserBack();
       return;
     }
@@ -968,6 +1348,19 @@
     // The remote's menu button arrives as a ContextMenu key and would open the
     // browser's context menu; a real right-click (button 2) is left alone.
     if (state.enabled && e.button !== 2) e.preventDefault();
+  }
+
+  // Taking the focus back from the page. A focus trap answers at once, inside
+  // the same call, so the focus arriving back on Leanback is not the page
+  // letting go: the count of tries carries on until the call returns.
+  function refocus(fn) {
+    const outer = state.refocusing;
+    state.refocusing = true;
+    try {
+      fn();
+    } finally {
+      state.refocusing = outer;
+    }
   }
 
   function onFocusIn(e) {
@@ -989,18 +1382,38 @@
       return;
     }
     if (state.playerFocused) state.playerFocused = false;
+    const box = overlay();
+    if (box) {
+      // An open question keeps the selection, a bounded number of times.
+      if (!box.contains(t) && state.menuRefocus < MENU_REFOCUS_LIMIT) {
+        state.menuRefocus += 1;
+        refocus(() => box.refocus());
+      }
+      return;
+    }
     if (state.engaged && t !== state.engaged) cancelEngaged();
+    // A dialog (the cookie box) that took the focus before the page script
+    // saw it open: it is the dialog's to keep. Its focus trap moves it back
+    // the moment it leaves, so taking it would be a tug of war.
+    if (!state.modal && !ownUi(t)) {
+      const m = findModal();
+      if (m && m.contains(t)) {
+        syncModal();
+        return;
+      }
+    }
     if (state.screen && !state.modal && !state.menu.isOpen) {
       if (state.screen.contains(t)) {
-        // A click, or the focus coming back: the model follows.
+        // A click, or the focus coming back: the model follows. Coming back
+        // because Leanback took it back does not reset the count.
         state.screen.select(t);
-        state.screenRefocus = 0;
+        if (!state.refocusing) state.screenRefocus = 0;
       } else if (!ownUi(t) && !(state.kind === "video" && state.watch === "playing" && t.closest("[data-tenfoot-theater-root]"))) {
         // Dropout's page is underneath and still moves the focus about.
         // Take it back — a bounded number of times, never a tug of war.
         if (state.screenRefocus < SCREEN_REFOCUS_LIMIT && state.screen.current) {
           state.screenRefocus += 1;
-          focusEl(state.screen.current, { scroll: false });
+          refocus(() => focusEl(state.screen.current, { scroll: false }));
         }
         return;
       }
@@ -1015,13 +1428,13 @@
       // rather than fight a focus trap for ever.
       if (state.menu.contains(t)) {
         // The panel marks its own selection: no ring round it, no zoom on it.
-        state.menuRefocus = 0;
+        if (!state.refocusing) state.menuRefocus = 0;
         state.ring.hide();
         return;
       }
       if (state.menuRefocus < MENU_REFOCUS_LIMIT) {
         state.menuRefocus += 1;
-        state.menu.refocus();
+        refocus(() => state.menu.refocus());
       }
       return;
     }
@@ -1034,12 +1447,24 @@
     if (!state.theater && !state.playerFocused) showHints();
   }
 
+  // The page going. On Edit Profile, Dropout asks Firefox to check first
+  // when something is not saved, and Firefox's box for that cannot be drawn
+  // in Leanback's look: Leanback asks its own question on Cancel instead,
+  // and Dropout's is kept from Firefox (taken first, at the window, before
+  // the page's own listener).
+  function onBeforeUnload(e) {
+    state.unloading = true;
+    clearBackFallback();
+    if (state.enabled && state.kind === "profileEdit") e.stopImmediatePropagation();
+  }
+
   // The site changing its address without a page load (the search app), or
   // the history moving between an episode's details page and the step its
   // video added above it.
   function onPopState() {
     if (state.leaving || !state.enabled) return;
     clearBackFallback();
+    if (overlay()) overlay().close();
     if (location.href !== state.href) onNavigate(true);
     else if (state.inPlace) followInPlace();
     else if (state.kind === "video") followPlay();
@@ -1071,6 +1496,7 @@
     syncModal();
     refreshScreen();
     stampChrome();
+    syncForm();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
     if (state.kind === "video") {
@@ -1244,18 +1670,26 @@
     state.href = location.href;
     state.historyLength = history.length;
     clearBackFallback();
-    if (openSeason()) return;
+    if (openSeason() || redirectPage() || offerWelcome()) return;
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     if (state.kind === "series") captureEpisodeOrder();
     stampChrome();
+    syncForm();
     if (state.kind === "video") {
       markVideoElements();
       sendHistoryMeta();
     }
     state.railActive = false;
     state.railReturn = null;
-    if (screenKind()) startScreen();
-    else stopScreen();
+    // The page's own look (Theme This Page) before its screen is drawn.
+    applyLook(false);
+    // A screen kept across a change of address within the page (the
+    // picker's Add Profile, at #/add) is drawn afresh for it.
+    if (screenKind()) {
+      const kept = Boolean(state.screen);
+      startScreen();
+      if (kept) refreshScreen();
+    } else stopScreen();
     // The page described on its trail entry before an episode playing adds
     // its own above it.
     recordTrail();
@@ -1300,13 +1734,17 @@
   function onSettingsChanged(s) {
     const prev = state.settings;
     state.settings = s;
-    state.ring.setStyle(ringStyle());
+    applyLook(true);
     state.hints.setEnabled(s.hintBar);
     if (prev.enabled !== s.enabled) applyEnabled(s.enabled);
   }
 
+  // What of the site is never shown while Leanback is on: the hover
+  // tooltips, and what the rules list as having no place on a TV (the
+  // promotion bar).
   function installSiteStyle() {
-    const sels = Rules.selectorList(state.rules.common && state.rules.common.hoverSuppress);
+    const common = state.rules.common || {};
+    const sels = [...Rules.selectorList(common.hoverSuppress), ...Rules.selectorList(common.hidden)];
     if (!sels.length) return;
     const style = document.createElement("style");
     style.id = "tenfoot-site-style";
@@ -1326,25 +1764,29 @@
       return;
     }
     state.ring = Ring.createRing(document, ringStyle());
+    Themes.apply(root, state.settings, new Date());
     state.hints = Ring.createHintBar(document, { enabled: settings.hintBar });
     state.menu = Panel.createPanel(document, { label: "Leanback settings", onPick: onPanelPick });
+    state.ask = Ask.createAsk(document, { onFocus: (b) => state.ring.follow(b) });
+    state.picker = Ask.createPicker(document, { onFocus: (b) => state.ring.follow(b) });
     state.settingsMenu = createSettingsMenu();
     if (History) {
-      state.history = await History.load(API);
+      // The watch history is the profile's that is watching; telling the
+      // background first is what makes its writes for this tab go there.
+      state.profile = Common.profileIndex(document);
+      await send({ type: "profile:current", profile: state.profile });
+      state.history = await History.load(API, state.profile);
       History.watch(API, (store) => {
         state.history = store;
         refreshScreen();
-      });
+      }, state.profile);
     }
     installSiteStyle();
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
     window.addEventListener("popstate", onPopState);
-    window.addEventListener("beforeunload", () => {
-      state.unloading = true;
-      clearBackFallback();
-    });
+    window.addEventListener("beforeunload", onBeforeUnload, true);
     window.addEventListener("pagehide", () => { state.leaving = true; });
     // An unload listener keeps the page out of Firefox's back-forward cache,
     // so Back always loads it afresh. A page restored from that cache did not

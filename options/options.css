@@ -117,3 +117,9 @@ kbd, code {
 p.hint {
   margin: 4px 0 8px;
 }
+
+h3.group {
+  margin: 1.2em 0 0.4em;
+  font-size: 1em;
+}
+

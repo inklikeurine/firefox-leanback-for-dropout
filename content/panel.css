@@ -1,11 +1,11 @@
 /* Leanback for Dropout — the settings panel (nav/panel.js), the same on a page
-   and during playback. Full height, flown in from the right: Leanback's dark
-   ground, the selected entry in Dropout's yellow with black text, a switch for
-   each on/off, a chevron where an entry opens a list, a tick on the chosen
-   option, and the keys along the foot. It is narrow, so an entry's value sits
-   under its name. Sizes are in --tf-su, 1/1920 of the window's width, with
-   pixel minimums. Dropout's own button colours reach into the page, so the
-   entries pin theirs. */
+   and during playback. Full height, flown in from the right, about a third of
+   the screen: Leanback's dark ground, entries under grey group headings, each
+   value at the end of its line, the selected entry a yellow pill with black
+   text, a switch for each on/off, a chevron where an entry opens a list, a
+   tick on the chosen option, and the keys along the foot. Sizes are in
+   --tf-su, 1/1920 of the window's width, with pixel minimums. Dropout's own
+   button colours reach into the page, so the entries pin theirs. */
 
 .tenfoot-settings {
   --tf-su: calc(100vw / 1920);
@@ -15,20 +15,20 @@
   bottom: 0;
   z-index: 2147483647;
   box-sizing: border-box;
-  width: min(92vw, max(260px, calc(var(--tf-su) * 310)));
+  width: min(92vw, max(340px, calc(var(--tf-su) * 660)));
   display: flex;
   flex-direction: column;
   margin: 0;
   padding: 0;
-  background: #0b0c10;
-  border-left: 1px solid #1d2027;
+  background: #121419;
+  border-left: 1px solid #262a33;
   color: #f5f6f7;
   font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif !important;
-  font-size: max(15px, calc(var(--tf-su) * 22));
+  font-size: max(16px, calc(var(--tf-su) * 28));
   font-weight: 700;
   line-height: 1.25;
   text-align: left;
-  box-shadow: calc(var(--tf-su) * -24) 0 calc(var(--tf-su) * 64) rgba(0, 0, 0, 0.7);
+  box-shadow: calc(var(--tf-su) * -32) 0 calc(var(--tf-su) * 80) rgba(0, 0, 0, 0.7);
   transform: translateX(0);
   transition: transform 250ms ease-out;
 }
@@ -50,32 +50,15 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   justify-content: space-between;
   gap: calc(var(--tf-su) * 16);
   margin: 0;
-  padding: calc(var(--tf-su) * 40) calc(var(--tf-su) * 24) calc(var(--tf-su) * 22);
-  border-bottom: 1px solid #1d2027;
+  padding: calc(var(--tf-su) * 48) calc(var(--tf-su) * 48) calc(var(--tf-su) * 12);
 }
 .tenfoot-settings-title {
   margin: 0;
   min-width: 0;
-  font-size: max(20px, calc(var(--tf-su) * 32));
-  line-height: 1.15;
+  font-size: max(24px, calc(var(--tf-su) * 46));
+  line-height: 1.1;
   font-weight: 800;
   color: #ffffff;
-}
-/* A picture of a close button: Back is what closes. */
-.tenfoot-settings-close {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: max(30px, calc(var(--tf-su) * 46));
-  height: max(30px, calc(var(--tf-su) * 46));
-  border-radius: calc(var(--tf-su) * 10);
-  background: rgba(255, 255, 255, 0.06);
-  color: #9aa0ac;
-}
-.tenfoot-settings-close svg {
-  width: 45%;
-  height: 45%;
 }
 
 .tenfoot-settings-list {
@@ -84,19 +67,20 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  padding: calc(var(--tf-su) * 14) 0;
+  gap: calc(var(--tf-su) * 4);
+  padding: calc(var(--tf-su) * 8) calc(var(--tf-su) * 24) calc(var(--tf-su) * 16);
   scrollbar-width: none;
 }
 
-/* A heading over a group of options ("Color", "Size"). Not a stop. */
+/* A heading over a group of entries ("Playback", "Color"). Not a stop. */
 .tenfoot-settings-group {
-  margin: calc(var(--tf-su) * 22) 0 calc(var(--tf-su) * 6);
+  margin: calc(var(--tf-su) * 18) 0 calc(var(--tf-su) * 6);
   padding: 0 calc(var(--tf-su) * 24);
-  font-size: max(13px, calc(var(--tf-su) * 19));
+  font-size: max(12px, calc(var(--tf-su) * 20));
   font-weight: 800;
-  letter-spacing: 0.1em !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase;
-  color: var(--tenfoot-ring-color, #feea3b);
+  color: #9aa0ac;
 }
 
 .tenfoot-settings-item,
@@ -108,11 +92,12 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   gap: calc(var(--tf-su) * 14);
   box-sizing: border-box;
   width: 100%;
-  min-height: max(44px, calc(var(--tf-su) * 72));
+  flex: 0 0 auto;
+  min-height: max(40px, calc(var(--tf-su) * 60));
   margin: 0;
-  padding: calc(var(--tf-su) * 14) calc(var(--tf-su) * 24);
+  padding: calc(var(--tf-su) * 8) calc(var(--tf-su) * 24);
   border: 0;
-  border-radius: 0;
+  border-radius: calc(var(--tf-su) * 10);
   background: transparent !important;
   color: #f5f6f7 !important;
   font: inherit;
@@ -122,33 +107,46 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   cursor: pointer;
   transition: none !important;
 }
+/* The line above an entry that ends the list (Clear Continue Watching). */
 .tenfoot-settings-item[data-tenfoot-separator="true"] {
-  margin-top: calc(var(--tf-su) * 12);
-  border-top: 1px solid #1d2027;
+  position: relative;
+  margin-top: calc(var(--tf-su) * 26);
+}
+.tenfoot-settings-item[data-tenfoot-separator="true"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--tf-su) * 24);
+  right: calc(var(--tf-su) * 24);
+  top: calc(var(--tf-su) * -14);
+  height: 1px;
+  background: #262a33;
 }
 /* The selection: stamped by the owner, never read from :focus. */
 .tenfoot-settings-item[data-tenfoot-current="true"] {
   background: var(--tenfoot-ring-color, #feea3b) !important;
   color: #000000 !important;
 }
-/* The name, and its value on the line under it. */
+/* The name, and its value at the end of the same line. */
 .tenfoot-settings-text {
   flex: 1 1 auto;
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--tf-su) * 16);
   min-width: 0;
 }
 .tenfoot-settings-label {
+  flex: 0 1 auto;
   min-width: 0;
 }
 .tenfoot-settings-value {
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8em;
-  font-weight: 600;
-  color: #9aa0ac;
+  font-weight: 400;
+  color: #c4c8d0;
 }
 .tenfoot-settings-value:empty {
   display: none;
@@ -161,7 +159,7 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: max(22px, calc(var(--tf-su) * 34));
+  min-width: max(18px, calc(var(--tf-su) * 28));
   height: max(22px, calc(var(--tf-su) * 34));
 }
 .tenfoot-settings-mark svg {
@@ -220,9 +218,9 @@ html:not(.tenfoot-settings-open) .tenfoot-settings {
   flex-wrap: wrap;
   gap: calc(var(--tf-su) * 12);
   margin: 0;
-  padding: calc(var(--tf-su) * 20) calc(var(--tf-su) * 24) calc(var(--tf-su) * 28);
-  border-top: 1px solid #1d2027;
-  font-size: max(13px, calc(var(--tf-su) * 18));
+  padding: calc(var(--tf-su) * 20) calc(var(--tf-su) * 48) calc(var(--tf-su) * 36);
+  border-top: 1px solid #262a33;
+  font-size: max(13px, calc(var(--tf-su) * 22));
   font-weight: 600;
   color: #cfd3da;
 }

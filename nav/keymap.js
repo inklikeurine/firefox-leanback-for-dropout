@@ -49,7 +49,7 @@
    * @param {{editable?: boolean, atStart?: boolean, singleLine?: boolean}} ctx —
    *   atStart: the text cursor sits at the very start of the field, with
    *   nothing selected; singleLine: a one-line field (a search box), where ▼
-   *   has nothing to do
+   *   and ▲ have nothing to do
    * @returns {string|null} action name, or null when the key is not ours
    */
   function actionFor(event, ctx) {
@@ -58,11 +58,12 @@
     const key = event.key;
     if (ctx && ctx.editable) {
       // Typing: the back button leaves the field, and so does ◀ when the
-      // cursor cannot go further left, and ▼ from a one-line field (there is
-      // no line below to go to). Everything else is the field's, including
-      // "/".
+      // cursor cannot go further left, and ▼ or ▲ from a one-line field
+      // (there is no line below or above to go to). Everything else is the
+      // field's, including "/".
       if (key === "Escape" || key === "BrowserBack") return "back";
       if (key === "ArrowDown" && ctx.singleLine) return "down";
+      if (key === "ArrowUp" && ctx.singleLine) return "up";
       return key === "ArrowLeft" && ctx.atStart ? "left" : null;
     }
     if (Object.prototype.hasOwnProperty.call(REMOTE, key)) return REMOTE[key];

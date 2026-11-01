@@ -165,6 +165,25 @@
       return true;
     }
 
+    // Clear Progress on the details page: the episode is unstarted again
+    // (lib/history.js forgetOne), and the selection goes back to Watch.
+    function clearProgress() {
+      const key = History ? History.keyOf(location.href) : null;
+      if (!key || state.kind !== "video" || state.watch !== "details") return false;
+      send({ type: "history:forget", key }).then((r) => {
+        if (!r || !r.ok) return;
+        // The saved history comes back through History.watch; the page
+        // need not wait for it to redraw.
+        state.history = History.forgetOne(state.history, key, Date.now());
+        if (!state.screen || state.watch !== "details") return;
+        state.screen.refresh();
+        const t = state.screen.initialTarget();
+        if (t) focusEl(t, { scroll: false });
+        notice("Progress cleared");
+      });
+      return true;
+    }
+
     // Back while playing: the details page, now saying Resume.
     function showDetails() {
       if (state.watch !== "playing" || !state.screen) return false;
@@ -412,7 +431,7 @@
     }
 
     Object.assign(P, {
-      markVideoElements, isLive, setupWatch, syncPlayer, startWatching, showDetails, followPlay,
+      markVideoElements, isLive, setupWatch, syncPlayer, startWatching, clearProgress, showDetails, followPlay,
       sendHistoryMeta, episodeDetails, episodeInfo, setTheater, enterPlayer, leavePlayer,
       captureEpisodeOrder, readEpisodeOrder, episodeUrl, pageUpNext, takePageUpNext, syncUpNextOffer,
       goEpisode, onPlayerEnded, playerAction

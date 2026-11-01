@@ -80,8 +80,6 @@
    *   onPlayback(p)    -> the viewer paused (true) or played (false)
    *   nextEpisode()    -> Dropout's up-next {url, title}, or null
    *   onNext()         -> Play Next Episode
-   *   resumed()        -> the video picked up where it was left (Start Over shows)
-   *   onRestart()      -> Start Over
    *   onSetting(patch) -> a Leanback setting changed
    *   onAction(id)     -> "forget": Clear Continue Watching, confirmed
    *   onClose()        -> the row closed; ◀ ▶ go back to seeking
@@ -297,7 +295,7 @@
     // -- the settings panel -------------------------------------------------
     // Full height, flown in from the right: nav/panel.js draws it, the same
     // panel as Leanback's settings on a page.
-    const view = globalThis.TenfootPanel.createPanel(doc, { label: "Settings", onPick: (i) => pickEntry(i) });
+    const view = globalThis.TenfootPanel.createPanel(doc, { label: "Playback Settings", onPick: (i) => pickEntry(i) });
     const panelEl = view.element;
 
     // -- selectors ----------------------------------------------------------
@@ -516,19 +514,19 @@
     // rest are Leanback's own. The player's popover holds three entries —
     // Quality, Speed and CC/subtitles — and the caption appearance (font,
     // background, window) lives inside CC/subtitles, under Customize.
+    // Grouped under headings, the way nav/panel.js draws Leanback's own
+    // settings. Start Over is on the episode's details page, not here.
     const ROWS = [
-      // Only after the video picked up where it was left: back to 0:00.
-      { id: "restart", label: "Start Over", kind: "restart" },
-      { id: "quality", label: "Quality", kind: "vendor", match: /quality|resolution/i },
-      { id: "speed", label: "Speed", kind: "vendor", match: /speed|rate/i },
       // Not a toggle: it takes you to the next episode. Whether one plays by
       // itself at the end is a Leanback setting, and lives in that submenu.
-      { id: "next", label: "Play Next Episode", kind: "action" },
+      { id: "next", label: "Play Next Episode", kind: "action", group: "This episode" },
+      { id: "quality", label: "Quality", kind: "vendor", match: /quality|resolution/i, group: "Picture" },
+      { id: "speed", label: "Speed", kind: "vendor", match: /speed|rate/i, group: "Picture" },
       // Captions are the player's: setting a TextTrack's mode draws nothing,
       // because the player keeps its own state. A switch here; ▶ opens the
       // player's own captions menu (its tracks, and Customize).
-      { id: "captions", label: "Closed Captions", kind: "captions", match: /cc|subtitle|caption/i },
-      { id: "captionStyle", label: "Caption Style", kind: "captionStyle" },
+      { id: "captions", label: "Closed Captions", kind: "captions", match: /cc|subtitle|caption/i, group: "Captions" },
+      { id: "captionStyle", label: "Caption Style", kind: "captionStyle", group: "Captions" },
       { id: "leanback", label: "Leanback Settings", kind: "leanback" }
     ];
     const VENDOR_ROWS = ROWS.filter((r) => r.match);
@@ -543,7 +541,6 @@
         if (r.kind === "vendor" || r.kind === "captions") return Boolean(vendor[r.id]);
         if (r.kind === "captionStyle") return Boolean(vendor.captions);
         if (r.kind === "action") return Boolean(nextEpisode());
-        if (r.kind === "restart") return typeof o.resumed === "function" && Boolean(o.resumed());
         return true;
       });
     }
@@ -557,19 +554,19 @@
       const vendor = panel && panel.vendor ? panel.vendor : {};
       switch (r.kind) {
         case "vendor":
-          return { id: r.id, label: r.label, kind: "drill", value: vendor[r.id] ? vendor[r.id].value : "" };
+          return { id: r.id, label: r.label, kind: "drill", group: r.group, value: vendor[r.id] ? vendor[r.id].value : "" };
         case "captions":
-          return { id: r.id, label: r.label, kind: "toggle", on: captionsOn() };
+          return { id: r.id, label: r.label, kind: "toggle", group: r.group, on: captionsOn() };
         case "captionStyle":
-          return { id: r.id, label: r.label, kind: "drill" };
+          return { id: r.id, label: r.label, kind: "drill", group: r.group };
         case "leanback":
           return { id: r.id, label: r.label, kind: "drill", separator: true };
         case "action": {
           const n = nextEpisode();
-          return { id: r.id, label: r.label, kind: "action", value: n && n.title ? n.title : "" };
+          return { id: r.id, label: r.label, kind: "action", group: r.group, value: n && n.title ? n.title : "" };
         }
         default:
-          return { id: r.id, label: r.label, kind: "action" };
+          return { id: r.id, label: r.label, kind: "action", group: r.group };
       }
     }
 
@@ -648,7 +645,7 @@
         view.render(lvl.menu.view());
         return;
       }
-      view.render({ title: lvl ? lvl.title : "Settings", index: lvl ? lvl.index : panel.index, entries: entriesOf(lvl) });
+      view.render({ title: lvl ? lvl.title : "Playback Settings", index: lvl ? lvl.index : panel.index, entries: entriesOf(lvl) });
     }
 
     async function openPanel() {
@@ -669,6 +666,9 @@
       }
       panel = { vendor: mapVendor(items), rows: [], index: 0, stack: [], resume: wasPlaying };
       panel.rows = visibleRows();
+      // The selection starts on the first setting, never on Play Next
+      // Episode: OK out of habit must not leave the episode.
+      panel.index = Math.max(0, panel.rows.findIndex((r) => r.kind !== "action"));
       view.open();
       renderPanel();
       schedulePaint();
@@ -793,7 +793,6 @@
           settings,
           save: (patch) => { if (typeof o.onSetting === "function") o.onSetting(patch); },
           onClear: () => { if (typeof o.onAction === "function") o.onAction("forget"); },
-          onDisable: () => { if (typeof o.onSetting === "function") o.onSetting({ enabled: false }); },
           showCleared: true
         });
         menu.open();
@@ -898,10 +897,6 @@
       if (byRight) return true;
       if (row.kind === "action") {
         if (typeof o.onNext === "function") o.onNext();
-        return true;
-      }
-      if (row.kind === "restart") {
-        if (typeof o.onRestart === "function") o.onRestart();
         return true;
       }
       return false;
@@ -1038,9 +1033,10 @@
       for (const ev of MEDIA_EVENTS) v.removeEventListener(ev, onTimeUpdate);
     }
 
-    // The bar and the title for `ms`, without the selection: the keys stay
-    // playback's. Opening the bar for real takes over from a peek. `reason`
-    // ("pause", "seek") lets the caller end only the peek it started.
+    // The bar and the title for `ms` (0: until endPeek), without the
+    // selection: the keys stay playback's. Opening the bar for real takes over
+    // from a peek. `reason` ("pause", "seek") lets the caller end only the
+    // peek it started.
     function peek(ms, withBar, reason) {
       if (open || panel) return false;
       peekReason = reason || "";
@@ -1054,7 +1050,7 @@
       }
       showTitle(0);
       if (peekTimer) clearTimeout(peekTimer);
-      peekTimer = setTimeout(endPeek, ms);
+      peekTimer = ms > 0 ? setTimeout(endPeek, ms) : 0;
       return true;
     }
 
@@ -1073,10 +1069,11 @@
       hideTitle();
     }
 
-    // A skip: the glyph and the time it landed on, and the bar for `ms`. Each
-    // skip restarts the clock rather than hiding and showing again, so quick
-    // presses hold everything steady instead of flickering.
-    function seekFeedback(delta, at, ms, reason) {
+    // A skip: the glyph and the time it landed on for `ms`, and the bar for
+    // `barMs` (0: until endPeek; default `ms`). Each skip restarts the clock
+    // rather than hiding and showing again, so quick presses hold everything
+    // steady instead of flickering.
+    function seekFeedback(delta, at, ms, reason, barMs) {
       const dir = delta < 0 ? "rewind" : "forward";
       if (seekEl.dataset.tenfootDir !== dir) {
         seekEl.dataset.tenfootDir = dir;
@@ -1091,7 +1088,7 @@
         seekEl.hidden = true;
       }, ms);
       if (open) schedulePaint();
-      else peek(ms, true, reason);
+      else peek(barMs === undefined ? ms : barMs, true, reason);
       return true;
     }
 
@@ -1112,7 +1109,9 @@
       setStyle(s) {
         if (!s) return;
         for (const node of [el, panelEl]) {
-          node.style.setProperty("--tenfoot-ring-color", s.ringColor || "#feea3b");
+          const Themes = globalThis.TenfootThemes;
+          const accent = Themes ? Themes.lookOf(s, new Date()).accent : s.ringColor;
+          node.style.setProperty("--tenfoot-ring-color", accent || "#feea3b");
           node.style.setProperty("--tenfoot-ring-width", `${s.ringWidth || 4}px`);
         }
       },

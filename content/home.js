@@ -254,7 +254,9 @@
    * with a View all card on a full row. Null when the page holds no Home.
    * @param {Document} doc
    * @param {object} R — the rules' "home" object
-   * @param {{history?: object, continueWatching?: boolean}} [opts]
+   * @param {{history?: object, continueWatching?: boolean, banner?: string}} [opts]
+   *   — banner "off" (Theme This Page): no featured banner; the selection
+   *   starts on the first row
    */
   function homeModel(doc, R, opts) {
     const o = opts || {};
@@ -278,7 +280,7 @@
     return {
       kind: "home",
       head: "",
-      hero: site.slides.length ? {
+      hero: site.slides.length && o.banner !== "off" ? {
         kicker: "Featured",
         slides: site.slides.map((s) => ({ title: s.title, meta: s.subtitle, description: s.description, image: s.image, actions: slideActions(doc, rules, s) }))
       } : null,
@@ -291,8 +293,8 @@
       moreScroll: true,
       scroll: "rows",
       // Watch now, which Dropout draws after the rows: waited for.
-      start: "slide-0",
-      waitForStart: true
+      start: o.banner === "off" ? null : "slide-0",
+      waitForStart: o.banner !== "off"
     };
   }
 

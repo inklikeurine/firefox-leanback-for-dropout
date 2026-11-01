@@ -7,11 +7,12 @@
    * Page kind for a path: the first route whose pattern matches wins.
    * @param {{routes?: {kind: string, path: string}[]}} rules
    * @param {string} pathname
-   * @returns {string} a page kind, "other" when nothing matches
+   * @returns {string} a page kind, "other" when nothing matches or there is
+   *   no path
    */
   function classify(rules, pathname) {
     const routes = rules && Array.isArray(rules.routes) ? rules.routes : [];
-    const p = typeof pathname === "string" ? pathname : "/";
+    if (typeof pathname !== "string") return "other";
     for (const r of routes) {
       if (!r || typeof r.path !== "string" || typeof r.kind !== "string") continue;
       let re;
@@ -20,7 +21,7 @@
       } catch (_err) {
         continue;
       }
-      if (re.test(p)) return r.kind;
+      if (re.test(pathname)) return r.kind;
     }
     return "other";
   }

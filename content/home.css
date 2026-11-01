@@ -6,7 +6,10 @@
    at 80 % of a 1920-wide layout. */
 
 :root {
-  --tf-u: calc(100vw / 1920 * 0.8);
+  /* --tf-scale: Interface Size (Accessibility); the theme's colours below are
+     set again on <html> by the page script (lib/themes.js). */
+  --tf-u: calc(100vw / 1920 * 0.8 * var(--tf-scale, 1));
+  --tenfoot-accent: #feea3b;
   --tf-bg: #0b0c10;
   --tf-surface: #15171c;
   --tf-raised: #1e2128;
@@ -83,10 +86,24 @@ html[data-tenfoot="on"][data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfo
 .tenfoot-rail-item[data-tenfoot-end="true"] {
   margin-top: auto;
 }
+/* The profile watching, at the top and set apart: its picture, square with
+   round corners like the picker's, in place of the icon. */
+.tenfoot-rail-item[data-tenfoot-start="true"] {
+  margin-bottom: calc(var(--tf-u) * 36);
+}
+.tenfoot-rail-item[data-tenfoot-picture="true"] svg {
+  display: none;
+}
+.tenfoot-rail-picture {
+  width: 72%;
+  height: 72%;
+  border-radius: 20%;
+  object-fit: cover;
+}
 /* The page on screen: its icon in yellow. A yellow box on the rail is only
    ever the selection. */
 .tenfoot-rail-item[data-tenfoot-page="true"] {
-  color: #feea3b;
+  color: var(--tenfoot-accent, #feea3b);
 }
 
 /* Pages Leanback does not replace make room for the rail. */
@@ -100,7 +117,7 @@ html[data-tenfoot="on"][data-tenfoot-rail="on"]:not([data-tenfoot-home="on"]) bo
 .tenfoot-home {
   display: none;
 }
-html[data-tenfoot="on"][data-tenfoot-home="on"]:not([data-tenfoot-modal]) .tenfoot-home:not([hidden]) {
+html[data-tenfoot="on"][data-tenfoot-home="on"]:is(:not([data-tenfoot-modal]), [data-tenfoot-kind="welcome"], [data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) .tenfoot-home:not([hidden]) {
   display: block;
   position: fixed;
   inset: 0;
@@ -138,24 +155,24 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   top: 0;
   bottom: 0;
   width: calc(var(--tf-gutter) * 0.75);
-  background: linear-gradient(to right, var(--tf-bg) 20%, rgba(11, 12, 16, 0));
+  background: linear-gradient(to right, var(--tf-bg) 20%, transparent);
 }
 .tenfoot-home-view::after {
   left: 0;
   right: 0;
   top: 0;
   height: calc(var(--tf-u) * 44);
-  background: linear-gradient(to bottom, var(--tf-bg) 30%, rgba(11, 12, 16, 0));
+  background: linear-gradient(to bottom, var(--tf-bg) 30%, transparent);
 }
 /* With a row selected, the fade reaches down to its heading (screen.js
    ROW_ANCHOR: 7 % of the height), so the row above it does not peek in. */
 .tenfoot-home[data-tenfoot-scrolled="true"] .tenfoot-home-view::after {
   height: 7vh;
-  background: linear-gradient(to bottom, var(--tf-bg) 65%, rgba(11, 12, 16, 0));
+  background: linear-gradient(to bottom, var(--tf-bg) 65%, transparent);
 }
 .tenfoot-home-scroll {
   padding: calc(var(--tf-u) * 36) 0 60vh var(--tf-gutter);
-  transition: transform 260ms ease-out;
+  transition: transform 200ms ease-out;
   will-change: transform;
 }
 
@@ -183,8 +200,8 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to top, var(--tf-bg) 4%, rgba(11, 12, 16, 0.55) 45%, rgba(11, 12, 16, 0) 75%),
-    linear-gradient(to right, rgba(11, 12, 16, 0.85) 0%, rgba(11, 12, 16, 0) 60%);
+    linear-gradient(to top, var(--tf-bg) 4%, rgba(11, 12, 16, 0.55) 45%, transparent 75%),
+    linear-gradient(to right, rgba(11, 12, 16, 0.85) 0%, transparent 60%);
 }
 .tenfoot-hero-body {
   position: absolute;
@@ -194,7 +211,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 }
 .tenfoot-hero-label {
   margin: 0 0 calc(var(--tf-u) * 12);
-  color: #feea3b;
+  color: var(--tenfoot-accent, #feea3b);
   font-weight: 800;
   font-size: max(13px, calc(var(--tf-u) * 18));
   letter-spacing: 0.14em;
@@ -257,8 +274,8 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   outline: none;
 }
 .tenfoot-hero-primary {
-  border-color: #feea3b;
-  background: #feea3b;
+  border-color: var(--tenfoot-accent, #feea3b);
+  background: var(--tenfoot-accent, #feea3b);
   color: #1a1a05;
   font-weight: 800;
 }
@@ -275,7 +292,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-home button.tenfoot-hero-primary:hover,
 .tenfoot-home button.tenfoot-hero-primary:focus,
 .tenfoot-home button.tenfoot-hero-primary:active {
-  background: #feea3b !important;
+  background: var(--tenfoot-accent, #feea3b) !important;
   color: #1a1a05 !important;
 }
 /* Dropout colours every link (a:link, a:visited: teal) and underlines some;
@@ -327,7 +344,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   background: rgba(255, 255, 255, 0.3);
 }
 .tenfoot-hero-dot--on {
-  background: #feea3b;
+  background: var(--tenfoot-accent, #feea3b);
 }
 
 /* The rows. */
@@ -349,7 +366,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-track {
   display: flex;
   gap: var(--tf-card-gap);
-  transition: transform 260ms ease-out;
+  transition: transform 200ms ease-out;
   will-change: transform;
 }
 .tenfoot-card {
@@ -388,7 +405,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   left: calc(var(--tf-u) * 12);
   padding: calc(var(--tf-u) * 5) calc(var(--tf-u) * 11);
   border-radius: calc(var(--tf-u) * 6);
-  background: #feea3b;
+  background: var(--tenfoot-accent, #feea3b);
   color: #1a1a05;
   font-family: var(--tf-font);
   font-weight: 800;
@@ -419,7 +436,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-card-progress-fill {
   display: block;
   height: 100%;
-  background: #feea3b;
+  background: var(--tenfoot-accent, #feea3b);
 }
 .tenfoot-card-badge[hidden],
 .tenfoot-card-time[hidden],
@@ -444,7 +461,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 }
 .tenfoot-card-viewall::after {
   content: " →";
-  color: #feea3b;
+  color: var(--tenfoot-accent, #feea3b);
 }
 .tenfoot-card-title {
   margin-top: calc(var(--tf-u) * 12);
@@ -475,7 +492,7 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
    enlarged picture and the ring. */
 .tenfoot-card-title,
 .tenfoot-card-sub {
-  transition: transform 150ms ease-out;
+  transition: transform 120ms ease-out;
 }
 .tenfoot-card-link.tenfoot-scaled ~ .tenfoot-card-title,
 .tenfoot-card-link.tenfoot-scaled ~ .tenfoot-card-sub {
@@ -657,7 +674,7 @@ html[data-tenfoot="on"] .tenfoot-screen-pills[hidden] {
   width: 24%;
   height: 44%;
   box-sizing: border-box;
-  border: solid #feea3b;
+  border: solid var(--tenfoot-accent, #feea3b);
   border-width: 0 3px 3px 0;
   transform: rotate(45deg);
 }
@@ -674,6 +691,264 @@ html[data-tenfoot="on"] .tenfoot-screen-pills[hidden] {
 }
 .tenfoot-home-more[hidden] {
   display: none;
+}
+
+/* The profile picker: "Who is watching?" and the profiles in one row, both
+   centred in the screen; square pictures with round corners, the name under
+   each. A profile with no picture shows its first letter. No rail. */
+/* A profile's form (Add Profile, Edit Profile): one centred column — the
+   title and Dropout's line, the picture, the name box, the buttons. */
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-home-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 var(--tf-gutter);
+  text-align: center;
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] :is(.tenfoot-hero, .tenfoot-hero-body) {
+  display: contents;
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] :is(.tenfoot-hero-art, .tenfoot-hero-scrim, .tenfoot-screen-picture, .tenfoot-hero-logo, .tenfoot-hero-label, .tenfoot-hero-title, .tenfoot-hero-dots) {
+  display: none;
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-screen-head {
+  order: 0;
+  margin-bottom: calc(var(--tf-u) * 12);
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-screen-title {
+  font-size: max(26px, calc(var(--tf-u) * 64));
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-hero-text {
+  order: 1;
+  margin: 0 0 calc(var(--tf-u) * 40);
+  color: var(--tf-dim);
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-hero-meta {
+  order: 2;
+  margin: 0 0 calc(var(--tf-u) * 24);
+  color: var(--tenfoot-accent, #feea3b);
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-screen-sections {
+  order: 3;
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-screen-field {
+  order: 4;
+  width: min(90%, calc(var(--tf-u) * 760));
+  margin: calc(var(--tf-u) * 36) 0;
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] input.tenfoot-screen-field-input {
+  width: 100%;
+  text-align: center;
+}
+.tenfoot-screen[data-tenfoot-screen="profileForm"] .tenfoot-hero-actions {
+  order: 5;
+  justify-content: center;
+}
+.tenfoot-hero-action[aria-disabled="true"] {
+  opacity: 0.45;
+}
+.tenfoot-hero-action[data-tenfoot-danger="true"] {
+  border-color: #ff6b6b !important;
+  color: #ff8f8f !important;
+}
+.tenfoot-hero-action[data-tenfoot-danger="true"]:focus {
+  background: #ff6b6b !important;
+  color: #000 !important;
+}
+
+.tenfoot-screen[data-tenfoot-screen="profiles"] .tenfoot-home-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 var(--tf-gutter);
+}
+.tenfoot-screen[data-tenfoot-screen="profiles"] .tenfoot-screen-head {
+  margin-bottom: calc(var(--tf-u) * 56);
+  text-align: center;
+}
+.tenfoot-screen[data-tenfoot-screen="profiles"] .tenfoot-screen-title {
+  font-size: max(26px, calc(var(--tf-u) * 64));
+}
+.tenfoot-screen-section[data-tenfoot-avatars="true"] {
+  --tf-card-w: calc(var(--tf-u) * 230);
+  --tf-card-gap: calc(var(--tf-u) * 48);
+}
+.tenfoot-screen-section[data-tenfoot-avatars="true"] .tenfoot-card-link {
+  aspect-ratio: 1;
+  border-radius: 20%;
+}
+.tenfoot-screen-section[data-tenfoot-avatars="true"] .tenfoot-card-title,
+.tenfoot-screen-section[data-tenfoot-avatars="true"] .tenfoot-card-sub {
+  text-align: center;
+}
+.tenfoot-screen-section[data-tenfoot-avatars="true"] .tenfoot-card-title {
+  font-size: max(16px, calc(var(--tf-u) * 30));
+}
+.tenfoot-screen-section[data-tenfoot-avatars="true"] .tenfoot-card-sub {
+  color: var(--tenfoot-accent, #feea3b);
+}
+/* Manage profiles: a pencil over each picture, and the profile's Edit
+   button under its name, which is what the selection goes to. */
+.tenfoot-card[data-tenfoot-action="true"] .tenfoot-card-link {
+  position: relative;
+}
+.tenfoot-card[data-tenfoot-action="true"] .tenfoot-card-link::after {
+  content: "\270E";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: max(28px, calc(var(--tf-u) * 72));
+}
+.tenfoot-card-action {
+  display: block;
+  margin: calc(var(--tf-u) * 14) auto 0;
+  min-width: calc(var(--tf-u) * 120);
+  padding: calc(var(--tf-u) * 10) calc(var(--tf-u) * 28);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: max(15px, calc(var(--tf-u) * 24));
+  font-weight: 600;
+  cursor: pointer;
+}
+.tenfoot-card-action[hidden] {
+  display: none;
+}
+.tenfoot-card-action:focus {
+  outline: none;
+  border-color: var(--tenfoot-accent, #feea3b);
+  background: var(--tenfoot-accent, #feea3b);
+  color: #000;
+}
+.tenfoot-card[data-tenfoot-initial="true"] .tenfoot-card-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tf-surface);
+}
+.tenfoot-card[data-tenfoot-initial="true"] .tenfoot-card-viewall {
+  font-size: max(40px, calc(var(--tf-u) * 110));
+}
+.tenfoot-card[data-tenfoot-initial="true"] .tenfoot-card-viewall::after {
+  content: none;
+}
+.tenfoot-screen-section[data-tenfoot-avatars="true"] .tenfoot-card[data-tenfoot-viewall="true"] .tenfoot-card-viewall {
+  padding: 0 calc(var(--tf-u) * 20);
+  font-size: max(15px, calc(var(--tf-u) * 26));
+  text-align: center;
+}
+
+/* The cookie dialog on a first visit comes up over the welcome, which stays
+   (elsewhere a dialog shows over Dropout's own page). */
+html[data-tenfoot="on"]:is([data-tenfoot-kind="welcome"], [data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) [data-tenfoot-dialog] {
+  z-index: 2147482500 !important;
+}
+
+/* Dropout's picture chooser (Add Profile, Edit Profile) over Leanback's
+   screen, in Leanback's look: a dark card, large type, large pictures. The
+   ring marks the picture selected. */
+html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) [data-tenfoot-dialog]:is([class*="Modal-module__backdrop"]) {
+  background: rgba(5, 6, 9, 0.8) !important;
+}
+html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) :is([data-tenfoot-dialog] [class*="Modal-module__panel"], [data-tenfoot-dialog][role="dialog"]) {
+  box-sizing: border-box !important;
+  width: min(92vw, calc(var(--tf-u) * 1400)) !important;
+  max-width: none !important;
+  max-height: 90vh !important;
+  padding: calc(var(--tf-u) * 40) !important;
+  border: none !important;
+  border-radius: calc(var(--tf-u) * 28) !important;
+  background: var(--tf-surface, #15171c) !important;
+  color: #fff !important;
+  font-family: var(--tf-font) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6) !important;
+}
+/* Larger type needs its own line height and room: Dropout's boxes keep the
+   small type's (the "Delete profile" box's title ran into its line). */
+html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) [data-tenfoot-dialog] :is(h1, h2) {
+  margin: 0 0 calc(var(--tf-u) * 20) !important;
+  color: #fff !important;
+  font-family: var(--tf-font) !important;
+  font-size: max(24px, calc(var(--tf-u) * 52)) !important;
+  line-height: 1.2 !important;
+}
+html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) [data-tenfoot-dialog] :is(h3, p) {
+  margin-top: 0 !important;
+  color: var(--tf-dim) !important;
+  font-family: var(--tf-font) !important;
+  font-size: max(16px, calc(var(--tf-u) * 30)) !important;
+  line-height: 1.4 !important;
+}
+html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) [data-tenfoot-dialog] :is(h1, h2) + :is(p, div) {
+  margin-top: calc(var(--tf-u) * 8) !important;
+}
+html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="profileEdit"]) [data-tenfoot-dialog] button:has(img) {
+  width: max(80px, calc(var(--tf-u) * 150)) !important;
+  height: max(80px, calc(var(--tf-u) * 150)) !important;
+  border-radius: 20% !important;
+}
+
+/* The welcome, signed out: Dropout's logo, its line, its words and the
+   buttons, one column in the middle of the screen. No rail. */
+.tenfoot-hero-logo {
+  display: block;
+  width: auto;
+  max-width: calc(var(--tf-u) * 640);
+  max-height: calc(var(--tf-u) * 220);
+  margin: 0 auto calc(var(--tf-u) * 40);
+}
+.tenfoot-hero-logo[hidden] {
+  display: none;
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-home-scroll {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 var(--tf-gutter);
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-screen-hero {
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-hero-art,
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-hero-scrim {
+  display: none;
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-hero-body {
+  position: static;
+  max-width: calc(var(--tf-u) * 1100);
+  margin: 0 auto;
+  text-align: center;
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-hero-title {
+  margin-bottom: calc(var(--tf-u) * 24);
+  font-size: max(24px, calc(var(--tf-u) * 60));
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-hero-text {
+  -webkit-line-clamp: 5;
+  margin-bottom: calc(var(--tf-u) * 48);
+}
+.tenfoot-screen[data-tenfoot-screen="welcome"] .tenfoot-hero-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: calc(var(--tf-u) * 14);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -725,7 +1000,70 @@ html[data-tenfoot="on"] .tenfoot-season:is(:hover, :focus, :active) {
 }
 html[data-tenfoot="on"] .tenfoot-season[aria-current="true"],
 html[data-tenfoot="on"] .tenfoot-season[aria-current="true"]:is(:hover, :focus, :active) {
-  border-color: #feea3b !important;
-  background: #feea3b !important;
+  border-color: var(--tenfoot-accent, #feea3b) !important;
+  background: var(--tenfoot-accent, #feea3b) !important;
   color: #1a1a05 !important;
 }
+
+/* --- the look (lib/themes.js) ------------------------------------------- */
+
+/* Holidays: a glow of the holiday's colours along the top of the screens. */
+html[data-tenfoot="on"][data-tenfoot-holiday] .tenfoot-home:not([hidden])::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 45vh;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 70% at 15% -10%, var(--tf-glow, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 70% at 85% -10%, var(--tf-glow2, transparent), transparent 70%);
+}
+
+/* Theme This Page — Home's banner: smaller (no synopsis), or none. */
+html[data-tenfoot-look-banner="small"] .tenfoot-hero:not(.tenfoot-screen-hero) {
+  height: calc(var(--tf-u) * 340);
+}
+html[data-tenfoot-look-banner="small"] .tenfoot-hero:not(.tenfoot-screen-hero) .tenfoot-hero-text {
+  display: none;
+}
+/* Card Size: narrower or wider cards (six or four across a grid). */
+html[data-tenfoot-look-cards="small"] {
+  --tf-card-w: calc(var(--tf-u) * 288);
+}
+html[data-tenfoot-look-cards="large"] {
+  --tf-card-w: calc(var(--tf-u) * 447);
+}
+/* An episode's details page: its picture on the left, or none. */
+html[data-tenfoot-look-picture="left"] .tenfoot-screen-hero[data-tenfoot-layout="details"] {
+  grid-template-columns: calc(var(--tf-u) * 900) minmax(0, 1fr);
+}
+html[data-tenfoot-look-picture="left"] .tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-screen-picture {
+  grid-column: 1;
+}
+html[data-tenfoot-look-picture="left"] .tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-body {
+  grid-column: 2;
+}
+html[data-tenfoot-look-picture="off"] .tenfoot-screen-hero[data-tenfoot-layout="details"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+html[data-tenfoot-look-picture="off"] .tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-screen-picture {
+  display: none !important;
+}
+
+/* Reduce Motion (Accessibility): nothing of Leanback's slides or fades. */
+html[data-tenfoot-motion="reduce"] :is([class*="tenfoot-"], [class*="tenfoot-"] *) {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* High Contrast (Accessibility): the colours come from the theme (black and
+   white); buttons get a solid white edge. */
+html[data-tenfoot-contrast="on"] :is(.tenfoot-hero-button, .tenfoot-card-action, .tenfoot-ask-button) {
+  border-color: #fff !important;
+  color: #fff;
+}
+html[data-tenfoot-contrast="on"] .tenfoot-card-sub {
+  color: #fff;
+}
+

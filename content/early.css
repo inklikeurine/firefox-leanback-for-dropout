@@ -7,7 +7,9 @@
    page stays blank on Leanback's own dark ground, so it never shows before
    Leanback's screen does — nor Season 1 of a show that page.js moves on to
    its newest season. If page.js never starts, the page appears by itself
-   after 3 s. */
+   after 3 s. The cookie dialog (Ketch, mounted in #lanyard_root) is left
+   visible: its focus trap starts while the page is still blank, and throws
+   when it finds nothing it could select. */
 html:not([data-tenfoot-ready]) {
   background-color: #0b0c10 !important;
 }
@@ -21,4 +23,7 @@ html:not([data-tenfoot-ready]) body {
   to {
     visibility: visible;
   }
+}
+html:not([data-tenfoot-ready]) #lanyard_root {
+  visibility: visible !important;
 }

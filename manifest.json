@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Leanback for Dropout",
-  "version": "0.35.0",
+  "version": "0.36.0",
   "description": "Drive watch.dropout.tv with a TV remote: a TV-style Home screen with Continue Watching, a details page before every video, a big focus ring and media-key control",
   "browser_specific_settings": {
     "gecko": {
@@ -42,6 +42,7 @@
       ],
       "js": [
         "lib/settings.js",
+        "lib/themes.js",
         "lib/common.js",
         "lib/history.js",
         "nav/keymap.js",
@@ -49,6 +50,7 @@
         "nav/spatial.js",
         "nav/focus-ring.js",
         "nav/panel.js",
+        "nav/ask.js",
         "nav/settings-menu.js",
         "nav/rail.js",
         "nav/trail.js",
@@ -75,6 +77,7 @@
       ],
       "js": [
         "lib/settings.js",
+        "lib/themes.js",
         "lib/common.js",
         "lib/history.js",
         "nav/keymap.js",
