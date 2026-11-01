@@ -320,11 +320,11 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   color: var(--tf-text) !important;
   text-decoration: none !important;
 }
-.tenfoot-hero-action[data-tenfoot-listed="true"]::before {
-  content: "✓ ";
-}
-.tenfoot-hero-action[data-tenfoot-listed="false"]::before {
-  content: "+ ";
+.tenfoot-hero-glyph {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.5em;
 }
 .tenfoot-hero-next {
   justify-content: center;
