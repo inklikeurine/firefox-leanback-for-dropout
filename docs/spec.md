@@ -631,9 +631,31 @@ of episodes one further down is not considered until more are loaded.
 
 ## Milestones
 
-The theming milestones (0.39.0–0.41.0, and import and export in 1.0) are
-described in full, with the lessons they rest on, in
-[theming.md](./theming.md#milestones).
+0.37.0 is the accessibility options. The theming milestones (0.39.0–0.41.0,
+and import and export in 1.0) are described in full, with the lessons they
+rest on, in [theming.md](./theming.md#milestones).
+
+### 0.37.0 — accessibility options
+
+The owner's list, as given. Where Leanback already has something close, it
+is said beside the item: the milestone builds on it, and what exactly
+changes is settled when the work starts.
+
+- **Colour-blind-safe colours.** May be done here or in the theming
+  releases below. The player's *Color Filter (Experimental)* already
+  changes the video's colours; Leanback's own colours do not change yet.
+- **Button remapping**: which remote button does what.
+- **A larger focus ring.** *Ring Width* (2–12 px) and *Enlarge Selection*
+  exist already; the milestone goes beyond them.
+- **A setting that stops going on to the next episode by itself.**
+  *Autoplay Next Episode* is that switch already; the milestone makes sure
+  it always stops the next episode, Dropout's own countdown included.
+- **Turning off previews that play by themselves.**
+- **Reduce Motion, extended.** It is in 0.36.0 (Accessibility); the
+  milestone takes it further.
+- **Adjustable hold and repeat timing** for the remote's buttons (today an
+  arrow held down moves at most once every 80 ms).
+- **An on-screen keyboard** of Leanback's own, for typing with the remote.
 
 ### 0.39.0 — theming foundations, in the refactor
 
