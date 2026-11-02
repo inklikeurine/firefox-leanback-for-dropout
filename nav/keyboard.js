@@ -7,8 +7,8 @@
 //
 // Pages: letters (QWERTY, with Shift), then digits and symbols. A layout says
 // what the bottom row holds: "text" (comma, Space, full stop), "email" (@, a
-// full stop, .com), "password" (Space and a Show / Hide key that turns the box
-// between hidden and readable), or "digits" (a number pad, for a PIN).
+// full stop, .com), or "password" (Space and a Show / Hide key that turns the
+// box between hidden and readable).
 //
 // Typing goes into any <input> at the cursor, with beforeinput and input
 // events, so a box that mirrors into the site's own (search) keeps working.
@@ -40,15 +40,6 @@
 
   // The rows of one page for a layout, as [{id, label, w, kind, value?}].
   function rowsFor(layout, page) {
-    if (layout === "digits") {
-      const pad = (c) => key(`c:${c}`, c, 3, { kind: "char", value: c });
-      return [
-        ["1", "2", "3"].map(pad),
-        ["4", "5", "6"].map(pad),
-        ["7", "8", "9"].map(pad),
-        [key("backspace", "", 3, { kind: "backspace", icon: "backspace", aria: "Backspace" }), pad("0"), key("done", "Done", 3, { kind: "done" })]
-      ];
-    }
     const symbols = page === "symbols";
     const base = symbols ? SYMBOLS : LETTERS;
     const rows = base.map((r) => r.map(ch));
@@ -362,14 +353,14 @@
      * Open for a box. Resolves with "done" when Done is pressed, or null when
      * it is closed otherwise (Back, or another box taking it over).
      * @param {HTMLInputElement} box
-     * @param {{layout?: "text"|"email"|"password"|"digits", page?: "letters"|"symbols"}} [how]
+     * @param {{layout?: "text"|"email"|"password", page?: "letters"|"symbols"}} [how]
      * @returns {Promise<"done"|null>}
      */
     function open(box, how) {
       finish(null);
       const h = how || {};
       input = box;
-      layout = ["text", "email", "password", "digits"].includes(h.layout) ? h.layout : "text";
+      layout = ["text", "email", "password"].includes(h.layout) ? h.layout : "text";
       page = h.page === "symbols" ? "symbols" : "letters";
       origType = box && box.type ? box.type : "";
       shown = false;

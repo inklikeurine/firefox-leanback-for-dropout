@@ -62,7 +62,7 @@ scripts, and the background script relays between them.
 | `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). The ring is moved by transform, frame by frame: a 90 ms glide to where the target will end up once the zoom and the row's slide are over (`finalRect`), then held there. |
 | `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free. Styled by `content/panel.css`. |
 | `nav/settings-menu.js` | Top frame and player frame | Leanback's settings as a menu (`ROWS` under their groups, Theme This Page first under Look where the page has a look of its own, then Accessibility and Clear Continue Watching): its levels (top, a choice's values, a menu, Theme This Page and its values) and keys, `view()` for `nav/panel.js`, `preview(patch)` while moving through a look's values and `preview(null)` when it is left. `page.js` and `transport.js` each draw it; the player's own menu levels are `transport.js`'s. |
-| `nav/keyboard.js` | Top frame | The on-screen keyboard (`createKeyboard()`): a panel along the bottom, its keys and pages, the layouts (text, email, password, digits), typing into any `<input>` at the cursor with `beforeinput` / `input`. Opened and closed as `nav/ask.js`'s boxes are (`open()` → a promise of `"done"` or null, `key(action)`, `close()`); drawn by `content/keyboard.css`. |
+| `nav/keyboard.js` | Top frame | The on-screen keyboard (`createKeyboard()`): a panel along the bottom, its keys and pages, the layouts (text, email, password), typing into any `<input>` at the cursor with `beforeinput` / `input`. Opened and closed as `nav/ask.js`'s boxes are (`open()` → a promise of `"done"` or null, `key(action)`, `close()`); drawn by `content/keyboard.css`. |
 | `nav/ask.js` | Top frame | A question in a box over the screen (Sign Out, Delete Profile): a title, a line, buttons, the safe one selected; and a picture to pick in the same kind of box (`createPicker`). `page.js` routes keys to whichever is open first (`askUser()`, `pickPicture()`), Back answers with nothing. |
 | `nav/keymap.js` | Both content scripts | Keys → actions per context (page / player / typing). Pure. |
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
@@ -670,7 +670,8 @@ resolves `"done"` or null.
 
 `content/page-keyboard.js` opens it: `onBoxKey()` (from the page script's
 `onKeyDown`) opens it on Enter in a box `layoutFor()` knows (sign-in's two
-boxes through `signinLayoutFor()`, the search box by its class) that has not
+boxes through `signinLayoutFor()`; the search box and a profile's name box,
+which share a class) that has not
 been typed in (`state.typedBox`, set by a printable key, Backspace or Delete
 in the box, cleared when the selection moves to another element); `onClick()`
 opens it for a pointer click (`detail > 0`, so a script's own `click()` does

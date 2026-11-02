@@ -29,12 +29,26 @@
       return false;
     }
 
+    // A box of one of Leanback's screens (a profile's name) that would sit
+    // behind the keyboard: the screen goes up until it is in view above it.
+    function liftAbove(box) {
+      if (!state.screen || !state.screen.contains(box)) return;
+      const panel = state.keyboard.element.querySelector(".tenfoot-kb-panel");
+      if (!panel) return;
+      const gap = Math.round((window.innerHeight || 0) * 0.04);
+      const need = box.getBoundingClientRect().bottom + gap - panel.getBoundingClientRect().top;
+      if (need > 0) state.screen.setLift(state.screen.lift + need);
+    }
+
     function openFor(box) {
       const layout = layoutFor(box);
       if (!layout || !state.keyboard || state.keyboard.isOpen) return false;
       root.setAttribute("data-tenfoot-keyboard", "on");
-      state.keyboard.open(box, { layout }).then((answer) => {
+      const answered = state.keyboard.open(box, { layout });
+      liftAbove(box);
+      answered.then((answer) => {
         root.removeAttribute("data-tenfoot-keyboard");
+        if (state.screen) state.screen.setLift(0);
         state.typedBox = null;
         if (answer === "done") enterIn(box);
       });

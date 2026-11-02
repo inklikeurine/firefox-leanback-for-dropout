@@ -292,8 +292,8 @@ use ([targets.md](./targets.md)).
   tab, so Back from it, or its *Browse*, comes back to Home and stays.
 - **The on-screen keyboard** (`nav/keyboard.js`). OK on one of Leanback's
   own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
-  search box — opens a panel along the bottom of the screen with the box
-  still in view above it (the sign-in screen moves up). A pointer click on
+  search box, and the name box of Add Profile and Edit Profile — opens a panel along the bottom of the screen with the box
+  still in view above it (the sign-in screen, and a profile's form, move up). A pointer click on
   one of those boxes opens it too, since the air mouse has no keyboard.
   Letters in QWERTY rows with *Shift*, a page of digits and symbols (*123* /
   *abc*), *Space*, *Backspace*, ◀ ▶ to move in the text, and *Done*; the
@@ -720,9 +720,8 @@ keeps, logs or sends it, and it asks for no new permission.
 - **An on-screen keyboard** of Leanback's own. **OK on a text box opens
   it**, and a real keyboard or a phone keyboard app still types without it.
   It works on sign-in (with `@` and `.com` keys on the email box and
-  *Show* / *Hide* on the password), the password reset, search, a
-  profile's name and, if Leanback can reach it, a profile's PIN (digits
-  first).
+  *Show* / *Hide* on the password), the password reset, search and a
+  profile's name. A profile's PIN is left to Dropout (the owner uses none).
 - **Back to where you were** after signing in, through Dropout's
   `return_to`.
 - **"Dropout signed you out."** When this TV was signed in and a page loads

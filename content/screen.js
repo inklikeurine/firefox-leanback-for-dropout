@@ -514,6 +514,16 @@
 
     // -- scrolling ---------------------------------------------------------------
 
+    // The screen pushed up by `px` more than the selected row needs, so a box
+    // stays in view above the on-screen keyboard; 0 puts it back.
+    let lift = 0;
+    function setLift(px) {
+      const next = Math.max(0, Math.round(px) || 0);
+      if (next === lift) return;
+      lift = next;
+      applyScroll();
+    }
+
     // Down the screen: the selected row's top goes to the same place near the
     // top every time. With model.scroll "rows" (Home) that is every row of
     // cards, and the banner scrolls away; otherwise the buttons, the seasons
@@ -532,6 +542,7 @@
         if (model && model.scroll === "rows") y = Math.max(0, target.offsetTop - anchor);
         else if (pos.row !== firstCards) y = Math.max(0, target.offsetTop - anchor);
       }
+      y += lift;
       const t = y ? `translateY(${-y}px)` : "";
       if (scroller.style.transform !== t) scroller.style.transform = t;
       setAttr(layer, "data-tenfoot-scrolled", y ? "true" : null);
@@ -914,7 +925,7 @@
     }
 
     return Object.freeze({
-      refresh, move, select, initialTarget, isEmpty, destroy, snapshot, stepSlide,
+      refresh, move, select, initialTarget, isEmpty, destroy, snapshot, stepSlide, setLift, get lift() { return lift; },
       element: layer,
       get current() { return current(); },
       get ready() { return ready(); },

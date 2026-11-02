@@ -22,7 +22,8 @@
   request it says "Check your email on your phone or computer. Set the new
   password there, then sign in here."
 - **An on-screen keyboard.** OK on a text box (sign-in's *Email* and
-  *Password*, the password reset's *Email*, the search box) opens Leanback's
+  *Password*, the password reset's *Email*, the search box, a profile's
+  name) opens Leanback's
   own keyboard along the bottom of the screen: letters with Shift, digits
   and symbols, Space, Backspace, ◀ ▶ for the text cursor and *Done*. An
   email box has `@`, `.` and `.com`; a password box has *Show* / *Hide*.

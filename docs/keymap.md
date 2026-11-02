@@ -48,7 +48,7 @@ filters, then the results; the next box or button; with nothing there, the
 key stays the field's). In a field of several lines ▼ ▲ move the cursor. In
 the search box Leanback draws, OK and Back also leave it for what is below
 (Back, with nothing below, goes back as anywhere else) — once it has been typed in with a real keyboard.
-**OK on one of Leanback's own text boxes** (sign-in, the reset, search) that has
+**OK on one of Leanback's own text boxes** (sign-in, the reset, search, a profile's name) that has
 not been typed in opens [the on-screen keyboard](#the-on-screen-keyboard);
 typing in it with a real keyboard makes Enter its own again until the
 selection moves on. A pointer click on one opens the keyboard too.
@@ -162,7 +162,7 @@ text cursor, and *Done*. A text box starts a name with a capital and again
 after a space; the bottom row differs by box: a text box has `,` Space `.`,
 an email box `@` `.` `.com` (no Space, no capitals), a password box Space and
 *Show* / *Hide* (which turns the box readable and back; closing puts it
-back), a PIN a number pad. ◀ ▶ go along a row and round its ends; ▲ ▼ go to
+back). ◀ ▶ go along a row and round its ends; ▲ ▼ go to
 the key nearest the same place in the next row (a tie goes to the left), keep
 that place across rows and stop at the top and the bottom. OK types the key;
 a held OK or arrow repeats as the browser repeats it (a held move is slowed
