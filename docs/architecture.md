@@ -61,6 +61,7 @@ scripts, and the background script relays between them.
 | `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). The ring is moved by transform, frame by frame: a 90 ms glide to where the target will end up once the zoom and the row's slide are over (`finalRect`), then held there. |
 | `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free. Styled by `content/panel.css`. |
 | `nav/settings-menu.js` | Top frame and player frame | Leanback's settings as a menu (`ROWS` under their groups, Theme This Page first under Look where the page has a look of its own, then Accessibility and Clear Continue Watching): its levels (top, a choice's values, a menu, Theme This Page and its values) and keys, `view()` for `nav/panel.js`, `preview(patch)` while moving through a look's values and `preview(null)` when it is left. `page.js` and `transport.js` each draw it; the player's own menu levels are `transport.js`'s. |
+| `nav/keyboard.js` | Top frame | The on-screen keyboard (`createKeyboard()`): a panel along the bottom, its keys and pages, the layouts (text, email, password, digits), typing into any `<input>` at the cursor with `beforeinput` / `input`. Opened and closed as `nav/ask.js`'s boxes are (`open()` → a promise of `"done"` or null, `key(action)`, `close()`); drawn by `content/keyboard.css`. |
 | `nav/ask.js` | Top frame | A question in a box over the screen (Sign Out, Delete Profile): a title, a line, buttons, the safe one selected; and a picture to pick in the same kind of box (`createPicker`). `page.js` routes keys to whichever is open first (`askUser()`, `pickPicture()`), Back answers with nothing. |
 | `nav/keymap.js` | Both content scripts | Keys → actions per context (page / player / typing). Pure. |
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
@@ -641,6 +642,33 @@ saved settings until it is picked or left. In the player frame,
 caption window by `zoom`, colours it and its box over the player's own) and
 `data-tenfoot-filter`, with the SVG `feColorMatrix` filters added to the
 frame once; the video's CSS `filter` names one.
+
+## The on-screen keyboard (`nav/keyboard.js`)
+
+`createKeyboard(doc, {onFocus})` builds one layer, `.tenfoot-kb`, a child of
+`<html>`, and hands back the same shape as `nav/ask.js`'s boxes (`open`,
+`key`, `close`, `refocus`, `contains`, `isOpen`, `current`, `element`) so the
+page script can route keys to it the same way. `open(input, {layout, page})`
+resolves `"done"` or null.
+
+- **Keys** are data, not markup: `rowsFor(layout, page)` gives the rows
+  of `{id, label, w, kind}`; `w` is a width in units (a letter is 2), set on
+  each button as `--tf-kb-w`, so the CSS draws what the code counts.
+- **Moves use those widths, not the page's geometry**: each key's centre is
+  counted from the middle of its row, ▲ ▼ pick the nearest centre in the next
+  row (a tie goes left) and remember the place across rows, ◀ ▶ wrap in the
+  row. This is why the moves are testable headless.
+- **Typing** (`edit()`): `beforeinput` (cancelable), the value through the
+  native setter (past a framework's watcher), then `input`. The cursor is the
+  box's own where it has one; `type=email` has none, so the keyboard keeps
+  its own, and the panel's top line shows the text with a cursor in it
+  (masked for a password box until *Show*). *Show* sets `input.type` to
+  `text` and closing sets it back.
+- **Looks**: `content/keyboard.css`, sizes from `--tf-u`, colours from the
+  theme variables, the ring from `nav/focus-ring.js` via `onFocus`.
+
+Nothing opens it yet but its tests (`keyboard.test.mjs`); the page script
+does in the next part.
 
 ## The sign-in and reset screens (`content/page-signin.js`)
 

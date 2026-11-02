@@ -51,6 +51,7 @@
         "nav/focus-ring.js",
         "nav/panel.js",
         "nav/ask.js",
+        "nav/keyboard.js",
         "nav/settings-menu.js",
         "nav/rail.js",
         "nav/trail.js",
@@ -73,7 +74,8 @@
       "css": [
         "content/page.css",
         "content/panel.css",
-        "content/home.css"
+        "content/home.css",
+        "content/keyboard.css"
       ],
       "run_at": "document_idle"
     },

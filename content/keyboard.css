@@ -1,0 +1,112 @@
+/* Leanback for Dropout — the on-screen keyboard (nav/keyboard.js): a panel
+   along the bottom of the screen, over everything but the ring, leaving the
+   box being typed in visible above it. Sizes come from --tf-u (Interface
+   Size scales them) and colours from the theme. Dropout's own button, input
+   and heading styles are held off. */
+.tenfoot-kb {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483100;
+  display: flex;
+  justify-content: center;
+  font-family: var(--tf-font, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif);
+}
+.tenfoot-kb[hidden] {
+  display: none;
+}
+.tenfoot-kb-panel {
+  box-sizing: border-box;
+  width: 100%;
+  padding: calc(var(--tf-u, 0.04vw) * 22) var(--tf-gutter, 5vw) calc(var(--tf-u, 0.04vw) * 30);
+  background: var(--tf-surface, #15171c);
+  border-top: 2px solid var(--tf-rail-edge, #262a33);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.5);
+}
+/* The text so far, with the cursor in it. */
+.tenfoot-kb-preview {
+  min-height: 1.4em;
+  margin: 0 auto calc(var(--tf-u, 0.04vw) * 16);
+  color: var(--tf-text, #f5f6f7);
+  font-weight: 600;
+  font-size: max(16px, calc(var(--tf-u, 0.04vw) * 40));
+  line-height: 1.4;
+  text-align: center;
+  white-space: pre;
+  overflow: hidden;
+}
+.tenfoot-kb-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin: 0 1px;
+  vertical-align: text-bottom;
+  background: var(--tenfoot-accent, #feea3b);
+}
+.tenfoot-kb-keys {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--tf-u, 0.04vw) * 12);
+}
+.tenfoot-kb-row {
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--tf-u, 0.04vw) * 12);
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(var(--tf-u, 0.04vw) * 72 * var(--tf-kb-w, 2) - var(--tf-u, 0.04vw) * 12);
+  min-width: 0;
+  height: calc(var(--tf-u, 0.04vw) * 100);
+  margin: 0;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: calc(var(--tf-u, 0.04vw) * 10);
+  background: var(--tf-raised, #1e2128) !important;
+  box-shadow: none !important;
+  color: var(--tf-text, #f5f6f7) !important;
+  font: inherit;
+  font-weight: 700;
+  font-size: max(15px, calc(var(--tf-u, 0.04vw) * 40));
+  line-height: 1;
+  text-transform: none;
+  outline: none;
+  cursor: pointer;
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key:is(:hover, :focus, :active) {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: var(--tf-text, #f5f6f7) !important;
+  transition: none !important;
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--done {
+  border-color: var(--tenfoot-accent, #feea3b) !important;
+  background: var(--tenfoot-accent, #feea3b) !important;
+  color: #1a1a05 !important;
+  font-weight: 800;
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--done:is(:hover, :focus, :active) {
+  background: var(--tenfoot-accent, #feea3b) !important;
+  color: #1a1a05 !important;
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--shift[aria-pressed="true"] {
+  border-color: var(--tenfoot-accent, #feea3b) !important;
+  color: var(--tenfoot-accent, #feea3b) !important;
+}
+.tenfoot-kb-key svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key {
+  border-color: #fff !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tenfoot-kb-key {
+    transition: none !important;
+  }
+}

@@ -149,6 +149,25 @@ first, in a box over the screen, with the safe answer (*Cancel*) selected.
 back a page as well (T2: it cannot be stopped). Nothing else gets past it
 while it is open.
 
+## The on-screen keyboard
+
+A panel along the bottom of the screen (`nav/keyboard.js`), the box being
+typed in left visible above it. Letters in QWERTY rows with Shift; a page of
+digits and symbols (the *123* / *abc* key); Space, Backspace, ◀ ▶ for the
+text cursor, and *Done*. A text box starts a name with a capital and again
+after a space; the bottom row differs by box: a text box has `,` Space `.`,
+an email box `@` `.` `.com` (no Space, no capitals), a password box Space and
+*Show* / *Hide* (which turns the box readable and back; closing puts it
+back), a PIN a number pad. ◀ ▶ go along a row and round its ends; ▲ ▼ go to
+the key nearest the same place in the next row (a tie goes to the left), keep
+that place across rows and stop at the top and the bottom. OK types the key;
+a held OK or arrow repeats as the browser repeats it (a held move is slowed
+by the page script as everywhere). *Done* closes it (the caller does what
+Enter in the box does) and Escape closes it with no answer; both put the
+selection back on the box. The remote's Back is Firefox's, so nothing depends
+on it. Nothing else gets past it while it is open. The pointer presses a key
+as it does any button.
+
 ## A picture to pick
 
 OK on a profile's picture in Manage profiles opens a box of pictures. ◀ ▶
