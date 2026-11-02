@@ -68,6 +68,7 @@
       "content/page-look.js",
       "content/page-forms.js",
       "content/page-signin.js",
+      "content/page-keyboard.js",
       "content/page-settings.js",
         "content/page.js"
       ],

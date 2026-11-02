@@ -21,6 +21,14 @@
   through Dropout's own form as *Sign in* does, and when Dropout takes the
   request it says "Check your email on your phone or computer. Set the new
   password there, then sign in here."
+- **An on-screen keyboard.** OK on a text box (sign-in's *Email* and
+  *Password*, the password reset's *Email*, the search box) opens Leanback's
+  own keyboard along the bottom of the screen: letters with Shift, digits
+  and symbols, Space, Backspace, ◀ ▶ for the text cursor and *Done*. An
+  email box has `@`, `.` and `.com`; a password box has *Show* / *Hide*.
+  *Done* does what Enter in the box does. A real keyboard, or a keyboard
+  app on your phone, still types straight into a box without it, and a
+  click with the pointer opens it too.
 
 ### Changed
 

@@ -45,6 +45,7 @@ scripts, and the background script relays between them.
 | `content/page-profiles.js` | Top frame | [The profiles](#profiles-and-their-forms): whether the picker shows a form of Dropout's own, a profile's picture through Dropout's API (`editPicture()`), *Cancel* and *Delete Profile* on Edit Profile asked first, *Sign Out*. |
 | `content/page-look.js` | Top frame | [The look](#the-look-libthemesjs) written onto the page and the ring, a look tried in the settings panel (`previewLook()`), Theme This Page with what moves sliding to its new place, Cookie Preferences. |
 | `content/page-forms.js` | Top frame | Dropout's own pages laid out for the TV: the site's chrome marked, Edit Profile drawn large (`syncForm()`), the policies read by scrolling, the welcome offered once signed out, `rules.redirects`. |
+| `content/page-keyboard.js` | Top frame | Opening [the on-screen keyboard](#the-on-screen-keyboard-navkeyboardjs): OK or a click on one of Leanback's text boxes, which box gets which layout, what Done does. |
 | `content/page-signin.js` | Top frame | [The sign-in and reset screens](#the-sign-in-and-reset-screens-contentpage-signinjs): the layer with its form, its stops and its moves (`syncSignin()`, `moveSignin()`), the hand-over to Dropout's form. |
 | `content/page-settings.js` | Top frame | Leanback's settings in the panel: `nav/settings-menu.js` drawn by `nav/panel.js`, its keys, and the options button opening the player's panel while a video plays. |
 | `content/home.js` | Top frame: Home and hubs | [Home](#home-contenthomejs) read off Dropout's page: `readSite()`, `homeModel()`, `rowOverride()`. |
@@ -667,8 +668,18 @@ resolves `"done"` or null.
 - **Looks**: `content/keyboard.css`, sizes from `--tf-u`, colours from the
   theme variables, the ring from `nav/focus-ring.js` via `onFocus`.
 
-Nothing opens it yet but its tests (`keyboard.test.mjs`); the page script
-does in the next part.
+`content/page-keyboard.js` opens it: `onBoxKey()` (from the page script's
+`onKeyDown`) opens it on Enter in a box `layoutFor()` knows (sign-in's two
+boxes through `signinLayoutFor()`, the search box by its class) that has not
+been typed in (`state.typedBox`, set by a printable key, Backspace or Delete
+in the box, cleared when the selection moves to another element); `onClick()`
+opens it for a pointer click (`detail > 0`, so a script's own `click()` does
+not). `state.keyboard` is in `overlay()` with the question and picture
+boxes, so the page script routes keys to it, Back closes it and focus
+leaving it is taken back. While it is open `<html>` carries
+`data-tenfoot-keyboard="on"`, which moves the sign-in screen to the top. When
+it answers `"done"`, `enterIn()` does what Enter in the box does
+(`signinEnter()`, or `leaveFieldBelow()` for search).
 
 ## The sign-in and reset screens (`content/page-signin.js`)
 

@@ -47,7 +47,11 @@ box (they leave the field for what is below or above it: the result
 filters, then the results; the next box or button; with nothing there, the
 key stays the field's). In a field of several lines ▼ ▲ move the cursor. In
 the search box Leanback draws, OK and Back also leave it for what is below
-(Back, with nothing below, goes back as anywhere else).
+(Back, with nothing below, goes back as anywhere else) — once it has been typed in with a real keyboard.
+**OK on one of Leanback's own text boxes** (sign-in, the reset, search) that has
+not been typed in opens [the on-screen keyboard](#the-on-screen-keyboard);
+typing in it with a real keyboard makes Enter its own again until the
+selection moves on. A pointer click on one opens the keyboard too.
 
 ## Actions → behaviour by context
 
@@ -164,7 +168,9 @@ that place across rows and stop at the top and the bottom. OK types the key;
 a held OK or arrow repeats as the browser repeats it (a held move is slowed
 by the page script as everywhere). *Done* closes it (the caller does what
 Enter in the box does) and Escape closes it with no answer; both put the
-selection back on the box. The remote's Back is Firefox's, so nothing depends
+selection back on the box. *Done* does what Enter in the box does (sign-in's
+*Email* goes on to *Password*, its *Password* and the reset's *Email* press
+the button, the search box leaves for the results). The remote's Back is Firefox's, so nothing depends
 on it. Nothing else gets past it while it is open. The pointer presses a key
 as it does any button.
 

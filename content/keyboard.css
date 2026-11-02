@@ -110,3 +110,12 @@ html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key {
     transition: none !important;
   }
 }
+
+/* With the keyboard up, the sign-in screen moves to the top so its boxes stay
+   above it. */
+html[data-tenfoot-keyboard="on"] .tenfoot-signin {
+  align-items: flex-start !important;
+}
+html[data-tenfoot-keyboard="on"] .tenfoot-signin-card {
+  padding-top: calc(var(--tf-u, 0.04vw) * 30);
+}

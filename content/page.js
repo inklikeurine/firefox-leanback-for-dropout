@@ -43,6 +43,7 @@
   const Ring = globalThis.TenfootFocusRing;
   const Panel = globalThis.TenfootPanel;
   const Ask = globalThis.TenfootAsk;
+  const Keyboard = globalThis.TenfootKeyboard;
   const Themes = globalThis.TenfootThemes;
   const History = globalThis.TenfootHistory;
 
@@ -79,6 +80,8 @@
     modalReturn: null,
     menu: null,
     ask: null, // a question in a box (nav/ask.js): Sign out?, Delete profile?
+    keyboard: null, // the on-screen keyboard (nav/keyboard.js)
+    typedBox: null, // the text box last typed in with a keyboard: its Enter is its own
     picker: null, // a picture to pick, in a box (nav/ask.js): a profile's picture
     preview: null, // a look being tried in the settings panel, not yet picked
     modalAwaitStart: false, // a dialog whose first choice has not appeared yet
@@ -120,7 +123,7 @@
     send, dispatch, showHints, notice, askUser, pickPicture, click, firstVisible, collect, currentEl, focusEl,
     goBack, samePath, leaveFieldBelow, refocusPage, reducedMotion
   });
-  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageProfiles, globalThis.TenfootPageLive, globalThis.TenfootPageLook, globalThis.TenfootPageForms, globalThis.TenfootPageSignin, globalThis.TenfootPageSettings]) part.install(P);
+  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageProfiles, globalThis.TenfootPageLive, globalThis.TenfootPageLook, globalThis.TenfootPageForms, globalThis.TenfootPageSignin, globalThis.TenfootPageKeyboard, globalThis.TenfootPageSettings]) part.install(P);
   // From page-back.js.
   const goSideways = (...a) => P.goSideways(...a);
   const goTop = (...a) => P.goTop(...a);
@@ -178,6 +181,10 @@
   const inSignin = (...a) => P.inSignin(...a);
   const moveSignin = (...a) => P.moveSignin(...a);
   const leaveSigninBox = (...a) => P.leaveSigninBox(...a);
+  // From page-keyboard.js.
+  const onBoxKey = (...a) => P.onBoxKey(...a);
+  const onClick = (...a) => P.onClick(...a);
+  const onSelect = (...a) => P.onSelect(...a);
   // From page-settings.js.
   const openMenu = (...a) => P.openMenu(...a);
   const dispatchInMenu = (...a) => P.dispatchInMenu(...a);
@@ -239,11 +246,13 @@
   // Leanback's own elements: the Home screen, the rail, the options panel.
   function ownUi(el) {
     if (!el) return false;
-    return Boolean((state.screen && state.screen.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)) || (state.ask && state.ask.contains(el)) || (state.picker && state.picker.contains(el)));
+    return Boolean((state.keyboard && state.keyboard.contains(el)) || (state.screen && state.screen.contains(el)) || (state.rail && state.rail.contains(el)) || (state.menu && state.menu.contains(el)) || (state.ask && state.ask.contains(el)) || (state.picker && state.picker.contains(el)));
   }
 
-  // The box open over the screen, if any: a question, or a picture to pick.
+  // The box open over the screen, if any: the keyboard, a question, or a
+  // picture to pick.
   function overlay() {
+    if (state.keyboard && state.keyboard.isOpen) return state.keyboard;
     if (state.ask && state.ask.isOpen) return state.ask;
     if (state.picker && state.picker.isOpen) return state.picker;
     return null;
@@ -930,6 +939,7 @@
 
   function hintItems() {
     const step = state.settings.seekStep;
+    if (state.keyboard && state.keyboard.isOpen) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Type" }, { keys: "Back", label: "Close" }];
     if (state.modal) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Select" }, { keys: "Back", label: "Close" }];
     if ((state.kind === "video" || state.inPlace) && state.playerFocused) {
       const offering = state.playerState && state.playerState.upNextShowing;
@@ -983,6 +993,14 @@
     const editable = Keymap.isEditable(e.target);
     const atStart = editable && Keymap.caretAtStart(e.target);
     const singleLine = editable && Keymap.isSingleLine(e.target);
+    // OK on one of Leanback's text boxes opens the keyboard; typing in one
+    // marks it as typed in.
+    if (editable && !overlay() && onBoxKey(e)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      showHints();
+      return;
+    }
     const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
@@ -1029,6 +1047,7 @@
   function onFocusIn(e) {
     if (!state.enabled) return;
     const t = e.target;
+    onSelect(t);
     if (!t || t === document.body || t === root) return;
     if (t.tagName === "IFRAME") {
       if (state.kind === "video" && state.watch === "details") {
@@ -1372,6 +1391,7 @@
     state.enabled = Boolean(on);
     root.dataset[MARK] = state.enabled ? "on" : "off";
     if (!state.enabled) {
+      if (overlay()) overlay().close();
       closeInPlace();
       clearInitialFocusTimer();
       state.menu.close();
@@ -1433,6 +1453,7 @@
     state.menu = Panel.createPanel(document, { label: "Leanback settings", onPick: onPanelPick });
     state.ask = Ask.createAsk(document, { onFocus: (b) => state.ring.follow(b) });
     state.picker = Ask.createPicker(document, { onFocus: (b) => state.ring.follow(b) });
+    state.keyboard = Keyboard.createKeyboard(document, { onFocus: (b) => state.ring.follow(b) });
     state.settingsMenu = createSettingsMenu();
     if (History) {
       // The watch history is the profile's that is watching; telling the
@@ -1449,6 +1470,7 @@
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
+    document.addEventListener("click", onClick, true);
     window.addEventListener("popstate", onPopState);
     window.addEventListener("beforeunload", onBeforeUnload, true);
     window.addEventListener("pagehide", () => { state.leaving = true; });

@@ -152,8 +152,8 @@ has are mapped, so nothing is hidden behind a letter key:
 | volume | `AudioVolume*` | Your desktop's, never intercepted |
 | media keys | `Media*` | Play/pause, stop, skip, next/previous episode, for remotes that have them |
 
-The one keyboard exception is `/`, which opens search — searching needs
-typing anyway. Every key, everywhere: [docs/keymap.md](./docs/keymap.md).
+The one keyboard exception is `/`, which opens search. Typing needs no
+real keyboard: OK on a text box opens Leanback's own on-screen keyboard. Every key, everywhere: [docs/keymap.md](./docs/keymap.md).
 
 **Home** is the featured banner and one row per shelf. ▲ ▼ go from row to
 row, and each row remembers where you were in it; ◀ ▶ move along a row.
@@ -193,8 +193,8 @@ profiles goes to the first profile used.
 
 **Signed out**, Leanback opens on a welcome screen: *Sign In*, *Browse*,
 *Privacy Policy* and *Terms of Use*. *Sign In* opens Leanback's sign-in screen, one screen with an *Email* and a
-*Password* box; typing your email and password needs a keyboard, or a
-keyboard app on your phone. The privacy policy, terms and cookies policy scroll with ▲ ▼.
+*Password* box; OK on a box opens the on-screen keyboard (or type with a real
+keyboard, or a keyboard app on your phone). The privacy policy, terms and cookies policy scroll with ▲ ▼.
 
 **Browse, My List and the lists** show their shows or episodes five across
 (four or six with *Theme This Page*), the same cards as on Home; more
@@ -338,8 +338,8 @@ to play its player there. The manifest declares
 - Dropout 24/7 plays on its page only while the stream's page carries its
   player's address; otherwise *Watch* opens the stream's page, where the
   sound waits for *Watch* there.
-- Signing in and searching need a keyboard (or a keyboard app on your phone):
-  there is no on-screen keyboard. Signing in uses Dropout's invisible
+- The on-screen keyboard opens for sign-in, the password reset and search;
+  a profile's name still needs a real keyboard (or a keyboard app on your phone). Signing in uses Dropout's invisible
   reCAPTCHA, which normally asks nothing; if it ever shows a puzzle, it is
   Dropout's own, and needs a pointer.
 - Each profile's watch history is kept by its place in Dropout's list of

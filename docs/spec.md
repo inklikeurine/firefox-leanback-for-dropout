@@ -40,8 +40,9 @@ The product spec: what Leanback does, exactly. What each key does is in
 
 - Not an ad blocker, not a downloader, not a paywall or DRM workaround. It
   needs a paid Dropout login exactly as the site does.
-- No on-screen keyboard. Search and login need a real keyboard or a phone;
-  `/` opens search and is the **only** keyboard key the extension maps.
+- A real keyboard maps to nothing but `/`, which opens search; typing with
+  one (or a phone's keyboard app) goes straight into a box without the
+  on-screen keyboard, and is never needed.
 - Not a general spatial-navigation extension — it runs only on Dropout hosts.
 - Not the store: Dropout's subscription store (`/products`) is deliberately
   not drawn or linked — a poor fit for a TV UI.
@@ -250,8 +251,11 @@ use ([targets.md](./targets.md)).
   into Dropout's own box, say by a password app). ▲ ▼ go from box to box to
   *Sign in*, *Forgot password?* and the policies and stop at the ends (▲ ▼
   leave a one-line box, letters type); ◀ ▶ go between the two policies;
-  Enter in *Email* goes to *Password*, in *Password* it presses *Sign in*;
-  Back from a box goes to *Sign in*.
+  Back from a box goes to *Sign in*. **OK on a box opens the on-screen
+  keyboard** (see below) with the email layout on *Email* and the password
+  layout on *Password*; typing in the box with a real keyboard needs none,
+  and then Enter in *Email* goes to *Password* and in *Password* presses
+  *Sign in*; the keyboard's *Done* does the same.
   **Sign in** goes through Dropout's own form on the same page, so its
   checks and its reCAPTCHA work unchanged: the email goes into Dropout's
   email box and its *Next* is pressed; when Dropout shows its password step,
@@ -286,6 +290,27 @@ use ([targets.md](./targets.md)).
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per
   tab, so Back from it, or its *Browse*, comes back to Home and stays.
+- **The on-screen keyboard** (`nav/keyboard.js`). OK on one of Leanback's
+  own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
+  search box — opens a panel along the bottom of the screen with the box
+  still in view above it (the sign-in screen moves up). A pointer click on
+  one of those boxes opens it too, since the air mouse has no keyboard.
+  Letters in QWERTY rows with *Shift*, a page of digits and symbols (*123* /
+  *abc*), *Space*, *Backspace*, ◀ ▶ to move in the text, and *Done*; the
+  text so far is shown on the panel's top line with its cursor. A text box
+  starts with a capital and takes one after a space; an email box has `@`,
+  `.` and `.com` and no *Space*; a password box has *Show* / *Hide*, which
+  turns it readable and back. ◀ ▶ go along a row and round its ends, ▲ ▼ go
+  to the key nearest the same place in the next row and stop at the top and
+  bottom; OK types, *Done* closes it and does what Enter in the box does
+  (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*,
+  search → the results), Escape closes it and the selection is back on the
+  box. Typing in a box with a real keyboard marks it as typed in, and Enter
+  in it is its own again until the selection moves on. Nothing else gets
+  past an open keyboard; the remote's Back is Firefox's, so nothing depends
+  on it. Letters go into the box at the cursor with `beforeinput` and
+  `input` events, so a box that mirrors into Dropout's (search) keeps
+  working.
 - **The policies (`/privacy`, `/tos`, `/cookies`).** Dropout's words
   (`pages.legal.content`, stamped `data-tenfoot-reading`) in a column of
   Leanback's type on its dark ground, the headings white and the links
@@ -342,7 +367,9 @@ use ([targets.md](./targets.md)).
   box, and Dropout's results come back as Home's cards, five across. Under
   the box, Dropout's type filters (*All (118)*, *Videos (115)*, *Collections
   (4)*) as pills, the one on screen yellow. With nothing typed, Dropout's own
-  words ("Start typing to see results"). The selection starts in the box.
+  words ("Start typing to see results"). The selection starts in the box;
+  OK in it opens the on-screen keyboard, whose *Done* (or, typing with a
+  real keyboard, Enter) goes down to the filters and results.
   *Load More* is pressed near the end of the results, never while typing.
 - **Spatial navigation** on the pages Leanback does not draw: arrow keys
   move DOM focus to the nearest focusable element in that direction. A tile

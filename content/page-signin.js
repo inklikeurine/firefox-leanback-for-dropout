@@ -364,6 +364,25 @@
       store("remove", RESET_KEY);
     }
 
+    // The layout of the keyboard for one of the screen's boxes, or null.
+    function signinLayoutFor(el) {
+      const s = state.signin;
+      if (!s || !el) return null;
+      if (el === s.email) return "email";
+      if (el === s.password) return "password";
+      return null;
+    }
+
+    // What Enter in a box does: Email goes on to Password; Password (and the
+    // reset's Email) press the button.
+    function signinEnter(box) {
+      const s = state.signin;
+      if (!s) return false;
+      if (box === s.email && s.password) focusEl(s.password);
+      else s.submit.click();
+      return true;
+    }
+
     function inSignin(el) {
       return Boolean(state.signin && el && state.signin.layer.contains(el));
     }
@@ -406,7 +425,7 @@
       return true;
     }
 
-    Object.assign(P, { syncSignin, removeSignin, inSignin, moveSignin, leaveSigninBox, forgetSigninEmail });
+    Object.assign(P, { syncSignin, removeSignin, inSignin, signinLayoutFor, signinEnter, moveSignin, leaveSigninBox, forgetSigninEmail });
   }
 
   globalThis.TenfootPageSignin = Object.freeze({ install });
