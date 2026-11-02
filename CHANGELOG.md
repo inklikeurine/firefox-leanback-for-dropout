@@ -23,13 +23,23 @@
   password there, then sign in here."
 - **An on-screen keyboard.** OK on a text box (sign-in's *Email* and
   *Password*, the password reset's *Email*, the search box, a profile's
-  name) opens Leanback's
+  name, and a PIN's boxes, which get a number pad) opens Leanback's
   own keyboard along the bottom of the screen: letters with Shift, digits
   and symbols, Space, Backspace, ◀ ▶ for the text cursor and *Done*. An
   email box has `@`, `.` and `.com`; a password box has *Show* / *Hide*.
   *Done* does what Enter in the box does. A real keyboard, or a keyboard
   app on your phone, still types straight into a box without it, and a
   click with the pointer opens it too.
+
+### Fixed
+
+- **Edit Profile's Save** shows when it is ready: it is a grey outlined
+  button until something has changed (Leanback did not notice Dropout
+  switching it on, so it stayed as it was), and yellow when it can be
+  saved. After OK on it, it says "✓ Saved" for a moment and "Profile saved"
+  appears at the bottom; if Dropout says something else, its words are
+  shown instead. The line under the title could also pick up Leanback's own
+  hint bar as if it were Dropout's message: it no longer does.
 
 ### Changed
 

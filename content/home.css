@@ -753,6 +753,14 @@ html[data-tenfoot="on"] .tenfoot-screen-pills[hidden] {
 .tenfoot-hero-action[aria-disabled="true"] {
   opacity: 0.45;
 }
+/* A yellow button that has nothing to do yet (Save, until something has
+   changed) is not yellow: it takes its colour when it is ready. */
+html[data-tenfoot="on"] .tenfoot-home .tenfoot-hero-action.tenfoot-hero-primary[aria-disabled="true"],
+html[data-tenfoot="on"] .tenfoot-home .tenfoot-hero-action.tenfoot-hero-primary[aria-disabled="true"]:is(:hover, :focus, :active) {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
 .tenfoot-hero-action[data-tenfoot-danger="true"] {
   border-color: #ff6b6b !important;
   color: #ff8f8f !important;

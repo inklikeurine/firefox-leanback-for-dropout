@@ -7,8 +7,10 @@
 //
 // Pages: letters (QWERTY, with Shift), then digits and symbols. A layout says
 // what the bottom row holds: "text" (comma, Space, full stop), "email" (@, a
-// full stop, .com), or "password" (Space and a Show / Hide key that turns the
-// box between hidden and readable).
+// full stop, .com), "password" (Space and a Show / Hide key that turns the
+// box between hidden and readable), or "digits" (a number pad, for a PIN; a
+// PIN's separate digit boxes are given as a group, and each digit goes into
+// the next empty one).
 //
 // Typing goes into any <input> at the cursor, with beforeinput and input
 // events, so a box that mirrors into the site's own (search) keeps working.
@@ -40,6 +42,15 @@
 
   // The rows of one page for a layout, as [{id, label, w, kind, value?}].
   function rowsFor(layout, page) {
+    if (layout === "digits") {
+      const pad = (c) => key(`c:${c}`, c, 3, { kind: "char", value: c });
+      return [
+        ["1", "2", "3"].map(pad),
+        ["4", "5", "6"].map(pad),
+        ["7", "8", "9"].map(pad),
+        [key("backspace", "", 3, { kind: "backspace", icon: "backspace", aria: "Backspace" }), pad("0"), key("done", "Done", 3, { kind: "done" })]
+      ];
+    }
     const symbols = page === "symbols";
     const base = symbols ? SYMBOLS : LETTERS;
     const rows = base.map((r) => r.map(ch));
@@ -85,6 +96,7 @@
     (doc.documentElement || doc.body).appendChild(layer);
 
     let input = null;
+    let group = null; // a PIN's digit boxes, in order, when it has several
     let layout = "text";
     let page = "letters";
     let shifted = false;
@@ -100,6 +112,28 @@
 
     function value() {
       return input ? String(input.value || "") : "";
+    }
+
+    // What the panel's top line shows: all of a PIN's boxes together.
+    function shownValue() {
+      return group ? group.map((b) => String(b.value || "")).join("") : value();
+    }
+
+    // With a group, the box a digit goes into (the first empty one) or comes
+    // out of (the last filled one); the cursor goes to the end of it.
+    function aim(remove) {
+      if (!group) return true;
+      let box = null;
+      if (remove) {
+        for (let i = group.length - 1; i >= 0 && !box; i -= 1) if (group[i].value) box = group[i];
+        box = box || group[0];
+      } else {
+        box = group.find((b) => !b.value) || null;
+        if (!box) return false; // all filled: another digit has no place
+      }
+      input = box;
+      caret = value().length;
+      return true;
     }
 
     // The cursor: the box's own when it has one, else the keyboard's.
@@ -137,6 +171,7 @@
     // beforeinput first (a page may cancel it), then the value, then input.
     function edit(text, remove) {
       if (!input || !input.isConnected) return;
+      if (!aim(remove)) return;
       syncCaret();
       const v = value();
       if (remove) {
@@ -196,9 +231,9 @@
           if (k.spec.kind === "shift") k.el.setAttribute("aria-pressed", shifted ? "true" : "false");
         }
       }
-      const v = value();
-      const masked = layout === "password" && !shown ? "•".repeat(v.length) : v;
-      const c = Math.max(0, Math.min(masked.length, caret));
+      const v = shownValue();
+      const masked = (layout === "password" && !shown) || layout === "digits" ? "•".repeat(v.length) : v;
+      const c = group ? masked.length : Math.max(0, Math.min(masked.length, caret));
       preview.textContent = "";
       const before = el("span", "tenfoot-kb-text");
       before.textContent = masked.slice(0, c);
@@ -336,9 +371,10 @@
         } catch (_err) { /* nothing to put back */ }
       }
       const done = settle;
-      const box = input;
+      const box = group ? group.find((b) => !b.value) || group[group.length - 1] : input;
       settle = null;
       input = null;
+      group = null;
       shown = false;
       if (done) done(answer);
       // The selection goes back to the box.
@@ -353,14 +389,16 @@
      * Open for a box. Resolves with "done" when Done is pressed, or null when
      * it is closed otherwise (Back, or another box taking it over).
      * @param {HTMLInputElement} box
-     * @param {{layout?: "text"|"email"|"password", page?: "letters"|"symbols"}} [how]
+     * @param {{layout?: "text"|"email"|"password"|"digits", page?: "letters"|"symbols", boxes?: HTMLInputElement[]}} [how] —
+     *   boxes: a PIN's digit boxes, when it has several
      * @returns {Promise<"done"|null>}
      */
     function open(box, how) {
       finish(null);
       const h = how || {};
       input = box;
-      layout = ["text", "email", "password"].includes(h.layout) ? h.layout : "text";
+      group = Array.isArray(h.boxes) && h.boxes.length > 1 ? h.boxes : null;
+      layout = ["text", "email", "password", "digits"].includes(h.layout) ? h.layout : "text";
       page = h.page === "symbols" ? "symbols" : "letters";
       origType = box && box.type ? box.type : "";
       shown = false;

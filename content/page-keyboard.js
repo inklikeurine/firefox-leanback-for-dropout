@@ -9,6 +9,20 @@
   function install(P) {
     const { state } = P;
     const root = document.documentElement;
+    const { qs, qsa } = globalThis.TenfootCommon;
+
+    // A PIN-locked profile's PIN screen is Dropout's own form inside the
+    // picker app, which Leanback steps aside for: its digit boxes
+    // (rules → screen.profiles.pin), in page order, or none.
+    function pinRules() {
+      const profiles = state.rules && state.rules.screen && state.rules.screen.profiles;
+      return (profiles && profiles.pin) || {};
+    }
+
+    function pinBoxes() {
+      if (state.kind !== "profiles" || state.screen) return [];
+      return qsa(pinRules().boxes).filter((b) => b.tagName === "INPUT" && !b.disabled && b.type !== "hidden");
+    }
 
     // The layout a box gets, or null for a box Leanback does not open the
     // keyboard for.
@@ -16,6 +30,7 @@
       if (!el || el.tagName !== "INPUT") return null;
       const sign = P.signinLayoutFor(el);
       if (sign) return sign;
+      if (pinBoxes().includes(el)) return "digits";
       if (state.screen && el.classList.contains("tenfoot-screen-field-input")) return "text";
       return null;
     }
@@ -25,6 +40,13 @@
     // search box leaves for the results.
     function enterIn(box) {
       if (P.inSignin(box)) return P.signinEnter(box);
+      // A PIN: Dropout's own button, when it has one (it may go on by itself
+      // once the last digit is in).
+      if (pinBoxes().length) {
+        const go = qs(pinRules().submit);
+        if (go && !go.disabled) go.click();
+        return true;
+      }
       if (state.screen && state.screen.contains(box)) return P.leaveFieldBelow();
       return false;
     }
@@ -44,7 +66,8 @@
       const layout = layoutFor(box);
       if (!layout || !state.keyboard || state.keyboard.isOpen) return false;
       root.setAttribute("data-tenfoot-keyboard", "on");
-      const answered = state.keyboard.open(box, { layout });
+      const boxes = layout === "digits" ? pinBoxes() : null;
+      const answered = state.keyboard.open(box, { layout, boxes });
       liftAbove(box);
       answered.then((answer) => {
         root.removeAttribute("data-tenfoot-keyboard");

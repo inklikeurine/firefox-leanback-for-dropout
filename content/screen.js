@@ -280,9 +280,10 @@
         node.classList.toggle("tenfoot-hero-primary", Boolean(a.primary));
         setAttr(node, "data-tenfoot-danger", a.danger ? "true" : null);
         setAttr(node, "aria-disabled", a.disabled ? "true" : null);
-        if (typeof a.listed === "boolean") {
-          // My List: a drawn plus or tick, then the words. The glyph is
-          // redrawn only when the state changes, so the element keeps focus.
+        const gname = a.glyph || (typeof a.listed === "boolean" ? (a.listed ? "check" : "plus") : "");
+        if (gname) {
+          // My List, a Saved: a drawn plus or tick, then the words. The glyph
+          // is redrawn only when it changes, so the element keeps focus.
           let word = node.querySelector(".tenfoot-hero-word");
           if (!word) {
             node.textContent = "";
@@ -290,11 +291,11 @@
             node.appendChild(word);
           }
           setText(word, a.label);
-          const want = a.listed ? "check" : "plus";
+          const want = gname;
           const glyph = node.querySelector(".tenfoot-hero-glyph");
           if (!glyph || glyph.dataset.glyph !== want) {
             if (glyph) glyph.remove();
-            const g = Common.svgIcon(doc, a.listed ? "M5 12.5l4.5 4.5L19 7" : "M12 5v14M5 12h14", { strokeWidth: 3 });
+            const g = Common.svgIcon(doc, want === "check" ? "M5 12.5l4.5 4.5L19 7" : "M12 5v14M5 12h14", { strokeWidth: 3 });
             g.setAttribute("class", "tenfoot-hero-glyph");
             g.dataset.glyph = want;
             node.insertBefore(g, word);

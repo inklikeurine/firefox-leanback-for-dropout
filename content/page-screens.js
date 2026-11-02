@@ -44,6 +44,7 @@
     const editPicture = (...a) => P.editPicture(...a);
     const cancelProfile = (...a) => P.cancelProfile(...a);
     const deleteProfile = (...a) => P.deleteProfile(...a);
+    const saveProfile = (...a) => P.saveProfile(...a);
     const syncPicker = (...a) => P.syncPicker(...a);
     const signOut = (...a) => P.signOut(...a);
     // Theme This Page's Card Size: how many cards across a grid.
@@ -114,7 +115,7 @@
           // The picker, or its Add Profile form.
           profiles: () => Readers.profilesModel(document, screenRules().profiles, { current: state.profile, signOut, editPicture }) ||
             Readers.profileFormModel(document, formRules().add),
-          profileForm: () => Readers.profileFormModel(document, formRules().edit),
+          profileForm: () => Readers.profileFormModel(document, formRules().edit, { saved: state.profileSaved }),
           welcome: () => Readers.welcomeModel(document, screenRules().welcome, {
             signinUrl: state.rules.signinUrl,
             browseUrl: state.rules.browseUrl,
@@ -148,6 +149,7 @@
             if (what === "clear") return clearProgress();
             if (what === "ask:delete") return deleteProfile();
             if (what === "ask:cancel") return cancelProfile();
+            if (what === "save") return saveProfile();
             return startWatching(what === "restart");
           }
         });

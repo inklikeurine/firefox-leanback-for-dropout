@@ -183,31 +183,9 @@
       return Boolean(qs(R.passwordInput)) && !qs(R.passwordHidden);
     }
 
-    // Resolve with what `check` returns once it is truthy, looked at now and
-    // on every change in Dropout's form (a MutationObserver, no polling), or
-    // with null after `ms`.
-    function waitFor(check, ms) {
-      return new Promise((resolve) => {
-        const now = check();
-        if (now) {
-          resolve(now);
-          return;
-        }
-        const target = qs(pageRules().box) || document.body;
-        let timer = 0;
-        const done = (v) => {
-          clearTimeout(timer);
-          observer.disconnect();
-          resolve(v);
-        };
-        const observer = new MutationObserver(() => {
-          const v = check();
-          if (v) done(v);
-        });
-        observer.observe(target, { subtree: true, childList: true, attributes: true, characterData: true });
-        timer = setTimeout(() => done(check() || null), ms);
-      });
-    }
+    // What `check` returns once it is truthy, looked at on every change in
+    // Dropout's form, or null after `ms`.
+    const waitFor = (check, ms) => Common.waitFor(check, ms, qs(pageRules().box) || document.body);
 
     // Put text into one of Dropout's boxes as if typed there, with the events
     // its script listens for.

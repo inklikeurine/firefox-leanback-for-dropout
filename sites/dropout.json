@@ -460,7 +460,11 @@
       "name": ":scope > span",
       "add": "^Add Profile$",
       "toggle": "h1 ~ button",
-      "done": "^Done$"
+      "done": "^Done$",
+      "pin": {
+        "boxes": "#profile-picker-react-app input[inputmode='numeric'], #profile-picker-react-app input[type='tel'], #profile-picker-react-app input[type='number'], [class*='LockedProfilePinScreen'] input:not([type='hidden'])",
+        "submit": "[class*='LockedProfilePinScreen'] button[type='submit']"
+      }
     },
     "profileForm": {
       "add": {
@@ -486,8 +490,10 @@
         "name": "#profile-name",
         "kid": "#profile-kid-mode, #child-mode, [role='switch']",
         "status": "[data-sonner-toast], [role='status']",
+        "saveMs": 6000,
+        "saveSettleMs": 800,
         "buttons": [
-          { "key": "save", "text": "^Save$", "label": "Save", "primary": true },
+          { "key": "save", "text": "^Save$", "label": "Save", "primary": true, "save": true },
           { "key": "cancel", "text": "^Cancel$", "label": "Cancel", "ask": true },
           { "key": "delete", "text": "^Delete Profile$", "label": "Delete Profile", "danger": true, "ask": true }
         ],

@@ -14,7 +14,8 @@ The product spec: what Leanback does, exactly. What each key does is in
   page, the profile picker with Manage profiles, Add Profile, Edit Profile,
   and the welcome a signed-out TV opens on are Leanback's own screens;
   the sign-in and password reset screens are Leanback's own too; a
-  profile's PIN is Dropout's own, laid out for the TV; the privacy policy, terms and cookies policy are
+  profile's PIN screen is Dropout's own, laid out for the TV with Leanback's
+  number pad; the privacy policy, terms and cookies policy are
   Dropout's words in Leanback's type; only account and help pages are
   Dropout's as they are (with the rail beside them).
 - Dropout runs on **Vimeo OTT**. The player is a **cross-origin iframe from
@@ -292,7 +293,8 @@ use ([targets.md](./targets.md)).
   tab, so Back from it, or its *Browse*, comes back to Home and stays.
 - **The on-screen keyboard** (`nav/keyboard.js`). OK on one of Leanback's
   own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
-  search box, and the name box of Add Profile and Edit Profile — opens a panel along the bottom of the screen with the box
+  search box, the name box of Add Profile and Edit Profile, and the digit boxes
+  of a PIN-locked profile's PIN screen (Dropout's own) — opens a panel along the bottom of the screen with the box
   still in view above it (the sign-in screen, and a profile's form, move up). A pointer click on
   one of those boxes opens it too, since the air mouse has no keyboard.
   Letters in QWERTY rows with *Shift*, a page of digits and symbols (*123* /
@@ -300,7 +302,9 @@ use ([targets.md](./targets.md)).
   text so far is shown on the panel's top line with its cursor. A text box
   starts with a capital and takes one after a space; an email box has `@`,
   `.` and `.com` and no *Space*; a password box has *Show* / *Hide*, which
-  turns it readable and back. ◀ ▶ go along a row and round its ends, ▲ ▼ go
+  turns it readable and back; a PIN gets a number pad whose digits go into
+  the PIN screen's boxes in turn (shown as dots on the panel's top line), and
+  *Done* presses Dropout's button. ◀ ▶ go along a row and round its ends, ▲ ▼ go
   to the key nearest the same place in the next row and stop at the top and
   bottom; OK types, *Done* closes it and does what Enter in the box does
   (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*,
@@ -721,7 +725,7 @@ keeps, logs or sends it, and it asks for no new permission.
   it**, and a real keyboard or a phone keyboard app still types without it.
   It works on sign-in (with `@` and `.com` keys on the email box and
   *Show* / *Hide* on the password), the password reset, search and a
-  profile's name. A profile's PIN is left to Dropout (the owner uses none).
+  profile's name and a PIN (a number pad, digits first).
 - **Back to where you were** after signing in, through Dropout's
   `return_to`.
 - **"Dropout signed you out."** When this TV was signed in and a page loads

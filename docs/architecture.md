@@ -62,7 +62,7 @@ scripts, and the background script relays between them.
 | `nav/focus-ring.js` | Top frame | The [ring, selection zoom and hint bar](#focus-ring-and-hint-bar-navfocus-ringjs). The ring is moved by transform, frame by frame: a 90 ms glide to where the target will end up once the zoom and the row's slide are over (`finalRect`), then held there. |
 | `nav/panel.js` | Top frame and player frame | The settings panel's look (`render({title, index, entries})`, `open`/`close`), logic-free. Styled by `content/panel.css`. |
 | `nav/settings-menu.js` | Top frame and player frame | Leanback's settings as a menu (`ROWS` under their groups, Theme This Page first under Look where the page has a look of its own, then Accessibility and Clear Continue Watching): its levels (top, a choice's values, a menu, Theme This Page and its values) and keys, `view()` for `nav/panel.js`, `preview(patch)` while moving through a look's values and `preview(null)` when it is left. `page.js` and `transport.js` each draw it; the player's own menu levels are `transport.js`'s. |
-| `nav/keyboard.js` | Top frame | The on-screen keyboard (`createKeyboard()`): a panel along the bottom, its keys and pages, the layouts (text, email, password), typing into any `<input>` at the cursor with `beforeinput` / `input`. Opened and closed as `nav/ask.js`'s boxes are (`open()` → a promise of `"done"` or null, `key(action)`, `close()`); drawn by `content/keyboard.css`. |
+| `nav/keyboard.js` | Top frame | The on-screen keyboard (`createKeyboard()`): a panel along the bottom, its keys and pages, the layouts (text, email, password, digits), typing into any `<input>` at the cursor with `beforeinput` / `input`. Opened and closed as `nav/ask.js`'s boxes are (`open()` → a promise of `"done"` or null, `key(action)`, `close()`); drawn by `content/keyboard.css`. |
 | `nav/ask.js` | Top frame | A question in a box over the screen (Sign Out, Delete Profile): a title, a line, buttons, the safe one selected; and a picture to pick in the same kind of box (`createPicker`). `page.js` routes keys to whichever is open first (`askUser()`, `pickPicture()`), Back answers with nothing. |
 | `nav/keymap.js` | Both content scripts | Keys → actions per context (page / player / typing). Pure. |
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
@@ -228,7 +228,10 @@ are dropped), and only inside the topmost open `modal` when there is one.
    it, wait for the `MutationObserver` to report new tiles, move ▼ again.
 
 The candidate cache is dropped by a debounced (100 ms) `MutationObserver` on
-the document and rebuilt on the next key. Mutations entirely inside
+the document and rebuilt on the next key. It watches `class`, `hidden`,
+`aria-hidden`, `src`, `style` and `disabled`, `aria-disabled`, `aria-checked`,
+`aria-pressed` (so Dropout switching Edit Profile's Save on, or a switch
+over, redraws Leanback's button). Mutations entirely inside
 Leanback's own elements are ignored, so the ring or a redraw cannot set off
 another round.
 
@@ -605,7 +608,15 @@ selected, and `PATCH`es the one picked (`{profile: {name,
 profile_image_id}}`), then opens `profileApi.after` (Manage profiles
 again). Without the API on the page it presses Dropout's button instead.
 The button under the card always presses Dropout's button alone. On Edit
-Profile, *Cancel* asks first when Dropout's *Save* is lit
+Profile, *Save* (`run: "save"`, `saveProfile()` in `page-profiles.js`) is a
+grey outlined button while Dropout's is disabled and yellow once it is ready;
+OK presses Dropout's and watches its answer (`Common.waitFor`, no polling):
+Dropout greying Save again for 800 ms, or a toast saying saved, is a save
+(`state.profileSaved`: the button reads *✓ Saved* for 3 s, and the hint bar
+says "Profile saved"); another toast is shown as it is, and no answer in 6 s
+is said too. The toast is read with `Common.siteText()`, which skips
+Leanback's own elements (its hint bar is `role="status"` too).
+*Cancel* asks first when Dropout's *Save* is lit
 (`cancelProfile()`), and `onBeforeUnload` — on the window, in the capture
 phase, so before the page's own listener — keeps Dropout's
 `beforeunload` from Firefox there. `profileFormModel()` reads Add Profile (in the
@@ -668,10 +679,16 @@ resolves `"done"` or null.
 - **Looks**: `content/keyboard.css`, sizes from `--tf-u`, colours from the
   theme variables, the ring from `nav/focus-ring.js` via `onFocus`.
 
-`content/page-keyboard.js` opens it: `onBoxKey()` (from the page script's
+`content/page-keyboard.js` opens it (for a PIN screen, Dropout's own form
+that Leanback steps aside for, with the `digits` layout and the screen's
+boxes as `boxes`: each digit goes into the first empty one, Backspace empties
+the last filled one, and Dropout's script moves the focus along as it does for
+a real keyboard; Done presses `screen.profiles.pin.submit` if there is one;
+that screen's markup has never been read, so the selectors are a best guess): `onBoxKey()` (from the page script's
 `onKeyDown`) opens it on Enter in a box `layoutFor()` knows (sign-in's two
 boxes through `signinLayoutFor()`; the search box and a profile's name box,
-which share a class) that has not
+which share a class; a PIN's digit boxes, found by `pinBoxes()` from
+`screen.profiles.pin`) that has not
 been typed in (`state.typedBox`, set by a printable key, Backspace or Delete
 in the box, cleared when the selection moves to another element); `onClick()`
 opens it for a pointer click (`detail > 0`, so a script's own `click()` does

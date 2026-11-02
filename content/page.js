@@ -81,6 +81,7 @@
     menu: null,
     ask: null, // a question in a box (nav/ask.js): Sign out?, Delete profile?
     keyboard: null, // the on-screen keyboard (nav/keyboard.js)
+    profileSaved: false, // Edit Profile's Save has just worked: the button says Saved for a moment
     typedBox: null, // the text box last typed in with a keyboard: its Enter is its own
     picker: null, // a picture to pick, in a box (nav/ask.js): a profile's picture
     preview: null, // a look being tried in the settings panel, not yet picked
@@ -1223,7 +1224,7 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "hidden", "aria-hidden", "src", "style"]
+      attributeFilter: ["class", "hidden", "aria-hidden", "src", "style", "disabled", "aria-disabled", "aria-checked", "aria-pressed"]
     });
   }
 

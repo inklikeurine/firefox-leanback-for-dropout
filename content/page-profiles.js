@@ -8,7 +8,11 @@
   function install(P) {
     const { state } = P;
     const Readers = globalThis.TenfootReaders;
-    const { qs } = globalThis.TenfootCommon;
+    const Common = globalThis.TenfootCommon;
+    const { qs } = Common;
+    const SAVE_MS = 6000; // how long Dropout has to answer a Save
+    const SAVE_SETTLE_MS = 800; // a Save greyed this long is saved, not sending
+    const SAVED_MS = 3000; // how long the button says Saved
 
     // From the rest of the page script.
     const screenRules = (...a) => P.screenRules(...a);
@@ -117,6 +121,65 @@
       }
       // Dropout's picker draws its profiles once: drawn again, managing.
       if (R.after) goSideways(R.after);
+    }
+
+    // Save on Edit Profile: Dropout's own Save pressed, and its answer
+    // watched for (no polling): Dropout greying Save again (what a saved form
+    // does) or its toast saying saved means it worked, and the button says
+    // Saved with a tick for a moment. Anything else Dropout says is shown as
+    // it is; no answer is said too. Save grey to begin with: nothing to save.
+    let savedTimer = 0;
+    async function saveProfile() {
+      const R = formRules().edit || {};
+      const root = qs(R.root);
+      if (!root) return;
+      const rule = (R.buttons || []).find((b) => b.key === "save");
+      const save = findButton(root, rule && rule.text);
+      if (!save) return;
+      let re = null;
+      try {
+        re = new RegExp((rule && rule.text) || "^Save$", "i");
+      } catch (_err) {
+        return;
+      }
+      // Dropout's own button, in Dropout's form (Leanback's is outside it).
+      const saveNow = () => {
+        const scope = qs(R.root) || root;
+        return Array.from(scope.querySelectorAll("button")).find((b) => re.test((b.textContent || "").trim())) || null;
+      };
+      const grey = () => {
+        const b = saveNow();
+        return Boolean(b) && (b.disabled || b.getAttribute("aria-disabled") === "true");
+      };
+      const toast = () => Common.siteText(R.status);
+      const verdict = () => {
+        const t = toast();
+        if (t && /saved|updated|success/i.test(t)) return "saved";
+        if (t) return "toast";
+        return grey() ? "grey" : null;
+      };
+      clearTimeout(savedTimer);
+      state.profileSaved = false;
+      save.click();
+      let result = await Common.waitFor(verdict, Number(R.saveMs) || SAVE_MS);
+      if (state.kind !== "profileEdit") return; // Dropout moved on: nothing to say
+      if (result === "grey") {
+        // Greyed while it sends is not greyed for good: look again.
+        await new Promise((resolve) => setTimeout(resolve, Number(R.saveSettleMs) || SAVE_SETTLE_MS));
+        result = verdict() || "none";
+      }
+      if (result === "saved" || result === "grey") {
+        state.profileSaved = true;
+        notice("Profile saved");
+        P.refreshScreen();
+        savedTimer = setTimeout(() => {
+          state.profileSaved = false;
+          P.refreshScreen();
+        }, SAVED_MS);
+      } else {
+        notice(result === "toast" ? toast() : "Dropout did not say whether it saved");
+        P.refreshScreen();
+      }
     }
 
     // Cancel on Edit Profile. With changes not saved (Dropout's Save lit),
@@ -231,7 +294,7 @@
       });
     }
 
-    Object.assign(P, { formRules, pickerForm, editPicture, cancelProfile, deleteProfile, syncPicker, signOut });
+    Object.assign(P, { formRules, pickerForm, editPicture, cancelProfile, deleteProfile, saveProfile, syncPicker, signOut });
   }
 
   globalThis.TenfootPageProfiles = Object.freeze({ install });

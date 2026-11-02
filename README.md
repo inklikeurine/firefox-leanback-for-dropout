@@ -338,8 +338,8 @@ to play its player there. The manifest declares
 - Dropout 24/7 plays on its page only while the stream's page carries its
   player's address; otherwise *Watch* opens the stream's page, where the
   sound waits for *Watch* there.
-- The on-screen keyboard opens for sign-in, the password reset, search and a profile's name;
-  a profile's PIN screen (Dropout's own) has no on-screen keyboard. Signing in uses Dropout's invisible
+- The on-screen keyboard opens for sign-in, the password reset, search, a profile's name and a PIN;
+  a profile's PIN screen is Dropout's own, with Leanback's number pad on it (its markup has not been seen yet, so it is the least tried part). Signing in uses Dropout's invisible
   reCAPTCHA, which normally asks nothing; if it ever shows a puzzle, it is
   Dropout's own, and needs a pointer.
 - Each profile's watch history is kept by its place in Dropout's list of

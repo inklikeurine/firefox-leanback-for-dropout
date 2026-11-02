@@ -423,6 +423,10 @@ and then with two.
     All of it styled-components, no stable class names. With Profile Lock
     on for the account, adding asks for a code or the main profile's PIN
     first.
+  - **Not read yet:** the PIN screen's markup (it needs a PIN-locked profile
+    signed in). Leanback finds its boxes by what they are
+    (`screen.profiles.pin`) and types into them in turn; see the Box question
+    in the workshop's `open-questions.md`.
   - The PIN screen (`/login/<index>` inside the app) has
     `LockedProfilePinScreen-module__…` class names, four digit boxes,
     *Forgot PIN?* and a back button.

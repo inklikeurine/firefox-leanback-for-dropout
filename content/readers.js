@@ -231,9 +231,11 @@
      * line under the title. Null when the page holds no such form.
      * @param {Document} doc
      * @param {object} R — the rules' "screen.profileForm.add" or ".edit"
+     * @param {{saved?: boolean}} [ctx] — Save has just worked
      */
-    function profileFormModel(doc, R) {
+    function profileFormModel(doc, R, ctx) {
       const rules = R || {};
+      const c = ctx || {};
       const root = qs(rules.root, doc);
       if (!root) return null;
       const input = qs(rules.name, root);
@@ -263,10 +265,17 @@
         const off = Boolean(found.disabled) || found.getAttribute("aria-disabled") === "true";
         const a = { key: b.key, label: b.label || textOf(found), primary: Boolean(b.primary), danger: Boolean(b.danger), disabled: off };
         if (b.ask) a.run = `ask:${b.key}`;
+        else if (b.save) a.run = "save";
         else a.proxy = found;
+        // Just saved, and Dropout's Save grey again: Leanback says so.
+        if (b.save && c.saved && off) {
+          a.label = "Saved";
+          a.glyph = "check";
+          a.disabled = false;
+        }
         actions.push(a);
       }
-      const status = textOf(qs(rules.status, doc));
+      const status = Common.siteText(rules.status, doc);
       return {
         kind: "profileForm",
         head: textOf(qs(rules.title, root)),
