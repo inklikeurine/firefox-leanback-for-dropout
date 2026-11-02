@@ -612,11 +612,10 @@ Profile, *Save* (`run: "save"`, `saveProfile()` in `page-profiles.js`) is a
 grey outlined button while Dropout's is disabled and yellow once it is ready;
 OK presses Dropout's and watches its answer (`Common.waitFor`, no polling):
 Dropout greying Save again for 800 ms, or a toast saying saved, is a save
-(`state.profileSaved`: the button reads *Saved!*, and 1.2 s later
-(`leaveMs`) the screen closes by `cancelProfile()`, which with Save grey
-presses Dropout's own *Cancel* and so goes where Dropout sends it, unless
-the name was changed again meanwhile; the *Saved!* alone lasts 3 s if it did
-not close; nothing else says so: a toast that is only good news is not shown under the title,
+(`state.profileSaved`: the screen closes at once by `cancelProfile()`, which
+with Save grey presses Dropout's own *Cancel* and so goes where Dropout sends
+it; a toast saying saved ends the wait for the settle at once; the button
+reads *Saved!*, for 3 s if the screen stays; nothing else says so: a toast that is only good news is not shown under the title,
 `screen.profileForm.edit.statusQuiet`); another toast is shown as it is, and no
 answer in 6 s is said in the hint bar. The toast is read with `Common.siteText()`, which skips
 Leanback's own elements (its hint bar is `role="status"` too).

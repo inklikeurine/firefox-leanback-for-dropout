@@ -206,10 +206,11 @@ use ([targets.md](./targets.md)).
     Dropout opens to ask again (or answers its `window.confirm` yes, once).
     A button Dropout greys out (*Save* before a change) shows as a grey
     outline; *Save* turns yellow once a change has been made. OK on *Save*
-    presses Dropout's own; when it has saved, the button reads "Saved!" for
-    a moment and the screen closes as *Cancel* does with nothing left to save
-    (Dropout's own *Cancel*, so it goes where Dropout sends you), unless the
-    name was changed again meanwhile. A good save shows no other message;
+    presses Dropout's own; the moment Dropout has saved (its toast says so, or
+    *Save* goes grey and stays grey), the screen closes as *Cancel* does with
+    nothing left to save (Dropout's own *Cancel*, so it goes where Dropout
+    sends you), with no delay; the button reads "Saved!" for as long as the
+    screen stays. A good save shows no other message;
     an error of Dropout's is shown under the title.
     *Cancel* with a change not saved (*Save* lit) asks "Leave without
     saving?" in Leanback's box, *Keep Editing* selected; and Dropout's

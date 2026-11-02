@@ -36,8 +36,8 @@
 - **Edit Profile's Save** shows when it is ready: it is a grey outlined
   button until something has changed (Leanback did not notice Dropout
   switching it on, so it stayed as it was), and yellow when it can be
-  saved. After OK on it, it says "Saved!" for a moment and the screen closes (no
-  message under the title or at the bottom for a good save); if Dropout says
+  saved. After OK on it, the screen closes at once (it says "Saved!" if it stays;
+  no message under the title or at the bottom for a good save); if Dropout says
   something else, its words are shown instead. The line under the title could also pick up Leanback's own
   hint bar as if it were Dropout's message: it no longer does.
 

@@ -493,7 +493,6 @@
         "statusQuiet": "saved|updated|success",
         "saveMs": 6000,
         "saveSettleMs": 800,
-        "leaveMs": 1200,
         "buttons": [
           { "key": "save", "text": "^Save$", "label": "Save", "primary": true, "save": true },
           { "key": "cancel", "text": "^Cancel$", "label": "Cancel", "ask": true },
