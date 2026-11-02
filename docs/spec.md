@@ -13,8 +13,8 @@ The product spec: what Leanback does, exactly. What each key does is in
   List, the lists, a show's page, a special, search, an episode's details
   page, the profile picker with Manage profiles, Add Profile, Edit Profile,
   and the welcome a signed-out TV opens on are Leanback's own screens;
-  the sign-in screen is Leanback's own too; the password reset and a
-  profile's PIN are Dropout's own, laid out for the TV; the privacy policy, terms and cookies policy are
+  the sign-in and password reset screens are Leanback's own too; a
+  profile's PIN is Dropout's own, laid out for the TV; the privacy policy, terms and cookies policy are
   Dropout's words in Leanback's type; only account and help pages are
   Dropout's as they are (with the rail beside them).
 - Dropout runs on **Vimeo OTT**. The player is a **cross-origin iframe from
@@ -266,14 +266,23 @@ use ([targets.md](./targets.md)).
   *Next*) or 20 s (its *Sign in*: the page moving on counts), the screen
   says "Dropout isn't answering. Check the TV's internet connection, then
   try again." and *Sign in* works again.
-- **Password reset (`/forgot_password`).** Dropout's own form, its checks
-  untouched, laid out for the TV (`pages.reset.box`, stamped
-  `data-tenfoot-form`): one of Leanback's cards in the middle of its dark
-  screen, "DROPOUT" in yellow over "Reset password", a large dark box, the
-  button yellow; Dropout's picture behind it is not shown
-  (`pages.reset.hide`). Under the card's buttons: "Typing needs a keyboard,
-  or a keyboard app on your phone.", then *Privacy Policy* and *Terms of
-  Use*. No top bar, no rail; the selection starts in the email box.
+- **Password reset (`/forgot_password`).** Leanback's own screen, over
+  Dropout's form (`pages.reset`), in the sign-in screen's look: "DROPOUT"
+  over "Reset password", one **Email** box (holding the email typed on the
+  sign-in screen in this tab, if any), *Send reset email* (yellow), *Back to
+  sign in*, the typing line and the policies; no rail. The email goes with
+  the viewer between the two screens, and back, in the tab's session
+  storage, and is forgotten once the tab is on any other page. *Send reset
+  email* goes through Dropout's own form as *Sign in* does: the email into
+  Dropout's box and its button pressed, "Sending…" meanwhile. Dropout
+  answers with a page of its own, so the ask is noted first; the sign-in or
+  reset screen that page turns out to be then says, in Leanback's words,
+  "Check your email on your phone or computer. Set the new password there,
+  then sign in here.", leaves the box and the button out and selects *Back
+  to sign in*. An error Dropout shows instead is shown in its words, the
+  email kept. An empty box ("Enter your email."), a bad email ("Please enter
+  a valid email.") and no answer ("Dropout isn't answering…", after 15 s on
+  the same page) are said on the screen.
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per
   tab, so Back from it, or its *Browse*, comes back to Home and stays.

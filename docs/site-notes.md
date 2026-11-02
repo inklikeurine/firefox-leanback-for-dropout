@@ -46,7 +46,7 @@ it is matched by the `Name_module_` prefix.
 | `/` | Signed out: Dropout's front page (a promotion, the banner, slides, the apps) — see [The front page](#the-front-page-signed-out) | `welcome` — drawn by `content/screen.js` (`screen.welcome`); signed in, Leanback goes on to `/browse` |
 | `/profile/pick` (`?edit=1` for Manage Profiles) | The profile picker, "Who is watching?" (React) — see [Profiles](#profiles). `/profiles` is not it: that address goes to `/browse` | `profiles` — drawn by `content/screen.js` (`screen.profiles`), Manage profiles and Add Profile (`screen.profileForm.add`) too; a PIN driven as Dropout's (`pages.profiles`). The page is the picker's by its root, whatever address the app shows |
 | `/settings/manage/profile` | Edit Profile, in Dropout's settings app — see [Profiles](#profiles) | `profileEdit` — drawn by `content/screen.js` (`screen.profileForm.edit`) |
-| `/login`, `/forgot_password` | Sign-in (two steps) and password reset — see [Sign-in](#sign-in) | `signin` — Dropout's own form, laid out for the TV (`pages.signin`) |
+| `/login`, `/forgot_password` | Sign-in (two steps) and password reset — see [Sign-in](#sign-in) | `signin` and `reset` — Leanback's own screens over it (`pages.signin`, `pages.reset`) |
 | `/privacy`, `/tos`, `/cookies` | The privacy policy, terms of service and cookies policy — see [Policies](#policies) | `legal` — Dropout's words in Leanback's type, scrolled (`pages.legal`) |
 | `/events/dropout-24-7` | Dropout 24/7's stream at an address no hub is in, where a My List card for it leads; signed out it is a plain `live-events` page | none: `redirects` sends it on to `/dropout-24-7` |
 | `/checkout/…`, `/contact/…`, `/settings`, `/help`, … | Account and help pages | `other` — the extension stays passive |
@@ -519,7 +519,12 @@ Read 2026-10-29, signed out.
     when empty). "Need help?" links to
     `/help/articles/trouble-logging-in-computer`.
 - **`/forgot_password`**: `form#forgot-password-form` with `input#email`
-  and a submit input, plus "Sign in?" linking to `/login`.
+  and a submit input, plus "Sign in?" linking to `/login`. Its form is a
+  normal post to `/login/send_forgot_password_email`; **what Dropout answers
+  with has not been seen** (reading it means sending a reset email), so
+  Leanback copes with an error shown on the same page, the page moving on
+  to anywhere (it then says "check your email" on the next sign-in or reset
+  screen), or nothing at all.
 - **reCAPTCHA** on `/login` is Enterprise, **invisible**
   (`size=invisible`): a badge bottom right, with no box to tick unless
   Google asks for a challenge.

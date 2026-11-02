@@ -954,14 +954,15 @@ html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="p
   row-gap: calc(var(--tf-u) * 14);
 }
 
-/* --- Sign in (content/page-signin.js): Leanback's own /login. One column in
+/* --- Sign in and Reset password (content/page-signin.js): Leanback's own /login
+   and /forgot_password. One column in
    the middle of the screen over Dropout's form, which stays underneath. No
    rail. Its boxes are real form boxes; Dropout's input and link colours are
    held off. */
 .tenfoot-signin {
   display: none;
 }
-html[data-tenfoot="on"][data-tenfoot-kind="signin"] .tenfoot-signin {
+html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="reset"]) .tenfoot-signin {
   display: flex;
   position: fixed;
   inset: 0;
@@ -1004,6 +1005,10 @@ html[data-tenfoot="on"][data-tenfoot-kind="signin"] .tenfoot-signin {
   font-weight: 700;
   font-size: max(15px, calc(var(--tf-u) * 26));
   text-align: center;
+}
+.tenfoot-signin-error[data-tone="notice"] {
+  border-color: var(--tenfoot-accent, #feea3b);
+  color: var(--tf-text);
 }
 .tenfoot-signin-error[hidden] {
   display: none;

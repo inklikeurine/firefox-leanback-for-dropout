@@ -15,6 +15,12 @@
   (the email kept, the password box emptied and selected). Leanback never
   keeps or logs the password. If Dropout does not answer, the screen says
   so and *Sign in* can be pressed again.
+- **Leanback's own password reset screen.** *Forgot password?* opens
+  "Reset password": an *Email* box (with the email you typed on the sign-in
+  screen, if any), *Send reset email* and *Back to sign in*. It goes
+  through Dropout's own form as *Sign in* does, and when Dropout takes the
+  request it says "Check your email on your phone or computer. Set the new
+  password there, then sign in here."
 
 ### Changed
 
@@ -22,8 +28,6 @@
   details page the button reads *+ My List* when the show or episode is not
   on your list and *✓ My List* when it is. An episode's page used to say
   *Add to* or *Remove from My List*; a screen reader still does.
-- The password reset (`/forgot_password`) is a page kind of its own, as
-  Dropout's own form laid out for the TV, as before.
 - Inside, not on screen: helpers that were copied between files (the
   icons, building elements, the reduced-motion check, the question box and
   the picture box) are shared; the page script's look, Dropout's own pages,

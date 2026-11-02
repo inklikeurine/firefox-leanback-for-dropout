@@ -289,55 +289,6 @@ html[data-tenfoot="on"] [data-tenfoot-form] [class*="danger-btn"] {
   border-color: #ff8a80 !important;
   color: #ff8a80 !important;
 }
-/* Sign-in's back arrow, back to the email: a small round button. */
-html[data-tenfoot="on"] [data-tenfoot-form] button.signin_flow__back-arrow,
-html[data-tenfoot="on"] [data-tenfoot-form] button.signin_flow__back-arrow:is(:hover, :focus, :active) {
-  position: absolute !important;
-  top: max(16px, calc(var(--tf-u) * 28)) !important;
-  right: max(16px, calc(var(--tf-u) * 28)) !important;
-  left: auto !important;
-  width: max(40px, calc(var(--tf-u) * 64)) !important;
-  min-height: max(40px, calc(var(--tf-u) * 64)) !important;
-  height: max(40px, calc(var(--tf-u) * 64)) !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-}
-html[data-tenfoot="on"] [data-tenfoot-form] a,
-html[data-tenfoot="on"] [data-tenfoot-form] a:is(:link, :visited, :hover, :focus, :active) {
-  color: #f5f6f7 !important;
-  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
-  font-weight: 700 !important;
-  text-decoration: none !important;
-}
-/* Dropout's message when something is wrong (a password that does not
-   match): red on the card. */
-html[data-tenfoot="on"] [data-tenfoot-form] :is(.flash-msg, [role="alert"]) {
-  color: #ff8a80 !important;
-  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
-}
-/* Leanback's line under the sign-in: what typing needs, then the
-   policies. */
-html[data-tenfoot="on"] [data-tenfoot-form] .tenfoot-form-foot {
-  margin: max(16px, calc(var(--tf-u) * 32)) 0 0 !important;
-  padding-top: max(14px, calc(var(--tf-u) * 24)) !important;
-  border-top: 1px solid #262a33;
-}
-html[data-tenfoot="on"] [data-tenfoot-form] .tenfoot-form-foot p {
-  display: flex;
-  flex-wrap: wrap;
-  gap: max(8px, calc(var(--tf-u) * 14)) max(18px, calc(var(--tf-u) * 36));
-  margin: 0 0 max(8px, calc(var(--tf-u) * 12)) !important;
-  color: #9aa0ac !important;
-  font-size: max(14px, calc(var(--tf-u) * 22)) !important;
-  font-weight: 600 !important;
-}
-html[data-tenfoot="on"] [data-tenfoot-form] .tenfoot-form-foot a {
-  display: inline-block;
-  padding: max(4px, calc(var(--tf-u) * 6)) max(6px, calc(var(--tf-u) * 10));
-  border-radius: max(6px, calc(var(--tf-u) * 8));
-}
-
 /* A policy (privacy, terms, cookies), read from the sofa: Dropout's words
    in a column of Leanback's type on its dark ground, the headings white,
    the links yellow. ▲ ▼ scroll it (content/page.js). */

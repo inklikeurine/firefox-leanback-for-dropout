@@ -44,8 +44,8 @@ scripts, and the background script relays between them.
 | `content/page-screens.js` | Top frame | Which [screen](#leanbacks-screens) a page gets; starting, stopping and redrawing it; moves on it; [the rail](#the-rail-navrailjs); the season a show opens on. |
 | `content/page-profiles.js` | Top frame | [The profiles](#profiles-and-their-forms): whether the picker shows a form of Dropout's own, a profile's picture through Dropout's API (`editPicture()`), *Cancel* and *Delete Profile* on Edit Profile asked first, *Sign Out*. |
 | `content/page-look.js` | Top frame | [The look](#the-look-libthemesjs) written onto the page and the ring, a look tried in the settings panel (`previewLook()`), Theme This Page with what moves sliding to its new place, Cookie Preferences. |
-| `content/page-forms.js` | Top frame | Dropout's own pages laid out for the TV: the site's chrome marked, the password reset and Edit Profile drawn large (`syncForm()`), the policies read by scrolling, the welcome offered once signed out, `rules.redirects`. |
-| `content/page-signin.js` | Top frame | [The sign-in screen](#the-sign-in-screen-contentpage-signinjs): the layer with its form, its stops and its moves (`syncSignin()`, `moveSignin()`). |
+| `content/page-forms.js` | Top frame | Dropout's own pages laid out for the TV: the site's chrome marked, Edit Profile drawn large (`syncForm()`), the policies read by scrolling, the welcome offered once signed out, `rules.redirects`. |
+| `content/page-signin.js` | Top frame | [The sign-in and reset screens](#the-sign-in-and-reset-screens-contentpage-signinjs): the layer with its form, its stops and its moves (`syncSignin()`, `moveSignin()`), the hand-over to Dropout's form. |
 | `content/page-settings.js` | Top frame | Leanback's settings in the panel: `nav/settings-menu.js` drawn by `nav/panel.js`, its keys, and the options button opening the player's panel while a video plays. |
 | `content/home.js` | Top frame: Home and hubs | [Home](#home-contenthomejs) read off Dropout's page: `readSite()`, `homeModel()`, `rowOverride()`. |
 | `content/screen.js` | Top frame: every page Leanback draws | The one screen engine: a screen drawn from a model (`createScreen()`). |
@@ -85,7 +85,7 @@ What each key does on each: [keymap.md](./keymap.md).
 | `welcome` | `/`, signed out (signed in: on to `/browse`) | `screen.js`: the welcome (`welcomeModel`), no rail | *Sign In* | no banner to read: Dropout's page, geometric navigation |
 | `profiles` | `/profile/pick`, or any address while the page holds `screen.profiles.root` | `screen.js`: the picker or Manage profiles (`profilesModel`; Sign Out, the Edit buttons), or the app's Add Profile (`profileFormModel`, `screen.profileForm.add`), with the rail; while the app shows a PIN, Dropout's | the profile watching (its Edit button, managing); Add Profile: the name box | Dropout's page, the ring over `pages.profiles.focusable` |
 | `signin` | `/login` | `page-signin.js`: Leanback's own screen over Dropout's form, no rail | the email box (the password box when the email is already filled) | — |
-| `reset` | `/forgot_password` | Dropout's form, laid out for the TV (`[data-tenfoot-form]`, `pages.reset`) with Leanback's line and the policies under it | the email box | — |
+| `reset` | `/forgot_password` | `page-signin.js`: Leanback's own screen over Dropout's form, no rail | the email box (*Back to sign in* once the request is taken) | — |
 | `profileEdit` | `/settings/manage/profile` | `screen.js`: Edit Profile (`profileFormModel`, `screen.profileForm.edit`), with the rail; Delete Profile asks first (`deleteProfile()` in `page-screens.js`) | the name box | Dropout's form laid out for the TV (`pages.profileEdit`) |
 | `legal` | `/privacy`, `/tos`, `/cookies` | Dropout's words in Leanback's type (`[data-tenfoot-reading]`, `pages.legal`) | none: ▲ ▼ scroll | — |
 | `other` | account, help | Dropout | none: the ring follows the page's focus | — (arrows move among `pages.other.focusable`) |
@@ -642,10 +642,10 @@ caption window by `zoom`, colours it and its box over the player's own) and
 `data-tenfoot-filter`, with the SVG `feColorMatrix` filters added to the
 frame once; the video's CSS `filter` names one.
 
-## The sign-in screen (`content/page-signin.js`)
+## The sign-in and reset screens (`content/page-signin.js`)
 
-`/login` (kind `signin`) is drawn by a part of its own, not by the screen
-engine (`content/screen.js`). The engine draws rows of cards and one search
+`/login` (kind `signin`) and `/forgot_password` (kind `reset`) are drawn by a
+part of its own, not by the screen engine (`content/screen.js`). The engine draws rows of cards and one search
 box whose text goes into a box of Dropout's; sign-in is a real form with two
 boxes a password manager must be able to find, and it will hand its
 contents to Dropout's form and show Dropout's answers, which the engine's
@@ -682,6 +682,20 @@ changes or Leanback is turned off. The layer reuses the screens' look
   first. While waiting `state.signin.busy` holds and the button reads
   "Signing in…". The password is a value read and passed on: not stored, not
   logged, not in a message.
+- **The reset** (`sendReset()`): the same hand-over with the email and
+  `pages.reset.send`. Dropout answers with a page of its own (what that page
+  is has not been seen: it is a Box question), so before pressing, two
+  keys go into the tab's session storage: `tenfoot.signin-email` (the email,
+  which the next of the two screens starts with; also set by *Forgot
+  password?* and *Back to sign in*) and `tenfoot.reset-asked`. A sign-in or
+  reset screen built while `reset-asked` is set consumes it: Dropout's error on
+  that page if it shows one, else the "Check your email…" notice (`showSent()`
+  on the reset screen: box and button hidden, the selection on *Back to
+  sign in*). Staying on the same page with no error within `answerMs` is "no
+  answer", and forgets the ask. `forgetSigninEmail()` (from `classifyPage()`)
+  removes both keys on any other page kind. They are the page origin's session
+  storage, which Dropout's own scripts can read; the email is what the
+  viewer is giving Dropout's own form anyway.
 - **Moves** (`moveSignin()`): a list in reading order, Email, Password, Sign
   in, Forgot password?, the policies; ▲ ▼ step along it and stop at the ends,
   ◀ ▶ go between the two policies. No geometry is used. In a box, `dispatch()`
@@ -1058,7 +1072,8 @@ The only file that knows Dropout. Which selectors are verified:
 | `rail` | `kinds` (the page kinds with the rail), `links` (id, label, icon, url) |
 | `screen` | what `readers.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` an episode's details page (title, show, season line, description, My List, its picture); `screen.profiles` the picker (its root, title, row, a profile's parts, *Add Profile*, the Manage / Done button and the word that says Manage profiles is on); `screen.welcome` the front page's banner (logo, line, words) and the line Leanback adds; `screen.profileForm.add` / `.edit` a profile's form (root, title, line, picture and its image or letter, name box, Kid Profile, the buttons in Leanback's order — `text` the pattern of Dropout's button, `ask` for one Leanback asks about first — Dropout's toast, its dialog and its confirm button) |
 | `pages.signin` | Leanback's sign-in screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `emailNext`, `passwordInput`, `passwordHidden`, `passwordSubmit`, `error`, `errorText`), `nextMs` and `signinMs` (how long it has to answer), and the `focusable` selectors of the layer |
-| `pages.reset`, `pages.profileEdit` | a form laid out for the TV: its `box`, `focusable`, `initialFocus`, `hide` (what has no use on a TV) |
+| `pages.reset` | Leanback's reset screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `send`, `error`, `errorText`), `answerMs`, and the `focusable` selectors of the layer |
+| `pages.profileEdit` | a form laid out for the TV: its `box`, `focusable`, `initialFocus`, `hide` (what has no use on a TV) |
 | `pages.legal` | a policy: its words (`content`) and what goes (`hide`) |
 
 Two rules the file has to keep:

@@ -146,18 +146,15 @@
     },
     "reset": {
       "box": "#login--box-container",
+      "dropoutEmail": "#forgot-password-form #email",
+      "send": "#forgot-password-form input[type='submit'], #forgot-password-form button[type='submit']",
+      "error": ".flash-error-container .flash-msg-container",
+      "errorText": ".flash-msg",
+      "answerMs": 15000,
       "focusable": [
-        "#login--box-container input:not([type='hidden']):not([type='checkbox'])",
-        "#login--box-container button",
-        "#login--box-container a[href]"
-      ],
-      "initialFocus": [
-        "#forgot-password-form input[type='email']"
-      ],
-      "hide": [
-        "#login-form-magic",
-        ".signin-flow__divider-container",
-        "#background"
+        ".tenfoot-signin input",
+        ".tenfoot-signin button",
+        ".tenfoot-signin a[href]"
       ]
     },
     "legal": {

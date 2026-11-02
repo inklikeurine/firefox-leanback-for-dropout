@@ -1,6 +1,6 @@
 // Leanback for Dropout — Dropout's own pages laid out for the TV, for
 // content/page.js: the site's header and footer marked while Leanback is
-// on, the password reset and Edit Profile drawn large,
+// on, Edit Profile drawn large,
 // the policies read by scrolling, the welcome offered once signed out, and
 // the addresses better seen as another (redirects). Installed into the page
 // script's shared context.
@@ -28,20 +28,19 @@
       }
     }
 
-    // A page of Dropout's laid out for the TV (content/page.css): a form — the
-    // password reset (reset), Edit Profile
-    // (profileEdit) — its box (pages.<kind>.box) centred, drawn large and in
-    // Leanback's colours ([data-tenfoot-form]); or a policy, its words
-    // (pages.legal.content) in Leanback's type ([data-tenfoot-reading]).
-    // What has no use on a TV (pages.<kind>.hide) goes. Under the reset box,
-    // a line on typing and the policies. (The sign-in screen is Leanback's
-    // own: content/page-signin.js.)
+    // A page of Dropout's laid out for the TV (content/page.css): a form —
+    // Edit Profile (profileEdit) — its box (pages.<kind>.box) centred, drawn
+    // large and in Leanback's colours ([data-tenfoot-form]); or a policy, its
+    // words (pages.legal.content) in Leanback's type
+    // ([data-tenfoot-reading]). What has no use on a TV (pages.<kind>.hide)
+    // goes. (The sign-in and reset screens are Leanback's own:
+    // content/page-signin.js.)
     function syncForm() {
-      if (state.kind === "signin") {
-        P.syncSignin(); // Leanback's own screen (content/page-signin.js)
+      if (state.kind === "signin" || state.kind === "reset") {
+        P.syncSignin();
         return;
       }
-      if (state.kind !== "reset" && state.kind !== "profileEdit" && state.kind !== "legal") return;
+      if (state.kind !== "profileEdit" && state.kind !== "legal") return;
       for (const el of qsa(Rules.selector(state.page.hide))) {
         if (!el.hasAttribute("data-tenfoot-gone")) el.setAttribute("data-tenfoot-gone", "");
       }
@@ -52,35 +51,7 @@
         return;
       }
       const box = qs(state.page.box);
-      if (!box) return;
-      if (!box.hasAttribute("data-tenfoot-form")) box.setAttribute("data-tenfoot-form", state.kind);
-      if (state.kind === "reset" && (!state.formFoot || !state.formFoot.isConnected)) {
-        state.formFoot = formFoot();
-        box.appendChild(state.formFoot);
-      }
-    }
-
-    // The line under the reset box: typing needs a keyboard; then the
-    // privacy policy and terms (rules → legal), links the ring reaches.
-    function formFoot() {
-      const foot = document.createElement("div");
-      foot.className = "tenfoot-form-foot";
-      const note = document.createElement("p");
-      note.textContent = "Typing needs a keyboard, or a keyboard app on your phone.";
-      const links = document.createElement("p");
-      for (const l of legalLinks()) {
-        const a = document.createElement("a");
-        a.href = l.url;
-        a.textContent = l.label;
-        links.appendChild(a);
-      }
-      foot.append(note, links);
-      return foot;
-    }
-
-    function legalLinks() {
-      const list = Array.isArray(state.rules.legal) ? state.rules.legal : [];
-      return list.filter((l) => l && typeof l.url === "string" && typeof l.label === "string");
+      if (box && !box.hasAttribute("data-tenfoot-form")) box.setAttribute("data-tenfoot-form", state.kind);
     }
 
     function signedOut() {

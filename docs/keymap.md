@@ -71,10 +71,9 @@ through every episode you watched: see [T2](#t2--back-is-firefoxs).
 A policy (`legal`: the privacy policy, terms, cookies) has nothing to
 select: ▲ ▼ scroll it by most of a screen, ◀ ▶ do nothing, Back leaves. The
 welcome, the profile picker and Manage profiles are one row of buttons or
-cards, moved along with ◀ ▶. The sign-in screen is a short list in reading order (▲ ▼ from box to
+cards, moved along with ◀ ▶. The sign-in and reset screens are a short list in reading order (▲ ▼ from box to
 box to the buttons and the policies, stopping at the ends; ◀ ▶ between
-the two policies). The reset form is Dropout's: the arrows move among its
-boxes and buttons, as on any page.
+the two policies). 
 
 ## Home and the rail
 
