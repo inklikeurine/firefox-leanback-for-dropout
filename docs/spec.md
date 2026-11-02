@@ -252,6 +252,20 @@ use ([targets.md](./targets.md)).
   leave a one-line box, letters type); ◀ ▶ go between the two policies;
   Enter in *Email* goes to *Password*, in *Password* it presses *Sign in*;
   Back from a box goes to *Sign in*.
+  **Sign in** goes through Dropout's own form on the same page, so its
+  checks and its reCAPTCHA work unchanged: the email goes into Dropout's
+  email box and its *Next* is pressed; when Dropout shows its password step,
+  the password goes into Dropout's box and its *Sign in* is pressed. While
+  it waits, the button reads "Signing in…" and cannot be pressed twice.
+  Leanback never keeps, logs or sends the password anywhere but into
+  Dropout's own box. An email that is not an email is refused on the screen
+  ("Please enter a valid email."), an empty box asks for both ("Enter your
+  email and your password."). Dropout's own error (wrong password, unknown
+  email) is shown under the title in its words, the email kept, the password
+  box emptied and selected. If Dropout gives no answer within 15 s (its
+  *Next*) or 20 s (its *Sign in*: the page moving on counts), the screen
+  says "Dropout isn't answering. Check the TV's internet connection, then
+  try again." and *Sign in* works again.
 - **Password reset (`/forgot_password`).** Dropout's own form, its checks
   untouched, laid out for the TV (`pages.reset.box`, stamped
   `data-tenfoot-form`): one of Leanback's cards in the middle of its dark

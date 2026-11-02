@@ -7,15 +7,31 @@
 // autocomplete=current-password, each with a label — which is all Firefox's
 // saved passwords and every password app's add-on look for. Installed into
 // the page script's shared context.
+//
+// Sign in is handed to Dropout's own form on the same page, so its checks and
+// its reCAPTCHA work unchanged: the email goes into Dropout's email box and
+// its Next is pressed, then, once the password step shows, the password goes
+// into Dropout's box and its Sign in is pressed. The password is read from
+// Leanback's box at that moment and passed on; it is never kept, logged or
+// sent anywhere else.
 
 (function () {
   function install(P) {
     const { state } = P;
-    const { qs } = globalThis.TenfootCommon;
+    const Common = globalThis.TenfootCommon;
+    const { qs } = Common;
 
     const focusEl = (...a) => P.focusEl(...a);
 
     const TYPING_LINE = "Press OK on a box to type with the remote, or use a keyboard.";
+    const NO_ANSWER = "Dropout isn't answering. Check the TV's internet connection, then try again.";
+    const BAD_EMAIL = "Please enter a valid email.";
+    const MISSING = "Enter your email and your password.";
+    // How long Dropout has to answer (pages.signin.nextMs: its Next, to the
+    // password step or an error; signinMs: its Sign in, to the page moving on
+    // or an error).
+    const NEXT_MS = 15000;
+    const SIGNIN_MS = 20000;
 
     function signinRules() {
       return state.page || {};
@@ -59,6 +75,9 @@
       const form = make("form", "tenfoot-signin-form");
       form.noValidate = true;
       form.setAttribute("autocomplete", "on");
+      const error = make("p", "tenfoot-signin-error");
+      error.setAttribute("role", "alert");
+      error.hidden = true;
       const email = field("tenfoot-signin-email", "Email", "email", "email", "username");
       const password = field("tenfoot-signin-password", "Password", "password", "password", "current-password");
       const submit = make("button", "tenfoot-hero-button tenfoot-hero-primary tenfoot-signin-submit", "Sign in");
@@ -76,12 +95,15 @@
         links.appendChild(a);
         return a;
       });
-      card.append(make("div", "tenfoot-signin-brand", "DROPOUT"), make("h1", "tenfoot-signin-title", "Sign in"), form, note, links);
+      card.append(make("div", "tenfoot-signin-brand", "DROPOUT"), make("h1", "tenfoot-signin-title", "Sign in"), error, form, note, links);
       layer.appendChild(card);
 
       // Never submitted by the browser: Sign in is handed to Dropout's own
       // form instead.
-      form.addEventListener("submit", (e) => e.preventDefault());
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        signIn();
+      });
       // Enter in Email goes on to Password; in Password it is Sign in, which
       // the form's own submit button already does.
       email.input.addEventListener("keydown", (e) => {
@@ -89,7 +111,7 @@
         e.preventDefault();
         focusEl(password.input);
       });
-      return { layer, form, email: email.input, password: password.input, submit, forgot, legal };
+      return { layer, form, error, email: email.input, password: password.input, submit, forgot, legal, busy: false };
     }
 
     // The text already in Dropout's own email box (a password app or Firefox
@@ -97,6 +119,123 @@
     function dropoutEmail() {
       const box = qs(signinRules().dropoutEmail);
       return box ? String(box.value || "").trim() : "";
+    }
+
+    // ----- the hand-over to Dropout's form ----------------------------------
+
+    function showError(text) {
+      const s = state.signin;
+      if (!s) return;
+      s.error.textContent = text || "";
+      s.error.hidden = !text;
+    }
+
+    function setBusy(on) {
+      const s = state.signin;
+      if (!s) return;
+      s.busy = on;
+      s.submit.textContent = on ? "Signing in…" : "Sign in";
+      if (on) s.submit.setAttribute("aria-disabled", "true");
+      else s.submit.removeAttribute("aria-disabled");
+    }
+
+    // Dropout's own words for what went wrong, when its page shows any.
+    function dropoutError() {
+      const R = signinRules();
+      const box = qs(R.error);
+      if (!box || box.classList.contains("is-hidden")) return "";
+      return (qs(R.errorText, box) || box).textContent.trim();
+    }
+
+    function passwordStepShown() {
+      const R = signinRules();
+      return Boolean(qs(R.passwordInput)) && !qs(R.passwordHidden);
+    }
+
+    // Resolve with what `check` returns once it is truthy, looked at now and
+    // on every change in Dropout's form (a MutationObserver, no polling), or
+    // with null after `ms`.
+    function waitFor(check, ms) {
+      return new Promise((resolve) => {
+        const now = check();
+        if (now) {
+          resolve(now);
+          return;
+        }
+        const target = qs(signinRules().box) || document.body;
+        let timer = 0;
+        const done = (v) => {
+          clearTimeout(timer);
+          observer.disconnect();
+          resolve(v);
+        };
+        const observer = new MutationObserver(() => {
+          const v = check();
+          if (v) done(v);
+        });
+        observer.observe(target, { subtree: true, childList: true, attributes: true, characterData: true });
+        timer = setTimeout(() => done(check() || null), ms);
+      });
+    }
+
+    // Put text into one of Dropout's boxes as if typed there, with the events
+    // its script listens for.
+    function fill(box, text) {
+      Common.typeInto(box, text);
+      if (box) box.dispatchEvent(new (box.ownerDocument.defaultView || globalThis).Event("change", { bubbles: true }));
+    }
+
+    // Dropout shows its own error under the title; Leanback shows it on its
+    // screen, keeps the email, empties the password and selects it.
+    function fail(text, where) {
+      setBusy(false);
+      showError(text);
+      const s = state.signin;
+      if (!s) return;
+      if (where === "password") s.password.value = "";
+      focusEl(where === "password" ? s.password : s.email);
+    }
+
+    function hideDropoutError() {
+      const box = qs(signinRules().error);
+      if (box) box.classList.add("is-hidden");
+    }
+
+    async function signIn() {
+      const s = state.signin;
+      if (!s || s.busy) return;
+      const R = signinRules();
+      showError("");
+      const email = s.email.value.trim();
+      if (!email) return fail(MISSING, "email");
+      if (!s.password.value) return fail(MISSING, "password");
+      setBusy(true);
+      // Step 1: Dropout's email box and its Next.
+      hideDropoutError();
+      const theirs = qs(R.dropoutEmail);
+      fill(theirs, email);
+      // Dropout's form checks the email itself and the browser's own check
+      // would stop its Next without a word: say it here.
+      if (theirs && typeof theirs.checkValidity === "function" && !theirs.checkValidity()) return fail(BAD_EMAIL, "email");
+      const next = qs(R.emailNext);
+      if (!next) return fail(NO_ANSWER, "email");
+      next.click();
+      const first = await waitFor(() => dropoutError() ? "error" : passwordStepShown() ? "step" : null, Number(R.nextMs) || NEXT_MS);
+      if (!state.signin || state.signin !== s) return; // the page moved on
+      if (first === "error") return fail(dropoutError(), "email");
+      if (first !== "step") return fail(NO_ANSWER, "email");
+      // Step 2: the password, read from Leanback's box now, and Dropout's
+      // Sign in.
+      hideDropoutError();
+      fill(qs(R.passwordInput), s.password.value);
+      const go = qs(R.passwordSubmit);
+      if (!go) return fail(NO_ANSWER, "password");
+      go.click();
+      const second = await waitFor(() => dropoutError() ? "error" : null, Number(R.signinMs) || SIGNIN_MS);
+      if (!state.signin || state.signin !== s) return;
+      // The page moves on when it works; staying here is an error, Dropout's
+      // or none at all.
+      fail(second === "error" ? dropoutError() : NO_ANSWER, "password");
     }
 
     function syncSignin() {

@@ -9,7 +9,12 @@
   policies, in Leanback's look, in place of Dropout's two-step form (which
   stays underneath, unseen). The boxes are ordinary form boxes, so
   Firefox's saved passwords and password apps can find them. ▲ ▼ go from
-  box to box; Enter in *Email* goes to *Password*.
+  box to box; Enter in *Email* goes to *Password*. *Sign in* hands your
+  email and password to Dropout's own form on the page, so its checks and
+  reCAPTCHA work as ever, and shows Dropout's errors on Leanback's screen
+  (the email kept, the password box emptied and selected). Leanback never
+  keeps or logs the password. If Dropout does not answer, the screen says
+  so and *Sign in* can be pressed again.
 
 ### Changed
 

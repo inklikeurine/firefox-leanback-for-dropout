@@ -128,7 +128,16 @@
   },
   "pages": {
     "signin": {
+      "box": "#login--box-container",
       "dropoutEmail": "#signin-email-input",
+      "emailNext": "#signin-email-submit",
+      "passwordInput": "#signin-password-input",
+      "passwordHidden": ".signin-flow__password-form-container.signin-flow--hidden",
+      "passwordSubmit": "#signin-password-submit",
+      "nextMs": 15000,
+      "signinMs": 20000,
+      "error": ".flash-error-container .flash-msg-container",
+      "errorText": ".flash-msg",
       "focusable": [
         ".tenfoot-signin input",
         ".tenfoot-signin button",

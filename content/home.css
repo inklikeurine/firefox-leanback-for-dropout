@@ -995,6 +995,19 @@ html[data-tenfoot="on"][data-tenfoot-kind="signin"] .tenfoot-signin {
   line-height: 1.1;
   text-align: center;
 }
+.tenfoot-signin-error {
+  margin: calc(var(--tf-u) * -20) 0 calc(var(--tf-u) * 28);
+  padding: calc(var(--tf-u) * 14) calc(var(--tf-u) * 22);
+  border: 2px solid #ff8a80;
+  border-radius: calc(var(--tf-u) * 10);
+  color: #ffb4ab;
+  font-weight: 700;
+  font-size: max(15px, calc(var(--tf-u) * 26));
+  text-align: center;
+}
+.tenfoot-signin-error[hidden] {
+  display: none;
+}
 .tenfoot-signin-field {
   margin: 0 0 calc(var(--tf-u) * 26);
 }

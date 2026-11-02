@@ -51,24 +51,6 @@
   const Common = globalThis.TenfootCommon;
 
   /**
-   * Type `value` into one of the site's text boxes as if typed there: its
-   * own value setter (past a framework's watcher on the element), then an
-   * input event, which is what a React box listens for.
-   */
-  function typeInto(input, value) {
-    if (!input || !input.isConnected) return;
-    const win = input.ownerDocument.defaultView || globalThis;
-    try {
-      const desc = Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, "value");
-      if (desc && desc.set) desc.set.call(input, value);
-      else input.value = value;
-    } catch (_err) {
-      input.value = value;
-    }
-    input.dispatchEvent(new win.Event("input", { bubbles: true }));
-  }
-
-  /**
    * @param {Document} doc
    * @param {{
    *   read: () => object|null,              // the model, read afresh on every refresh
@@ -161,7 +143,7 @@
     field.setAttribute("data-tenfoot-nozoom", "");
     fieldBox.appendChild(field);
     field.addEventListener("input", () => {
-      if (model && model.field) typeInto(model.field.proxy, field.value);
+      if (model && model.field) Common.typeInto(model.field.proxy, field.value);
     });
     field.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;

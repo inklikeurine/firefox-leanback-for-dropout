@@ -668,6 +668,20 @@ changes or Leanback is turned off. The layer reuses the screens' look
   for. *Email*, or *Password* when Dropout's own email box
   (`pages.signin.dropoutEmail`) already holds text, which is copied into
   *Email*.
+- **The hand-over** (`signIn()`): the email goes into Dropout's email box
+  (`pages.signin.dropoutEmail`, with `input` and `change` events, the shared
+  `typeInto()` of `lib/common.js`) and `emailNext` is clicked; a
+  `MutationObserver` on Dropout's box (`pages.signin.box`, no polling) waits for
+  its password step (`passwordInput` shown: `passwordHidden` gone) or its
+  error (`error`, `errorText`; not `is-hidden`), up to `nextMs`. Then the
+  password, read from Leanback's box at that moment, goes into
+  `passwordInput` and `passwordSubmit` is clicked, up to `signinMs` for its
+  error. Dropout's error is hidden before each press so a new one is told
+  from an old one. The browser's own check of the email (Dropout's form has
+  no `novalidate`) would stop *Next* unseen, so `checkValidity()` is asked
+  first. While waiting `state.signin.busy` holds and the button reads
+  "Signing in…". The password is a value read and passed on: not stored, not
+  logged, not in a message.
 - **Moves** (`moveSignin()`): a list in reading order, Email, Password, Sign
   in, Forgot password?, the policies; ▲ ▼ step along it and stop at the ends,
   ◀ ▶ go between the two policies. No geometry is used. In a box, `dispatch()`
@@ -1043,7 +1057,7 @@ The only file that knows Dropout. Which selectors are verified:
 | `live` | `path` (a live stream's page: Dropout 24/7's), `player` (its player frame on that page), `title` |
 | `rail` | `kinds` (the page kinds with the rail), `links` (id, label, icon, url) |
 | `screen` | what `readers.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` an episode's details page (title, show, season line, description, My List, its picture); `screen.profiles` the picker (its root, title, row, a profile's parts, *Add Profile*, the Manage / Done button and the word that says Manage profiles is on); `screen.welcome` the front page's banner (logo, line, words) and the line Leanback adds; `screen.profileForm.add` / `.edit` a profile's form (root, title, line, picture and its image or letter, name box, Kid Profile, the buttons in Leanback's order — `text` the pattern of Dropout's button, `ask` for one Leanback asks about first — Dropout's toast, its dialog and its confirm button) |
-| `pages.signin` | Leanback's sign-in screen: `dropoutEmail` (Dropout's own email box, read for what a password app put there) and the `focusable` selectors of the layer |
+| `pages.signin` | Leanback's sign-in screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `emailNext`, `passwordInput`, `passwordHidden`, `passwordSubmit`, `error`, `errorText`), `nextMs` and `signinMs` (how long it has to answer), and the `focusable` selectors of the layer |
 | `pages.reset`, `pages.profileEdit` | a form laid out for the TV: its `box`, `focusable`, `initialFocus`, `hide` (what has no use on a TV) |
 | `pages.legal` | a policy: its words (`content`) and what goes (`hide`) |
 
