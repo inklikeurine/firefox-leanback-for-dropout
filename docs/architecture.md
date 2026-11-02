@@ -756,6 +756,16 @@ changes or Leanback is turned off. The layer reuses the screens' look
   removes both keys on any other page kind. They are the page origin's session
   storage, which Dropout's own scripts can read; the email is what the
   viewer is giving Dropout's own form anyway.
+- **Home after signing in** (`homeAfterSignIn()` in `page-forms.js`, called
+  from `redirectPage()` on every page load): `signIn()` puts a timestamp in
+  `tenfoot.signin-home` just before pressing Dropout's *Sign in* (and takes it
+  out again if Dropout answers with an error or not at all). A page load
+  with the note: kinds `signin`, `reset` and `profiles` leave it alone (the flow
+  is not over); any other page uses it up, and goes to `rules.browseUrl`
+  (replacing the page) unless it is Browse already or the page is still signed
+  out. Leanback does not ask Dropout for it (`?return_to=` is understood by
+  Dropout's `/login` but its effect on this host has not been seen), so it
+  works whatever Dropout does.
 - **Moves** (`moveSignin()`): a list in reading order, Email, Password, Sign
   in, Forgot password?, the policies; ▲ ▼ step along it and stop at the ends,
   ◀ ▶ go between the two policies. No geometry is used. In a box, `dispatch()`

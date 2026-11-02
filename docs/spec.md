@@ -275,7 +275,13 @@ use ([targets.md](./targets.md)).
   ("Please enter a valid email."), an empty box asks for both ("Enter your
   email and your password."). Dropout's own error (wrong password, unknown
   email) is shown under the title in its words, the email kept, the password
-  box emptied and selected. If Dropout gives no answer within 15 s (its
+  box emptied and selected. **After signing in from this screen the TV
+  always lands on Home**, whatever Dropout does next (it may go back to the
+  page that asked for the sign-in): pressing Dropout's *Sign in* notes it in
+  the tab's session storage, and the first page after that which is not part
+  of the flow — the sign-in and reset screens and "Who is watching?" — goes to
+  Home (`/browse`) if it is not Home; still signed out, the sign-in did not
+  work and nothing moves; the note lapses after two minutes. If Dropout gives no answer within 15 s (its
   *Next*) or 20 s (its *Sign in*: the page moving on counts), the screen
   says "Dropout isn't answering. Check the TV's internet connection, then
   try again." and *Sign in* works again.
@@ -734,8 +740,8 @@ keeps, logs or sends it, and it asks for no new permission.
   It works on sign-in (with `@` and `.com` keys on the email box and
   *Show* / *Hide* on the password), the password reset, search and a
   profile's name and a PIN (a number pad, digits first).
-- **Back to where you were** after signing in, through Dropout's
-  `return_to`.
+- **Home after signing in**, always (the owner's decision: not back to the
+  page that asked for the sign-in).
 - **"Dropout signed you out."** When this TV was signed in and a page loads
   signed out, Leanback says so and offers *Sign in*, rather than leaving a
   Home whose videos won't play.

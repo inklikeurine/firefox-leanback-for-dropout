@@ -9,6 +9,8 @@
   function install(P) {
     const { state } = P;
     const SIGNIN_OFFERED = "tenfoot.signin-offered";
+    const SIGNIN_HOME_KEY = "tenfoot.signin-home";
+    const SIGNIN_HOME_TTL_MS = 120000;
     const READ_STEP = 0.6; // ▲ ▼ on a policy: this share of the window's height
     const Rules = globalThis.TenfootSiteRules;
     const { qs, qsa } = globalThis.TenfootCommon;
@@ -77,7 +79,39 @@
         P.navigate(state.rules.browseUrl, "replace");
         return true;
       }
-      return false;
+      return homeAfterSignIn();
+    }
+
+    // After signing in from Leanback's screen the TV always lands on Home,
+    // whatever Dropout does next (it may go back to the page that asked for
+    // the sign-in). The sign-in screen notes it (SIGNIN_HOME_KEY, when it
+    // presses Dropout's Sign in); the first page after that which is not part
+    // of the flow — the sign-in and reset screens, "Who is watching?" — goes to
+    // Home if it is not Home. Signed out still, the sign-in did not work: no
+    // Home. The note lapses after a couple of minutes.
+    function homeAfterSignIn() {
+      let at = 0;
+      try {
+        at = Number(sessionStorage.getItem(SIGNIN_HOME_KEY)) || 0;
+      } catch (_err) {
+        return false;
+      }
+      if (!at) return false;
+      if (Date.now() - at > SIGNIN_HOME_TTL_MS) {
+        forgetHome();
+        return false;
+      }
+      if (state.kind === "signin" || state.kind === "reset" || state.kind === "profiles") return false;
+      forgetHome();
+      if (state.kind === "browse" || signedOut() || !state.rules.browseUrl) return false;
+      P.navigate(state.rules.browseUrl, "replace");
+      return true;
+    }
+
+    function forgetHome() {
+      try {
+        sessionStorage.removeItem(SIGNIN_HOME_KEY);
+      } catch (_err) { /* nothing to forget */ }
     }
 
     // Signed out, the first Home of the tab goes on to the welcome (Sign In,

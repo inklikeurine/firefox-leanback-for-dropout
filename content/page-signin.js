@@ -45,6 +45,8 @@
     // screen then says "check your email" for).
     const EMAIL_KEY = "tenfoot.signin-email";
     const RESET_KEY = "tenfoot.reset-asked";
+    // Signed in from here: the page that follows the flow is Home (page-forms.js).
+    const HOME_KEY = "tenfoot.signin-home";
 
     const isReset = () => state.kind === "reset";
 
@@ -245,11 +247,13 @@
       fill(qs(R.passwordInput), s.password.value);
       const go = qs(R.passwordSubmit);
       if (!go) return fail(NO_ANSWER, "password");
+      store("set", HOME_KEY, String(Date.now()));
       go.click();
       const second = await waitFor(() => dropoutError() ? "error" : null, Number(R.signinMs) || SIGNIN_MS);
       if (!state.signin || state.signin !== s) return;
       // The page moves on when it works; staying here is an error, Dropout's
       // or none at all.
+      store("remove", HOME_KEY);
       fail(second === "error" ? dropoutError() : NO_ANSWER, "password");
     }
 
