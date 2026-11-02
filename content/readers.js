@@ -269,13 +269,17 @@
         else a.proxy = found;
         // Just saved, and Dropout's Save grey again: Leanback says so.
         if (b.save && c.saved && off) {
-          a.label = "Saved";
-          a.glyph = "check";
+          a.label = "Saved!";
           a.disabled = false;
         }
         actions.push(a);
       }
-      const status = Common.siteText(rules.status, doc);
+      // Dropout's word after a press (a toast), unless it is only good news
+      // (Saved!, on Leanback's own button).
+      let status = Common.siteText(rules.status, doc);
+      try {
+        if (status && rules.statusQuiet && new RegExp(rules.statusQuiet, "i").test(status)) status = "";
+      } catch (_err) { /* no such rule: it is shown */ }
       return {
         kind: "profileForm",
         head: textOf(qs(rules.title, root)),

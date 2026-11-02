@@ -126,7 +126,7 @@
     // Save on Edit Profile: Dropout's own Save pressed, and its answer
     // watched for (no polling): Dropout greying Save again (what a saved form
     // does) or its toast saying saved means it worked, and the button says
-    // Saved with a tick for a moment. Anything else Dropout says is shown as
+    // Saved! for a moment. Anything else Dropout says is shown as
     // it is; no answer is said too. Save grey to begin with: nothing to save.
     let savedTimer = 0;
     async function saveProfile() {
@@ -170,7 +170,6 @@
       }
       if (result === "saved" || result === "grey") {
         state.profileSaved = true;
-        notice("Profile saved");
         P.refreshScreen();
         savedTimer = setTimeout(() => {
           state.profileSaved = false;

@@ -490,6 +490,7 @@
         "name": "#profile-name",
         "kid": "#profile-kid-mode, #child-mode, [role='switch']",
         "status": "[data-sonner-toast], [role='status']",
+        "statusQuiet": "saved|updated|success",
         "saveMs": 6000,
         "saveSettleMs": 800,
         "buttons": [
