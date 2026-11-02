@@ -12,7 +12,8 @@
     const { qs } = Common;
     const SAVE_MS = 6000; // how long Dropout has to answer a Save
     const SAVE_SETTLE_MS = 800; // a Save greyed this long is saved, not sending
-    const SAVED_MS = 3000; // how long the button says Saved
+    const SAVED_MS = 3000; // how long the button says Saved!
+    const LEAVE_MS = 1200; // how long after a save the screen closes
 
     // From the rest of the page script.
     const screenRules = (...a) => P.screenRules(...a);
@@ -125,10 +126,11 @@
 
     // Save on Edit Profile: Dropout's own Save pressed, and its answer
     // watched for (no polling): Dropout greying Save again (what a saved form
-    // does) or its toast saying saved means it worked, and the button says
-    // Saved! for a moment. Anything else Dropout says is shown as
+    // does) or its toast saying saved means it worked: the button says
+    // Saved! for a moment and the screen closes. Anything else Dropout says is shown as
     // it is; no answer is said too. Save grey to begin with: nothing to save.
     let savedTimer = 0;
+    let leaveTimer = 0;
     async function saveProfile() {
       const R = formRules().edit || {};
       const root = qs(R.root);
@@ -159,6 +161,7 @@
         return grey() ? "grey" : null;
       };
       clearTimeout(savedTimer);
+      clearTimeout(leaveTimer);
       state.profileSaved = false;
       save.click();
       let result = await Common.waitFor(verdict, Number(R.saveMs) || SAVE_MS);
@@ -175,6 +178,12 @@
           state.profileSaved = false;
           P.refreshScreen();
         }, SAVED_MS);
+        // Saved: the screen closes, as Cancel does with nothing left to save
+        // (Dropout's own Cancel, so it goes where Dropout sends it). Not if
+        // the name has been changed again meanwhile.
+        leaveTimer = setTimeout(() => {
+          if (state.kind === "profileEdit" && state.profileSaved && grey()) cancelProfile();
+        }, Number(R.leaveMs) || LEAVE_MS);
       } else {
         notice(result === "toast" ? toast() : "Dropout did not say whether it saved");
         P.refreshScreen();

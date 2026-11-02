@@ -204,7 +204,13 @@ use ([targets.md](./targets.md)).
     in Leanback's box ("Delete Sam?", *Cancel* selected), then presses
     Dropout's own *Delete Profile* and the *Delete Profile* in the box
     Dropout opens to ask again (or answers its `window.confirm` yes, once).
-    A button Dropout greys out (*Save* before a change) shows dimmed.
+    A button Dropout greys out (*Save* before a change) shows as a grey
+    outline; *Save* turns yellow once a change has been made. OK on *Save*
+    presses Dropout's own; when it has saved, the button reads "Saved!" for
+    a moment and the screen closes as *Cancel* does with nothing left to save
+    (Dropout's own *Cancel*, so it goes where Dropout sends you), unless the
+    name was changed again meanwhile. A good save shows no other message;
+    an error of Dropout's is shown under the title.
     *Cancel* with a change not saved (*Save* lit) asks "Leave without
     saving?" in Leanback's box, *Keep Editing* selected; and Dropout's
     `beforeunload` warning is kept from Firefox on this page, so Firefox's
@@ -214,7 +220,8 @@ use ([targets.md](./targets.md)).
     the picture, the name box, then *Cancel* and *Continue* (*Continue*
     dimmed until there is a name). A PIN-locked profile's PIN is Dropout's
     own: while the app shows one, Leanback draws no screen and the ring
-    moves over Dropout's buttons and boxes (`pages.profiles`).
+    moves over Dropout's buttons and boxes (`pages.profiles`), with the
+    on-screen keyboard's number pad on its digit boxes.
   - Dropout's picture chooser (both forms) is Dropout's own dialog, drawn
     in Leanback's look over Leanback's screen — a dark card, large type,
     large pictures — with the ring moving in it from the picture chosen now
