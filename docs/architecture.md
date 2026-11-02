@@ -756,16 +756,21 @@ changes or Leanback is turned off. The layer reuses the screens' look
   removes both keys on any other page kind. They are the page origin's session
   storage, which Dropout's own scripts can read; the email is what the
   viewer is giving Dropout's own form anyway.
-- **Home after signing in** (`homeAfterSignIn()` in `page-forms.js`, called
-  from `redirectPage()` on every page load): `signIn()` puts a timestamp in
-  `tenfoot.signin-home` just before pressing Dropout's *Sign in* (and takes it
-  out again if Dropout answers with an error or not at all). A page load
-  with the note: kinds `signin`, `reset` and `profiles` leave it alone (the flow
-  is not over); any other page uses it up, and goes to `rules.browseUrl`
-  (replacing the page) unless it is Browse already or the page is still signed
-  out. Leanback does not ask Dropout for it (`?return_to=` is understood by
-  Dropout's `/login` but its effect on this host has not been seen), so it
-  works whatever Dropout does.
+- **The picker, then Home** (`homeAfterSignIn()` in `page-forms.js`, called
+  from `redirectPage()` on every page load): one note in session storage,
+  `tenfoot.signin-home` = `<stage>:<time>`. `signIn()` writes `signed` just
+  before pressing Dropout's *Sign in* (and removes it if Dropout answers with
+  an error or not at all). `chooseProfile()` writes `chose` when a profile
+  is chosen on Leanback's picker (the card's `run`, `choose()` in
+  `page-screens.js`, which then presses Dropout's button). On a page load:
+  the sign-in and reset screens and the picker (kind `profiles`) leave the
+  note alone; a page still signed out forgets it; with `signed`, any other
+  page goes to `rules.profilesUrl` (replacing it) and the note becomes
+  `forced`; with `forced` (Dropout took the viewer off the picker) or `chose`,
+  it is used up and the page goes to `rules.browseUrl` unless it is Browse.
+  The note lapses after two minutes. Leanback does not ask Dropout for any of
+  this (`?return_to=` is understood by Dropout's `/login` but its effect on
+  this host has not been seen), so it works whatever Dropout does.
 - **Moves** (`moveSignin()`): a list in reading order, Email, Password, Sign
   in, Forgot password?, the policies; ▲ ▼ step along it and stop at the ends,
   ◀ ▶ go between the two policies. No geometry is used. In a box, `dispatch()`

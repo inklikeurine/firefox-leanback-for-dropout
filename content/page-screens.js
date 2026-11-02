@@ -45,6 +45,11 @@
     const cancelProfile = (...a) => P.cancelProfile(...a);
     const deleteProfile = (...a) => P.deleteProfile(...a);
     const saveProfile = (...a) => P.saveProfile(...a);
+    // Choosing a profile: Home comes next; then Dropout's own button.
+    const choose = (button) => {
+      P.chooseProfile();
+      if (button && button.isConnected) button.click();
+    };
     const syncPicker = (...a) => P.syncPicker(...a);
     const signOut = (...a) => P.signOut(...a);
     // Theme This Page's Card Size: how many cards across a grid.
@@ -113,7 +118,7 @@
             empty: railPage() === "my-list" ? "Nothing in My List yet. Add a show or a video to it with Add to My List on its page." : ""
           }),
           // The picker, or its Add Profile form.
-          profiles: () => Readers.profilesModel(document, screenRules().profiles, { current: state.profile, signOut, editPicture }) ||
+          profiles: () => Readers.profilesModel(document, screenRules().profiles, { current: state.profile, signOut, editPicture, choose }) ||
             Readers.profileFormModel(document, formRules().add),
           profileForm: () => Readers.profileFormModel(document, formRules().edit, { saved: state.profileSaved }),
           welcome: () => Readers.welcomeModel(document, screenRules().welcome, {

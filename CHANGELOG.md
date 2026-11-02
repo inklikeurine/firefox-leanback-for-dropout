@@ -31,9 +31,11 @@
   app on your phone, still types straight into a box without it, and a
   click with the pointer opens it too.
 
-- **Home after signing in.** Signing in from Leanback's screen always ends
-  on Home, even when Dropout would take you back to the page that asked for
-  the sign-in.
+- **After signing in: "Who is watching?", then Home.** Signing in from
+  Leanback's screen always takes you to the profile picker, and choosing a
+  profile there (or from the rail's *Switch profile*) always ends on Home,
+  even when Dropout would take you somewhere else, such as the page that asked
+  for the sign-in.
 
 ### Fixed
 

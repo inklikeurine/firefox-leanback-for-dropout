@@ -195,7 +195,10 @@
           // profile): Edit Profile. OK on the profile itself changes its
           // picture, where the page says how.
           button: managing ? "Edit" : "",
-          run: managing && typeof c.editPicture === "function" ? () => c.editPicture(b, i) : undefined,
+          run: managing && typeof c.editPicture === "function"
+            ? () => c.editPicture(b, i)
+            // Choosing one: Dropout's own button, and Home comes next.
+            : !managing && typeof c.choose === "function" ? () => c.choose(b) : undefined,
           image: img ? img.getAttribute("src") || "" : "",
           initial: name.charAt(0).toUpperCase(),
           proxy: b

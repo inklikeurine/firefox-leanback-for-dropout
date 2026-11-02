@@ -5,6 +5,7 @@
   "searchUrl": "https://watch.dropout.tv/search",
   "signinUrl": "https://watch.dropout.tv/login",
   "resetUrl": "https://watch.dropout.tv/forgot_password",
+  "profilesUrl": "https://watch.dropout.tv/profile/pick",
   "welcomeUrl": "https://watch.dropout.tv/",
   "signout": {
     "url": "https://watch.dropout.tv/logout",

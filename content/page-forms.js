@@ -82,30 +82,63 @@
       return homeAfterSignIn();
     }
 
-    // After signing in from Leanback's screen the TV always lands on Home,
-    // whatever Dropout does next (it may go back to the page that asked for
-    // the sign-in). The sign-in screen notes it (SIGNIN_HOME_KEY, when it
-    // presses Dropout's Sign in); the first page after that which is not part
-    // of the flow — the sign-in and reset screens, "Who is watching?" — goes to
-    // Home if it is not Home. Signed out still, the sign-in did not work: no
-    // Home. The note lapses after a couple of minutes.
+    // After signing in the TV goes to "Who is watching?", and choosing a
+    // profile there always ends on Home, whatever Dropout does next (it may go
+    // back to the page that asked for the sign-in, or straight to Browse, or
+    // skip the picker). One note in session storage (SIGNIN_HOME_KEY,
+    // "<stage>:<time>") carries it from page to page:
+    //   signed — Leanback's sign-in screen pressed Dropout's Sign in. The first
+    //            page after the flow (the sign-in and reset screens are part of
+    //            it) that is not the picker goes to the picker, once ("forced");
+    //   forced — sent there; if Dropout takes the viewer away from it again
+    //            (one profile, "remember my profile"), Home instead;
+    //   chose  — a profile was chosen on Leanback's picker (chooseProfile(),
+    //            also from the rail's Switch profile): the first page after
+    //            that goes to Home, unless it is Home.
+    // Signed out still, the sign-in did not work: nothing moves. The note
+    // lapses after a couple of minutes.
     function homeAfterSignIn() {
-      let at = 0;
+      let raw = "";
       try {
-        at = Number(sessionStorage.getItem(SIGNIN_HOME_KEY)) || 0;
+        raw = sessionStorage.getItem(SIGNIN_HOME_KEY) || "";
       } catch (_err) {
         return false;
       }
-      if (!at) return false;
-      if (Date.now() - at > SIGNIN_HOME_TTL_MS) {
+      const [stage, at] = raw.split(":");
+      if (!stage) return false;
+      if (!(Date.now() - Number(at) < SIGNIN_HOME_TTL_MS)) {
         forgetHome();
         return false;
       }
-      if (state.kind === "signin" || state.kind === "reset" || state.kind === "profiles") return false;
+      const home = state.rules.browseUrl;
+      const picker = state.rules.profilesUrl;
+      // Still in the flow.
+      if (state.kind === "signin" || state.kind === "reset") return false;
+      if (state.kind === "profiles") return false;
+      if (signedOut()) {
+        forgetHome();
+        return false;
+      }
+      if (stage === "signed" && picker) {
+        noteHome("forced");
+        P.navigate(picker, "replace");
+        return true;
+      }
       forgetHome();
-      if (state.kind === "browse" || signedOut() || !state.rules.browseUrl) return false;
-      P.navigate(state.rules.browseUrl, "replace");
+      if (state.kind === "browse" || !home) return false;
+      P.navigate(home, "replace");
       return true;
+    }
+
+    function noteHome(stage) {
+      try {
+        sessionStorage.setItem(SIGNIN_HOME_KEY, `${stage}:${Date.now()}`);
+      } catch (_err) { /* no way to carry it */ }
+    }
+
+    // A profile was chosen on Leanback's picker: Home comes next.
+    function chooseProfile() {
+      noteHome("chose");
     }
 
     function forgetHome() {
@@ -140,7 +173,7 @@
       return true;
     }
 
-    Object.assign(P, { stampChrome, syncForm, redirectPage, offerWelcome, scrollReading });
+    Object.assign(P, { stampChrome, syncForm, redirectPage, offerWelcome, scrollReading, chooseProfile });
   }
 
   globalThis.TenfootPageForms = Object.freeze({ install });
