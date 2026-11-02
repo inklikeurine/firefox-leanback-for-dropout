@@ -954,6 +954,119 @@ html[data-tenfoot="on"]:is([data-tenfoot-kind="profiles"], [data-tenfoot-kind="p
   row-gap: calc(var(--tf-u) * 14);
 }
 
+/* --- Sign in (content/page-signin.js): Leanback's own /login. One column in
+   the middle of the screen over Dropout's form, which stays underneath. No
+   rail. Its boxes are real form boxes; Dropout's input and link colours are
+   held off. */
+.tenfoot-signin {
+  display: none;
+}
+html[data-tenfoot="on"][data-tenfoot-kind="signin"] .tenfoot-signin {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 2147481000;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--tf-bg);
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+}
+.tenfoot-signin-card {
+  box-sizing: border-box;
+  width: min(100%, calc(var(--tf-u) * 760));
+  padding: 0 var(--tf-gutter);
+}
+.tenfoot-signin-brand {
+  margin: 0 0 calc(var(--tf-u) * 16);
+  color: var(--tenfoot-accent, #feea3b);
+  font-weight: 800;
+  font-size: max(18px, calc(var(--tf-u) * 36));
+  letter-spacing: 0.18em;
+  text-align: center;
+}
+.tenfoot-signin-title {
+  margin: 0 0 calc(var(--tf-u) * 44);
+  color: var(--tf-text) !important;
+  font-family: var(--tf-font) !important;
+  font-weight: 800;
+  font-size: max(24px, calc(var(--tf-u) * 60)) !important;
+  line-height: 1.1;
+  text-align: center;
+}
+.tenfoot-signin-field {
+  margin: 0 0 calc(var(--tf-u) * 26);
+}
+.tenfoot-signin-label {
+  display: block;
+  margin: 0 0 calc(var(--tf-u) * 10);
+  color: var(--tf-dim) !important;
+  font-family: var(--tf-font) !important;
+  font-weight: 700;
+  font-size: max(14px, calc(var(--tf-u) * 26)) !important;
+}
+html[data-tenfoot="on"] input.tenfoot-signin-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: calc(var(--tf-u) * 18) calc(var(--tf-u) * 26);
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: calc(var(--tf-u) * 10);
+  background: var(--tf-raised) !important;
+  box-shadow: none !important;
+  color: var(--tf-text) !important;
+  font-family: var(--tf-font) !important;
+  font-weight: 600;
+  font-size: max(18px, calc(var(--tf-u) * 40)) !important;
+  line-height: 1.2;
+  outline: none;
+}
+.tenfoot-signin-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--tf-u) * 18);
+  margin: calc(var(--tf-u) * 36) 0 0;
+}
+html[data-tenfoot="on"] .tenfoot-signin button.tenfoot-hero-button:is(:hover, :focus, :active) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  transition: none !important;
+}
+html[data-tenfoot="on"] .tenfoot-signin button.tenfoot-hero-primary:is(:hover, :focus, :active) {
+  background: var(--tenfoot-accent, #feea3b) !important;
+  color: #1a1a05 !important;
+}
+html[data-tenfoot="on"] .tenfoot-signin a.tenfoot-hero-button,
+html[data-tenfoot="on"] .tenfoot-signin a.tenfoot-hero-button:is(:link, :visited, :hover, :focus, :active) {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+.tenfoot-signin-note,
+.tenfoot-signin-links {
+  margin: calc(var(--tf-u) * 36) 0 0;
+  color: var(--tf-dim);
+  font-weight: 600;
+  font-size: max(14px, calc(var(--tf-u) * 22));
+}
+.tenfoot-signin-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--tf-u) * 14) calc(var(--tf-u) * 36);
+  margin: calc(var(--tf-u) * 12) 0 0 calc(var(--tf-u) * -10);
+}
+html[data-tenfoot="on"] .tenfoot-signin a.tenfoot-signin-link,
+html[data-tenfoot="on"] .tenfoot-signin a.tenfoot-signin-link:is(:link, :visited, :hover, :focus, :active) {
+  display: inline-block;
+  padding: calc(var(--tf-u) * 6) calc(var(--tf-u) * 10);
+  border-radius: calc(var(--tf-u) * 8);
+  color: var(--tf-dim) !important;
+  text-decoration: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-home-scroll,
   .tenfoot-track,

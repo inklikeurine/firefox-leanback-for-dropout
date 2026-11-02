@@ -13,8 +13,8 @@ The product spec: what Leanback does, exactly. What each key does is in
   List, the lists, a show's page, a special, search, an episode's details
   page, the profile picker with Manage profiles, Add Profile, Edit Profile,
   and the welcome a signed-out TV opens on are Leanback's own screens;
-  sign-in, the password reset and a profile's PIN are Dropout's own, laid
-  out for the TV; the privacy policy, terms and cookies policy are
+  the sign-in screen is Leanback's own too; the password reset and a
+  profile's PIN are Dropout's own, laid out for the TV; the privacy policy, terms and cookies policy are
   Dropout's words in Leanback's type; only account and help pages are
   Dropout's as they are (with the rail beside them).
 - Dropout runs on **Vimeo OTT**. The player is a **cross-origin iframe from
@@ -236,19 +236,30 @@ use ([targets.md](./targets.md)).
   Policy* and *Terms of Use* (`legal`), in the middle of the screen; no
   rail. Starting a subscription is not offered on the TV. Signed in, `/`
   goes on to Home.
-- **Sign-in (`/login`, `/forgot_password`).** Dropout's own form, its steps
-  and its checks untouched, laid out for the TV (`pages.signin.box`,
-  stamped `data-tenfoot-form`): one of Leanback's cards in the middle of its
-  dark screen, "DROPOUT" in yellow over "Sign in", large dark boxes, the
-  button that goes on (*Next*, *Sign in*, *Reset Password*) yellow, the
-  others outlined; Dropout's picture behind it and the emailed sign-in link
-  (it signs in whatever device opens it) are not shown
-  (`pages.signin.hide`). Under the card's buttons: "Typing needs a
-  keyboard, or a keyboard app on your phone.", then *Privacy Policy* and
-  *Terms of Use*. No top bar, no rail. The selection starts in the email
-  box; ▼ ▲ move between the boxes, buttons and links (▲ ▼ leave any one-line
-  box), letters type; when Dropout shows the password step, the selection
-  goes to the password box, once.
+- **Sign-in (`/login`).** Leanback's own screen, one screen for both
+  boxes, over Dropout's form, which stays underneath unseen (`pages.signin`):
+  "DROPOUT" in yellow over "Sign in", an **Email** box and a **Password**
+  box, *Sign in* (yellow), *Forgot password?*, the line "Press OK on a box
+  to type with the remote, or use a keyboard.", then *Privacy Policy* and
+  *Terms of Use* (`legal`). No top bar, no rail. The boxes are real form
+  boxes (a `<form>`; `type=email name=email autocomplete=username` and
+  `type=password name=password autocomplete=current-password`, each with its
+  label), so Firefox's saved passwords and any password app's add-on
+  recognise them; the form is never submitted by the browser. The selection
+  starts in *Email*, or in *Password* when the email is already there (typed
+  into Dropout's own box, say by a password app). ▲ ▼ go from box to box to
+  *Sign in*, *Forgot password?* and the policies and stop at the ends (▲ ▼
+  leave a one-line box, letters type); ◀ ▶ go between the two policies;
+  Enter in *Email* goes to *Password*, in *Password* it presses *Sign in*;
+  Back from a box goes to *Sign in*.
+- **Password reset (`/forgot_password`).** Dropout's own form, its checks
+  untouched, laid out for the TV (`pages.reset.box`, stamped
+  `data-tenfoot-form`): one of Leanback's cards in the middle of its dark
+  screen, "DROPOUT" in yellow over "Reset password", a large dark box, the
+  button yellow; Dropout's picture behind it is not shown
+  (`pages.reset.hide`). Under the card's buttons: "Typing needs a keyboard,
+  or a keyboard app on your phone.", then *Privacy Policy* and *Terms of
+  Use*. No top bar, no rail; the selection starts in the email box.
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per
   tab, so Back from it, or its *Browse*, comes back to Home and stays.
@@ -605,7 +616,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 44 | Restart Firefox | Settings kept |
 | 45 | Signed out (a fresh profile): open `https://watch.dropout.tv/` | Leanback's welcome: Dropout's logo, "INDEPENDENT. FUNNY. AD FREE.", the words and the line about starting a subscription elsewhere; *Sign In* yellow and ringed, then *Browse*, *Privacy Policy*, *Terms of Use*; no rail, nothing of Dropout's page |
 | 46 | On the welcome: *Privacy Policy*, OK; ▼ ▼ ▲; Back | The policy in large white-on-dark type, no top bar or footer; each ▼ scrolls most of a screen, ▲ back; Back returns to the welcome |
-| 47 | On the welcome: *Sign In*, OK (a fresh profile: the cookie dialog first, *Accept All* ringed; OK) | The sign-in card in the middle of a dark screen in Leanback's look: yellow "DROPOUT", "Sign in", a large email box (ringed), *Next* yellow; no picture behind it, no "Email me a sign in link"; the keyboard line and *Privacy Policy*, *Terms of Use* under it, reachable with ▼ |
+| 47 | On the welcome: *Sign In*, OK (a fresh profile: the cookie dialog first, *Accept All* ringed; OK) | Leanback's sign-in screen on a dark ground: yellow "DROPOUT", "Sign in", an *Email* box (ringed) and a *Password* box, *Sign in* yellow, *Forgot password?*; the typing line and *Privacy Policy*, *Terms of Use* under it, reachable with ▼; ▲ ▼ go box to box and stop at the ends; Enter in *Email* goes to *Password* |
 | 48 | Sign out, open Home | It goes on to the welcome; *Browse* there returns to Home and stays |
 | 49 | Picker: ▶ to *Manage Profiles*, OK; then *Add Profile*, OK; Back; then a profile's *Edit*, OK | "Manage profiles" at once: a pencil over each picture and an *Edit* button under each name, the ring on the profile watching; ▼ to its *Edit*, ▲ back; then *Add Profile* and *Done*; ▶ at the end goes round. Add Profile: Leanback's screen — the title, the picture, a large name box (ringed), *Cancel* then *Continue* (dimmed until a name is typed); OK on the picture: Dropout's chooser, dark and large, the ring on a picture. Edit: the same screen with *Save* (dimmed), *Cancel*, a red *Delete Profile*; the rail beside both |
 | 50 | On My List, a Dropout 24/7 card, OK | Dropout 24/7's page (Leanback's, *Watch* ringed), not Dropout's plain stream page |

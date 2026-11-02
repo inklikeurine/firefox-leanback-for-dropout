@@ -22,7 +22,7 @@ navigate, not what you can watch.
   cookie box and its settings are in Leanback's look. The profile picker, Manage profiles,
   Add Profile and Edit Profile are drawn for the TV too, and so is a welcome
   screen when you are signed out (*Sign In*, *Browse*, the privacy policy
-  and terms). Sign-in is Dropout's own form in Leanback's look; the
+  and terms). Sign-in is Leanback's own screen, with an *Email* and a *Password* box; the
   policies are in large type. Account and help pages stay Dropout's,
   driven with the arrows, with the rail beside them.
 - **Continue Watching**, first on Home: what you started here and what you
@@ -192,9 +192,9 @@ Watching, resume points and watched ticks; the history from before
 profiles goes to the first profile used.
 
 **Signed out**, Leanback opens on a welcome screen: *Sign In*, *Browse*,
-*Privacy Policy* and *Terms of Use*. The sign-in form is laid out for the
-TV; typing your email and password needs a keyboard, or a keyboard app on
-your phone. The privacy policy, terms and cookies policy scroll with ▲ ▼.
+*Privacy Policy* and *Terms of Use*. *Sign In* opens Leanback's sign-in screen, one screen with an *Email* and a
+*Password* box; typing your email and password needs a keyboard, or a
+keyboard app on your phone. The privacy policy, terms and cookies policy scroll with ▲ ▼.
 
 **Browse, My List and the lists** show their shows or episodes five across
 (four or six with *Theme This Page*), the same cards as on Home; more

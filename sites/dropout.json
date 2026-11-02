@@ -4,6 +4,7 @@
   "gridUrl": "https://watch.dropout.tv/series",
   "searchUrl": "https://watch.dropout.tv/search",
   "signinUrl": "https://watch.dropout.tv/login",
+  "resetUrl": "https://watch.dropout.tv/forgot_password",
   "welcomeUrl": "https://watch.dropout.tv/",
   "signout": {
     "url": "https://watch.dropout.tv/logout",
@@ -62,7 +63,11 @@
     },
     {
       "kind": "signin",
-      "path": "^/(login|forgot_password)/?$"
+      "path": "^/login/?$"
+    },
+    {
+      "kind": "reset",
+      "path": "^/forgot_password/?$"
     },
     {
       "kind": "legal",
@@ -123,6 +128,14 @@
   },
   "pages": {
     "signin": {
+      "dropoutEmail": "#signin-email-input",
+      "focusable": [
+        ".tenfoot-signin input",
+        ".tenfoot-signin button",
+        ".tenfoot-signin a[href]"
+      ]
+    },
+    "reset": {
       "box": "#login--box-container",
       "focusable": [
         "#login--box-container input:not([type='hidden']):not([type='checkbox'])",
@@ -130,10 +143,8 @@
         "#login--box-container a[href]"
       ],
       "initialFocus": [
-        "#signin-email-input",
         "#forgot-password-form input[type='email']"
       ],
-      "nextStep": "#signin-password-input",
       "hide": [
         "#login-form-magic",
         ".signin-flow__divider-container",

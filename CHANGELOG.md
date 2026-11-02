@@ -2,12 +2,23 @@
 
 ## [0.37.0] — 2026-11-01
 
+### Added
+
+- **Leanback's own sign-in screen.** *Sign In* now opens one screen with an
+  *Email* box and a *Password* box, *Sign in*, *Forgot password?* and the
+  policies, in Leanback's look, in place of Dropout's two-step form (which
+  stays underneath, unseen). The boxes are ordinary form boxes, so
+  Firefox's saved passwords and password apps can find them. ▲ ▼ go from
+  box to box; Enter in *Email* goes to *Password*.
+
 ### Changed
 
 - **One My List button.** On Home's banner, a show's page and an episode's
   details page the button reads *+ My List* when the show or episode is not
   on your list and *✓ My List* when it is. An episode's page used to say
   *Add to* or *Remove from My List*; a screen reader still does.
+- The password reset (`/forgot_password`) is a page kind of its own, as
+  Dropout's own form laid out for the TV, as before.
 - Inside, not on screen: helpers that were copied between files (the
   icons, building elements, the reduced-motion check, the question box and
   the picture box) are shared; the page script's look, Dropout's own pages,

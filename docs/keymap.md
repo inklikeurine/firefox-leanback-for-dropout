@@ -42,8 +42,8 @@ do is reachable from the remote.
 While the focus is in a text field, **only the back button is ours** — even
 `/` belongs to the field — plus ◀ when the text cursor is at the very start
 with nothing selected (it leaves the field, for the rail on the search page)
-and ▼ and ▲ in a one-line field such as the search box or the sign-in
-form's (they leave the field for what is below or above it: the result
+and ▼ and ▲ in a one-line field such as the search box or a sign-in
+box (they leave the field for what is below or above it: the result
 filters, then the results; the next box or button; with nothing there, the
 key stays the field's). In a field of several lines ▼ ▲ move the cursor. In
 the search box Leanback draws, OK and Back also leave it for what is below
@@ -71,8 +71,10 @@ through every episode you watched: see [T2](#t2--back-is-firefoxs).
 A policy (`legal`: the privacy policy, terms, cookies) has nothing to
 select: ▲ ▼ scroll it by most of a screen, ◀ ▶ do nothing, Back leaves. The
 welcome, the profile picker and Manage profiles are one row of buttons or
-cards, moved along with ◀ ▶. The sign-in and Edit Profile forms are
-Dropout's: the arrows move among its boxes and buttons, as on any page.
+cards, moved along with ◀ ▶. The sign-in screen is a short list in reading order (▲ ▼ from box to
+box to the buttons and the policies, stopping at the ends; ◀ ▶ between
+the two policies). The reset form is Dropout's: the arrows move among its
+boxes and buttons, as on any page.
 
 ## Home and the rail
 

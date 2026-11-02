@@ -173,8 +173,8 @@ html[data-tenfoot="on"] [data-tenfoot-gone] {
    --tf-u (content/home.css), with pixel minimums. Dropout's form, its
    steps and its checks are untouched; its colours, which reach every
    button and link, are held off. */
-html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="profileEdit"]),
-html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="profileEdit"]) body {
+html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="reset"], [data-tenfoot-kind="profileEdit"]),
+html[data-tenfoot="on"]:is([data-tenfoot-kind="signin"], [data-tenfoot-kind="reset"], [data-tenfoot-kind="profileEdit"]) body {
   background: var(--tf-bg, #0b0c10) !important;
 }
 html[data-tenfoot="on"] [data-tenfoot-form] {

@@ -120,7 +120,7 @@
     send, dispatch, showHints, notice, askUser, pickPicture, click, firstVisible, collect, currentEl, focusEl,
     goBack, samePath, leaveFieldBelow, refocusPage, reducedMotion
   });
-  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageProfiles, globalThis.TenfootPageLive, globalThis.TenfootPageLook, globalThis.TenfootPageForms, globalThis.TenfootPageSettings]) part.install(P);
+  for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageProfiles, globalThis.TenfootPageLive, globalThis.TenfootPageLook, globalThis.TenfootPageForms, globalThis.TenfootPageSignin, globalThis.TenfootPageSettings]) part.install(P);
   // From page-back.js.
   const goSideways = (...a) => P.goSideways(...a);
   const goTop = (...a) => P.goTop(...a);
@@ -172,6 +172,11 @@
   const redirectPage = (...a) => P.redirectPage(...a);
   const offerWelcome = (...a) => P.offerWelcome(...a);
   const scrollReading = (...a) => P.scrollReading(...a);
+  // From page-signin.js.
+  const removeSignin = (...a) => P.removeSignin(...a);
+  const inSignin = (...a) => P.inSignin(...a);
+  const moveSignin = (...a) => P.moveSignin(...a);
+  const leaveSigninBox = (...a) => P.leaveSigninBox(...a);
   // From page-settings.js.
   const openMenu = (...a) => P.openMenu(...a);
   const dispatchInMenu = (...a) => P.dispatchInMenu(...a);
@@ -292,8 +297,8 @@
     if (picker && picker.root && qs(picker.root)) state.kind = "profiles";
     // For content/page.css: the forms and the policies are laid out for the TV.
     root.dataset.tenfootKind = state.kind;
-    state.signinStep = null;
     state.formFoot = null;
+    removeSignin();
     state.page = Rules.pageRules(state.rules, state.kind === "hub" ? "browse" : state.kind);
     state.href = location.href;
     state.memory = new Map();
@@ -517,6 +522,12 @@
     if (c.editable) {
       // Back from the search box Leanback draws: down to the results, or,
       // with none, Back as anywhere else.
+      // On Leanback's sign-in screen the boxes are stops in its own order.
+      if (inSignin(document.activeElement)) {
+        if (action === "back") return leaveSigninBox();
+        if (action === "down" || action === "up") return moveSignin(action);
+        return action === "left" ? true : false;
+      }
       if (action === "back") return inScreen(document.activeElement) ? leaveFieldBelow() || goBack() : blurField();
       if (action === "down") return leaveFieldBelow();
       if (action === "up") return leaveFieldAbove();
@@ -550,6 +561,7 @@
     state.lastMove = performance.now();
     if (state.screen && !state.modal) return moveScreen(dir);
     if (state.kind === "legal" && !state.modal) return scrollReading(dir);
+    if (state.kind === "signin" && !state.modal && state.signin) return moveSignin(dir);
     const cur = currentEl();
     const { candidates, rows } = collect();
     let target = null;
@@ -1372,6 +1384,7 @@
       }
       state.watch = null;
       stopScreen();
+      removeSignin();
       setupRail();
       state.pendingInitialFocus = 0;
       markReady();
