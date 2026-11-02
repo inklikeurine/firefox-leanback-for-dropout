@@ -314,8 +314,9 @@ use ([targets.md](./targets.md)).
   (the sign-in expired, or the password was changed elsewhere) opens Leanback's
   question box: "Dropout signed you out.", "Sign in again to carry on.", *Sign
   in* (selected) and *Not now*. *Sign in* goes to the sign-in screen (and from
-  there, the picker, then Home); *Not now* closes it and leaves the flag for
-  another tab. Asked once per tab, never on the sign-in and reset screens or the
+  there, the picker, then Home); *Not now* **closes the tab** (with it the
+  window, when it is the last tab), whatever *Back On Home* says, because
+  Dropout does not work signed out; the flag stays for another tab. Asked once per tab, never on the sign-in and reset screens or the
   policies, and not while a sign-in is in progress.
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per

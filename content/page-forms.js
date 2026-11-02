@@ -210,6 +210,9 @@
         start: "signin"
       }).then((answer) => {
         if (answer === "signin" && state.rules.signinUrl) P.navigate(state.rules.signinUrl, "push");
+        // Dropout does not work signed out: Not now closes the tab (and with
+        // it, the window, when it is the last), whatever Back On Home says.
+        else if (answer === "later") P.send({ type: "exit", force: true });
       });
     }
 

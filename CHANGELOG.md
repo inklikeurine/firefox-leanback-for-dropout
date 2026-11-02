@@ -40,7 +40,8 @@
 - **"Dropout signed you out."** If this TV was signed in and a page now loads
   signed out (the sign-in expired, or the password was changed elsewhere), a
   question box says so with *Sign in* selected and *Not now*, once per tab,
-  instead of leaving a Home whose videos will not play. Signing out on
+  instead of leaving a Home whose videos will not play; *Not now* closes the
+  tab (Dropout does not work signed out). Signing out on
   purpose (Leanback's *Sign Out*, or Dropout's own) is never reported. Leanback
   keeps only a flag that this TV was signed in.
 

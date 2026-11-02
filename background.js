@@ -182,10 +182,12 @@ async function updateBadge(settings) {
   return s;
 }
 
-async function handleExit(sender) {
+// `force`: close the tab whatever Back On Home says (the page asks for it
+// when the site cannot be used: signed out, "Not now").
+async function handleExit(sender, force) {
   const s = await Settings.load(API);
   const tabId = sender && sender.tab ? sender.tab.id : null;
-  if (s.exitHook === "close-tab" && typeof tabId === "number") {
+  if ((force === true || s.exitHook === "close-tab") && typeof tabId === "number") {
     await API.tabs.remove(tabId);
     return { ok: true, action: "close-tab" };
   }
@@ -264,7 +266,7 @@ async function handleMessage(message, sender) {
     case "page:info":
       return fromTab() || relayToPage(tabId, message);
     case "exit":
-      return handleExit(sender);
+      return handleExit(sender, message.force);
     default:
       return { ok: false, error: "Unknown message" };
   }

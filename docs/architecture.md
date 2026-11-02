@@ -767,7 +767,11 @@ changes or Leanback is turned off. The layer reuses the screens' look
   selected), unless it is the sign-in or reset screen, a policy, or a sign-in
   is noted (`state.signinNoted`, set by `homeAfterSignIn()` when the note
   below exists); `sessionStorage` `tenfoot.signedout-asked` makes it once per
-  tab. *Sign in* navigates to `rules.signinUrl`.
+  tab. *Sign in* navigates to `rules.signinUrl`; *Not now* sends
+`{type: "exit", force: true}`, which the background (`handleExit()`) answers by
+closing the sender's tab even with *Back On Home* set to do nothing (only a
+real `true` forces it). Back on the question answers nothing and closes only
+the box.
 - **The picker, then Home** (`homeAfterSignIn()` in `page-forms.js`, called
   from `redirectPage()` on every page load): one note in session storage,
   `tenfoot.signin-home` = `<stage>:<time>`. `signIn()` writes `signed` just
