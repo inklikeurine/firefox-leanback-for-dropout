@@ -306,6 +306,17 @@ use ([targets.md](./targets.md)).
   email kept. An empty box ("Enter your email."), a bad email ("Please enter
   a valid email.") and no answer ("Dropout isn't answering…", after 15 s on
   the same page) are said on the screen.
+  **"Dropout signed you out."** Leanback remembers that this TV was signed
+  in: a flag in `storage.local` (nothing else of the account), set whenever a
+  page loads signed in (`common.signedIn`) and cleared by every sign-out —
+  Leanback's own *Sign Out* on the picker, Dropout's own *Log out* form, and
+  the `/logout` address. A page that loads signed out while the flag is set
+  (the sign-in expired, or the password was changed elsewhere) opens Leanback's
+  question box: "Dropout signed you out.", "Sign in again to carry on.", *Sign
+  in* (selected) and *Not now*. *Sign in* goes to the sign-in screen (and from
+  there, the picker, then Home); *Not now* closes it and leaves the flag for
+  another tab. Asked once per tab, never on the sign-in and reset screens or the
+  policies, and not while a sign-in is in progress.
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per
   tab, so Back from it, or its *Browse*, comes back to Home and stays.

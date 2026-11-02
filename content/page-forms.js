@@ -11,6 +11,13 @@
     const SIGNIN_OFFERED = "tenfoot.signin-offered";
     const SIGNIN_HOME_KEY = "tenfoot.signin-home";
     const SIGNIN_HOME_TTL_MS = 120000;
+    // This TV was signed in: a flag in storage.local, no account details.
+    // Set when a page loads signed in; cleared by any sign-out. A page that
+    // loads signed out with the flag set means Dropout signed the viewer out
+    // (the sign-in expired, a password changed elsewhere): said once per tab.
+    const SIGNED_IN_KEY = "signedIn";
+    const SIGNED_OUT_ASKED = "tenfoot.signedout-asked";
+    const API = typeof browser !== "undefined" ? browser : chrome;
     const READ_STEP = 0.6; // ▲ ▼ on a policy: this share of the window's height
     const Rules = globalThis.TenfootSiteRules;
     const { qs, qsa } = globalThis.TenfootCommon;
@@ -98,6 +105,7 @@
     // Signed out still, the sign-in did not work: nothing moves. The note
     // lapses after a couple of minutes.
     function homeAfterSignIn() {
+      state.signinNoted = false;
       let raw = "";
       try {
         raw = sessionStorage.getItem(SIGNIN_HOME_KEY) || "";
@@ -106,6 +114,7 @@
       }
       const [stage, at] = raw.split(":");
       if (!stage) return false;
+      state.signinNoted = true; // signing in: syncSession() does not say Dropout signed the viewer out
       if (!(Date.now() - Number(at) < SIGNIN_HOME_TTL_MS)) {
         forgetHome();
         return false;
@@ -129,6 +138,82 @@
       P.navigate(home, "replace");
       return true;
     }
+
+    // ----- "Dropout signed you out" ---------------------------------------------
+
+    function storeGet() {
+      try {
+        return Promise.resolve(API.storage.local.get(SIGNED_IN_KEY)).then((r) => Boolean(r && r[SIGNED_IN_KEY]), () => false);
+      } catch (_err) {
+        return Promise.resolve(false);
+      }
+    }
+
+    function storeSet(on) {
+      try {
+        return Promise.resolve(on ? API.storage.local.set({ [SIGNED_IN_KEY]: true }) : API.storage.local.remove(SIGNED_IN_KEY)).catch(() => {});
+      } catch (_err) {
+        return Promise.resolve();
+      }
+    }
+
+    // Any sign-out clears the flag: Leanback's own Sign Out (the picker),
+    // Dropout's own Log out form, and the /logout address itself.
+    function clearSignedIn() {
+      return storeSet(false);
+    }
+
+    function onLogoutSubmit(e) {
+      const form = e.target;
+      const url = state.rules.signout && state.rules.signout.url;
+      if (!form || !form.action || !url) return;
+      try {
+        if (new URL(form.action, location.href).pathname === new URL(url).pathname) clearSignedIn();
+      } catch (_err) { /* not a form we know */ }
+    }
+
+    // Called on every page the script stays on. Signed in: the flag is set.
+    // Signed out with the flag set, and not in the middle of signing in or on
+    // a screen that has its own Sign In: a question, once per tab.
+    async function syncSession() {
+      if (!state.enabled) return;
+      const url = state.rules.signout && state.rules.signout.url;
+      try {
+        if (url && location.pathname === new URL(url).pathname) {
+          clearSignedIn();
+          return;
+        }
+      } catch (_err) { /* no such address */ }
+      const common = state.rules.common || {};
+      if (common.signedIn && qs(common.signedIn) && !signedOut()) {
+        storeSet(true);
+        return;
+      }
+      if (!signedOut()) return;
+      if (state.kind === "signin" || state.kind === "reset" || state.kind === "legal" || state.signinNoted) return;
+      try {
+        if (sessionStorage.getItem(SIGNIN_HOME_KEY) || sessionStorage.getItem(SIGNED_OUT_ASKED)) return;
+      } catch (_err) {
+        return; // no way to remember it: never ask over and over
+      }
+      if (!(await storeGet())) return;
+      if (!state.enabled || !signedOut() || state.href !== location.href) return;
+      try {
+        sessionStorage.setItem(SIGNED_OUT_ASKED, "1");
+      } catch (_err) {
+        return;
+      }
+      P.askUser({
+        title: "Dropout signed you out.",
+        text: "Sign in again to carry on.",
+        buttons: [{ id: "signin", label: "Sign in", primary: true }, { id: "later", label: "Not now" }],
+        start: "signin"
+      }).then((answer) => {
+        if (answer === "signin" && state.rules.signinUrl) P.navigate(state.rules.signinUrl, "push");
+      });
+    }
+
+    document.addEventListener("submit", onLogoutSubmit, true);
 
     function noteHome(stage) {
       try {
@@ -173,7 +258,7 @@
       return true;
     }
 
-    Object.assign(P, { stampChrome, syncForm, redirectPage, offerWelcome, scrollReading, chooseProfile });
+    Object.assign(P, { stampChrome, syncForm, redirectPage, offerWelcome, scrollReading, chooseProfile, syncSession, clearSignedIn });
   }
 
   globalThis.TenfootPageForms = Object.freeze({ install });

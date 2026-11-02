@@ -297,7 +297,9 @@
         input.value = meta ? meta.getAttribute("content") || "" : "";
         form.appendChild(input);
         document.body.appendChild(form);
-        form.submit();
+        // Signed out on purpose: the flag goes first, so the next page does
+        // not say Dropout signed the viewer out.
+        Promise.resolve(P.clearSignedIn()).then(() => form.submit());
       });
     }
 

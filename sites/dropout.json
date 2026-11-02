@@ -90,6 +90,7 @@
   "common": {
     "header": ".site-header",
     "signedOut": "body.logged-out",
+    "signedIn": "body.logged-in",
     "chrome": [
       ".site-header",
       "footer.footer--site"

@@ -756,6 +756,18 @@ changes or Leanback is turned off. The layer reuses the screens' look
   removes both keys on any other page kind. They are the page origin's session
   storage, which Dropout's own scripts can read; the email is what the
   viewer is giving Dropout's own form anyway.
+- **"Dropout signed you out"** (`syncSession()` in `page-forms.js`, from
+  `setupPage()` once the page is staying): the flag is `storage.local`
+  `signedIn: true` (no new permission; nothing about the account). A page
+  with `common.signedIn` (`body.logged-in`) sets it; `clearSignedIn()` removes
+  it, called by Leanback's own *Sign Out* (`page-profiles.js` `signOut()`,
+  before it sends the form), by a capturing `submit` listener for any form
+  whose action is `signout.url` (Dropout's own Log out), and on the `/logout`
+  address itself. A signed-out page with the flag asks (`askUser()`, *Sign in*
+  selected), unless it is the sign-in or reset screen, a policy, or a sign-in
+  is noted (`state.signinNoted`, set by `homeAfterSignIn()` when the note
+  below exists); `sessionStorage` `tenfoot.signedout-asked` makes it once per
+  tab. *Sign in* navigates to `rules.signinUrl`.
 - **The picker, then Home** (`homeAfterSignIn()` in `page-forms.js`, called
   from `redirectPage()` on every page load): one note in session storage,
   `tenfoot.signin-home` = `<stage>:<time>`. `signIn()` writes `signed` just
