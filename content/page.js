@@ -121,7 +121,7 @@
   const P = { state };
   Object.assign(P, {
     send, dispatch, showHints, notice, askUser, pickPicture, click, firstVisible, collect, currentEl, focusEl,
-    goBack, samePath, leaveFieldBelow, refocusPage, reducedMotion
+    goBack, samePath, leaveFieldBelow, refocusPage, reducedMotion, overlay
   });
   for (const part of [globalThis.TenfootPageBack, globalThis.TenfootPageVideo, globalThis.TenfootPageScreens, globalThis.TenfootPageProfiles, globalThis.TenfootPageLive, globalThis.TenfootPageLook, globalThis.TenfootPageForms, globalThis.TenfootPageSignin, globalThis.TenfootPageKeyboard, globalThis.TenfootPageSettings]) part.install(P);
   // From page-back.js.
@@ -543,7 +543,13 @@
       if (action === "up") return leaveFieldAbove();
       return action === "left" ? leaveField() : false;
     }
-    if (overlay()) return overlay().key(action);
+    if (overlay()) {
+      // A key pressed on an open box is deliberate: the page may take the
+      // focus again (results coming back under the keyboard) and gets it back
+      // each time, a bounded number of times per key, never for ever.
+      state.menuRefocus = 0;
+      return overlay().key(action);
+    }
     if (state.menu.isOpen) return dispatchInMenu(action);
     if (state.engaged) return dispatchEngaged(action);
     if (state.modal) return dispatchInModal(action);
@@ -1066,8 +1072,11 @@
     if (state.playerFocused) state.playerFocused = false;
     const box = overlay();
     if (box) {
-      // An open question keeps the selection, a bounded number of times.
-      if (!box.contains(t) && state.menuRefocus < MENU_REFOCUS_LIMIT) {
+      // An open question keeps the selection, a bounded number of times
+      // (the count starts again with each key and each click on its buttons).
+      if (box.contains(t)) {
+        if (!state.refocusing) state.menuRefocus = 0;
+      } else if (state.menuRefocus < MENU_REFOCUS_LIMIT) {
         state.menuRefocus += 1;
         refocus(() => box.refocus());
       }

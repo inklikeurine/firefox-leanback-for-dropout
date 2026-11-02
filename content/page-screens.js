@@ -171,7 +171,9 @@
       const before = currentEl();
       const target = state.screen.refresh();
       if (state.screen.ready) setPending(false);
-      if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || state.playerFocused || state.theater || state.inPlace || !target) return;
+      // A box open over the screen (the keyboard, a question) keeps the
+      // selection: results arriving under it do not take it.
+      if (state.pendingInitialFocus || state.railActive || state.menu.isOpen || state.modal || P.overlay() || state.playerFocused || state.theater || state.inPlace || !target) return;
       // The card the selection was on went away, or the site took the focus:
       // put it on the card Home now has selected. Still there, it may have
       // changed size (Watch becoming Resume): the ring follows.
