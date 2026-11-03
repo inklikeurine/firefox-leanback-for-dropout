@@ -275,7 +275,10 @@ use ([targets.md](./targets.md)).
   ("Please enter a valid email."), an empty box asks for both ("Enter your
   email and your password."). Dropout's own error (wrong password, unknown
   email) is shown under the title in its words, the email kept, the password
-  box emptied and selected. **After signing in from this screen the TV
+  box emptied and selected — whether it comes on the same page or, since
+  Dropout's password form is a real post, on the new `/login` page Dropout
+  answers with (the email is kept for it in the tab's session storage, and
+  any error Dropout's page shows as it loads is shown). **After signing in from this screen the TV
   goes to "Who is watching?"**, whatever Dropout does next (it may go back to
   the page that asked for the sign-in, or straight to Browse), and **choosing a
   profile there always ends on Home** (also from the rail's *Switch profile*).
@@ -288,7 +291,10 @@ use ([targets.md](./targets.md)).
   note lapses after two minutes. If Dropout gives no answer within 15 s (its
   *Next*) or 20 s (its *Sign in*: the page moving on counts), the screen
   says "Dropout isn't answering. Check the TV's internet connection, then
-  try again." and *Sign in* works again.
+  try again." and *Sign in* works again: a Dropout button its page left
+  greyed while it was sending (`pages.signin.sending`) is lit again before it
+  is pressed. With no network at all, Firefox shows its own error page in
+  place of Dropout's, and Leanback's screen goes with it.
 - **Password reset (`/forgot_password`).** Leanback's own screen, over
   Dropout's form (`pages.reset`), in the sign-in screen's look: "DROPOUT"
   over "Reset password", one **Email** box (holding the email typed on the
@@ -682,7 +688,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 26 | Watch an episode for a moment, then the remote's Back, Back; on each page, press ◀ ▶ | Every page answers the remote straight away; no page needs a reload |
 | 27 | Open any page from the rail, watching the screen as it loads | A dark screen, then Leanback's; Dropout's own page never shows first |
 | 28 | `/search`: type a query | Leanback's box at the top, ringed, not grown; letters appear in it and Dropout's results arrive as cards five across; ▼ the filters (*All (…)* yellow), ▼ the results; OK on *Videos* shows only videos. In the box, Left moves the text cursor and at the start of the text reaches the rail; Right returns. Up from the first row of results reaches the filters, then the box |
-| 29 | Search: type a word, wait, type another; then ◀ to the rail, Home, OK | Home opens; Escape from the results instead leaves Search in one step |
+| 29 | Search: type a word with the on-screen keyboard, Backspace, the same letter again, *Done*; ▶ to *Videos*, OK; then ◀ to the rail, Home, OK; then Back | Home opens (not an earlier search); Back from Home goes where you were before Search. Escape from the results instead leaves Search in one step |
 | 30 | Rail → Dropout 24/7; *Watch*; then Back, Back | Dropout's 24/7 page: its banner picture, "Dropout 24/7", *Watch* ringed, the 24/7 icon yellow; then the stream in the full window, with sound, the address still the 24/7 page's; Back: the 24/7 page, *Watch* ringed; Back: where you were |
 | 31 | On a details page, press MediaPlayPause; then again | The video starts as with *Watch*; then pauses |
 | 32 | Let an episode end (or seek near the end) | Eight seconds before the end, the "Up next" card: picture, ring counting down, "UP NEXT · 0:08", "S… · E…", the show, *OK Play now · ◀ Hide*; the next episode starts at the end. Again with OK: it starts at once. Again with ◀: the card goes and nothing plays by itself |
@@ -714,7 +720,13 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 58 | Home: Settings → *Theme This Page* → *Banner* → ▼ (Small), ▼ (Off), OK; then *Card Size* → *Large*, OK | The banner shrinks, then goes, the rows sliding up into its place; then the cards grow, sliding to their places. Closing the panel: the ring on a card |
 | 59 | Settings → *Accessibility* → *Interface Size* 130 %, *High Contrast* on | Everything larger; black and white with white edges and a thicker ring |
 | 60 | Playing, captions on: Settings → Accessibility → *Caption Size* Largest, *Caption Background* Black box; *Color Filter* Green-weak | The captions larger on a black box; the picture's colours shifted (experimental) |
-| 61 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
+| 61 | Sign-in screen: your email and password, *Sign in*, OK | "Signing in…", then "Who is watching?"; choosing a profile opens Home |
+| 62 | Sign-in screen: a wrong password, *Sign in*, OK | Dropout's message in a red box under the title, the email kept, the password box empty and ringed |
+| 63 | Sign-in screen: *Forgot password?*, OK; *Send reset email*, OK (Dropout sends you a reset email) | "Reset password" with the email carried over; then "Check your email on your phone or computer…", the ring on *Back to sign in* |
+| 64 | Sign-in screen: OK on *Email*; type with the keys, `.com`, *Done*; OK on *Password*, *Show*, *Hide*, *Done* | The keyboard along the bottom, the box visible above it, the ring on *q*; the letters go into the box; *Done* goes on to *Password*; *Show* makes the password readable, *Hide* hides it; *Done* presses *Sign in* |
+| 65 | Edit Profile: change the name with the keyboard, *Done*, *Save*, OK | *Save* turns yellow once the name changes; after OK the screen closes, the picker showing the new name |
+| 66 | Signed in on this TV, sign out on another device (or let the sign-in expire); open Home | "Dropout signed you out.", *Sign in* ringed; *Not now* closes the tab |
+| 67 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Known limitations
 
@@ -734,11 +746,11 @@ that may prove unnecessary.
 
 ### 0.37.0 — sign-in robustness, ease and the in-UI keyboard
 
-Signing in on a TV is hard because of the typing. 0.37.0 takes the typing
-away where it can (a saved password fills the boxes) and makes it easier
-where it can't (a keyboard on the screen). Throughout,
-Leanback passes the password to Dropout's own form on the page and never
-keeps, logs or sends it, and it asks for no new permission.
+Signing in on a TV is hard because of the typing. 0.37.0 has the typing
+taken away where it can be (a saved password fills the boxes) and made
+easier where it can't (a keyboard on the screen). Throughout, Leanback
+passes the password to Dropout's own form on the page and never keeps, logs
+or sends it, and it asks for no new permission. 0.37.0 has:
 
 - **Leanback-drawn sign-in screen**, one screen with an *Email* and a
   *Password* box, *Sign in*, *Forgot password?* and the policies. *Sign in*
@@ -761,7 +773,10 @@ keeps, logs or sends it, and it asks for no new permission.
 - **"Dropout signed you out."** When this TV was signed in and a page loads
   signed out, Leanback says so and offers *Sign in*, rather than leaving a
   Home whose videos won't play.
-- **When Dropout doesn't answer**: a message, never a spinner left turning.
+- **When Dropout doesn't answer**: a message, never a spinner left turning,
+  and *Sign in* can be pressed again.
+- **The rail's Home after a search** opens Home, however many steps
+  Dropout's search added to the history.
 - **One My List button**: *+ My List* when not in the list and *✓ My List*
   when it is, on Home's banner, a show's page and an episode's page alike.
 - **A list of the things that don't match** across Leanback's screens, for

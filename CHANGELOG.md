@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.37.0] — 2026-11-01
+## [0.37.0] — 2026-11-02
 
 ### Added
 
@@ -30,13 +30,11 @@
   *Done* does what Enter in the box does. A real keyboard, or a keyboard
   app on your phone, still types straight into a box without it, and a
   click with the pointer opens it too.
-
 - **After signing in: "Who is watching?", then Home.** Signing in from
   Leanback's screen always takes you to the profile picker, and choosing a
   profile there (or from the rail's *Switch profile*) always ends on Home,
   even when Dropout would take you somewhere else, such as the page that asked
   for the sign-in.
-
 - **"Dropout signed you out."** If this TV was signed in and a page now loads
   signed out (the sign-in expired, or the password was changed elsewhere), a
   question box says so with *Sign in* selected and *Not now*, once per tab,
@@ -47,6 +45,17 @@
 
 ### Fixed
 
+- **Home on the rail after a search** goes to Home. After searching (most
+  often with the on-screen keyboard, or after pressing a filter) it could go
+  back through the history and stop short, on an earlier search. Dropout's
+  search adds a step to the history after every search, even one that leaves
+  the address as it was, and Leanback missed those steps; it now counts them,
+  and on Firefox 147 and later finds Home in the history itself rather than
+  counting at all. If Home is no longer in the history, it is opened.
+- **A wrong password shows Dropout's message** on Leanback's sign-in screen
+  when Dropout answers with a page of its own, with the email kept and the
+  password box selected. After "Dropout isn't answering", pressing *Sign in*
+  again reaches Dropout even when its own button was left greyed out.
 - **Edit Profile's Save** shows when it is ready: it is a grey outlined
   button until something has changed (Leanback did not notice Dropout
   switching it on, so it stayed as it was), and yellow when it can be

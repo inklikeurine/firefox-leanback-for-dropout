@@ -187,14 +187,18 @@ Edit Profile — its picture (OK: Dropout's picture chooser), its name,
 *Save*, *Cancel* (which asks first when something is not saved, with
 *Keep Editing* selected) and *Delete Profile*, which asks first with *Cancel*
 selected. *Add Profile* is the same screen with *Cancel* and *Continue*.
-Typing a name needs a keyboard. Each profile has its own Continue
+OK on the name box opens the on-screen keyboard. Each profile has its own Continue
 Watching, resume points and watched ticks; the history from before
 profiles goes to the first profile used.
 
 **Signed out**, Leanback opens on a welcome screen: *Sign In*, *Browse*,
 *Privacy Policy* and *Terms of Use*. *Sign In* opens Leanback's sign-in screen, one screen with an *Email* and a
 *Password* box; OK on a box opens the on-screen keyboard (or type with a real
-keyboard, or a keyboard app on your phone). The privacy policy, terms and cookies policy scroll with ▲ ▼.
+keyboard, or a keyboard app on your phone). A saved password from Firefox or
+a password app's add-on can fill the boxes. *Sign in* goes through Dropout's
+own form, and Dropout's messages (a wrong password, say) are shown on
+Leanback's screen. *Forgot password?* opens Leanback's reset screen. The
+privacy policy, terms and cookies policy scroll with ▲ ▼.
 
 **Browse, My List and the lists** show their shows or episodes five across
 (four or six with *Theme This Page*), the same cards as on Home; more

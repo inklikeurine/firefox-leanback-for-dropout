@@ -135,10 +135,13 @@ pushed as a page loads cannot hold it.
    slug, for episodes and season pages) and structural parent. The navigation
    type (`PerformanceNavigationTiming.type`) and the intent Leanback left
    before navigating (`tenfoot.intent`: `push`, `replace`, `back`) say how
-   the page was reached. The search app adds a history step per search
-   (`history.pushState`, no load); `followSearchHistory()` gives each one a
-   trail entry, cuts the trail back to where Firefox's Back landed, or
-   updates the top entry's address.
+   the page was reached. The search app adds a history step after every
+   search it runs (`history.pushState`, no load), even one that leaves the
+   address as it was (the same words again, a filter pressed), and several
+   can come between two looks; `followSearchHistory()` gives each one a
+   trail entry (it counts `history.length`, and `onMutations()` looks at it
+   on Search even when the address has not changed), cuts the trail back to
+   where Firefox's Back landed, or updates the top entry's address.
    An empty `unload` listener keeps the site's pages out of the back-forward
    cache, so Back always loads afresh (a page restored from it gets no keys
    until a reload); the `pageshow` handler covers one restored anyway.
@@ -148,7 +151,14 @@ pushed as a page loads cannot hold it.
    its newest season; one rail section to another (Browse, Search, My List,
    Dropout 24/7: pushed from Home, replaced from each other). The rail's
    *Home* goes back down the history (`history.go(-n)`) when Home is on the
-   trail, else opens it. Leanback's own Back (and `/` on Search) goes to the
+   trail, else opens it. Every jump back to a page of the trail
+   (`goBackTo()`: the rail's *Home*, Leanback's Back, `/` on Search) counts
+   its `n` from the history itself where Firefox has the Navigation API
+   (147 and later: `navigation.entries()`, the newest entry below this one
+   at that page), so steps the site added without Leanback seeing them
+   cannot make it land short; a page the history no longer holds (its
+   oldest steps drop off) is opened instead. Without the API, `n` is the
+   trail's count. Leanback's own Back (and `/` on Search) goes to the
    newest trail entry that is another page (`backIndex()`), past all of
    search's steps at once.
 3. **A video playing is a step of its own** above its details page, at the
@@ -611,7 +621,7 @@ The button under the card always presses Dropout's button alone. On Edit
 Profile, *Save* (`run: "save"`, `saveProfile()` in `page-profiles.js`) is a
 grey outlined button while Dropout's is disabled and yellow once it is ready;
 OK presses Dropout's and watches its answer (`Common.waitFor`, no polling):
-Dropout greying Save again for 800 ms, or a toast saying saved, is a save
+Dropout greying Save again for 800 ms, or a toast saying saved (its words: `statusQuiet`), is a save
 (`state.profileSaved`: the screen closes at once by `cancelProfile()`, which
 with Save grey presses Dropout's own *Cancel* and so goes where Dropout sends
 it; a toast saying saved ends the wait for the settle at once; the button
@@ -741,7 +751,16 @@ changes or Leanback is turned off. The layer reuses the screens' look
   no `novalidate`) would stop *Next* unseen, so `checkValidity()` is asked
   first. While waiting `state.signin.busy` holds and the button reads
   "Signing in…". The password is a value read and passed on: not stored, not
-  logged, not in a message.
+  logged, not in a message. Dropout's password form is a real post, so its
+  answer to a wrong password is most likely a new `/login` page: the email
+  goes into `tenfoot.signin-email` before the first press, and any screen
+  built while Dropout's page shows its error shows it (the selection then
+  starts in *Password*, the email being there). Each of Dropout's buttons is
+  pressed through `press()`: one its page left greyed while it was sending
+  (`disabled` and `pages.<kind>.sending`, Rails' `data-disable-with`) is lit
+  again first, so a second try after "isn't answering" goes through. A try
+  that finds Dropout's password step already up, with the same email in its
+  box, skips *Next* (hidden by then) and goes straight to the password.
 - **The reset** (`sendReset()`): the same hand-over with the email and
   `pages.reset.send`. Dropout answers with a page of its own (what that page
   is has not been seen: it is a Box question), so before pressing, two
@@ -749,7 +768,7 @@ changes or Leanback is turned off. The layer reuses the screens' look
   which the next of the two screens starts with; also set by *Forgot
   password?* and *Back to sign in*) and `tenfoot.reset-asked`. A sign-in or
   reset screen built while `reset-asked` is set consumes it: Dropout's error on
-  that page if it shows one, else the "Check your email…" notice (`showSent()`
+  that page if it shows one (as on any screen built), else the "Check your email…" notice (`showSent()`
   on the reset screen: box and button hidden, the selection on *Back to
   sign in*). Staying on the same page with no error within `answerMs` is "no
   answer", and forgets the ask. `forgetSigninEmail()` (from `classifyPage()`)
@@ -1162,8 +1181,8 @@ The only file that knows Dropout. Which selectors are verified:
 | `live` | `path` (a live stream's page: Dropout 24/7's), `player` (its player frame on that page), `title` |
 | `rail` | `kinds` (the page kinds with the rail), `links` (id, label, icon, url) |
 | `screen` | what `readers.js` reads on a collection page (root, title, a tile and its parts, *Load More*); `screen.search` the same plus its box, filters and empty message; `screen.episode` an episode's details page (title, show, season line, description, My List, its picture); `screen.profiles` the picker (its root, title, row, a profile's parts, *Add Profile*, the Manage / Done button and the word that says Manage profiles is on); `screen.welcome` the front page's banner (logo, line, words) and the line Leanback adds; `screen.profileForm.add` / `.edit` a profile's form (root, title, line, picture and its image or letter, name box, Kid Profile, the buttons in Leanback's order — `text` the pattern of Dropout's button, `ask` for one Leanback asks about first — Dropout's toast, its dialog and its confirm button) |
-| `pages.signin` | Leanback's sign-in screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `emailNext`, `passwordInput`, `passwordHidden`, `passwordSubmit`, `error`, `errorText`), `nextMs` and `signinMs` (how long it has to answer), and the `focusable` selectors of the layer |
-| `pages.reset` | Leanback's reset screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `send`, `error`, `errorText`), `answerMs`, and the `focusable` selectors of the layer |
+| `pages.signin` | Leanback's sign-in screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `emailNext`, `passwordInput`, `passwordHidden`, `passwordSubmit`, `error`, `errorText`), `sending` (a button greyed while its post is under way), `nextMs` and `signinMs` (how long it has to answer), and the `focusable` selectors of the layer |
+| `pages.reset` | Leanback's reset screen: Dropout's form it hands over to (`box`, `dropoutEmail`, `send`, `error`, `errorText`, `sending`), `answerMs`, and the `focusable` selectors of the layer |
 | `pages.profileEdit` | a form laid out for the TV: its `box`, `focusable`, `initialFocus`, `hide` (what has no use on a TV) |
 | `pages.legal` | a policy: its words (`content`) and what goes (`hide`) |
 
