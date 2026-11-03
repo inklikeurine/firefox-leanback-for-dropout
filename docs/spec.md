@@ -729,13 +729,14 @@ of episodes one further down is not considered until more are loaded.
 0.37.0 is sign-in robustness, ease and the in-UI keyboard. 0.38.0 is the
 accessibility options. The theming milestones (0.39.0–0.41.0, and import and
 export in 1.0) are described in full, with the lessons they rest on, in
-[theming.md](./theming.md#milestones).
+[theming.md](./theming.md#milestones). 0.42.0 holds two rare sign-in blocks
+that may prove unnecessary.
 
 ### 0.37.0 — sign-in robustness, ease and the in-UI keyboard
 
 Signing in on a TV is hard because of the typing. 0.37.0 takes the typing
 away where it can (a saved password fills the boxes) and makes it easier
-where it can't (a keyboard on the screen, or the phone). Throughout,
+where it can't (a keyboard on the screen). Throughout,
 Leanback passes the password to Dropout's own form on the page and never
 keeps, logs or sends it, and it asks for no new permission.
 
@@ -746,9 +747,7 @@ keeps, logs or sends it, and it asks for no new permission.
   Leanback's screen.
 - **Filled by a saved password.** The boxes are ordinary sign-in boxes, so
   Firefox's own saved passwords (synced through a Mozilla account) and any
-  password app's add-on can fill them. When they are filled, the selection
-  moves to *Sign in* and one press of OK signs in. No code for any one
-  password app.
+  password app's add-on can fill them. No code for any one password app.
 - **Leanback-drawn password reset screen**: the email (carried over from
   sign-in), *Send reset email*, and what to do next in plain words.
 - **An on-screen keyboard** of Leanback's own. **OK on a text box opens
@@ -762,14 +761,9 @@ keeps, logs or sends it, and it asks for no new permission.
 - **"Dropout signed you out."** When this TV was signed in and a page loads
   signed out, Leanback says so and offers *Sign in*, rather than leaving a
   Home whose videos won't play.
-- **When something goes wrong**: Dropout not answering (a message, never a
-  spinner left turning), Google's "are you a person" puzzle (Leanback steps
-  back and says to use the pointer), and an account with no active
-  subscription (renew on a phone or computer).
+- **When Dropout doesn't answer**: a message, never a spinner left turning.
 - **One My List button**: *+ My List* when not in the list and *✓ My List*
   when it is, on Home's banner, a show's page and an episode's page alike.
-- **Typing with a phone, and saved passwords**: a setup section in
-  [targets.md](./targets.md).
 - **A list of the things that don't match** across Leanback's screens, for
   the 0.39.0 theming foundations to fix.
 
@@ -825,6 +819,19 @@ starts.
 - **Layouts as modules**: a theme chooses, for each screen, one of the
   layouts Leanback provides, and navigation follows the layout. See
   [theming.md](./theming.md#041--themes-that-rearrange-whole-screens).
+
+### 0.42.0 — two rare sign-in blocks (may be unnecessary)
+
+Both are explained instead of silent. Before building either, check whether
+it ever happens on the TV; if neither does, this milestone is dropped.
+
+- **Google's "are you a person" puzzle.** If Google shows a challenge window,
+  Leanback's screen steps back so the window is on top, with a line saying to
+  use the remote's pointer; when it closes, Leanback's screen comes back.
+- **An account with no active subscription.** If signing in lands on
+  Dropout's plans, checkout or account page instead of Browse, Leanback says
+  the subscription has to be renewed on a phone or computer, with *Sign out*
+  and *Browse*. Dropout's exact address for that page is not known yet.
 
 ### 1.0
 
