@@ -138,6 +138,7 @@
       "passwordSubmit": "#signin-password-submit",
       "nextMs": 15000,
       "signinMs": 20000,
+      "sending": "[data-disable-with]",
       "error": ".flash-error-container .flash-msg-container",
       "errorText": ".flash-msg",
       "focusable": [
@@ -153,6 +154,7 @@
       "error": ".flash-error-container .flash-msg-container",
       "errorText": ".flash-msg",
       "answerMs": 15000,
+      "sending": "[data-disable-with]",
       "focusable": [
         ".tenfoot-signin input",
         ".tenfoot-signin button",

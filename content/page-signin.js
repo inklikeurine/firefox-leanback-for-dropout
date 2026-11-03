@@ -17,8 +17,9 @@
 // sent anywhere else. The reset is handed over the same way (Dropout's email
 // box and its button).
 //
-// The email typed on one of the two screens is kept for the other, in this
-// tab's session storage, for as long as the tab stays on them.
+// The email typed on one of the two screens is kept for the other, and for
+// the page Dropout answers with, in this tab's session storage, for as long
+// as the tab stays on them.
 
 (function () {
   function install(P) {
@@ -214,6 +215,15 @@
       if (box) box.classList.add("is-hidden");
     }
 
+    // Press one of Dropout's buttons. Its page greys a button while what it
+    // sent is under way (rules: pages.<kind>.sending); after "isn't
+    // answering" that button is still grey, so it is lit again first and a
+    // second try goes through. A button grey for any other reason is left.
+    function press(btn) {
+      if (btn.disabled && Common.matches(btn, pageRules().sending)) btn.disabled = false;
+      btn.click();
+    }
+
     // Dropout's email box, given the email, and whether the browser would
     // accept it: its form's own check would stop its button without a word.
     function handOverEmail(email) {
@@ -231,16 +241,24 @@
       if (!email) return fail(MISSING, "email");
       if (!s.password.value) return fail(MISSING, "password");
       setBusy(true, "Signing in…");
-      // Step 1: Dropout's email box and its Next.
+      // The email stays for the page Dropout may answer with (its sign-in
+      // form is a real post: a wrong password comes back as a new page).
+      store("set", EMAIL_KEY, email);
+      // Step 1: Dropout's email box and its Next — unless a try before this
+      // one already got Dropout to its password step with this same email.
       hideDropoutError();
-      if (!handOverEmail(email)) return fail(BAD_EMAIL, "email");
-      const next = qs(R.emailNext);
-      if (!next) return fail(NO_ANSWER, "email");
-      next.click();
-      const first = await waitFor(() => dropoutError() ? "error" : passwordStepShown() ? "step" : null, Number(R.nextMs) || NEXT_MS);
-      if (!state.signin || state.signin !== s) return; // the page moved on
-      if (first === "error") return fail(dropoutError(), "email");
-      if (first !== "step") return fail(NO_ANSWER, "email");
+      const theirs = qs(R.dropoutEmail);
+      const ready = passwordStepShown() && theirs && String(theirs.value || "").trim() === email;
+      if (!ready) {
+        if (!handOverEmail(email)) return fail(BAD_EMAIL, "email");
+        const next = qs(R.emailNext);
+        if (!next) return fail(NO_ANSWER, "email");
+        press(next);
+        const first = await waitFor(() => dropoutError() ? "error" : passwordStepShown() ? "step" : null, Number(R.nextMs) || NEXT_MS);
+        if (!state.signin || state.signin !== s) return; // the page moved on
+        if (first === "error") return fail(dropoutError(), "email");
+        if (first !== "step") return fail(NO_ANSWER, "email");
+      }
       // Step 2: the password, read from Leanback's box now, and Dropout's
       // Sign in.
       hideDropoutError();
@@ -248,7 +266,7 @@
       const go = qs(R.passwordSubmit);
       if (!go) return fail(NO_ANSWER, "password");
       store("set", HOME_KEY, `signed:${Date.now()}`);
-      go.click();
+      press(go);
       const second = await waitFor(() => dropoutError() ? "error" : null, Number(R.signinMs) || SIGNIN_MS);
       if (!state.signin || state.signin !== s) return;
       // The page moves on when it works; staying here is an error, Dropout's
@@ -276,7 +294,7 @@
       // The email stays for the screen Dropout's answer lands on.
       store("set", EMAIL_KEY, email);
       store("set", RESET_KEY, "1");
-      send.click();
+      press(send);
       const answer = await waitFor(() => dropoutError() ? "error" : null, Number(R.answerMs) || RESET_MS);
       if (!state.signin || state.signin !== s) return;
       store("remove", RESET_KEY);
@@ -321,15 +339,16 @@
       // own, there is nothing for the site to render first.
       state.pendingInitialFocus = 0;
       focusEl(start);
-      // Back from Dropout's answer to a reset: an error on its page is
-      // shown; otherwise the request was taken.
-      if (store("get", RESET_KEY)) {
-        store("remove", RESET_KEY);
-        const err = dropoutError();
-        if (err) show(err, "error");
-        else if (isReset()) showSent();
-        else show(SENT, "notice");
-      }
+      // Dropout's answer to what was sent from here is often a page of its
+      // own: an error on it (a wrong password, an unknown email) is shown, the
+      // email kept and the password box selected; with none, after a reset,
+      // the request was taken.
+      const asked = store("get", RESET_KEY);
+      store("remove", RESET_KEY);
+      const err = dropoutError();
+      if (err) show(err, "error");
+      else if (asked && isReset()) showSent();
+      else if (asked) show(SENT, "notice");
     }
 
     function removeSignin() {

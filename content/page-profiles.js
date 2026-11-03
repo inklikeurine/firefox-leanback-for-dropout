@@ -152,12 +152,19 @@
         return Boolean(b) && (b.disabled || b.getAttribute("aria-disabled") === "true");
       };
       const toast = () => Common.siteText(R.status);
-      const verdict = () => {
+      // Dropout's toast saying it saved (rules: statusQuiet), any other word,
+      // or nothing yet.
+      let good = null;
+      try {
+        good = new RegExp(R.statusQuiet || "saved", "i");
+      } catch (_err) {
+        good = /saved/i;
+      }
+      const word = () => {
         const t = toast();
-        if (t && /saved|updated|success/i.test(t)) return "saved";
-        if (t) return "toast";
-        return grey() ? "grey" : null;
+        return t ? (good.test(t) ? "saved" : "toast") : null;
       };
+      const verdict = () => word() || (grey() ? "grey" : null);
       clearTimeout(savedTimer);
       state.profileSaved = false;
       save.click();
@@ -166,10 +173,6 @@
       if (result === "grey") {
         // Greyed while it sends is not greyed for good: Dropout's toast saying
         // saved ends the wait at once; without one, look again after a moment.
-        const word = () => {
-          const t = toast();
-          return t ? (/saved|updated|success/i.test(t) ? "saved" : "toast") : null;
-        };
         result = (await Common.waitFor(word, Number(R.saveSettleMs) || SAVE_SETTLE_MS)) || (grey() ? "grey" : "none");
       }
       if (result === "saved" || result === "grey") {
