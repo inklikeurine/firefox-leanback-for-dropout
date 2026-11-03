@@ -274,7 +274,11 @@ is pushed on the press of *Watch*, so the details page has been interacted
 with; when Firefox passes over the details page of a video that started by
 itself, Leanback goes forward to it; a Back that lands on the previous
 episode carries on to the season page; and in a tab opened straight on a
-page Leanback does the Back itself.
+page Leanback does the Back itself. When Leanback goes back down the history
+itself (the rail's *Home*, Escape, `/` on Search) it finds the page in the
+history's own list where Firefox has one (the Navigation API), not by
+counting the steps it saw: Dropout's search adds steps Leanback cannot always
+see.
 
 What that means for layers: the remote's Back leaves the page, whatever is
 open on it, so ◀ is the way out of what is open — it closes the settings

@@ -532,14 +532,14 @@
   function dispatch(action, ctx) {
     const c = ctx || {};
     if (c.editable) {
-      // Back from the search box Leanback draws: down to the results, or,
-      // with none, Back as anywhere else.
       // On Leanback's sign-in screen the boxes are stops in its own order.
       if (inSignin(document.activeElement)) {
         if (action === "back") return leaveSigninBox();
         if (action === "down" || action === "up") return moveSignin(action);
-        return action === "left" ? true : false;
+        return action === "left";
       }
+      // Back from the search box Leanback draws: down to the results, or,
+      // with none, Back as anywhere else.
       if (action === "back") return inScreen(document.activeElement) ? leaveFieldBelow() || goBack() : blurField();
       if (action === "down") return leaveFieldBelow();
       if (action === "up") return leaveFieldAbove();
@@ -1186,6 +1186,8 @@
       onNavigate();
       return;
     }
+    // A search that left the address as it was still added a step.
+    if (state.kind === "search" && state.screen && history.length > state.historyLength) followSearchHistory(false);
     syncModal();
     refreshScreen();
     stampChrome();

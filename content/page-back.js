@@ -57,12 +57,32 @@
       return navigate(url, "replace");
     }
 
+    // How far back `url` is in the tab's history. The Navigation API (Firefox
+    // 147 and later) lists the history's own entries, so the newest one below
+    // this one at that page gives the exact count, whatever the site added
+    // without Leanback seeing it. null: the page is not in the history at all
+    // (the oldest steps drop off). Without the API, the trail's count.
+    function historyDelta(delta, url) {
+      const nav = window.navigation;
+      if (!Trail || !nav || typeof nav.entries !== "function" || !nav.currentEntry) return delta;
+      try {
+        const here = nav.currentEntry.index;
+        const below = nav.entries().filter((e) => e && e.index < here && Trail.same(e.url, url));
+        return below.length ? below[below.length - 1].index - here : null;
+      } catch (_err) {
+        return delta;
+      }
+    }
+
     // Back to an earlier page of the trail through the history itself, so the
-    // pages above it are left behind rather than piled on. `delta` < 0.
+    // pages above it are left behind rather than piled on. `delta` < 0. A page
+    // the history no longer holds is opened instead.
     function goBackTo(delta, url) {
-      state.lastNavigation = `history:${delta}`;
+      const d = historyDelta(delta, url);
+      if (!d) return go(url);
+      state.lastNavigation = `history:${d}`;
       if (Trail) Trail.setIntent(sessionStore(), "back", new URL(url, location.href).href);
-      history.go(delta);
+      history.go(d);
       return true;
     }
 
@@ -170,11 +190,12 @@
       return goHome();
     }
 
-    // The search app adds a step to the tab's history for every search it runs
-    // (history.pushState), without a page load. The trail follows: an entry
-    // for each new step, cut back to the step Firefox's Back returned to, the
-    // top's address updated otherwise — so going back down to Home counts
-    // every step.
+    // The search app adds a step to the tab's history after every search it
+    // runs (history.pushState), without a page load, even when the address
+    // stays the same. The trail follows: an entry for each new step (several
+    // can come between two looks), cut back to the step Firefox's Back
+    // returned to, the top's address updated otherwise — so going back down
+    // to Home counts every step.
     function followSearchHistory(popped) {
       if (!Trail || !state.trail.length) return;
       const href = location.href;
@@ -186,7 +207,7 @@
         if (j >= 0) t = t.slice(0, j + 1);
         else t[t.length - 1] = Object.assign({}, top, { url: href });
       } else if (history.length > state.historyLength) {
-        t.push(Object.assign({}, top, { url: href }));
+        for (let n = history.length - state.historyLength; n > 0; n--) t.push(Object.assign({}, top, { url: href }));
       } else {
         t[t.length - 1] = Object.assign({}, top, { url: href });
       }

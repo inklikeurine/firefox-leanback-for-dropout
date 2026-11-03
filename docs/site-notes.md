@@ -331,6 +331,17 @@ previous results on screen after an address change. On `/search` itself it is
 **not** the overlay (its props say `overlay: false`; no
 `Search-module__overlay`, so not `position: fixed`): it is part of the page.
 
+How it searches (its script, `search-<hash>.js`, read 2026-11-02, signed
+out): 500 ms after the words (or the type filter) last change, it asks
+Dropout's API, and when the answer comes it calls
+`history.pushState({}, "", "/search?q=<words>")` — **after every search,
+even when the address is already that**, so the history gains a step each
+time a filter is pressed or the same words are typed again. Fewer than two
+letters (and no filter) is no search and adds no step. A newer search
+cancels one still waiting (`AbortController`), so a burst of typing within
+the 500 ms adds one step; slow typing (a remote) adds one per letter.
+Closing the search overlay pushes the page's own address.
+
 ```text
 .Search-module__content-container.Search-module__show   ← padding 32px 200px from 1250 px wide
   .Search-module__search-container
