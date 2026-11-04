@@ -331,22 +331,31 @@ use ([targets.md](./targets.md)).
   own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
   search box, the name box of Add Profile and Edit Profile, and the digit boxes
   of a PIN-locked profile's PIN screen (Dropout's own) — opens a panel along the bottom of the screen with the box
-  still in view above it (the sign-in screen, and a profile's form, move up). A pointer click on
+  still in view above it (the sign-in screen, and a profile's form, move up), and
+  on search the results keep showing above it as they arrive. A pointer click on
   one of those boxes opens it too, since the air mouse has no keyboard.
-  Letters in QWERTY rows with *Shift*, a page of digits and symbols (*123* /
-  *abc*), *Space*, *Backspace*, ◀ ▶ to move in the text, and *Done*; the
-  text so far is shown on the panel's top line with its cursor. A text box
-  starts with a capital and takes one after a space; an email box has `@`,
-  `.` and `.com` and no *Space*; a password box has *Show* / *Hide*, which
+  The look is bare letters: a key has no box until it is selected, when it
+  becomes a solid accent-colour pill with no ring, and for a moment on OK it
+  answers. *Done* is accent-colour text until selected. The keys sit on a grid:
+  a number row, the letters in QWERTY rows, *Shift*, a page of symbols (*#+=* /
+  *abc*), *Space*, ◀ ▶ to move in the text, and an action column with *Backspace*
+  and *Done* at the end of every row. **Shift has three steps:** off (an outline),
+  one capital (solid), caps lock (solid with a bar under it). A text box starts with a
+  capital and takes one after a space. An email box has a row on top with
+  `@gmail.com`, `@outlook.com`, `@icloud.com`, `@` and `.com`, one press each,
+  and no *Space*; a password box has *Show* / *Hide*, which
   turns it readable and back; a PIN gets a number pad whose digits go into
   the PIN screen's boxes in turn (shown as dots on the panel's top line), and
-  *Done* presses Dropout's button. ◀ ▶ go along a row and round its ends, ▲ ▼ go
-  to the key nearest the same place in the next row and stop at the top and
-  bottom; OK types, *Done* closes it and does what Enter in the box does
+  *Done* presses Dropout's button. The selection starts in the middle (*g*, or
+  *5* on the pad). ◀ ▶ go along a row and round its ends, so ◀ from the left edge
+  reaches the action column; ▲ ▼ go straight up and down and stop at the top and
+  bottom. OK types; **the remote's Menu takes out the letter before the cursor**,
+  from wherever the selection is, and a line along the foot says so. *Done* closes it and does what Enter in the box does
   (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*,
   search → the results), Escape closes it and the selection is back on the
-  box. Typing in a box with a real keyboard marks it as typed in, and Enter
-  in it is its own again until the selection moves on. Nothing else gets
+  box. Typing with a real keyboard goes into the box, the keyboard open or not;
+  in a box typed in that way with it closed, Enter
+  is its own again until the selection moves on. Nothing else gets
   past an open keyboard; the remote's Back is Firefox's, so nothing depends
   on it. Letters go into the box at the cursor with `beforeinput` and
   `input` events, so a box that mirrors into Dropout's (search) keeps
@@ -723,7 +732,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 61 | Sign-in screen: your email and password, *Sign in*, OK | "Signing in…", then "Who is watching?"; choosing a profile opens Home |
 | 62 | Sign-in screen: a wrong password, *Sign in*, OK | Dropout's message in a red box under the title, the email kept, the password box empty and ringed |
 | 63 | Sign-in screen: *Forgot password?*, OK; *Send reset email*, OK (Dropout sends you a reset email) | "Reset password" with the email carried over; then "Check your email on your phone or computer…", the ring on *Back to sign in* |
-| 64 | Sign-in screen: OK on *Email*; type with the keys, `.com`, *Done*; OK on *Password*, *Show*, *Hide*, *Done* | The keyboard along the bottom, the box visible above it, the ring on *q*; the letters go into the box; *Done* goes on to *Password*; *Show* makes the password readable, *Hide* hides it; *Done* presses *Sign in* |
+| 64 | Sign-in screen: OK on *Email*; type with the keys, `@gmail.com`, Menu, *Done*; OK on *Password*, *Show*, *Hide*, *Done* | The keyboard along the bottom, the box visible above it, *g* a solid pill with no ring; the letters go into the box; one press types `@gmail.com`; Menu takes out the last letter; *Done* goes on to *Password*; *Show* makes the password readable, *Hide* hides it; *Done* presses *Sign in* |
 | 65 | Edit Profile: change the name with the keyboard, *Done*, *Save*, OK | *Save* turns yellow once the name changes; after OK the screen closes, the picker showing the new name |
 | 66 | Signed in on this TV, sign out on another device (or let the sign-in expire); open Home | "Dropout signed you out.", *Sign in* ringed; *Not now* closes the tab |
 | 67 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |

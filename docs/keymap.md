@@ -156,17 +156,22 @@ while it is open.
 ## The on-screen keyboard
 
 A panel along the bottom of the screen (`nav/keyboard.js`), the box being
-typed in left visible above it. Letters in QWERTY rows with Shift; a page of
-digits and symbols (the *123* / *abc* key); Space, Backspace, ◀ ▶ for the
-text cursor, and *Done*. A text box starts a name with a capital and again
-after a space; the bottom row differs by box: a text box has `,` Space `.`,
-an email box `@` `.` `.com` (no Space, no capitals), a password box Space and
+typed in left visible above it. On a grid: a number row, the letters in QWERTY
+rows, Shift, a page of symbols (the *#+=* / *abc* key), Space, ◀ ▶ for the text
+cursor, and an action column with Backspace and *Done* at the end of every row.
+Shift has three steps: off, one capital, caps lock. A text box starts a name with
+a capital and again after a space; an email box has a row on top with
+`@gmail.com`, `@outlook.com`, `@icloud.com`, `@` and `.com` (no Space, no
+capitals); a password box has Space and
 *Show* / *Hide* (which turns the box readable and back; closing puts it
-back), a PIN a number pad that fills its digit boxes in turn. ◀ ▶ go along a row and round its ends; ▲ ▼ go to
-the key nearest the same place in the next row (a tie goes to the left), keep
-that place across rows and stop at the top and the bottom. OK types the key;
-a held OK or arrow repeats as the browser repeats it (a held move is slowed
-by the page script as everywhere). *Done* closes it (the caller does what
+back); a PIN a number pad that fills its digit boxes in turn. The selection, a
+solid pill with no ring, starts on *g* (*5* on the pad). ◀ ▶ go along a row and
+round its ends, so ◀ from the left edge reaches the action column; ▲ ▼ go
+straight up and down (past a key spanning rows), keep their place across rows
+and stop at the top and the bottom. OK types the key; **Menu takes out the
+letter before the cursor**; a held OK or arrow repeats as the browser repeats it
+(a held move is slowed by the page script as everywhere). A real keyboard types
+into the box while it is open. *Done* closes it (the caller does what
 Enter in the box does) and Escape closes it with no answer; both put the
 selection back on the box. *Done* does what Enter in the box does (sign-in's
 *Email* goes on to *Password*, its *Password* and the reset's *Email* press

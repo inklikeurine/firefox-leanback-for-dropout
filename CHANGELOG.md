@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.37.1] — 2026-11-03
+
+### Changed
+
+- **A better-looking on-screen keyboard.** Bare letters: a key has no box until
+  it is selected, when it becomes a solid accent-colour pill with no ring, as in
+  the settings, and it answers for a moment on OK. *Done* is accent-colour text
+  until selected, so it no longer looks selected all the time. A line along the
+  foot says what the remote's keys do.
+- **The keys are on a grid with a number row.** Digits are always there, ▲ ▼ go
+  straight up and down, and Backspace and *Done* sit at the end of every row, so
+  ◀ from the left edge reaches them at once. The other page is symbols (*#+=*).
+  The selection starts on *g* (*5* on a PIN's pad), in the middle of the keys.
+- **Shift has three steps:** off, one capital, caps lock, and the key looks
+  different in each.
+- **Email boxes have a row of whole endings:** `@gmail.com`, `@outlook.com` and
+  `@icloud.com`, one press each, beside `@` and `.com`.
+- **The remote's Menu deletes a letter** while the keyboard is open, and a real
+  keyboard types while it is open.
+
 ## [0.37.0] — 2026-11-02
 
 ### Added

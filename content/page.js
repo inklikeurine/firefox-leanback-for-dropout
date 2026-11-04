@@ -947,7 +947,7 @@
 
   function hintItems() {
     const step = state.settings.seekStep;
-    if (state.keyboard && state.keyboard.isOpen) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Type" }, { keys: "Back", label: "Close" }];
+    if (state.keyboard && state.keyboard.isOpen) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Type" }, { keys: "Menu", label: "Delete" }, { keys: "Back", label: "Close" }];
     if (state.modal) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Select" }, { keys: "Back", label: "Close" }];
     if ((state.kind === "video" || state.inPlace) && state.playerFocused) {
       const offering = state.playerState && state.playerState.upNextShowing;
@@ -1007,6 +1007,13 @@
       e.preventDefault();
       e.stopImmediatePropagation();
       showHints();
+      return;
+    }
+    // A real keyboard types while the on-screen one is up.
+    if (state.keyboard && state.keyboard.isOpen && !e.ctrlKey && !e.altKey && !e.metaKey && (e.key.length === 1 || e.key === "Backspace")) {
+      state.keyboard.typed(e.key);
+      e.preventDefault();
+      e.stopImmediatePropagation();
       return;
     }
     const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
@@ -1467,7 +1474,7 @@
     state.menu = Panel.createPanel(document, { label: "Leanback settings", onPick: onPanelPick });
     state.ask = Ask.createAsk(document, { onFocus: (b) => state.ring.follow(b) });
     state.picker = Ask.createPicker(document, { onFocus: (b) => state.ring.follow(b) });
-    state.keyboard = Keyboard.createKeyboard(document, { onFocus: (b) => state.ring.follow(b) });
+    state.keyboard = Keyboard.createKeyboard(document, { onFocus: () => state.ring.follow(null) });
     state.settingsMenu = createSettingsMenu();
     if (History) {
       // The watch history is the profile's that is watching; telling the

@@ -677,12 +677,23 @@ page script can route keys to it the same way. `open(input, {layout, page})`
 resolves `"done"` or null.
 
 - **Keys** are data, not markup: `rowsFor(layout, page)` gives the rows
-  of `{id, label, w, kind}`; `w` is a width in units (a letter is 2), set on
-  each button as `--tf-kb-w`, so the CSS draws what the code counts.
-- **Moves use those widths, not the page's geometry**: each key's centre is
+  of `{id, label, w, kind}`; `w` is a width in grid columns, and a key that spans
+  rows is the same object in each of them, drawn as one button. Each button is
+  placed by `grid-column` and `grid-row-*`, so the CSS draws what the code counts.
+- **Moves use those numbers, not the page's geometry**: each key's centre is
   counted from the middle of its row, ▲ ▼ pick the nearest centre in the next
-  row (a tie goes left) and remember the place across rows, ◀ ▶ wrap in the
-  row. This is why the moves are testable headless.
+  row that is not the same key (a tie goes left) and remember the place across
+  rows, ◀ ▶ wrap in the row. This is why the moves are testable headless.
+- **Shift** is `shift`: `"off"`, `"once"` or `"lock"`, on the key as
+  `data-tenfoot-shift`. After an edit caps lock stays; anything else goes back to
+  what the text wants (`autoShift()`: a text box capitalises at the start and after
+  a space).
+- **The selection** is stamped as `data-tenfoot-current` on the key, not read
+  from `:focus`, and the page script hides the ring through `onFocus`. A press
+  stamps `data-tenfoot-pressed` for a moment.
+- **Menu** arrives as the `menu` action and takes out the letter before the
+  cursor. `typed(c)` is a real keyboard's key while it is open, sent by the page
+  script's `onKeyDown` before the keymap.
 - **Typing** (`edit()`): `beforeinput` (cancelable), the value through the
   native setter (past a framework's watcher), then `input`. The cursor is the
   box's own where it has one; `type=email` has none, so the keyboard keeps
@@ -690,7 +701,7 @@ resolves `"done"` or null.
   (masked for a password box until *Show*). *Show* sets `input.type` to
   `text` and closing sets it back.
 - **Looks**: `content/keyboard.css`, sizes from `--tf-u`, colours from the
-  theme variables, the ring from `nav/focus-ring.js` via `onFocus`.
+  theme variables.
 
 `content/page-keyboard.js` opens it (for a PIN screen, Dropout's own form
 that Leanback steps aside for, with the `digits` layout and the screen's

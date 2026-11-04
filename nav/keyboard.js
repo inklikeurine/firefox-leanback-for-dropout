@@ -1,16 +1,21 @@
 // Leanback for Dropout — the on-screen keyboard: a panel along the bottom of
 // the screen, over the box being typed in, which stays visible above it.
 // The page script routes keys to it while it is open (as for a question,
-// nav/ask.js): ◀ ▶ ▲ ▼ move the selection between keys, OK types the key,
-// Back (Escape) closes it without an answer. Held keys repeat as the
-// browser repeats them; the page script already slows held moves.
+// nav/ask.js): ◀ ▶ ▲ ▼ move the selection between keys, OK types the key, Menu
+// takes out the letter before the cursor, Back (Escape) closes it without an
+// answer. Held keys repeat as the browser repeats them; the page script
+// already slows held moves.
 //
-// Pages: letters (QWERTY, with Shift), then digits and symbols. A layout says
-// what the bottom row holds: "text" (comma, Space, full stop), "email" (@, a
-// full stop, .com), "password" (Space and a Show / Hide key that turns the
-// box between hidden and readable), or "digits" (a number pad, for a PIN; a
-// PIN's separate digit boxes are given as a group, and each digit goes into
-// the next empty one).
+// The keys sit on a grid, so ▲ ▼ go straight up and down. Every layout but the
+// number pad has a row of digits, then letters (QWERTY) or a page of symbols;
+// an action column at the end of every row holds Backspace and Done, so ◀ from
+// the left edge reaches them at once. A layout says what else there is: "text"
+// (Space), "email" (a row of whole endings, @ and .com, on top), "password"
+// (Space and a Show / Hide key that turns the box between hidden and readable),
+// or "digits" (a number pad, for a PIN; a PIN's separate digit boxes are given
+// as a group, and each digit goes into the next empty one).
+//
+// Shift has three steps: off, one capital, caps lock.
 //
 // Typing goes into any <input> at the cursor, with beforeinput and input
 // events, so a box that mirrors into the site's own (search) keeps working.
@@ -19,63 +24,75 @@
 // on the panel's top line.
 
 (function () {
-  const UNIT = 2; // a letter key is two units wide
-  const LETTERS = [
-    "q w e r t y u i o p".split(" "),
-    "a s d f g h j k l".split(" "),
-    "z x c v b n m".split(" ")
-  ];
-  const SYMBOLS = [
-    "1 2 3 4 5 6 7 8 9 0".split(" "),
-    ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
-    [".", ",", "?", "!", "'", "_", "#", "%"]
-  ];
+  const LETTERS = {
+    text: ["q w e r t y u i o p", "a s d f g h j k l '", "z x c v b n m , ."],
+    email: ["q w e r t y u i o p", "a s d f g h j k l .", "z x c v b n m - _"]
+  };
+  const DIGITS = "1 2 3 4 5 6 7 8 9 0";
+  const SYMBOLS = ["- / : ; ( ) $ & @ \"", ". , ? ! ' _ # % + =", "* ~ ^ | \\ < > [ ] {"];
+  const DOMAINS = ["@gmail.com", "@outlook.com", "@icloud.com"];
   const ICONS = {
-    shift: "M12 19V6M6 12l6-6 6 6",
+    shift: "M12 4l8 9h-5v7H9v-7H4z",
     backspace: "M21 5H9l-6 7 6 7h12z M12 9.5l5 5 M17 9.5l-5 5",
     left: "M15 5l-7 7 7 7",
     right: "M9 5l7 7-7 7"
   };
+  const SHIFT_NAMES = { off: "Shift", once: "Shift: one capital", lock: "Caps lock" };
+  const NEXT_SHIFT = { off: "once", once: "lock", lock: "off" };
+  const HINTS = [["OK", "Type"], ["Menu", "Delete"], ["Back", "Close"]];
+  const PRESSED_MS = 120;
 
   const key = (id, label, w, extra) => Object.assign({ id, label, w }, extra);
-  const ch = (c) => key(`c:${c}`, c, UNIT, { kind: "char", value: c });
+  const ch = (c, w) => key(`c:${c}`, c, w || 1, { kind: "char", value: c });
+  const chars = (line) => line.split(" ").map((c) => ch(c));
 
-  // The rows of one page for a layout, as [{id, label, w, kind, value?}].
+  // The rows of one page for a layout, as [{id, label, w, kind, value?}]. A key
+  // that spans rows is the same object in each of them.
   function rowsFor(layout, page) {
     if (layout === "digits") {
-      const pad = (c) => key(`c:${c}`, c, 3, { kind: "char", value: c });
       return [
-        ["1", "2", "3"].map(pad),
-        ["4", "5", "6"].map(pad),
-        ["7", "8", "9"].map(pad),
-        [key("backspace", "", 3, { kind: "backspace", icon: "backspace", aria: "Backspace" }), pad("0"), key("done", "Done", 3, { kind: "done" })]
+        chars("1 2 3"),
+        chars("4 5 6"),
+        chars("7 8 9"),
+        [key("backspace", "", 1, { kind: "backspace", icon: "backspace", aria: "Backspace" }), ch("0"), key("done", "Done", 1, { kind: "done" })]
       ];
     }
     const symbols = page === "symbols";
-    const base = symbols ? SYMBOLS : LETTERS;
-    const rows = base.map((r) => r.map(ch));
-    const back = key("backspace", "", symbols ? 4 : 3, { kind: "backspace", icon: "backspace", aria: "Backspace" });
-    if (symbols) rows[2].push(back);
-    else rows[2] = [key("shift", "", 3, { kind: "shift", icon: "shift", aria: "Shift" }), ...rows[2], back];
-    const pageKey = key("page", symbols ? "abc" : "123", 3, { kind: "page", aria: symbols ? "Letters" : "Digits and symbols" });
-    const left = key("left", "", UNIT, { kind: "left", icon: "left", aria: "Cursor left" });
-    const right = key("right", "", UNIT, { kind: "right", icon: "right", aria: "Cursor right" });
-    const done = key("done", "Done", 3, { kind: "done" });
-    let bottom;
-    if (layout === "email") {
-      bottom = [pageKey, ch("@"), ch("."), key("c:.com", ".com", 4, { kind: "char", value: ".com" }), left, right, done];
-    } else if (layout === "password") {
-      bottom = [pageKey, key("space", "space", 6, { kind: "char", value: " ", aria: "Space" }), key("show", "Show", 4, { kind: "show" }), left, right, done];
-    } else {
-      bottom = [pageKey, ch(","), key("space", "space", 6, { kind: "char", value: " ", aria: "Space" }), ch("."), left, right, done];
+    const email = layout === "email";
+    const letters = LETTERS[email ? "email" : "text"];
+    const rows = [chars(DIGITS)];
+    if (symbols) rows.push(...SYMBOLS.map(chars));
+    else {
+      rows.push(chars(letters[0]), chars(letters[1]));
+      rows.push([key("shift", "", 1, { kind: "shift", icon: "shift", aria: SHIFT_NAMES.off }), ...chars(letters[2])]);
     }
-    return [...rows, bottom];
+    const left = key("left", "", 1, { kind: "left", icon: "left", aria: "Cursor left" });
+    const right = key("right", "", 1, { kind: "right", icon: "right", aria: "Cursor right" });
+    const pageKey = (w) => key("page", symbols ? "abc" : "#+=", w, { kind: "page", aria: symbols ? "Letters" : "Symbols" });
+    const space = (w) => key("space", "space", w, { kind: "char", value: " ", aria: "Space" });
+    if (email) {
+      rows.unshift([...DOMAINS.map((d) => ch(d, 2)), ch("@", 2), ch(".com", 2)]);
+      rows.push([pageKey(4), Object.assign(left, { w: 3 }), Object.assign(right, { w: 3 })]);
+    } else if (layout === "password") {
+      rows.push([pageKey(2), space(3), key("show", "Show", 3, { kind: "show" }), left, right]);
+    } else {
+      rows.push([pageKey(2), space(6), left, right]);
+    }
+    // The action column: Backspace above, Done in the bottom three rows.
+    const back = key("backspace", "", 1, { kind: "backspace", icon: "backspace", aria: "Backspace", action: true });
+    const done = key("done", "Done", 1, { kind: "done", action: true });
+    return rows.map((row, r) => [...row, r < rows.length - 3 ? back : done]);
+  }
+
+  // Where the selection starts: the middle of the keys, one press from most.
+  function startOf(layout) {
+    return layout === "digits" ? "c:5" : "c:g";
   }
 
   /**
    * @param {Document} doc
    * @param {{onFocus?: (el: Element) => void}} [opts] — told of each key as it
-   *   is selected (for the ring)
+   *   is selected
    */
   function createKeyboard(doc, opts) {
     const o = opts || {};
@@ -91,7 +108,15 @@
     const preview = el("div", "tenfoot-kb-preview");
     preview.setAttribute("aria-hidden", "true");
     const grid = el("div", "tenfoot-kb-keys");
-    panel.append(preview, grid);
+    const hint = el("div", "tenfoot-kb-hint");
+    for (const [name, what] of HINTS) {
+      const item = el("span", "tenfoot-kb-hint-item");
+      const k = el("b", "tenfoot-kb-hint-key");
+      k.textContent = name;
+      item.append(k, doc.createTextNode(what));
+      hint.appendChild(item);
+    }
+    panel.append(preview, grid, hint);
     layer.appendChild(panel);
     (doc.documentElement || doc.body).appendChild(layer);
 
@@ -99,14 +124,16 @@
     let group = null; // a PIN's digit boxes, in order, when it has several
     let layout = "text";
     let page = "letters";
-    let shifted = false;
+    let shift = "off"; // "off", "once" (one capital) or "lock" (caps lock)
     let caret = 0;
     let shown = false; // a password box turned readable
     let origType = "";
     let settle = null;
-    let rows = []; // [{keys: [{spec, el}], }]
+    let rows = []; // [{keys: [{spec, el, x}], width}]
     let at = { r: 0, i: 0 };
     let column = null; // the x the selection keeps on ▲ ▼ across rows
+    let pressedEl = null;
+    let pressedTimer = null;
 
     // ----- the text ----------------------------------------------------------
 
@@ -191,11 +218,15 @@
       afterEdit();
     }
 
-    // A text box starts a name with a capital, and after a space; Shift is
-    // for the rest. A letter typed puts Shift back.
+    // A text box starts a name with a capital, and after a space. Caps lock
+    // stays on; otherwise what was typed puts Shift back.
+    function autoShift() {
+      return layout === "text" && (caret === 0 || /\s/.test(value()[caret - 1] || "")) ? "once" : "off";
+    }
+
     function afterEdit() {
       syncCaret();
-      shifted = layout === "text" && (caret === 0 || /\s/.test(value()[caret - 1] || ""));
+      if (shift !== "lock") shift = autoShift();
       refreshKeys();
     }
 
@@ -218,7 +249,7 @@
     // ----- drawing -----------------------------------------------------------
 
     function labelOf(spec) {
-      if (spec.kind === "char" && spec.id.startsWith("c:") && /^[a-z]$/.test(spec.value)) return shifted ? spec.value.toUpperCase() : spec.value;
+      if (spec.kind === "char" && spec.id.startsWith("c:") && /^[a-z]$/.test(spec.value)) return shift !== "off" ? spec.value.toUpperCase() : spec.value;
       if (spec.kind === "show") return shown ? "Hide" : "Show";
       return spec.label;
     }
@@ -228,7 +259,11 @@
         for (const k of row.keys) {
           const text = labelOf(k.spec);
           if (!k.spec.icon && k.el.textContent !== text) k.el.textContent = text;
-          if (k.spec.kind === "shift") k.el.setAttribute("aria-pressed", shifted ? "true" : "false");
+          if (k.spec.kind === "shift") {
+            k.el.setAttribute("aria-pressed", shift !== "off" ? "true" : "false");
+            k.el.setAttribute("aria-label", SHIFT_NAMES[shift]);
+            k.el.dataset.tenfootShift = shift;
+          }
         }
       }
       const v = shownValue();
@@ -243,40 +278,70 @@
       preview.append(before, bar, after);
     }
 
+    function classOf(spec) {
+      const kinds = [`tenfoot-kb-key--${spec.kind}`];
+      if (spec.id === "space" || spec.kind === "show" || spec.kind === "page" || spec.kind === "shift" || spec.kind === "backspace" || spec.kind === "left" || spec.kind === "right") kinds.push("tenfoot-kb-key--fn");
+      if (spec.kind === "char" && /^\d$/.test(spec.value)) kinds.push("tenfoot-kb-key--digit");
+      if (spec.kind === "char" && spec.value.length > 1) kinds.push("tenfoot-kb-key--chip");
+      if (spec.action) kinds.push("tenfoot-kb-key--action");
+      return `tenfoot-kb-key ${kinds.join(" ")}`;
+    }
+
+    function makeKey(spec, r, x) {
+      const b = el("button", classOf(spec));
+      b.type = "button";
+      b.dataset.tenfootKey = spec.id;
+      b.style.gridColumn = `${x + 1} / span ${spec.w}`;
+      b.style.gridRowStart = String(r + 1);
+      if (spec.aria) b.setAttribute("aria-label", spec.aria);
+      if (spec.icon) b.appendChild(Common.svgIcon(doc, ICONS[spec.icon], { strokeWidth: 2.5 }));
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        for (let row = 0; row < rows.length; row += 1) {
+          const i = rows[row].keys.findIndex((k) => k.el === b);
+          if (i >= 0) {
+            markCurrent(b);
+            at = { r: row, i };
+            break;
+          }
+        }
+        column = null;
+        press(spec);
+      });
+      grid.appendChild(b);
+      return b;
+    }
+
     function draw() {
       grid.textContent = "";
-      rows = rowsFor(layout, page).map((specs, r) => {
-        const row = el("div", "tenfoot-kb-row");
+      const made = new Map(); // a key spanning rows is one button
+      const specs = rowsFor(layout, page);
+      rows = specs.map((row, r) => {
         let x = 0;
-        const keys = specs.map((spec) => {
-          const b = el("button", `tenfoot-kb-key tenfoot-kb-key--${spec.kind}`);
-          b.type = "button";
-          b.dataset.tenfootKey = spec.id;
-          b.style.setProperty("--tf-kb-w", String(spec.w));
-          if (spec.aria) b.setAttribute("aria-label", spec.aria);
-          if (spec.icon) b.appendChild(Common.svgIcon(doc, ICONS[spec.icon], { strokeWidth: 2.5 }));
-          b.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            at = { r, i: keys.findIndex((k) => k.el === b) };
-            column = null;
-            press(spec);
-          });
-          row.appendChild(b);
-          const k = { spec, el: b, x: x + spec.w / 2 };
+        const keys = row.map((spec) => {
+          let k = made.get(spec);
+          if (!k) {
+            k = { spec, el: makeKey(spec, r, x), x: x + spec.w / 2, from: r };
+            made.set(spec, k);
+          } else k.el.style.gridRowEnd = String(r + 2);
           x += spec.w;
           return k;
         });
-        grid.appendChild(row);
         return { keys, width: x };
       });
+      grid.style.setProperty("--tf-kb-cols", String(rows.length ? rows[0].width : 1));
       refreshKeys();
     }
 
     // ----- the selection -----------------------------------------------------
 
-    // The key's centre, counted from the middle of its row, so rows of
-    // different lengths line up as they are drawn (centred).
+    function markCurrent(b) {
+      for (const stale of grid.querySelectorAll("[data-tenfoot-current]")) if (stale !== b) stale.removeAttribute("data-tenfoot-current");
+      if (b) b.setAttribute("data-tenfoot-current", "true");
+    }
+
+    // The key's centre, counted from the middle of its row.
     function centre(r, i) {
       const row = rows[r];
       return row.keys[i].x - row.width / 2;
@@ -290,9 +355,10 @@
       at = { r, i };
       if (!keepColumn) column = centre(r, i);
       const b = row.keys[i].el;
+      markCurrent(b);
       try {
         b.focus({ preventScroll: true });
-      } catch (_err) { /* the ring still marks it */ }
+      } catch (_err) { /* the selection still shows */ }
       if (typeof o.onFocus === "function") o.onFocus(b);
     }
 
@@ -305,41 +371,65 @@
       return best;
     }
 
-    // ◀ ▶ go along the row and round its ends; ▲ ▼ go to the key nearest
-    // the same place in the next row and stop at the top and the bottom.
+    // ◀ ▶ go along the row and round its ends; ▲ ▼ go to the key nearest the
+    // same place in the next row, past a key that spans rows, and stop at the
+    // top and the bottom.
     function move(action) {
       const row = rows[at.r];
       const n = row.keys.length;
       if (action === "left") focusAt(at.r, (at.i - 1 + n) % n);
       else if (action === "right") focusAt(at.r, (at.i + 1) % n);
       else {
-        const r = at.r + (action === "down" ? 1 : -1);
-        if (r < 0 || r >= rows.length) return;
+        const d = action === "down" ? 1 : -1;
+        const from = row.keys[at.i];
         if (column === null) column = centre(at.r, at.i);
-        focusAt(r, nearest(r), true);
+        for (let r = at.r + d; r >= 0 && r < rows.length; r += d) {
+          const i = nearest(r);
+          if (rows[r].keys[i] !== from) {
+            focusAt(r, i, true);
+            return;
+          }
+        }
       }
     }
 
     // ----- pressing keys -----------------------------------------------------
 
+    function clearPressed() {
+      if (pressedTimer !== null) win.clearTimeout(pressedTimer);
+      pressedTimer = null;
+      if (pressedEl) pressedEl.removeAttribute("data-tenfoot-pressed");
+      pressedEl = null;
+    }
+
+    // The key answers the press for a moment.
+    function showPressed(b) {
+      clearPressed();
+      pressedEl = b;
+      b.setAttribute("data-tenfoot-pressed", "true");
+      pressedTimer = win.setTimeout(clearPressed, PRESSED_MS);
+    }
+
     function press(spec) {
+      const k = rows[at.r] && rows[at.r].keys[at.i];
+      if (k && k.spec === spec) showPressed(k.el);
       switch (spec.kind) {
         case "char":
-          edit(shifted && /^[a-z]$/.test(spec.value) ? spec.value.toUpperCase() : spec.value, false);
+          edit(shift !== "off" && /^[a-z]$/.test(spec.value) ? spec.value.toUpperCase() : spec.value, false);
           break;
         case "backspace":
           edit("", true);
           break;
         case "shift":
-          shifted = !shifted;
+          shift = NEXT_SHIFT[shift];
           refreshKeys();
           break;
         case "page": {
           const was = rows[at.r].keys[at.i].spec.id;
           page = page === "letters" ? "symbols" : "letters";
           draw();
-          const r = rows.findIndex((row) => row.keys.some((k) => k.spec.id === was));
-          const i = r >= 0 ? rows[r].keys.findIndex((k) => k.spec.id === was) : 0;
+          const r = rows.findIndex((row) => row.keys.some((k2) => k2.spec.id === was));
+          const i = r >= 0 ? rows[r].keys.findIndex((k2) => k2.spec.id === was) : 0;
           focusAt(r >= 0 ? r : rows.length - 1, i);
           break;
         }
@@ -365,6 +455,7 @@
     function finish(answer) {
       if (layer.hidden) return;
       layer.hidden = true;
+      clearPressed();
       if (input && shown) {
         try {
           input.type = origType || "password";
@@ -404,13 +495,14 @@
       shown = false;
       caret = value().length;
       syncCaret();
-      shifted = layout === "text" && (caret === 0 || /\s/.test(value()[caret - 1] || ""));
+      shift = autoShift();
       column = null;
       draw();
       layer.hidden = false;
       const answer = new Promise((resolve) => { settle = resolve; });
-      // The selection starts on the first letter (a digit, on the number pad).
-      focusAt(0, 0);
+      const start = startOf(layout);
+      const r = Math.max(0, rows.findIndex((row) => row.keys.some((k) => k.spec.id === start)));
+      focusAt(r, Math.max(0, rows[r].keys.findIndex((k) => k.spec.id === start)));
       return answer;
     }
 
@@ -429,6 +521,9 @@
           if (k) press(k.spec);
           return true;
         }
+        case "menu":
+          edit("", true);
+          return true;
         case "back":
           finish(null);
           return true;
@@ -437,15 +532,30 @@
       }
     }
 
+    /** A real keyboard's key, while open: a character, or "Backspace". */
+    function typed(c) {
+      if (layer.hidden) return false;
+      if (c === "Backspace") edit("", true);
+      else edit(c, false);
+      return true;
+    }
+
     return Object.freeze({
       open,
       key: keyDown,
+      typed,
       close: () => finish(null),
       refocus: () => focusAt(at.r, at.i, true),
       contains: (n) => Boolean(n) && layer.contains(n),
       get isOpen() { return !layer.hidden; },
       get current() { return layer.hidden || !rows[at.r] ? null : rows[at.r].keys[at.i].el; },
-      get state() { return { layout, page, shifted, caret, shown, key: rows[at.r] ? rows[at.r].keys[at.i].spec.id : null }; },
+      get state() {
+        return {
+          layout, page, shift, shifted: shift !== "off", caret, shown,
+          key: rows[at.r] ? rows[at.r].keys[at.i].spec.id : null,
+          rows: rows.map((row) => row.keys.map((k) => k.spec.id))
+        };
+      },
       element: layer
     });
   }
