@@ -214,9 +214,11 @@ with a tick, one in progress with a bar. A show opens on its newest season
 episode to watch next. A special (a stand-up set, a film) has *Watch Movie*
 and its extras.
 
-**Search**: type into the large box at the top; Dropout's results appear
-below as cards as you type. ▼ goes to the filters (*All*, *Videos*,
-*Collections*), then the results.
+**Search**: OK on the search glyph opens a keyboard panel beside the rail, with the
+search box on it and Dropout's results beside it as you type. *Done* (or ▶ at the
+panel's right edge) goes to the results, and ▲ from there to the filters (*All*,
+*Videos*, *Collections*). ◀ comes back to the panel, and ◀ again at its left edge
+reaches the rail.
 
 **An episode's details page** opens when you choose an episode — any card,
 Continue Watching included, a show's yellow button, *Watch Movie* or an

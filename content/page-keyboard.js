@@ -51,31 +51,69 @@
       return false;
     }
 
-    // A box of one of Leanback's screens (a profile's name) that would sit
-    // behind the keyboard: the screen goes up until it is in view above it.
-    function liftAbove(box) {
-      if (!state.screen || !state.screen.contains(box)) return;
-      const panel = state.keyboard.element.querySelector(".tenfoot-kb-panel");
-      if (!panel) return;
-      const gap = Math.round((window.innerHeight || 0) * 0.04);
-      const need = box.getBoundingClientRect().bottom + gap - panel.getBoundingClientRect().top;
-      if (need > 0) state.screen.setLift(state.screen.lift + need);
-    }
-
     function openFor(box) {
       const layout = layoutFor(box);
       if (!layout || !state.keyboard || state.keyboard.isOpen) return false;
       root.setAttribute("data-tenfoot-keyboard", "on");
       const boxes = layout === "digits" ? pinBoxes() : null;
       const answered = state.keyboard.open(box, { layout, boxes });
-      liftAbove(box);
       answered.then((answer) => {
         root.removeAttribute("data-tenfoot-keyboard");
-        if (state.screen) state.screen.setLift(0);
         state.typedBox = null;
         if (answer === "done") enterIn(box);
       });
       return true;
+    }
+
+    // The search page's keyboard: up as soon as the page is, with the search
+    // box on it and the selection on its keys. The box on the screen stays
+    // hidden, only what the keyboard types into.
+    function dockKeyboard() {
+      if (!state.keyboard || !state.screen || state.keyboard.isDocked) return false;
+      const box = qs(".tenfoot-screen-field-input", state.screen.element);
+      if (!box) return false;
+      root.setAttribute("data-tenfoot-keyboard", "on");
+      root.setAttribute("data-tenfoot-keyboard-docked", "on");
+      state.pendingInitialFocus = 0;
+      state.keyboard.open(box, { layout: "text", docked: true }).then(() => {
+        root.removeAttribute("data-tenfoot-keyboard");
+        root.removeAttribute("data-tenfoot-keyboard-docked");
+      });
+      return true;
+    }
+
+    function undockKeyboard() {
+      if (state.keyboard && state.keyboard.isDocked) state.keyboard.close();
+    }
+
+    // Out to the results: the first when asked (Done), else where the selection
+    // last was. Nothing to go to: it stays.
+    function toResults(first) {
+      const s = state.screen;
+      if (!s) return false;
+      state.keyboard.leave();
+      const target = first || !s.started ? s.initialTarget() : s.current || s.initialTarget();
+      if (!target) {
+        state.keyboard.enter();
+        return false;
+      }
+      P.focusEl(target, { scroll: false });
+      return true;
+    }
+
+    // ◀ and ▶ past the docked keyboard's edges: the rail, the results.
+    function keyboardEdge(dir) {
+      if (dir === "right") return toResults(false);
+      state.keyboard.leave();
+      if (P.enterRail()) return true;
+      state.keyboard.enter();
+      return false;
+    }
+
+    // The selection is back on the docked keyboard: not on the rail any more.
+    function keyboardEntered() {
+      state.railActive = false;
+      state.railReturn = null;
     }
 
     // A key in a text box, before the page script's own handling. Typing
@@ -106,7 +144,7 @@
       if (state.typedBox && state.typedBox !== el) state.typedBox = null;
     }
 
-    Object.assign(P, { onBoxKey, onClick, onSelect });
+    Object.assign(P, { onBoxKey, onClick, onSelect, dockKeyboard, undockKeyboard, toResults, keyboardEdge, keyboardEntered });
   }
 
   globalThis.TenfootPageKeyboard = Object.freeze({ install });

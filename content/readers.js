@@ -14,6 +14,7 @@
   const qsa = (sel, scope) => (scope ? Common.qsa(sel, scope) : []);
   // A standard grid's columns.
   const { COLUMNS } = globalThis.TenfootScreen;
+  const SEARCH_COLUMNS = 3; // beside the docked keyboard
 
     /**
      * What a collection page holds: its title, its tiles in page order (one per
@@ -69,12 +70,12 @@
         kind: "search",
         head: "",
         hero: null,
-        field: { value: String(input.value || ""), placeholder: input.getAttribute("placeholder") || "Search", proxy: input },
+        // The box is on the docked keyboard (page-keyboard.js), not the screen.
+        field: { value: String(input.value || ""), placeholder: input.getAttribute("placeholder") || "Search", proxy: input, docked: true },
         pills: filters.length ? { items: filters } : null,
-        sections: [{ key: "results", title: "", sub: "", columns: COLUMNS, items: page.items }],
+        sections: [{ key: "results", title: "", sub: "", columns: SEARCH_COLUMNS, items: page.items }],
         empty: textOf(qs(rules.empty, doc)),
-        more: qs(rules.more, doc),
-        start: "field"
+        more: qs(rules.more, doc)
       };
     }
 

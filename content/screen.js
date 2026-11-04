@@ -144,6 +144,12 @@
     fieldBox.appendChild(field);
     field.addEventListener("input", () => {
       if (model && model.field) Common.typeInto(model.field.proxy, field.value);
+      // New words on the docked keyboard: the results start again from the top.
+      if (model && model.field && model.field.docked) {
+        pos = { row: 0, col: 0 };
+        started = false;
+        applyScroll();
+      }
     });
     field.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
@@ -381,7 +387,7 @@
     // overwritten by a slower page.
     function renderField() {
       const f = model && model.field;
-      fieldBox.hidden = !f;
+      fieldBox.hidden = !f || Boolean(f.docked);
       if (!f) return;
       setAttr(field, "placeholder", f.placeholder || null);
       setAttr(field, "aria-label", f.placeholder || "Search");
@@ -470,7 +476,7 @@
     function buildRows() {
       const next = [];
       const parts = { field: [], actions: [], pills: [], sections: [] };
-      if (model && model.field) parts.field.push({ key: "field", kind: "field", els: [field], keys: ["field"] });
+      if (model && model.field && !model.field.docked) parts.field.push({ key: "field", kind: "field", els: [field], keys: ["field"] });
       if (model && model.hero && actionEls.size) parts.actions.push({ key: "actions", kind: "actions", els: heroButtons(), keys: heroKeys() });
       if (pillEls.size) parts.pills.push({ key: "pills", kind: "pills", els: Array.from(pillEls.values()), keys: Array.from(pillEls.keys()) });
       for (const s of (model && model.sections) || []) {
@@ -631,7 +637,7 @@
       remember();
       const row = rows[pos.row];
       const lastCards = rows.length - 1;
-      if (row && row.kind === "cards" && pos.row >= lastCards - PREFETCH_ROWS && (entered || layoutOf(row) !== "row")) wantMore();
+      if (row && row.kind === "cards" && pos.row >= lastCards - PREFETCH_ROWS && (entered || layoutOf(row) !== "row") && !(typeof o.holdMore === "function" && o.holdMore())) wantMore();
       applyScroll();
       const target = current();
       return target ? { el: target } : { edge: "none" };

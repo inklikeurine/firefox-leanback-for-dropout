@@ -1,21 +1,24 @@
-// Leanback for Dropout — the on-screen keyboard: a panel along the bottom of
-// the screen, over the box being typed in, which stays visible above it.
-// The page script routes keys to it while it is open (as for a question,
-// nav/ask.js): ◀ ▶ ▲ ▼ move the selection between keys, OK types the key, Menu
-// takes out the letter before the cursor, Back (Escape) closes it without an
-// answer. Held keys repeat as the browser repeats them; the page script
-// already slows held moves.
+// Leanback for Dropout — the on-screen keyboard: a panel down the left of the
+// screen, beside the rail, with what is being typed in at its top and the page
+// beside it. The page script routes keys to it while it has the selection (as
+// for a question, nav/ask.js): ◀ ▶ ▲ ▼ move the selection between keys, OK types
+// the key, Menu takes out the letter before the cursor, Back (Escape) closes it
+// without an answer. Held keys repeat as the browser repeats them; the page
+// script already slows held moves.
 //
-// The keys sit on a grid, so ▲ ▼ go straight up and down. Every layout but the
-// number pad has a row of digits, then letters (QWERTY) or a page of symbols;
-// an action column at the end of every row holds Backspace and Done, so ◀ from
-// the left edge reaches them at once. A layout says what else there is: "text"
-// (Space), "email" (a row of whole endings, @ and .com, on top), "password"
-// (Space and a Show / Hide key that turns the box between hidden and readable),
-// or "digits" (a number pad, for a PIN; a PIN's separate digit boxes are given
-// as a group, and each digit goes into the next empty one).
+// The keys sit on a grid six across, so ▲ ▼ go straight up and down: the keys
+// that act on the text, the letters (A to Z), the digits, then Space and Done. A
+// layout says what else there is: "text", "email" (a row of whole endings on top
+// and .com in place of Space), "password" (a Show / Hide key that turns the box
+// between hidden and readable), or "digits" (a number pad, for a PIN; a PIN's
+// separate digit boxes are given as a group, and each digit goes into the next
+// empty one).
 //
 // Shift has three steps: off, one capital, caps lock.
+//
+// Docked, it stays up beside the page, the search page's way of typing: the
+// selection can leave it for the page and come back. ◀ and ▶ at its edges tell
+// the page script, which moves on, and Done is the page script's too.
 //
 // Typing goes into any <input> at the cursor, with beforeinput and input
 // events, so a box that mirrors into the site's own (search) keeps working.
@@ -24,12 +27,10 @@
 // on the panel's top line.
 
 (function () {
-  const LETTERS = {
-    text: ["q w e r t y u i o p", "a s d f g h j k l '", "z x c v b n m , ."],
-    email: ["q w e r t y u i o p", "a s d f g h j k l .", "z x c v b n m - _"]
-  };
-  const DIGITS = "1 2 3 4 5 6 7 8 9 0";
-  const SYMBOLS = ["- / : ; ( ) $ & @ \"", ". , ? ! ' _ # % + =", "* ~ ^ | \\ < > [ ] {"];
+  const LETTERS = ["a b c d e f", "g h i j k l", "m n o p q r", "s t u v w x"];
+  const LAST_LETTERS = { text: "y z . , ' -", email: "y z . - _ @" };
+  const DIGITS = { text: ["1 2 3 4 5 6", "7 8 9 0 @ _"], email: ["1 2 3 4 5 6", "7 8 9 0 + '"] };
+  const SYMBOLS = ["- / : ; ( )", "$ & @ \" . ,", "? ! ' _ # %", "+ = * ~ ^ |", "\\ < > [ ] {"];
   const DOMAINS = ["@gmail.com", "@outlook.com", "@icloud.com"];
   const ICONS = {
     shift: "M12 4l8 9h-5v7H9v-7H4z",
@@ -40,6 +41,7 @@
   const SHIFT_NAMES = { off: "Shift", once: "Shift: one capital", lock: "Caps lock" };
   const NEXT_SHIFT = { off: "once", once: "lock", lock: "off" };
   const HINTS = [["OK", "Type"], ["Menu", "Delete"], ["Back", "Close"]];
+  const DOCKED_HINTS = [["OK", "Type"], ["Menu", "Delete"], ["▶", "at the edge: results"]];
   const PRESSED_MS = 120;
 
   const key = (id, label, w, extra) => Object.assign({ id, label, w }, extra);
@@ -59,40 +61,36 @@
     }
     const symbols = page === "symbols";
     const email = layout === "email";
-    const letters = LETTERS[email ? "email" : "text"];
-    const rows = [chars(DIGITS)];
-    if (symbols) rows.push(...SYMBOLS.map(chars));
-    else {
-      rows.push(chars(letters[0]), chars(letters[1]));
-      rows.push([key("shift", "", 1, { kind: "shift", icon: "shift", aria: SHIFT_NAMES.off }), ...chars(letters[2])]);
-    }
     const left = key("left", "", 1, { kind: "left", icon: "left", aria: "Cursor left" });
     const right = key("right", "", 1, { kind: "right", icon: "right", aria: "Cursor right" });
-    const pageKey = (w) => key("page", symbols ? "abc" : "#+=", w, { kind: "page", aria: symbols ? "Letters" : "Symbols" });
+    const back = (w) => key("backspace", "", w, { kind: "backspace", icon: "backspace", aria: "Backspace" });
+    const pageKey = key("page", symbols ? "abc" : "#+=", 1, { kind: "page", aria: symbols ? "Letters" : "Symbols" });
+    const done = (w) => key("done", "Done", w, { kind: "done" });
     const space = (w) => key("space", "space", w, { kind: "char", value: " ", aria: "Space" });
-    if (email) {
-      rows.unshift([...DOMAINS.map((d) => ch(d, 2)), ch("@", 2), ch(".com", 2)]);
-      rows.push([pageKey(4), Object.assign(left, { w: 3 }), Object.assign(right, { w: 3 })]);
-    } else if (layout === "password") {
-      rows.push([pageKey(2), space(3), key("show", "Show", 3, { kind: "show" }), left, right]);
-    } else {
-      rows.push([pageKey(2), space(6), left, right]);
+    const rows = [];
+    if (email) rows.push(DOMAINS.map((d) => ch(d, 2)));
+    if (symbols) rows.push([pageKey, left, right, back(3)], ...SYMBOLS.map(chars));
+    else {
+      rows.push([key("shift", "", 1, { kind: "shift", icon: "shift", aria: SHIFT_NAMES.off }), pageKey, left, right, back(2)]);
+      rows.push(...LETTERS.map(chars), chars(LAST_LETTERS[email ? "email" : "text"]));
     }
-    // The action column: Backspace above, Done in the bottom three rows.
-    const back = key("backspace", "", 1, { kind: "backspace", icon: "backspace", aria: "Backspace", action: true });
-    const done = key("done", "Done", 1, { kind: "done", action: true });
-    return rows.map((row, r) => [...row, r < rows.length - 3 ? back : done]);
+    rows.push(...DIGITS[email ? "email" : "text"].map(chars));
+    if (email) rows.push([ch(".com", 3), done(3)]);
+    else if (layout === "password") rows.push([space(2), key("show", "Show", 2, { kind: "show" }), done(2)]);
+    else rows.push([space(3), done(3)]);
+    return rows;
   }
 
-  // Where the selection starts: the middle of the keys, one press from most.
+  // Where the selection starts.
   function startOf(layout) {
-    return layout === "digits" ? "c:5" : "c:g";
+    return layout === "digits" ? "c:5" : "c:a";
   }
 
   /**
    * @param {Document} doc
-   * @param {{onFocus?: (el: Element) => void}} [opts] — told of each key as it
-   *   is selected
+   * @param {{onFocus?: (el: Element) => void, onEdge?: (dir: "left"|"right") => void, onDone?: () => void, onEnter?: () => void}} [opts] —
+   *   onFocus: told of each key as it is selected; docked, onEdge: ◀ or ▶ past
+   *   its edge, onDone: Done pressed, onEnter: the selection came back to it
    */
   function createKeyboard(doc, opts) {
     const o = opts || {};
@@ -109,13 +107,6 @@
     preview.setAttribute("aria-hidden", "true");
     const grid = el("div", "tenfoot-kb-keys");
     const hint = el("div", "tenfoot-kb-hint");
-    for (const [name, what] of HINTS) {
-      const item = el("span", "tenfoot-kb-hint-item");
-      const k = el("b", "tenfoot-kb-hint-key");
-      k.textContent = name;
-      item.append(k, doc.createTextNode(what));
-      hint.appendChild(item);
-    }
     panel.append(preview, grid, hint);
     layer.appendChild(panel);
     (doc.documentElement || doc.body).appendChild(layer);
@@ -134,6 +125,9 @@
     let column = null; // the x the selection keeps on ▲ ▼ across rows
     let pressedEl = null;
     let pressedTimer = null;
+    let docked = false; // stays up beside the page
+    let active = true; // has the selection (docked, it can leave)
+    let seen = ""; // the text as last drawn
 
     // ----- the text ----------------------------------------------------------
 
@@ -266,6 +260,7 @@
           }
         }
       }
+      seen = value();
       const v = shownValue();
       const masked = (layout === "password" && !shown) || layout === "digits" ? "•".repeat(v.length) : v;
       const c = group ? masked.length : Math.max(0, Math.min(masked.length, caret));
@@ -276,6 +271,24 @@
       const after = el("span", "tenfoot-kb-text");
       after.textContent = masked.slice(c);
       preview.append(before, bar, after);
+      if (!masked && input && input.placeholder) {
+        const words = el("span", "tenfoot-kb-placeholder");
+        words.textContent = input.placeholder;
+        preview.appendChild(words);
+      }
+      // A long text shows its end, where the cursor usually is.
+      preview.scrollLeft = Math.max(0, bar.offsetLeft - preview.clientWidth + bar.offsetWidth + 2);
+    }
+
+    function drawHints() {
+      hint.textContent = "";
+      for (const [name, what] of docked ? DOCKED_HINTS : HINTS) {
+        const item = el("span", "tenfoot-kb-hint-item");
+        const k = el("b", "tenfoot-kb-hint-key");
+        k.textContent = name;
+        item.append(k, doc.createTextNode(what));
+        hint.appendChild(item);
+      }
     }
 
     function classOf(spec) {
@@ -283,7 +296,6 @@
       if (spec.id === "space" || spec.kind === "show" || spec.kind === "page" || spec.kind === "shift" || spec.kind === "backspace" || spec.kind === "left" || spec.kind === "right") kinds.push("tenfoot-kb-key--fn");
       if (spec.kind === "char" && /^\d$/.test(spec.value)) kinds.push("tenfoot-kb-key--digit");
       if (spec.kind === "char" && spec.value.length > 1) kinds.push("tenfoot-kb-key--chip");
-      if (spec.action) kinds.push("tenfoot-kb-key--action");
       return `tenfoot-kb-key ${kinds.join(" ")}`;
     }
 
@@ -303,6 +315,10 @@
           if (i >= 0) {
             markCurrent(b);
             at = { r: row, i };
+            if (docked && !active) {
+              active = true;
+              if (typeof o.onEnter === "function") o.onEnter();
+            }
             break;
           }
         }
@@ -331,6 +347,7 @@
         return { keys, width: x };
       });
       grid.style.setProperty("--tf-kb-cols", String(rows.length ? rows[0].width : 1));
+      grid.style.setProperty("--tf-kb-rows", String(rows.length || 1));
       refreshKeys();
     }
 
@@ -371,15 +388,20 @@
       return best;
     }
 
-    // ◀ ▶ go along the row and round its ends; ▲ ▼ go to the key nearest the
-    // same place in the next row, past a key that spans rows, and stop at the
-    // top and the bottom.
+    // ◀ ▶ go along the row and round its ends (docked, past them, which the page
+    // script takes up); ▲ ▼ go to the key nearest the same place in the next row,
+    // past a key that spans rows, and stop at the top and the bottom.
     function move(action) {
       const row = rows[at.r];
       const n = row.keys.length;
-      if (action === "left") focusAt(at.r, (at.i - 1 + n) % n);
-      else if (action === "right") focusAt(at.r, (at.i + 1) % n);
-      else {
+      if (action === "left" || action === "right") {
+        const d = action === "left" ? -1 : 1;
+        if (docked && (at.i + d < 0 || at.i + d >= n)) {
+          if (typeof o.onEdge === "function") o.onEdge(action);
+          return;
+        }
+        focusAt(at.r, (at.i + d + n) % n);
+      } else {
         const d = action === "down" ? 1 : -1;
         const from = row.keys[at.i];
         if (column === null) column = centre(at.r, at.i);
@@ -443,7 +465,8 @@
           toggleShow();
           break;
         case "done":
-          finish("done");
+          if (!docked) finish("done");
+          else if (typeof o.onDone === "function") o.onDone();
           break;
         default:
           break;
@@ -463,13 +486,17 @@
       }
       const done = settle;
       const box = group ? group.find((b) => !b.value) || group[group.length - 1] : input;
+      const wasDocked = docked;
       settle = null;
       input = null;
       group = null;
       shown = false;
+      docked = false;
+      active = true;
+      layer.removeAttribute("data-tenfoot-docked");
       if (done) done(answer);
       // The selection goes back to the box.
-      if (box && box.isConnected) {
+      if (!wasDocked && box && box.isConnected) {
         try {
           box.focus({ preventScroll: true });
         } catch (_err) { /* the page puts it back */ }
@@ -480,8 +507,9 @@
      * Open for a box. Resolves with "done" when Done is pressed, or null when
      * it is closed otherwise (Back, or another box taking it over).
      * @param {HTMLInputElement} box
-     * @param {{layout?: "text"|"email"|"password"|"digits", page?: "letters"|"symbols", boxes?: HTMLInputElement[]}} [how] —
-     *   boxes: a PIN's digit boxes, when it has several
+     * @param {{layout?: "text"|"email"|"password"|"digits", page?: "letters"|"symbols", boxes?: HTMLInputElement[], docked?: boolean}} [how] —
+     *   boxes: a PIN's digit boxes, when it has several; docked: stays up beside
+     *   the page until closed
      * @returns {Promise<"done"|null>}
      */
     function open(box, how) {
@@ -497,7 +525,12 @@
       syncCaret();
       shift = autoShift();
       column = null;
+      docked = Boolean(h.docked);
+      active = true;
+      if (docked) layer.setAttribute("data-tenfoot-docked", "true");
+      layer.dataset.tenfootLayout = layout;
       draw();
+      drawHints();
       layer.hidden = false;
       const answer = new Promise((resolve) => { settle = resolve; });
       const start = startOf(layout);
@@ -508,7 +541,7 @@
 
     /** A key, while open: true when it was the keyboard's. */
     function keyDown(action) {
-      if (layer.hidden) return false;
+      if (layer.hidden || !active) return false;
       switch (action) {
         case "left":
         case "right":
@@ -525,6 +558,7 @@
           edit("", true);
           return true;
         case "back":
+          if (docked) return false;
           finish(null);
           return true;
         default:
@@ -532,9 +566,36 @@
       }
     }
 
+    // Docked: the box's text changed by other means (a search from the address,
+    // Firefox's Back through the searches).
+    function refresh() {
+      if (layer.hidden || !input || value() === seen) return;
+      syncCaret();
+      if (shift !== "lock") shift = autoShift();
+      refreshKeys();
+    }
+
+    // Docked: the selection has gone to the page; the panel stays.
+    function leave() {
+      if (layer.hidden || !docked) return;
+      active = false;
+      markCurrent(null);
+    }
+
+    // Docked: the selection comes back, where it was, or along its row's last
+    // key when it comes from the right.
+    function enter(from) {
+      if (layer.hidden || !docked) return;
+      active = true;
+      const row = rows[at.r];
+      focusAt(at.r, from === "right" && row ? row.keys.length - 1 : at.i);
+      if (typeof o.onEnter === "function") o.onEnter();
+    }
+
     /** A real keyboard's key, while open: a character, or "Backspace". */
     function typed(c) {
       if (layer.hidden) return false;
+      if (!active) enter();
       if (c === "Backspace") edit("", true);
       else edit(c, false);
       return true;
@@ -544,11 +605,15 @@
       open,
       key: keyDown,
       typed,
+      refresh,
+      leave,
+      enter,
       close: () => finish(null),
       refocus: () => focusAt(at.r, at.i, true),
       contains: (n) => Boolean(n) && layer.contains(n),
-      get isOpen() { return !layer.hidden; },
-      get current() { return layer.hidden || !rows[at.r] ? null : rows[at.r].keys[at.i].el; },
+      get isOpen() { return !layer.hidden && active; },
+      get isDocked() { return !layer.hidden && docked; },
+      get current() { return layer.hidden || !active || !rows[at.r] ? null : rows[at.r].keys[at.i].el; },
       get state() {
         return {
           layout, page, shift, shifted: shift !== "off", caret, shown,

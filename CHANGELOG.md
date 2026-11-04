@@ -9,14 +9,21 @@
   the settings, and it answers for a moment on OK. *Done* is accent-colour text
   until selected, so it no longer looks selected all the time. A line along the
   foot says what the remote's keys do.
-- **The keys are on a grid with a number row.** Digits are always there, ▲ ▼ go
-  straight up and down, and Backspace and *Done* sit at the end of every row, so
-  ◀ from the left edge reaches them at once. The other page is symbols (*#+=*).
-  The selection starts on *g* (*5* on a PIN's pad), in the middle of the keys.
+- **The keyboard is a panel beside the page.** It sits down the left of the
+  screen, next to the rail, instead of along the bottom, and the page moves over.
+  What is being typed in is at its top.
+- **Search has the panel up all the time, with results beside it.** OK on the search
+  glyph opens the page with the selection on the keys and the search box on the panel.
+  Results follow as you type, three across. *Done* goes to the first result and leaves
+  the panel up, ▶ on the right column goes to the results, ◀ on the left column to
+  the rail.
+- **The keys are on a grid six across.** ▲ ▼ go straight up and down. The letters run
+  A to Z, with two rows of digits under them that are always there, and the other
+  page is symbols (*#+=*). The selection starts on *a* (*5* on a PIN's pad).
 - **Shift has three steps:** off, one capital, caps lock, and the key looks
   different in each.
 - **Email boxes have a row of whole endings:** `@gmail.com`, `@outlook.com` and
-  `@icloud.com`, one press each, beside `@` and `.com`.
+  `@icloud.com`, one press each, and `.com` in place of Space.
 - **The remote's Menu deletes a letter** while the keyboard is open, and a real
   keyboard types while it is open.
 

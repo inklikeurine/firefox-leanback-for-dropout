@@ -327,32 +327,32 @@ use ([targets.md](./targets.md)).
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per
   tab, so Back from it, or its *Browse*, comes back to Home and stays.
-- **The on-screen keyboard** (`nav/keyboard.js`). OK on one of Leanback's
+- **The on-screen keyboard** (`nav/keyboard.js`). A panel down the left of the
+  screen, beside the rail, with what is being typed in at its top and the page
+  beside it (the sign-in screen, a profile's form and Dropout's PIN form move over
+  to make room). OK on one of Leanback's
   own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
-  search box, the name box of Add Profile and Edit Profile, and the digit boxes
-  of a PIN-locked profile's PIN screen (Dropout's own) — opens a panel along the bottom of the screen with the box
-  still in view above it (the sign-in screen, and a profile's form, move up), and
-  on search the results keep showing above it as they arrive. A pointer click on
-  one of those boxes opens it too, since the air mouse has no keyboard.
+  name box of Add Profile and Edit Profile, and the digit boxes
+  of a PIN-locked profile's PIN screen (Dropout's own) — opens it, and a pointer click on
+  one of those boxes opens it too, since the air mouse has no keyboard. On search it
+  is always up (see **Search**).
   The look is bare letters: a key has no box until it is selected, when it
   becomes a solid accent-colour pill with no ring, and for a moment on OK it
-  answers. *Done* is accent-colour text until selected. The keys sit on a grid:
-  a number row, the letters in QWERTY rows, *Shift*, a page of symbols (*#+=* /
-  *abc*), *Space*, ◀ ▶ to move in the text, and an action column with *Backspace*
-  and *Done* at the end of every row. **Shift has three steps:** off (an outline),
+  answers. *Done* is accent-colour text until selected. The keys sit on a grid six
+  across: *Shift*, a page of symbols (*#+=* / *abc*), ◀ ▶ to move in the text and
+  *Backspace*; the letters A to Z; two rows of digits; *Space* and *Done*. **Shift has three steps:** off (an outline),
   one capital (solid), caps lock (solid with a bar under it). A text box starts with a
   capital and takes one after a space. An email box has a row on top with
-  `@gmail.com`, `@outlook.com`, `@icloud.com`, `@` and `.com`, one press each,
-  and no *Space*; a password box has *Show* / *Hide*, which
+  `@gmail.com`, `@outlook.com` and `@icloud.com`, one press each, `@` among the
+  letters and `.com` in place of *Space*; a password box has *Show* / *Hide*, which
   turns it readable and back; a PIN gets a number pad whose digits go into
   the PIN screen's boxes in turn (shown as dots on the panel's top line), and
-  *Done* presses Dropout's button. The selection starts in the middle (*g*, or
-  *5* on the pad). ◀ ▶ go along a row and round its ends, so ◀ from the left edge
-  reaches the action column; ▲ ▼ go straight up and down and stop at the top and
-  bottom. OK types; **the remote's Menu takes out the letter before the cursor**,
-  from wherever the selection is, and a line along the foot says so. *Done* closes it and does what Enter in the box does
-  (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*,
-  search → the results), Escape closes it and the selection is back on the
+  *Done* presses Dropout's button. The selection starts on *a* (*5* on the pad).
+  ◀ ▶ go along a row and round its ends; ▲ ▼ go straight up and down and stop at
+  the top and bottom. OK types; **the remote's Menu takes out the letter before the
+  cursor**, from wherever the selection is, and a line along the foot says so.
+  *Done* closes it and does what Enter in the box does
+  (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*), Escape closes it and the selection is back on the
   box. Typing with a real keyboard goes into the box, the keyboard open or not;
   in a box typed in that way with it closed, Enter
   is its own again until the selection moves on. Nothing else gets
@@ -411,14 +411,20 @@ use ([targets.md](./targets.md)).
     (where the selection starts) and *My List*, then the movie and its Extras.
   - Not drawn: Share, the season drop-down and sort control, and the My List
     button Dropout puts on each episode for a mouse.
-- **Search** (`/search`): Leanback's own box at the top, as wide as five
-  cards, large text, ringed but not grown; what is typed goes into Dropout's
-  box, and Dropout's results come back as Home's cards, five across. Under
-  the box, Dropout's type filters (*All (118)*, *Videos (115)*, *Collections
-  (4)*) as pills, the one on screen yellow. With nothing typed, Dropout's own
-  words ("Start typing to see results"). The selection starts in the box;
-  OK in it opens the on-screen keyboard, whose *Done* (or, typing with a
-  real keyboard, Enter) goes down to the filters and results.
+- **Search** (`/search`): OK on the search glyph opens it with **the keyboard
+  docked beside the page and the selection on its keys**: the search box is at the
+  top of the panel, not on the page, and what is typed goes into Dropout's box.
+  Beside the panel, Dropout's results come back as Home's cards, three across, under
+  Dropout's type filters (*All (118)*, *Videos (115)*, *Collections
+  (4)*) as pills, the one on screen yellow. They follow as you type, from Dropout's
+  own two letters on, and start again from the top with new words. With nothing typed, Dropout's own
+  words ("Start typing to see results"). **The panel stays for as long as the page
+  does.** *Done* goes to the first result (the filters if there are no results
+  yet, and nothing moves with neither). ▶ on the panel's right column goes to the
+  results, back where the selection was; ◀ from the results' left column comes back to
+  the panel; ◀ on the panel's left column goes to the rail, and ▶ or OK on the search glyph comes back.
+  ◀ ▶ don't go round a row here. A real keyboard's letter brings the selection back to the
+  keys and types. Back leaves search, in one step from the panel as from the results.
   *Load More* is pressed near the end of the results, never while typing.
 - **Spatial navigation** on the pages Leanback does not draw: arrow keys
   move DOM focus to the nearest focusable element in that direction. A tile
@@ -696,8 +702,8 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 25 | On the season row, switch season, open an episode; then Back, Back | The season you switched to, then Home — not the first season |
 | 26 | Watch an episode for a moment, then the remote's Back, Back; on each page, press ◀ ▶ | Every page answers the remote straight away; no page needs a reload |
 | 27 | Open any page from the rail, watching the screen as it loads | A dark screen, then Leanback's; Dropout's own page never shows first |
-| 28 | `/search`: type a query | Leanback's box at the top, ringed, not grown; letters appear in it and Dropout's results arrive as cards five across; ▼ the filters (*All (…)* yellow), ▼ the results; OK on *Videos* shows only videos. In the box, Left moves the text cursor and at the start of the text reaches the rail; Right returns. Up from the first row of results reaches the filters, then the box |
-| 29 | Search: type a word with the on-screen keyboard, Backspace, the same letter again, *Done*; ▶ to *Videos*, OK; then ◀ to the rail, Home, OK; then Back | Home opens (not an earlier search); Back from Home goes where you were before Search. Escape from the results instead leaves Search in one step |
+| 28 | OK on the search glyph; type a query with the keys | The panel beside the rail, its box at the top saying "Search", *a* a solid pill with no ring; letters appear in the box; from the second letter Dropout's results arrive beside it, three across, under the filters (*All (…)* yellow) |
+| 29 | Search: type a word, Menu, the same letter again, *Done*; ▲ to the filters, ▶ to *Videos*, OK; ◀ to the panel; ◀ to the left column and once more to the rail; Home, OK; then Back | *Done* lands on the first result; *Videos* changes the results; the panel stays throughout; Home opens (not an earlier search); Back from Home goes where you were before Search. Escape from the panel or the results instead leaves Search in one step |
 | 30 | Rail → Dropout 24/7; *Watch*; then Back, Back | Dropout's 24/7 page: its banner picture, "Dropout 24/7", *Watch* ringed, the 24/7 icon yellow; then the stream in the full window, with sound, the address still the 24/7 page's; Back: the 24/7 page, *Watch* ringed; Back: where you were |
 | 31 | On a details page, press MediaPlayPause; then again | The video starts as with *Watch*; then pauses |
 | 32 | Let an episode end (or seek near the end) | Eight seconds before the end, the "Up next" card: picture, ring counting down, "UP NEXT · 0:08", "S… · E…", the show, *OK Play now · ◀ Hide*; the next episode starts at the end. Again with OK: it starts at once. Again with ◀: the card goes and nothing plays by itself |
@@ -732,7 +738,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 61 | Sign-in screen: your email and password, *Sign in*, OK | "Signing in…", then "Who is watching?"; choosing a profile opens Home |
 | 62 | Sign-in screen: a wrong password, *Sign in*, OK | Dropout's message in a red box under the title, the email kept, the password box empty and ringed |
 | 63 | Sign-in screen: *Forgot password?*, OK; *Send reset email*, OK (Dropout sends you a reset email) | "Reset password" with the email carried over; then "Check your email on your phone or computer…", the ring on *Back to sign in* |
-| 64 | Sign-in screen: OK on *Email*; type with the keys, `@gmail.com`, Menu, *Done*; OK on *Password*, *Show*, *Hide*, *Done* | The keyboard along the bottom, the box visible above it, *g* a solid pill with no ring; the letters go into the box; one press types `@gmail.com`; Menu takes out the last letter; *Done* goes on to *Password*; *Show* makes the password readable, *Hide* hides it; *Done* presses *Sign in* |
+| 64 | Sign-in screen: OK on *Email*; type with the keys, `@gmail.com`, Menu, *Done*; OK on *Password*, *Show*, *Hide*, *Done* | The panel down the left, the sign-in form moved over beside it, *a* a solid pill with no ring; the letters go into the box and on the panel's top line; one press types `@gmail.com`; Menu takes out the last letter; *Done* goes on to *Password*; *Show* makes the password readable, *Hide* hides it; *Done* presses *Sign in* |
 | 65 | Edit Profile: change the name with the keyboard, *Done*, *Save*, OK | *Save* turns yellow once the name changes; after OK the screen closes, the picker showing the new name |
 | 66 | Signed in on this TV, sign out on another device (or let the sign-in expire); open Home | "Dropout signed you out.", *Sign in* ringed; *Not now* closes the tab |
 | 67 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |

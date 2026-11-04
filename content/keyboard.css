@@ -1,18 +1,24 @@
-/* Leanback for Dropout — the on-screen keyboard (nav/keyboard.js): a panel
-   along the bottom of the screen, over everything, leaving the box being typed
-   in visible above it. Bare letters: a key has no box until it is selected,
-   when it becomes a solid pill in the accent colour, as in the settings. Sizes
-   come from --tf-u (Interface Size scales them) and colours from the theme.
-   Dropout's own button, input and heading styles are held off. */
+/* Leanback for Dropout — the on-screen keyboard (nav/keyboard.js): a panel down
+   the left of the screen, beside the rail, over everything, with the page beside
+   it. Bare letters: a key has no box until it is selected, when it becomes a
+   solid pill in the accent colour, as in the settings. Sizes come from --tf-u
+   (Interface Size scales them) and colours from the theme. Dropout's own button,
+   input and heading styles are held off. */
+:root {
+  --tf-kb-side: calc(var(--tf-u, 0.04vw) * 825);
+}
 .tenfoot-kb {
   position: fixed;
   left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
+  width: var(--tf-kb-side);
   z-index: 2147483100;
   display: flex;
-  justify-content: center;
   font-family: var(--tf-font, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif);
+}
+html[data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfoot-kb {
+  left: var(--tf-rail-width);
 }
 .tenfoot-kb[hidden] {
   display: none;
@@ -23,21 +29,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--tf-u, 0.04vw) * 14);
-  padding: calc(var(--tf-u, 0.04vw) * 22) var(--tf-gutter, 5vw) calc(var(--tf-u, 0.04vw) * 16);
+  gap: calc(var(--tf-u, 0.04vw) * 22);
+  padding: calc(var(--tf-u, 0.04vw) * 34) calc(var(--tf-u, 0.04vw) * 36);
   background: var(--tf-surface, #15171c);
-  border-top: 1px solid var(--tf-rail-edge, #262a33);
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.5);
+  border-right: 1px solid var(--tf-rail-edge, #262a33);
+  box-shadow: 24px 0 60px rgba(0, 0, 0, 0.5);
 }
-/* The text so far, with the cursor in it. */
+/* What is being typed in, with the cursor in it: the search box, on search. */
 .tenfoot-kb-preview {
-  min-height: 1.4em;
-  max-width: 100%;
+  flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: calc(var(--tf-u, 0.04vw) * 112);
+  padding: calc(var(--tf-u, 0.04vw) * 22) calc(var(--tf-u, 0.04vw) * 30);
+  border-radius: calc(var(--tf-u, 0.04vw) * 18);
+  background: var(--tf-raised, #1e2128);
   color: var(--tf-text, #f5f6f7);
   font-weight: 600;
-  font-size: max(16px, calc(var(--tf-u, 0.04vw) * 40));
-  line-height: 1.4;
-  text-align: center;
+  font-size: max(18px, calc(var(--tf-u, 0.04vw) * 54));
+  line-height: 1.25;
   white-space: pre;
   overflow: hidden;
 }
@@ -49,10 +59,17 @@
   vertical-align: text-bottom;
   background: var(--tenfoot-accent, #feea3b);
 }
+.tenfoot-kb-placeholder {
+  color: var(--tf-dim, #9aa0ac);
+  font-weight: 500;
+}
 .tenfoot-kb-keys {
+  flex: 0 1 calc((var(--tf-u, 0.04vw) * 105 + var(--tf-u, 0.04vw) * 4) * var(--tf-kb-rows, 9));
+  min-height: 0;
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(var(--tf-kb-cols, 11), calc(var(--tf-u, 0.04vw) * 128));
-  grid-auto-rows: calc(var(--tf-u, 0.04vw) * 82);
+  grid-template-columns: repeat(var(--tf-kb-cols, 6), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--tf-kb-rows, 9), minmax(0, 1fr));
   gap: calc(var(--tf-u, 0.04vw) * 4) calc(var(--tf-u, 0.04vw) * 8);
 }
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key {
@@ -78,6 +95,7 @@ html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key {
   text-transform: none;
   outline: none;
   cursor: pointer;
+  transition: none !important;
 }
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--digit {
   color: #c4c8d0 !important;
@@ -89,16 +107,13 @@ html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--fn {
   font-weight: 600;
 }
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--chip {
-  font-size: max(13px, calc(var(--tf-u, 0.04vw) * 32));
+  font-size: max(12px, calc(var(--tf-u, 0.04vw) * 27));
   font-weight: 600;
 }
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--done {
   color: var(--tenfoot-accent, #feea3b) !important;
   font-size: max(14px, calc(var(--tf-u, 0.04vw) * 38));
   font-weight: 800;
-}
-html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--action {
-  margin-left: calc(var(--tf-u, 0.04vw) * 22);
 }
 /* Shift: an outline when off, solid for one capital, solid with a bar under it
    for caps lock. */
@@ -144,6 +159,8 @@ html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-pressed="
 }
 /* What the remote's keys do, along the foot. */
 .tenfoot-kb-hint {
+  flex: none;
+  margin-top: auto;
   display: flex;
   gap: calc(var(--tf-u, 0.04vw) * 36);
   color: var(--tf-dim, #9aa0ac);
@@ -168,11 +185,28 @@ html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-
   }
 }
 
-/* With the keyboard up, the sign-in screen moves to the top so its boxes stay
-   above it. */
+/* With the keyboard up, the page moves over to make room beside it: the
+   sign-in screen, a page Leanback draws (a profile's form, and search), and
+   Dropout's own page (a PIN). */
 html[data-tenfoot-keyboard="on"] .tenfoot-signin {
-  align-items: flex-start !important;
+  padding-left: var(--tf-kb-side);
 }
-html[data-tenfoot-keyboard="on"] .tenfoot-signin-card {
-  padding-top: calc(var(--tf-u, 0.04vw) * 30);
+html[data-tenfoot-keyboard="on"] .tenfoot-home-view {
+  left: calc(var(--tf-rail-width) + var(--tf-kb-side));
+}
+html[data-tenfoot-keyboard="on"] .tenfoot-home[data-tenfoot-norail="true"] .tenfoot-home-view {
+  left: var(--tf-kb-side);
+}
+html[data-tenfoot="on"][data-tenfoot-keyboard="on"]:not([data-tenfoot-home="on"]) body {
+  box-sizing: border-box !important;
+  padding-left: var(--tf-kb-side) !important;
+}
+html[data-tenfoot="on"][data-tenfoot-keyboard="on"][data-tenfoot-rail="on"]:not([data-tenfoot-home="on"]) body {
+  padding-left: calc(var(--tf-rail-width) + var(--tf-kb-side)) !important;
+}
+/* Search: the box is on the panel, and the results are three across, filling
+   what is left. */
+html[data-tenfoot-keyboard-docked="on"] .tenfoot-home {
+  --tf-card-w: calc((100vw - var(--tf-rail-width) - var(--tf-kb-side) - var(--tf-gutter) * 2 - var(--tf-card-gap) * 2) / 3);
+  --tf-reach: calc(var(--tf-card-w) * 9 / 16 * var(--tenfoot-zoom, 5) / 200 + var(--tenfoot-ring-width, 4px) + 2px);
 }

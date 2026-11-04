@@ -42,13 +42,11 @@ do is reachable from the remote.
 While the focus is in a text field, **only the back button is ours** — even
 `/` belongs to the field — plus ◀ when the text cursor is at the very start
 with nothing selected (it leaves the field, for the rail on the search page)
-and ▼ and ▲ in a one-line field such as the search box or a sign-in
+and ▼ and ▲ in a one-line field such as a profile's name or a sign-in
 box (they leave the field for what is below or above it: the result
 filters, then the results; the next box or button; with nothing there, the
-key stays the field's). In a field of several lines ▼ ▲ move the cursor. In
-the search box Leanback draws, OK and Back also leave it for what is below
-(Back, with nothing below, goes back as anywhere else) — once it has been typed in with a real keyboard.
-**OK on one of Leanback's own text boxes** (sign-in, the reset, search, a profile's name, and a PIN's digit boxes) that has
+key stays the field's). In a field of several lines ▼ ▲ move the cursor.
+**OK on one of Leanback's own text boxes** (sign-in, the reset, a profile's name, and a PIN's digit boxes) that has
 not been typed in opens [the on-screen keyboard](#the-on-screen-keyboard);
 typing in it with a real keyboard makes Enter its own again until the
 selection moves on. A pointer click on one opens the keyboard too.
@@ -155,19 +153,18 @@ while it is open.
 
 ## The on-screen keyboard
 
-A panel along the bottom of the screen (`nav/keyboard.js`), the box being
-typed in left visible above it. On a grid: a number row, the letters in QWERTY
-rows, Shift, a page of symbols (the *#+=* / *abc* key), Space, ◀ ▶ for the text
-cursor, and an action column with Backspace and *Done* at the end of every row.
+A panel down the left of the screen, beside the rail (`nav/keyboard.js`), with
+what is being typed in at its top. On a grid six across: Shift, a page of symbols
+(the *#+=* / *abc* key), ◀ ▶ for the text cursor and Backspace; the letters A to
+Z; two rows of digits; Space and *Done*.
 Shift has three steps: off, one capital, caps lock. A text box starts a name with
 a capital and again after a space; an email box has a row on top with
-`@gmail.com`, `@outlook.com`, `@icloud.com`, `@` and `.com` (no Space, no
-capitals); a password box has Space and
+`@gmail.com`, `@outlook.com` and `@icloud.com`, `@` among the letters and `.com` in
+place of Space (no capitals); a password box has
 *Show* / *Hide* (which turns the box readable and back; closing puts it
 back); a PIN a number pad that fills its digit boxes in turn. The selection, a
-solid pill with no ring, starts on *g* (*5* on the pad). ◀ ▶ go along a row and
-round its ends, so ◀ from the left edge reaches the action column; ▲ ▼ go
-straight up and down (past a key spanning rows), keep their place across rows
+solid pill with no ring, starts on *a* (*5* on the pad). ◀ ▶ go along a row and
+round its ends; ▲ ▼ go straight up and down, keep their place across rows
 and stop at the top and the bottom. OK types the key; **Menu takes out the
 letter before the cursor**; a held OK or arrow repeats as the browser repeats it
 (a held move is slowed by the page script as everywhere). A real keyboard types
@@ -175,9 +172,18 @@ into the box while it is open. *Done* closes it (the caller does what
 Enter in the box does) and Escape closes it with no answer; both put the
 selection back on the box. *Done* does what Enter in the box does (sign-in's
 *Email* goes on to *Password*, its *Password* and the reset's *Email* press
-the button, the search box leaves for the results). The remote's Back is Firefox's, so nothing depends
+the button). The remote's Back is Firefox's, so nothing depends
 on it. Nothing else gets past it while it is open. The pointer presses a key
 as it does any button.
+
+**On search it is docked:** up as soon as the page is, for as long as the page is,
+with the search box on it and the selection on its keys. There ◀ ▶ don't go round a
+row: ▶ on the right column goes to the results, where the selection last was, ◀ on the
+left column goes to the rail. ◀ from the results' left column comes back to the keys,
+at the end of the row it left; ▶ from the rail, or OK on the search glyph, comes back
+too. *Done* goes to the first result, or the filters with none, and leaves the panel
+up. Escape and `/` leave search; a real keyboard's letter brings the selection back to
+the keys and types.
 
 ## A picture to pick
 
@@ -287,8 +293,8 @@ see.
 
 What that means for layers: the remote's Back leaves the page, whatever is
 open on it, so ◀ is the way out of what is open — it closes the settings
-panels one level at a time and leaves the search box from the start of its
-text. The rail closes with ▶, the transport bar with ▲.
+panels one level at a time and leaves the keyboard on search for the rail from its
+left column. The rail closes with ▶, the transport bar with ▲.
 
 Most air-mouse remotes have no media keys; their QWERTY pad is needed only to
 type a search or log in. What a typical one sends:
