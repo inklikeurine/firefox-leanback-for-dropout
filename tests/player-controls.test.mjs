@@ -46,7 +46,7 @@ T.runAsync('stop pauses, rewinds and hands focus back to the page', async () => 
   T.eq(last('page:focus').hint, 'back');
 });
 
-T.runAsync('an over-broad hide selector can never empty the transport row (regression)', async () => {
+T.runAsync('an over-broad hide selector can never empty the transport row', async () => {
   // The hide list is substring matching, so a selector can match an ancestor
   // of the whole bar. Hiding that took every control with it and ▼ fell
   // through to the page, which is what the owner saw.
@@ -57,7 +57,7 @@ T.runAsync('an over-broad hide selector can never empty the transport row (regre
   T.eq(last('page:focus'), undefined, 'and ▼ did not fall through to the page');
 });
 
-T.runAsync('the row is ours, so no vendor selector can empty it (regression)', async () => {
+T.runAsync('the row is ours, so no vendor selector can empty it', async () => {
   // Both of these used to decide what the row held. The row is drawn by the
   // extension now, so a rule that matches everything — or nothing — changes
   // what the panels can read and nothing else.
@@ -73,7 +73,7 @@ T.runAsync('the row is ours, so no vendor selector can empty it (regression)', a
     ['playpause', 'settings', 'fullscreen'], 'with all three of its own controls');
 });
 
-T.runAsync('the row stays up while it is in use and takes nothing from the player (items 1 + 8)', async () => {
+T.runAsync('the row stays up while it is in use and takes nothing from the player', async () => {
   const { key, win, cmd } = await boot();
   const html = win.document.documentElement;
   const bar = () => win.document.querySelector('.tenfoot-transport');
@@ -95,7 +95,7 @@ T.runAsync('the row stays up while it is in use and takes nothing from the playe
   T.ok(bar().hidden, 'and gone again on the way out');
 });
 
-T.runAsync('back closes the row and nothing else — it must not leave the video (item 5)', async () => {
+T.runAsync('back closes the row and nothing else — it must not leave the video', async () => {
   const { key, cmd, bg } = await boot();
   key('ArrowDown');
   const before = bg.filter((m) => m.type === 'page:focus').length;
@@ -104,7 +104,7 @@ T.runAsync('back closes the row and nothing else — it must not leave the video
   T.eq(bg.filter((m) => m.type === 'page:focus').length, before, 'the page was never asked to take over');
 });
 
-T.runAsync('the row is play, position, settings, fullscreen — and position is not a stop (items 3 + 4)', async () => {
+T.runAsync('the row is play, position, settings, fullscreen — and position is not a stop', async () => {
   const { key, win } = await boot();
   key('ArrowDown');
   const bar = win.document.querySelector('.tenfoot-transport');
@@ -173,7 +173,7 @@ T.runAsync('settings opens a full-height panel with the player\'s settings and L
   T.eq(st.paused, false, 'and the picture starts again, because we were the ones who stopped it');
 });
 
-T.runAsync('◀ at the top of the settings panel closes it, as Back does (N2)', async () => {
+T.runAsync('◀ at the top of the settings panel closes it, as Back does', async () => {
   const { key, win } = await boot();
   key('ArrowDown');
   key('ArrowRight');
@@ -199,7 +199,7 @@ T.runAsync('a video already paused is left paused when the panel closes', async 
   T.eq(st.paused, true, 'still paused — settings did not start it');
 });
 
-T.runAsync('Leanback\'s own rows: the same list as on a page; a choice opens its values, OK picks one; an on/off flips (C1, C2)', async () => {
+T.runAsync('Leanback\'s own rows: the same list as on a page; a choice opens its values, OK picks one; an on/off flips', async () => {
   const { key, win, bg } = await boot({ settings: { seekStep: 15, autoplayNext: true, hintBar: true } });
   key('ArrowDown');
   key('ArrowRight');
@@ -321,7 +321,7 @@ T.runAsync('▶ enters a submenu of the player\'s, ◀ leaves it', async () => {
   T.eq(panel.querySelector('.tenfoot-settings-title').textContent, 'Playback Settings', '◀ comes back out');
 });
 
-T.runAsync('the frame keeps no history of its own; the page asks it what Back means (item 5)', async () => {
+T.runAsync('the frame keeps no history of its own; the page asks it what Back means', async () => {
   const { key, win, cmd, bg } = await boot();
   key('ArrowDown');
   T.eq((await cmd({ type: 'player:command', cmd: 'state' })).state.transport, true);
@@ -356,7 +356,7 @@ T.runAsync('Back walks one layer at a time: panel, then row, then the page', asy
   T.eq((await cmd({ type: 'player:back' })).consumed, false, 'third press is the page\'s');
 });
 
-T.runAsync('▼ opens the row; ◀ ▶ walk it and no longer seek; back leaves (item 1)', async () => {
+T.runAsync('▼ opens the row; ◀ ▶ walk it and no longer seek; back leaves', async () => {
   const { key, win, st, cmd } = await boot({ settings: { seekStep: 15 } });
   key('ArrowRight');
   T.eq(st.currentTime, 15, 'seeking before the row is open');
@@ -425,7 +425,7 @@ T.runAsync('OK on fullscreen asks for fullscreen, falling back to the player\'s 
   T.eq([asked, hits], [2, ['vendor']], 'refused: the player\'s own button instead');
 });
 
-T.runAsync('▼ again stays on the row: there is nothing below the video (D5)', async () => {
+T.runAsync('▼ again stays on the row: there is nothing below the video', async () => {
   const { key, cmd, last } = await boot();
   key('ArrowDown');
   T.eq((await cmd({ type: 'player:command', cmd: 'state' })).state.transport, true);
@@ -444,7 +444,7 @@ T.runAsync('▼ falls back to leaving for the page when there is no video to dri
   T.eq(last('page:focus').hint, 'below', 'the old behaviour is the fallback, never a dead key');
 });
 
-T.runAsync('the menu button does not raise Firefox\'s context menu inside the frame (item 4)', async () => {
+T.runAsync('the menu button does not raise Firefox\'s context menu inside the frame', async () => {
   const { win } = await boot();
   const e = new win.MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 0 });
   win.document.body.dispatchEvent(e);

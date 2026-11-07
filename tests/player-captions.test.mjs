@@ -89,7 +89,7 @@ T.runAsync('the panel does not lose the player\'s rows to one unlucky read', asy
     'the second read got them: ' + rows.join(' | '));
 });
 
-T.runAsync('captions go as deep as the player\'s menu: CC/subtitles → Customize → Font (B2)', async () => {
+T.runAsync('captions go as deep as the player\'s menu: CC/subtitles → Customize → Font', async () => {
   const t = await boot();
   const c = await openCaptions(t);
   T.eq(c.title(), 'Closed Captions');
@@ -153,7 +153,7 @@ T.runAsync('a caption colour is a submenu of its own: OK opens "Font Color", OK 
   T.eq(c.title(), 'Font Family', 'open already: straight in, not shut by a second click');
 });
 
-T.runAsync('◀ uses the player\'s own Back, one level at a time (B3)', async () => {
+T.runAsync('◀ uses the player\'s own Back, one level at a time', async () => {
   const t = await boot();
   const c = await openCaptions(t);
   c.walkTo('Customize');
@@ -186,7 +186,7 @@ T.runAsync('picking a caption track goes back up the way the player does, with t
   T.eq(cc.getAttribute('aria-checked'), 'true', 'captions on');
 });
 
-T.runAsync('Closed Captions is a switch: OK turns the player\'s first track on, and off again (C3)', async () => {
+T.runAsync('Closed Captions is a switch: OK turns the player\'s first track on, and off again', async () => {
   const t = await boot();
   const menu = realMenu(t.win);
   t.key('ArrowDown');
@@ -225,7 +225,7 @@ T.runAsync('OK held down (key repeat) toggles the captions once, not once per re
   T.eq(menu.track, 'Off', 'a fresh press afterwards works');
 });
 
-T.runAsync('Caption Style goes straight to the player\'s Customize, and ◀ comes straight back (C3)', async () => {
+T.runAsync('Caption Style goes straight to the player\'s Customize, and ◀ comes straight back', async () => {
   const t = await boot();
   const menu = realMenu(t.win);
   t.key('ArrowDown');

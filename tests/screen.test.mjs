@@ -55,7 +55,7 @@ T.run('readPage: the title, each tile once with its link, picture, title, length
   T.eq(none.window.TenfootReaders.readPage(none.window.document, rules.screen), { root: false, title: '', items: [], more: false });
 });
 
-T.runAsync('a list (New Releases): Leanback draws it, the rail beside it, Dropout\'s top bar and footer hidden (G6, G8)', async () => {
+T.runAsync('a list (New Releases): Leanback draws it, the rail beside it, Dropout\'s top bar and footer hidden', async () => {
   const p = await boot();
   const s = await p.state();
   T.eq([s.kind, Boolean(s.rail), s.rail.page], ['series', true, null], 'the rail on every page that plays no video (the owner, 2026-10-03); no entry lit');

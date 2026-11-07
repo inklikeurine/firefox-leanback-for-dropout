@@ -2,7 +2,7 @@
 import { T } from '../../firefox-tools/harness/lib.mjs';
 import { boot } from './player-support.mjs';
 
-T.runAsync('nothing touches the sound before a user gesture — that is what cost autoplay (item 1)', async () => {
+T.runAsync('nothing touches the sound before a user gesture — that is what cost autoplay', async () => {
   const { st, video, win } = await boot({ muted: true, autoplayBlocked: true });
   st.paused = false;
   video.dispatchEvent(new win.Event('play'));
@@ -11,7 +11,7 @@ T.runAsync('nothing touches the sound before a user gesture — that is what cos
   T.eq([st.muted, st.paused], [true, false], 'still muted, and still playing — the autoplay was never disturbed');
 });
 
-T.runAsync('the first keypress is the gesture, and the sound goes on then (item 1)', async () => {
+T.runAsync('the first keypress is the gesture, and the sound goes on then', async () => {
   const { key, st, video, win } = await boot({ muted: true, autoplayBlocked: true });
   st.paused = false;
   video.dispatchEvent(new win.Event('play'));
@@ -33,7 +33,7 @@ T.runAsync('if Firefox stops the video for the unmute anyway, it goes straight b
   T.eq([st.muted, st.paused], [true, false], 'back to muted and playing, never left stopped');
 });
 
-T.runAsync('a video you have opened before is re-muted by the site, and unmuted again (item 2)', async () => {
+T.runAsync('a video you have opened before is re-muted by the site, and unmuted again', async () => {
   const { st, video, win, gesture } = await boot({ muted: true });
   T.eq(st.muted, true, 'left muted until playback and a gesture — unmuting first costs autoplay');
   st.paused = false;
@@ -63,7 +63,7 @@ T.runAsync('once the user touches the transport row, their volume choice stands'
   T.eq(st.muted, true, 'not fought');
 });
 
-T.runAsync('videos start unmuted once playing, and the setting turns that around (owner report)', async () => {
+T.runAsync('videos start unmuted once playing, and the setting turns that around', async () => {
   // Dropout starts them muted to satisfy Firefox's autoplay policy.
   const a = await boot({ muted: true });
   a.st.paused = false;
@@ -79,7 +79,7 @@ T.runAsync('videos start unmuted once playing, and the setting turns that around
   T.eq(b.st.muted, true, 'startMuted leaves it alone');
 });
 
-T.runAsync('a video that has not started is never unmuted — that is what costs autoplay (item 1)', async () => {
+T.runAsync('a video that has not started is never unmuted — that is what costs autoplay', async () => {
   const { st, video, win, gesture } = await boot({ muted: true, autoplayBlocked: true });
   gesture(); // even with a gesture in hand, a video that has not started is left alone
   T.eq([st.muted, st.paused], [true, true], 'still muted and still paused');

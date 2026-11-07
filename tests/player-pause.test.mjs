@@ -2,7 +2,7 @@
 import { T } from '../../firefox-tools/harness/lib.mjs';
 import { boot, GC, titleOf, UP, dropoutCard, cardOf, at } from './player-support.mjs';
 
-T.runAsync('the title: the show, then "S9 · E3 · Whodunnit", for four seconds when a video starts (P1, P2)', async () => {
+T.runAsync('the title: the show, then "S9 · E3 · Whodunnit", for four seconds when a video starts', async () => {
   const { cmd, win, bg } = await boot({ pageInfo: GC });
   T.ok(bg.some((m) => m.type === 'page:info'), 'the page was asked what it knows');
   T.eq(titleOf(win), null, 'nothing before playback');
@@ -25,7 +25,7 @@ T.runAsync('the title without the page\'s answer: the player\'s own title alone'
   T.eq(titleOf(win), ['Fixture episode']);
 });
 
-T.runAsync('a pause brings up the title and the bar for a moment, and the keys stay playback\'s (P2, P3)', async () => {
+T.runAsync('a pause brings up the title and the bar for a moment, and the keys stay playback\'s', async () => {
   const { key, win, st } = await boot({ pageInfo: GC });
   const bar = () => win.document.querySelector('.tenfoot-transport');
   key('Enter');
@@ -93,7 +93,7 @@ T.runAsync('the bar opened over a playing video closes three seconds after the l
   T.notOk(bar().hidden, 'paused: the bar stays');
 });
 
-T.runAsync('a skip shows ⏪ / ⏩ and the new time, and the bar, until a second after the last one (F1)', async () => {
+T.runAsync('a skip shows ⏪ / ⏩ and the new time, and the bar, until a second after the last one', async () => {
   const { key, win, st, cmd } = await boot({ pageInfo: GC });
   await cmd({ type: 'player:command', cmd: 'toggle' });
   await T.sleep(20);
@@ -131,7 +131,7 @@ T.runAsync('a skip on a paused video: the skip shows for a second, the bar stays
   T.notOk(win.document.querySelector('.tenfoot-seek').hidden, 'a skip from the page (a media key) shows too');
 });
 
-T.runAsync('the up-next card: from eight seconds before the end, the next episode, counting down (P5)', async () => {
+T.runAsync('the up-next card: from eight seconds before the end, the next episode, counting down', async () => {
   const p = await boot({ upNext: UP });
   await p.cmd({ type: 'player:command', cmd: 'toggle' });
   await at(p, 40);

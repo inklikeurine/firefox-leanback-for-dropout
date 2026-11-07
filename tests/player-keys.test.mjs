@@ -51,7 +51,7 @@ T.runAsync('keys the player does not own pass through; modifiers and typing are 
   T.ok(key('Escape').defaultPrevented);
 });
 
-T.runAsync('the next episode can be started early without any keyboard (bug 3)', async () => {
+T.runAsync('the next episode can be started early without any keyboard', async () => {
   const { key, cmd, last, win, st } = await boot();
   // The menu button's panel is the general route; here we check the two paths
   // that live in the player frame itself.
@@ -80,7 +80,7 @@ T.runAsync('the next episode can be started early without any keyboard (bug 3)',
   T.eq(last('page:episode').delta, 1, 'with no overlay, the page navigates instead');
 });
 
-T.runAsync('OK on a finished video starts the next one even when no overlay is found (item 8)', async () => {
+T.runAsync('OK on a finished video starts the next one even when no overlay is found', async () => {
   const { key, st, video, win, last } = await boot();
   st.ended = true;
   st.paused = true;
@@ -92,7 +92,7 @@ T.runAsync('OK on a finished video starts the next one even when no overlay is f
   T.eq(st.plays, 0, 'and did not try to replay this one');
 });
 
-T.runAsync('only the visible up-next overlay counts — the site renders several (item 7)', async () => {
+T.runAsync('only the visible up-next overlay counts — the site renders several', async () => {
   const { win, cmd } = await boot();
   const extra = win.document.createElement('div');
   extra.className = 'ott-up-next';
@@ -107,7 +107,7 @@ T.runAsync('only the visible up-next overlay counts — the site renders several
   T.eq((await cmd({ type: 'player:command', cmd: 'state' })).state.upNextShowing, true, 'one with a link to the next episode does');
 });
 
-T.runAsync('the page can tell the frame the offer is showing, when the page renders it (item 7)', async () => {
+T.runAsync('the page can tell the frame the offer is showing, when the page renders it', async () => {
   const { key, cmd, last } = await boot();
   T.eq((await cmd({ type: 'player:offer', showing: true })).state.upNextShowing, true);
   key('Enter');
@@ -129,7 +129,7 @@ T.runAsync('the up-next overlay appearing is reported to the page', async () => 
   T.ok(last('player:state').state.upNextShowing, 'and it says the offer is on screen');
 });
 
-T.runAsync('no message is sent from a frame that is going away (bug 5)', async () => {
+T.runAsync('no message is sent from a frame that is going away', async () => {
   const { win, bg, video, st } = await boot();
   win.dispatchEvent(new win.Event('pagehide'));
   const after = bg.length;

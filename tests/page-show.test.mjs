@@ -49,7 +49,7 @@ T.runAsync('show (drawn): Dropout\'s Load More is pressed near the end, and the 
   T.eq(cardOf(p, 8).querySelector('.tenfoot-card-sub').textContent, 'Episode 8');
 });
 
-T.runAsync('series (page not recognised): a select is not engaged until Enter, so Left/Right still carry the ring past it (bugs 4+5)', async () => {
+T.runAsync('series (page not recognised): a select is not engaged until Enter, so Left/Right still carry the ring past it', async () => {
   const p = await boot({ html: fixture('series.html'), url: URLS.series, before: unrecognised });
   T.eq((await p.state()).show, null, 'Leanback does not recognise the page');
   const changes = [];
@@ -145,7 +145,7 @@ T.runAsync('show (drawn): Trailer opens Dropout\'s own trailer; its dialog takes
   T.eq(actionNow(p), 'trailer', 'closed: back on Trailer');
 });
 
-T.runAsync('show: the bare address opens on the newest season, replacing the page, and nothing is drawn meanwhile (S10)', async () => {
+T.runAsync('show: the bare address opens on the newest season, replacing the page, and nothing is drawn meanwhile', async () => {
   const p = await boot({ html: fixture('series.html'), url: URLS.series });
   const s = await p.state();
   T.eq(s.navigation, SEASON3, 'Dropout opened Season 1; Leanback moves on to Season 3');
@@ -165,7 +165,7 @@ T.runAsync('show: "Shows open on: first season" leaves the bare address on Seaso
   T.eq([s.navigation, s.show.current], [null, 'Season 1'], 'Season 1 chosen (or Back from an episode): it stays');
 });
 
-T.runAsync('show (drawn): the banner, the seasons newest first with the one on screen lit, its name and episode count over its episodes (G6, S1)', async () => {
+T.runAsync('show (drawn): the banner, the seasons newest first with the one on screen lit, its name and episode count over its episodes', async () => {
   const p = await boot({ html: fixture('series.html'), url: URLS.season2 });
   const s = await p.state();
   T.eq([s.show.layout, s.show.seasons, s.show.current], ['show', ['Season 3', 'Season 2', 'Season 1'], 'Season 2'], 'a long name keeps only "Season N" on its button');
@@ -185,7 +185,7 @@ T.runAsync('show (drawn): the banner, the seasons newest first with the one on s
   T.ok(p.doc.querySelector('.site-header').hasAttribute('data-tenfoot-chrome'), 'its top bar hidden');
 });
 
-T.runAsync('show (drawn): ▲ from the episodes lands on the season on screen; ◀ ▶ walk the seasons without wrapping; ▲ the buttons; ▼ back where it was; OK opens a season in place of this one (S11)', async () => {
+T.runAsync('show (drawn): ▲ from the episodes lands on the season on screen; ◀ ▶ walk the seasons without wrapping; ▲ the buttons; ▼ back where it was; OK opens a season in place of this one', async () => {
   const p = await boot({ html: fixture('series.html'), url: URLS.season2 });
   p.key('ArrowRight'); p.key('ArrowRight');
   T.eq(hrefNow(p), V(3));
@@ -223,7 +223,7 @@ T.runAsync('show (drawn): OK on the season already on screen goes down to its ep
   T.eq([s.navigation, hrefNow(p)], [null, V(1)]);
 });
 
-T.runAsync('show (drawn): My List presses Dropout\'s own button and shows when the show is on the list (M6)', async () => {
+T.runAsync('show (drawn): My List presses Dropout\'s own button and shows when the show is on the list', async () => {
   const p = await boot({ html: fixture('series.html'), url: URLS.season2 });
   const pressed = [];
   p.$('mylist').addEventListener('click', () => { pressed.push('mylist'); p.$('mylist').classList.replace('icon-watchlist-add', 'icon-watchlist-remove'); });
@@ -244,7 +244,7 @@ T.runAsync('show (drawn): My List presses Dropout\'s own button and shows when t
   T.eq(actionNow(p), 'mylist', 'nothing after it: Share is not drawn');
 });
 
-T.runAsync('show (drawn): the main button picks the show up (S8) — first of the buttons, yellow, OK plays it', async () => {
+T.runAsync('show (drawn): the main button picks the show up — first of the buttons, yellow, OK plays it', async () => {
   const progress = { entries: { ep2: { url: V(2), duration: 1000, local: { position: 400, at: 20 } } } };
   const p = await boot({ html: fixture('series.html'), url: URLS.season1, progress });
   T.eq((await p.state()).show.resume, { label: 'Resume S1 E2', href: V(2), action: 'resume' });
@@ -304,7 +304,7 @@ T.runAsync('video: the episode page tells the watch history its show, season and
   T.eq([m.show, m.season, m.episode], ['game-changer', 1, undefined], 'no episode link: the show and season from og:url');
 });
 
-T.runAsync('show (drawn): the selection starts on the episode to watch next; watched episodes are ticked, one in progress has a bar (S12)', async () => {
+T.runAsync('show (drawn): the selection starts on the episode to watch next; watched episodes are ticked, one in progress has a bar', async () => {
   const progress = { entries: {
     ep1: { url: V(1), duration: 1000, local: { position: 990, at: 10 } },
     ep2: { url: V(2), duration: 1000, local: { position: 400, at: 20 } },

@@ -14,7 +14,7 @@ T.runAsync('search: ▼ with nothing below the box stays the field\'s; a textare
   T.eq(p.doc.activeElement.id, 't');
 });
 
-T.runAsync('search: ◀ with the text cursor at the start of the box goes to the rail; anywhere else it moves the cursor (N2)', async () => {
+T.runAsync('search: ◀ with the text cursor at the start of the box goes to the rail; anywhere else it moves the cursor', async () => {
   const html = '<!doctype html><html><body><header class="site-header" data-rect="0,0,1280,60"></header><input type="search" id="q" value="dimension" data-rect="140,100,400,40"><div class="browse-item-card"><a href="/x" class="browse-item-link" id="res1" data-rect="140,200,380,214">R1</a></div></body></html>';
   const p = await boot({ html, url: 'https://watch.dropout.tv/search' });
   T.eq(p.doc.activeElement.id, 'q');
@@ -85,7 +85,7 @@ T.runAsync('search: results and filters are reachable, and load more is found', 
   T.ok(sel(search.loadMore).includes('SearchResults-module__load-more'), 'the results\' own Load More');
 });
 
-T.runAsync('search: the field keeps the keyboard; ▼ and Escape leave it for the results, ▲ comes back (N1)', async () => {
+T.runAsync('search: the field keeps the keyboard; ▼ and Escape leave it for the results, ▲ comes back', async () => {
   const html = '<!doctype html><html><body><header class="site-header" data-rect="0,0,1280,60"><a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a></header><input type="search" id="q" data-rect="40,100,400,40"><div class="browse-item-card"><a href="/x" class="browse-item-link" id="res1" data-rect="40,200,380,214">R1</a></div></body></html>';
   const p = await boot({ html, url: 'https://watch.dropout.tv/search' });
   T.eq((await p.state()).kind, 'search');

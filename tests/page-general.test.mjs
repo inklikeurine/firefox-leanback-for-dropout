@@ -21,7 +21,7 @@ T.runAsync('the options panel has no "Player controls" row: that switch is on th
   T.notOk((await p.state()).menu.includes('playerChrome'), JSON.stringify((await p.state()).menu));
 });
 
-T.runAsync('browse: the options button opens Leanback settings, and Back closes it', async () => {
+T.runAsync('the options button opens Leanback settings, and Back closes it', async () => {
   const p = await boot({ html: fixture('home.html'), url: URLS.browse });
   await p.act('menu');
   let s = await p.state();
@@ -62,7 +62,7 @@ T.runAsync('off a video the options button opens Leanback settings directly', as
   T.eq(s.navigation, null, 'and nothing navigated');
 });
 
-T.runAsync('settings open inside the page — never in another tab (item 2)', async () => {
+T.runAsync('settings open inside the page — never in another tab', async () => {
   const p = await boot({ html: fixture('home.html'), url: URLS.browse });
   p.key('ContextMenu');
   let s = await p.state();
@@ -202,7 +202,7 @@ T.runAsync('the on-screen keyboard\'s line of keys follows Button Hints: off, on
   T.eq(hint.hidden, true, 'turned off: gone at once');
 });
 
-T.runAsync('the hint bar stays up on a page, and gets out of the way while a video plays (bug 4)', async () => {
+T.runAsync('the hint bar stays up on a page, and gets out of the way while a video plays', async () => {
   const p = await boot({ html: fixture('home.html'), url: URLS.browse });
   T.notOk(p.hints().hidden, 'up from the start, before any key is pressed');
   p.key('ArrowRight');

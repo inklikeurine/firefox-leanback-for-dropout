@@ -82,7 +82,7 @@ T.run('the season a show opens on: the newest, or the first; nothing to do when 
   T.eq([t.S.seasonNumber('/a/season:12'), t.S.seasonNumber('/a/season:x'), t.S.seasonNumber(undefined)], [12, null, null]);
 });
 
-T.run('where the selection starts (S12)', () => {
+T.run('where the selection starts on a season: Episode 1, the one partway through, or the one after the last finished', () => {
   const titled = (html) => html.replace('<div class="collection-actions">', '<h1 class="collection-title">A Show</h1><div class="collection-actions">');
   const start = (entries, extras) => {
     const t = load(titled(showPage({ episodes: 5, extras })));

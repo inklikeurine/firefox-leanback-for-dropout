@@ -2,7 +2,7 @@
 import { T } from '../../firefox-tools/harness/lib.mjs';
 import { fixture, URLS, boot, SEASON3, EP0, EP2, trailOf, episodeOrder, trailNow, leftAt, watch, firefoxBack } from './page-support.mjs';
 
-T.runAsync('an episode opens on its details page: nothing plays, the selection on Watch, the rail beside it (D1, D6)', async () => {
+T.runAsync('an episode opens on its details page: nothing plays, the selection on Watch, the rail beside it', async () => {
   const p = await boot({ html: fixture('video.html'), url: URLS.video });
   const s = await p.state();
   T.eq([s.kind, s.watch, s.theater, s.playerFocused, s.focused.text], ['video', 'details', false, false, 'Watch']);
@@ -17,7 +17,7 @@ T.runAsync('an episode opens on its details page: nothing plays, the selection o
   T.eq((await p.state()).rail.active, true, '◀ onto the rail');
 });
 
-T.runAsync('the details page: the show, the title, the synopsis, the picture on the right; Watch, Add to My List, Episodes (D2, D3)', async () => {
+T.runAsync('the details page: the show, the title, the synopsis, the picture on the right; Watch, Add to My List, Episodes', async () => {
   const p = await boot({ html: fixture('video.html'), url: URLS.video });
   const s = await p.state();
   T.eq(s.home.episode, { show: 'Game Changer', title: 'Episode', meta: null, actions: ['Watch', 'My List', 'Episodes'], image: 'https://watch.dropout.tv/art-5.svg', left: null });
@@ -40,7 +40,7 @@ T.runAsync('the details page: the show, the title, the synopsis, the picture on 
   T.eq((await p.state()).theater, false, 'and ▲ is not the player any more');
 });
 
-T.runAsync('part-watched: Resume, Start Over beside it, and the picture with its progress and the time left (D3, D4)', async () => {
+T.runAsync('part-watched: Resume, Start Over beside it, and the picture with its progress and the time left', async () => {
   const p = await boot({ html: fixture('video.html'), url: URLS.video, progress: leftAt(600) });
   const s = await p.state();
   T.eq([s.home.episode.actions, s.home.episode.left, s.focused.text], [['Resume', 'Start Over', 'My List', 'Episodes', 'Clear Progress'], '15:00 left', 'Resume']);
@@ -64,7 +64,7 @@ T.runAsync('Clear Progress: the episode unstarted again, the selection back on W
   T.eq((await p.msg({ type: 'page:info' })).hold, true, 'nothing plays');
 });
 
-T.runAsync('Watch: the video in the full window, a step of its own in the history, the player told to play — the press being the viewer\'s (D1, D5)', async () => {
+T.runAsync('Watch: the video in the full window, a step of its own in the history, the player told to play — the press being the viewer\'s', async () => {
   const p = await boot({ html: fixture('video.html'), url: URLS.video });
   await watch(p);
   const s = await p.state();
@@ -111,7 +111,7 @@ T.runAsync('Resume says where it picks up; Start Over plays from the beginning a
   T.notOk(q.hints().textContent.includes('Resumed'), 'the frame\'s word on a resume is not shown: ' + q.hints().textContent);
 });
 
-T.runAsync('Back while it plays: the details page again, now saying Resume, and the video held (D5)', async () => {
+T.runAsync('Back while it plays: the details page again, now saying Resume, and the video held', async () => {
   const p = await boot({ html: fixture('video.html'), url: URLS.video });
   await watch(p);
   T.notOk(p.key('BrowserBack').defaultPrevented, 'the remote\'s Back is Firefox\'s');
@@ -397,7 +397,7 @@ T.runAsync('player:ended → autoplay next after a short delay while playing, un
   T.ok(r.hints().textContent.includes('No next episode'));
 }, 8000);
 
-T.runAsync('while it plays, the page-side up-next card is taken rather than navigated past (item 7)', async () => {
+T.runAsync('while it plays, the page-side up-next card is taken rather than navigated past', async () => {
   const p = await boot({ html: fixture('video.html'), url: URLS.video });
   await watch(p);
   const card = p.$('page-upnext');
@@ -475,7 +475,7 @@ T.runAsync('the season line under the title, Episodes going to that season; My L
   T.eq(p.doc.querySelector('.tenfoot-screen'), null);
 });
 
-T.runAsync('video (not drawn): Dropout\'s page plays at once with no rail; ▼ out of the player is Dropout\'s page, ▲ the video again (item 6)', async () => {
+T.runAsync('video (not drawn): Dropout\'s page plays at once with no rail; ▼ out of the player is Dropout\'s page, ▲ the video again', async () => {
   // No title to draw the details from: Dropout's page, driven as it is.
   const p = await boot({ html: fixture('video.html').replace('<h1 class="video-title">Episode</h1>', ''), url: URLS.video });
   let s = await p.state();
