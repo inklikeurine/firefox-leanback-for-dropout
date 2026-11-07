@@ -15,8 +15,8 @@ the milestones (the theming milestones are detailed in
 [theming.md](./theming.md)). The user-facing description is the extension's
 [README](../README.md).
 
-The headless suites, fixtures and verification journal live in the private
-workspace (`_workshop/tests/leanback-for-dropout/`, `_workshop/fixtures/leanback-for-dropout/`,
-`_workshop/review/leanback-for-dropout/`) and are not part of the published extension. The rules AI coding
-agents follow for every extension in this repository are in the root
-[`AGENTS.md`](../AGENTS.md).
+The test suites, their hand-made test pages and the live-check settings are
+in [`tests/`](../tests/) and are not part of the published extension; the
+shared tools that run them are in
+[firefox-tools](https://github.com/inklikeurine/firefox-tools). The rules AI
+coding agents follow are in the root [`AGENTS.md`](../AGENTS.md).

@@ -10,20 +10,30 @@
 
 <!-- Required. Which tool or model, and roughly how much of this it wrote. Write "None" if none. -->
 
-## How it was tested
+## Checks
 
-<!-- If nobody has run it in Firefox yet, say so. That's fine, just be honest. -->
+<!-- Tick only what was actually done. See AGENTS.md → "Your pull request". -->
 
-- Firefox version:
-- Remote, keyboard or gamepad (model if you know it):
-- Setup (desktop window, fullscreen, kiosk on a TV):
-- What you did and what happened:
+- [ ] **Validated**: `check.mjs` passed
+- [ ] **Automated Test**: `run.mjs --spec` passed (tests and live check)
+- [ ] **Manual Review**: leave unticked; the maintainer tries it in real Firefox before merging
+
+If a check wasn't run, say why:
+
+## How to try it
+
+<!-- Numbered steps. Each one: something to do, and what should happen.
+     Example: "On Home, press Down twice. The focus ring moves to the second row."
+     Write them from this change only. A one-line fix gets one or two steps. -->
+
+1.
 
 ## Checklist
 
 - [ ] One fix or feature only
-- [ ] AI use filled in above
-- [ ] Testing described above, honestly
-- [ ] If behaviour changed: I read `docs/spec.md` first
-- [ ] If a shipped file changed (anything but `README.md`, `CHANGELOG.md`, `docs/` and the repo files): `version` in `manifest.json` is above the last release, and `CHANGELOG.md` has a dated entry for it
-- [ ] No `package.json`, bundler, `eval`, remote code or inline scripts (see `AGENTS.md`)
+- [ ] New tests added that fail without this change (if shipped code changed)
+- [ ] No existing test, test page or `harness.json` entry edited or removed (or explained above, for the maintainer to allow)
+- [ ] No new permissions, page matches or web addresses (or explained above, for the maintainer to allow)
+- [ ] Nothing changed in `.github/`, `.claude/`, `AGENTS.md` or `CLAUDE.md` (or explained above, for the maintainer to allow)
+- [ ] `README.md` and `docs/` updated (if behaviour, permissions or settings changed)
+- [ ] `version` and `CHANGELOG.md` left alone (the maintainer does those at release)
