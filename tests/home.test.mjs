@@ -447,9 +447,7 @@ T.runAsync('Search: results are reachable (2026-09-26 capture)', async () => {
   const html = `<!doctype html><html><body class="search"><div id="search-react-app"><div class="Search-module__content-container Search-module__show"><div class="Search-module__search-container"><div class="SearchForm-module__search-form-container"><input class="SearchForm-module__search-input" value="test" data-rect="300,100,600,40"></div><div class="Search-module__results-content-container"><div class="SearchResults-module__search-results-container"><div><div class="TypeFilters-module__type-filters-container"><button class="TypeFilters-module__type-filter" data-filter-type="all" data-rect="300,200,120,30">All (20)</button></div><ul class="SearchResults-module__search-results">${[0, 1, 2].map(tile).join('')}</ul><button class="SearchResults-module__load-more">Load More</button></div></div></div></div></div></div></body></html>`;
   const p = await boot({ html, url: `${B}/search?q=test` });
   T.eq((await p.state()).kind, 'search');
-  p.key('Escape');
-  p.key('ArrowDown');
-  p.key('ArrowDown');
+  p.doc.querySelector('.tenfoot-kb [data-tenfoot-key="done"]').click();
   T.eq(hrefOf(p.active()), `${B}/videos/r0`, 'the result link — it has no class — is a target');
   p.key('ArrowRight');
   T.eq(hrefOf(p.active()), `${B}/videos/r1`);

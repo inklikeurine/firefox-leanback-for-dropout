@@ -547,9 +547,12 @@
     }
     if (overlay()) {
       // A key pressed on an open box is deliberate: the page may take the
-      // focus again (results coming back under the keyboard) and gets it back
+      // focus again (results coming back beside the keyboard) and gets it back
       // each time, a bounded number of times per key, never for ever.
       state.menuRefocus = 0;
+      // The search page's keyboard is the page: Back leaves it, as from the results.
+      if (action === "back" && state.keyboard.isOpen && state.keyboard.isDocked) return goBack();
+      if (action === "search" && state.keyboard.isOpen && state.keyboard.isDocked) return leaveSearch();
       return overlay().key(action);
     }
     if (state.menu.isOpen) return dispatchInMenu(action);
@@ -947,7 +950,7 @@
 
   function hintItems() {
     const step = state.settings.seekStep;
-    if (state.keyboard && state.keyboard.isOpen) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Type" }, { keys: "Back", label: "Close" }];
+    if (state.keyboard && state.keyboard.isOpen) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Type" }, { keys: "Menu", label: "Delete" }, { keys: "Back", label: state.keyboard.isDocked ? "Leave" : "Close" }];
     if (state.modal) return [{ keys: "◀ ▶ ▲ ▼", label: "Move" }, { keys: "OK", label: "Select" }, { keys: "Back", label: "Close" }];
     if ((state.kind === "video" || state.inPlace) && state.playerFocused) {
       const offering = state.playerState && state.playerState.upNextShowing;
@@ -1009,10 +1012,17 @@
       showHints();
       return;
     }
+    // A real keyboard types while the on-screen one is up.
+    if (state.keyboard && (state.keyboard.isOpen || state.keyboard.isDocked) && !e.ctrlKey && !e.altKey && !e.metaKey && (e.key.length === 1 || e.key === "Backspace") && !(e.key === "/" && state.keyboard.isDocked)) {
+      state.keyboard.typed(e.key);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
     const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
-      if (overlay()) {
+      if (overlay() && !(state.keyboard.isOpen && state.keyboard.isDocked)) {
         // A question is answered, not left by going back a page.
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -1434,6 +1444,7 @@
     state.settings = s;
     applyLook(true);
     state.hints.setEnabled(s.hintBar);
+    state.keyboard.setHints(s.hintBar);
     if (prev.enabled !== s.enabled) applyEnabled(s.enabled);
   }
 
@@ -1467,7 +1478,13 @@
     state.menu = Panel.createPanel(document, { label: "Leanback settings", onPick: onPanelPick });
     state.ask = Ask.createAsk(document, { onFocus: (b) => state.ring.follow(b) });
     state.picker = Ask.createPicker(document, { onFocus: (b) => state.ring.follow(b) });
-    state.keyboard = Keyboard.createKeyboard(document, { onFocus: (b) => state.ring.follow(b) });
+    state.keyboard = Keyboard.createKeyboard(document, {
+      hints: settings.hintBar,
+      onFocus: () => state.ring.follow(null),
+      onEdge: (dir) => P.keyboardEdge(dir),
+      onDone: () => P.toResults(true),
+      onEnter: () => P.keyboardEntered()
+    });
     state.settingsMenu = createSettingsMenu();
     if (History) {
       // The watch history is the profile's that is watching; telling the

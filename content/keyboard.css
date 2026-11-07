@@ -1,17 +1,24 @@
-/* Leanback for Dropout — the on-screen keyboard (nav/keyboard.js): a panel
-   along the bottom of the screen, over everything but the ring, leaving the
-   box being typed in visible above it. Sizes come from --tf-u (Interface
-   Size scales them) and colours from the theme. Dropout's own button, input
-   and heading styles are held off. */
+/* Leanback for Dropout — the on-screen keyboard (nav/keyboard.js): a panel down
+   the left of the screen, beside the rail, over everything, with the page beside
+   it. Bare letters: a key has no box until it is selected, when it becomes a
+   solid pill in the accent colour, as in the settings. Sizes come from --tf-u
+   (Interface Size scales them) and colours from the theme. Dropout's own button,
+   input and heading styles are held off. */
+:root {
+  --tf-kb-side: calc(var(--tf-u, 0.04vw) * 825);
+}
 .tenfoot-kb {
   position: fixed;
   left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
+  width: var(--tf-kb-side);
   z-index: 2147483100;
   display: flex;
-  justify-content: center;
   font-family: var(--tf-font, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif);
+}
+html[data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfoot-kb {
+  left: var(--tf-rail-width);
 }
 .tenfoot-kb[hidden] {
   display: none;
@@ -19,41 +26,67 @@
 .tenfoot-kb-panel {
   box-sizing: border-box;
   width: 100%;
-  padding: calc(var(--tf-u, 0.04vw) * 22) var(--tf-gutter, 5vw) calc(var(--tf-u, 0.04vw) * 30);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--tf-u, 0.04vw) * 22);
+  padding: calc(var(--tf-u, 0.04vw) * 34) calc(var(--tf-u, 0.04vw) * 36);
   background: var(--tf-surface, #15171c);
-  border-top: 2px solid var(--tf-rail-edge, #262a33);
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.5);
+  border-right: 1px solid var(--tf-rail-edge, #262a33);
+  box-shadow: 24px 0 60px rgba(0, 0, 0, 0.5);
 }
-/* The text so far, with the cursor in it. */
+/* What is being typed in, with the cursor in it: the search box, on search. */
 .tenfoot-kb-preview {
-  min-height: 1.4em;
-  margin: 0 auto calc(var(--tf-u, 0.04vw) * 16);
+  flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: calc(var(--tf-u, 0.04vw) * 112);
+  padding: calc(var(--tf-u, 0.04vw) * 22) calc(var(--tf-u, 0.04vw) * 30);
+  border-radius: calc(var(--tf-u, 0.04vw) * 18);
+  background: var(--tf-raised, #1e2128);
   color: var(--tf-text, #f5f6f7);
   font-weight: 600;
-  font-size: max(16px, calc(var(--tf-u, 0.04vw) * 40));
-  line-height: 1.4;
-  text-align: center;
+  font-size: max(18px, calc(var(--tf-u, 0.04vw) * 54));
+  line-height: 1.25;
   white-space: pre;
   overflow: hidden;
 }
 .tenfoot-kb-caret {
   display: inline-block;
-  width: 2px;
+  width: 3px;
   height: 1.1em;
   margin: 0 1px;
   vertical-align: text-bottom;
   background: var(--tenfoot-accent, #feea3b);
 }
-.tenfoot-kb-keys {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--tf-u, 0.04vw) * 12);
+.tenfoot-kb-placeholder {
+  color: var(--tf-dim, #9aa0ac);
+  font-weight: 500;
 }
-.tenfoot-kb-row {
-  display: flex;
-  justify-content: center;
-  gap: calc(var(--tf-u, 0.04vw) * 12);
+/* The keys take the height the panel has (more with no hint line along its foot),
+   up to a limit, so a number pad's few rows don't grow huge. */
+.tenfoot-kb-keys {
+  flex: 1 1 calc((var(--tf-u, 0.04vw) * 105 + var(--tf-u, 0.04vw) * 4) * var(--tf-kb-rows, 9) + var(--tf-kb-line-room, 0px));
+  max-height: calc((var(--tf-u, 0.04vw) * 130 + var(--tf-u, 0.04vw) * 4) * var(--tf-kb-rows, 9) + var(--tf-kb-line-room, 0px));
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--tf-kb-cols, 6), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--tf-kb-rows, 9), minmax(0, 1fr));
+  gap: calc(var(--tf-u, 0.04vw) * 4) calc(var(--tf-u, 0.04vw) * 8);
+}
+/* The line above the digits, as wide as the box at the top and in its colour, in a
+   slim row of its own. A number pad has no keys above its digits, so no line. */
+.tenfoot-kb-keys:has(> .tenfoot-kb-line) {
+  --tf-kb-line-room: calc(var(--tf-u, 0.04vw) * 24);
+  grid-template-rows: repeat(var(--tf-kb-above), minmax(0, 1fr)) calc(var(--tf-u, 0.04vw) * 20) repeat(var(--tf-kb-below), minmax(0, 1fr));
+}
+.tenfoot-kb-line {
+  grid-column: 1 / -1;
+  align-self: center;
+  height: max(2px, calc(var(--tf-u, 0.04vw) * 3));
+  border-radius: calc(var(--tf-u, 0.04vw) * 2);
+  background: var(--tf-raised, #1e2128);
 }
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key {
   display: flex;
@@ -61,49 +94,112 @@ html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: calc(var(--tf-u, 0.04vw) * 72 * var(--tf-kb-w, 2) - var(--tf-u, 0.04vw) * 12);
+  width: auto;
   min-width: 0;
-  height: calc(var(--tf-u, 0.04vw) * 100);
+  height: auto;
   margin: 0;
   padding: 0;
-  border: 2px solid rgba(255, 255, 255, 0.25) !important;
-  border-radius: calc(var(--tf-u, 0.04vw) * 10);
-  background: var(--tf-raised, #1e2128) !important;
+  border: none !important;
+  border-radius: calc(var(--tf-u, 0.04vw) * 18);
+  background: transparent !important;
   box-shadow: none !important;
   color: var(--tf-text, #f5f6f7) !important;
   font: inherit;
-  font-weight: 700;
-  font-size: max(15px, calc(var(--tf-u, 0.04vw) * 40));
+  font-weight: 500;
+  font-size: max(16px, calc(var(--tf-u, 0.04vw) * 47));
   line-height: 1;
   text-transform: none;
   outline: none;
   cursor: pointer;
-}
-html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key:is(:hover, :focus, :active) {
-  background: rgba(255, 255, 255, 0.14) !important;
-  color: var(--tf-text, #f5f6f7) !important;
   transition: none !important;
 }
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--digit {
+  color: #c4c8d0 !important;
+  font-size: max(15px, calc(var(--tf-u, 0.04vw) * 39));
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--fn {
+  color: var(--tf-dim, #9aa0ac) !important;
+  font-size: max(14px, calc(var(--tf-u, 0.04vw) * 32));
+  font-weight: 600;
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--chip {
+  font-size: max(12px, calc(var(--tf-u, 0.04vw) * 27));
+  font-weight: 600;
+}
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--done {
-  border-color: var(--tenfoot-accent, #feea3b) !important;
-  background: var(--tenfoot-accent, #feea3b) !important;
-  color: #1a1a05 !important;
+  color: var(--tenfoot-accent, #feea3b) !important;
+  font-size: max(14px, calc(var(--tf-u, 0.04vw) * 38));
   font-weight: 800;
 }
-html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--done:is(:hover, :focus, :active) {
-  background: var(--tenfoot-accent, #feea3b) !important;
-  color: #1a1a05 !important;
-}
-html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--shift[aria-pressed="true"] {
-  border-color: var(--tenfoot-accent, #feea3b) !important;
+/* Shift: an outline when off, solid for one capital, solid with a bar under it
+   for caps lock. */
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key--shift:is([data-tenfoot-shift="once"], [data-tenfoot-shift="lock"]) {
   color: var(--tenfoot-accent, #feea3b) !important;
 }
+.tenfoot-kb-key--shift:is([data-tenfoot-shift="once"], [data-tenfoot-shift="lock"]) svg {
+  fill: currentColor;
+}
+.tenfoot-kb-key--shift[data-tenfoot-shift="lock"] {
+  position: relative;
+}
+.tenfoot-kb-key--shift[data-tenfoot-shift="lock"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 0.7em;
+  height: 3px;
+  margin-left: -0.35em;
+  border-radius: 2px;
+  background: currentColor;
+}
 .tenfoot-kb-key svg {
-  width: 1.1em;
-  height: 1.1em;
+  width: 1.3em;
+  height: 1.3em;
+}
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transition: none !important;
+}
+/* The selection: stamped by the keyboard, never read from :focus, and no ring
+   round it. */
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-current="true"] {
+  background: var(--tenfoot-ring-color, #feea3b) !important;
+  color: #000000 !important;
+  font-weight: 700;
+}
+/* OK on it: the key answers for a moment. */
+html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-pressed="true"] {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+/* What the remote's keys do, along the foot. */
+.tenfoot-kb-hint {
+  flex: none;
+  margin-top: auto;
+  display: flex;
+  gap: calc(var(--tf-u, 0.04vw) * 36);
+  color: var(--tf-dim, #9aa0ac);
+  font-size: max(13px, calc(var(--tf-u, 0.04vw) * 24));
+  line-height: 1.3;
+}
+.tenfoot-kb-hint[hidden] {
+  display: none;
+}
+.tenfoot-kb-hint-key {
+  margin-right: calc(var(--tf-u, 0.04vw) * 10);
+  color: var(--tf-text, #f5f6f7);
+  font-weight: 600;
 }
 html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key {
-  border-color: #fff !important;
+  color: #ffffff !important;
+}
+html[data-tenfoot-contrast="on"] .tenfoot-kb-line {
+  background: #ffffff;
+}
+html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-current="true"] {
+  color: #000000 !important;
+  outline: 3px solid #ffffff;
 }
 @media (prefers-reduced-motion: reduce) {
   .tenfoot-kb-key {
@@ -111,11 +207,28 @@ html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key {
   }
 }
 
-/* With the keyboard up, the sign-in screen moves to the top so its boxes stay
-   above it. */
+/* With the keyboard up, the page moves over to make room beside it: the
+   sign-in screen, a page Leanback draws (a profile's form, and search), and
+   Dropout's own page (a PIN). */
 html[data-tenfoot-keyboard="on"] .tenfoot-signin {
-  align-items: flex-start !important;
+  padding-left: var(--tf-kb-side);
 }
-html[data-tenfoot-keyboard="on"] .tenfoot-signin-card {
-  padding-top: calc(var(--tf-u, 0.04vw) * 30);
+html[data-tenfoot-keyboard="on"] .tenfoot-home-view {
+  left: calc(var(--tf-rail-width) + var(--tf-kb-side));
+}
+html[data-tenfoot-keyboard="on"] .tenfoot-home[data-tenfoot-norail="true"] .tenfoot-home-view {
+  left: var(--tf-kb-side);
+}
+html[data-tenfoot="on"][data-tenfoot-keyboard="on"]:not([data-tenfoot-home="on"]) body {
+  box-sizing: border-box !important;
+  padding-left: var(--tf-kb-side) !important;
+}
+html[data-tenfoot="on"][data-tenfoot-keyboard="on"][data-tenfoot-rail="on"]:not([data-tenfoot-home="on"]) body {
+  padding-left: calc(var(--tf-rail-width) + var(--tf-kb-side)) !important;
+}
+/* Search: the box is on the panel, and the results are three across, filling
+   what is left. */
+html[data-tenfoot-keyboard-docked="on"] .tenfoot-home {
+  --tf-card-w: calc((100vw - var(--tf-rail-width) - var(--tf-kb-side) - var(--tf-gutter) * 2 - var(--tf-card-gap) * 2) / 3);
+  --tf-reach: calc(var(--tf-card-w) * 9 / 16 * var(--tenfoot-zoom, 5) / 200 + var(--tenfoot-ring-width, 4px) + 2px);
 }

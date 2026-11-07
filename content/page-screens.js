@@ -148,6 +148,8 @@
           columns: () => GRID_COLUMNS[pageLook().cards] || null,
           onPill: (pill) => onSeasonChosen(pill.key, Boolean(pill.current)),
           onFieldDone: () => leaveFieldBelow(),
+          // Typing on the docked keyboard: nothing more is loaded under it.
+          holdMore: () => Boolean(state.keyboard && state.keyboard.isOpen),
           // An episode's Watch (or Resume), Start Over and Clear Progress; a
           // profile's Delete Profile.
           onRun: (what) => {
@@ -162,10 +164,12 @@
       root.dataset.tenfootHome = "on";
       state.screenRefocus = 0;
       state.screen.refresh();
+      if (which === "search") P.dockKeyboard();
     }
 
     function stopScreen() {
       if (!state.screen) return;
+      P.undockKeyboard();
       state.screen.destroy();
       state.screen = null;
       delete root.dataset.tenfootHome;
@@ -177,6 +181,7 @@
       if (!state.screen) return;
       const before = currentEl();
       const target = state.screen.refresh();
+      if (state.keyboard) state.keyboard.refresh();
       if (state.screen.ready) setPending(false);
       // A box open over the screen (the keyboard, a question) keeps the
       // selection: results arriving under it do not take it.
@@ -191,7 +196,11 @@
     function moveScreen(dir) {
       const r = state.screen.move(dir);
       if (r && r.el) focusEl(r.el, { scroll: false });
-      else if (r && r.edge === "left") enterRail();
+      else if (r && r.edge === "left") {
+        // The docked keyboard is between the results and the rail.
+        if (state.keyboard && state.keyboard.isDocked) state.keyboard.enter("right");
+        else enterRail();
+      }
       return true;
     }
 
@@ -265,6 +274,10 @@
       state.railActive = false;
       const r = state.railReturn;
       state.railReturn = null;
+      if (r && state.keyboard && state.keyboard.isDocked && state.keyboard.contains(r)) {
+        state.keyboard.enter();
+        return true;
+      }
       if (r && r.isConnected) {
         if (state.screen) state.screen.select(r);
         focusEl(r, { scroll: !state.screen });
@@ -341,7 +354,9 @@
           return;
         case "search":
           if (state.kind === "search") {
-            leaveRail();
+            // OK on the search glyph is the keyboard, wherever the selection was.
+            if (state.keyboard && state.keyboard.isDocked) state.keyboard.enter();
+            else leaveRail();
             return;
           }
           goTop(state.rules.searchUrl || "/search");

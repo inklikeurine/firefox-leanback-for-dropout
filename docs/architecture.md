@@ -83,7 +83,7 @@ What each key does on each: [keymap.md](./keymap.md).
 | `grid` | `/series`, `/collections/...`, `/my-list`, `/movies`, `/continue-watching` | `screen.js`, with the rail | the first card | geometric navigation over Dropout's tiles; ▼ past the last row clicks Load More |
 | `series` | `/<slug>[/season:N]`, not a hub | show or special: `show.js` + `screen.js`; list: `screen.js`. With the rail | show: the episode to watch next; special: *Watch Movie*; list: the first card | Dropout's page, geometric navigation; its season and sort `<select>`s are two-step controls |
 | `video` | `/<slug>/season:N/videos/<ep>`, `/videos/<slug>`, `/<hub>/events/<slug>` (Dropout 24/7's stream) | `screen.js`: the [details page](#an-episodes-page), with the rail; the video playing in the full window | details: *Watch* (or *Resume*); playing: the player frame | no title to read: Dropout's page, playing at once; ▼ from the player → the series link, else the first focusable below |
-| `search` | `/search` | `screen.js`, with the rail | the search box | no Dropout search box: geometric navigation over Dropout's page |
+| `search` | `/search` | `screen.js`, with the rail and the docked keyboard | the keyboard's first letter | no Dropout search box: geometric navigation over Dropout's page |
 | `welcome` | `/`, signed out (signed in: on to `/browse`) | `screen.js`: the welcome (`welcomeModel`), no rail | *Sign In* | no banner to read: Dropout's page, geometric navigation |
 | `profiles` | `/profile/pick`, or any address while the page holds `screen.profiles.root` | `screen.js`: the picker or Manage profiles (`profilesModel`; Sign Out, the Edit buttons), or the app's Add Profile (`profileFormModel`, `screen.profileForm.add`), with the rail; while the app shows a PIN, Dropout's | the profile watching (its Edit button, managing); Add Profile: the name box | Dropout's page, the ring over `pages.profiles.focusable` |
 | `signin` | `/login` | `page-signin.js`: Leanback's own screen over Dropout's form, no rail | the email box (the password box when the email is already filled) | — |
@@ -107,7 +107,7 @@ screen is only redrawn.
   `<select>`) only these are taken: `back`; `left` with the caret at the very
   start and nothing selected (to the rail where there is one, else the
   nearest thing left); `down` in a one-line `input` (to the nearest thing
-  below — on search, the filters, then the results — or left to the field
+  below — the next box or button — or left to the field
   when there is nothing).
 - A `<select>` among the focusables is a two-step control (no rule marks it):
   OK engages it, ◀ ▶ step its options, OK commits, Back restores the old
@@ -386,7 +386,8 @@ Dropout's page with the `browse` rules.
 
 **The model** `screen.js` draws: a `head` (a title) or a `hero` (Home's
 banner: picture, title, meta, description, buttons); a `field` (a search box:
-its words, the site's box it types into); `pills` (a row of choices: seasons,
+its words, the site's box it types into, and `docked` when the keyboard shows it
+and the screen draws none); `pills` (a row of choices: seasons,
 search's filters); `sections` (groups of cards: title, count, columns);
 `empty` (what to say with no cards: search's own words, or an empty list's
 line — the screen is then ready with no rows, and the selection goes to the
@@ -677,20 +678,42 @@ page script can route keys to it the same way. `open(input, {layout, page})`
 resolves `"done"` or null.
 
 - **Keys** are data, not markup: `rowsFor(layout, page)` gives the rows
-  of `{id, label, w, kind}`; `w` is a width in units (a letter is 2), set on
-  each button as `--tf-kb-w`, so the CSS draws what the code counts.
-- **Moves use those widths, not the page's geometry**: each key's centre is
+  of `{id, label, w, kind}`; `w` is a width in grid columns. Each button is
+  placed by `grid-column` and `grid-row-*`, so the CSS draws what the code counts.
+  `.tenfoot-kb-line`, above the first row of digits when there are keys above them,
+  has a slim grid row of its own and is not a key: the moves and `state.rows` don't see it.
+- **Moves use those numbers, not the page's geometry**: each key's centre is
   counted from the middle of its row, ▲ ▼ pick the nearest centre in the next
-  row (a tie goes left) and remember the place across rows, ◀ ▶ wrap in the
-  row. This is why the moves are testable headless.
+  row (a tie goes left) and remember the place across
+  rows, ◀ ▶ wrap in the row. This is why the moves are testable headless.
+- **Shift** is `shift`: `"off"`, `"once"` or `"lock"`, on the key as
+  `data-tenfoot-shift`. After an edit caps lock stays; anything else goes back to
+  what the text wants (`autoShift()`: a text box capitalises at the start and after
+  a space).
+- **The selection** is stamped as `data-tenfoot-current` on the key, not read
+  from `:focus`, and the page script hides the ring through `onFocus`. A press
+  stamps `data-tenfoot-pressed` for a moment.
+- **Menu** arrives as the `menu` action and takes out the letter before the
+  cursor. `typed(c)` is a real keyboard's key while it is open, sent by the page
+  script's `onKeyDown` before the keymap.
 - **Typing** (`edit()`): `beforeinput` (cancelable), the value through the
   native setter (past a framework's watcher), then `input`. The cursor is the
   box's own where it has one; `type=email` has none, so the keyboard keeps
   its own, and the panel's top line shows the text with a cursor in it
   (masked for a password box until *Show*). *Show* sets `input.type` to
   `text` and closing sets it back.
+- **Docked** (`open(box, {docked: true})`): the search page's way of typing. It
+  stays up beside the page and the selection can leave it: `leave()` and
+  `enter(from)` move it out and back, and `isOpen` is false while it is out, so
+  `overlay()` stops routing keys to it, while `isDocked` stays true until `close()`.
+  ◀ ▶ past its edges call `onEdge(dir)` instead of going round, and Done calls
+  `onDone()`. `refresh()` follows the box when its text changes by other means.
 - **Looks**: `content/keyboard.css`, sizes from `--tf-u`, colours from the
-  theme variables, the ring from `nav/focus-ring.js` via `onFocus`.
+  theme variables. `.tenfoot-kb-keys` grows to the panel's height, up to a `max-height`
+  counted from its rows, so the keys take up what the foot's line leaves.
+  `--tf-kb-side` is the panel's width; while `<html>` carries
+  `data-tenfoot-keyboard="on"` the sign-in screen, a screen's view and Dropout's own
+  page move over by it.
 
 `content/page-keyboard.js` opens it (for a PIN screen, Dropout's own form
 that Leanback steps aside for, with the `digits` layout and the screen's
@@ -708,9 +731,23 @@ opens it for a pointer click (`detail > 0`, so a script's own `click()` does
 not). `state.keyboard` is in `overlay()` with the question and picture
 boxes, so the page script routes keys to it, Back closes it and focus
 leaving it is taken back. While it is open `<html>` carries
-`data-tenfoot-keyboard="on"`, which moves the sign-in screen to the top. When
+`data-tenfoot-keyboard="on"`. When
 it answers `"done"`, `enterIn()` does what Enter in the box does
-(`signinEnter()`, or `leaveFieldBelow()` for search).
+(`signinEnter()`, or `leaveFieldBelow()` for a profile's name).
+
+On search, `startScreen()` calls `dockKeyboard()`, which opens it docked on the
+screen's own `.tenfoot-screen-field-input` and adds
+`data-tenfoot-keyboard-docked="on"`; `stopScreen()` closes it. `searchModel()` marks
+its field `docked`, so `screen.js` draws no box and no field row, the selection has
+no start on the screen, and the results are `SEARCH_COLUMNS` (three) across; CSS sets
+`--tf-card-w` to fill what the panel leaves. The field is still what the keyboard types
+into, and its `input` listener still mirrors into Dropout's box. It also takes the
+screen back to the top, since the results are new, and `holdMore` keeps Load More from
+being pressed while the keyboard has the selection. `toResults(first)` (Done, and ▶ at
+the edge through `keyboardEdge()`) leaves the keyboard for `initialTarget()` or the
+screen's `current`. `moveScreen()` sends ◀ past the results to `keyboard.enter("right")`,
+`keyboardEdge("left")` to `enterRail()`, and `leaveRail()` and the rail's search glyph
+back to `keyboard.enter()`.
 
 ## The sign-in and reset screens (`content/page-signin.js`)
 
@@ -910,7 +947,8 @@ tops the playback panel until used.
   for the context, on a scrim. Off by default (`hintBar`); when on, it stays
   up on pages and, during playback, appears on a keypress and hides 3 s
   later. Short notices ("No next episode", "Nothing to go back to") use the
-  same bar, hints on or off.
+  same bar, hints on or off. The on-screen keyboard's line along its foot follows
+  the same setting (`hints` when created, then `setHints()`).
 
 ## The transport bar and the settings panel
 
