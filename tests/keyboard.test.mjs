@@ -48,7 +48,7 @@ T.runAsync('opened: a panel outside the page\'s body; the keys that act on the t
   T.eq(kb.contains(kb.current) && !kb.contains(box('t')), true);
 });
 
-T.runAsync('the remote: ◀ ▶ go round the row; ▲ ▼ go straight up and down and stop at the top and bottom', async () => {
+T.runAsync('the remote: ◀ ▶ go round the row; ▲ ▼ go straight up and down and round from the top to the bottom', async () => {
   const { kb, box } = load();
   kb.open(box('t'));
   const at = () => kb.current.dataset.tenfootKey;
@@ -63,15 +63,47 @@ T.runAsync('the remote: ◀ ▶ go round the row; ▲ ▼ go straight up and dow
   kb.key('up'); kb.key('up');
   T.eq(at(), 'page', 'and straight up, to the keys that act on the text');
   kb.key('up');
-  T.eq(at(), 'page', 'no row above: stays');
+  T.eq(at(), 'space', 'no row above: round to the bottom');
+  kb.key('down');
+  T.eq(at(), 'page', 'no row below: round to the top, the place kept');
   for (let i = 0; i < 7; i += 1) kb.key('down');
   T.eq(at(), 'c:8', 'through the letters and the digits');
   kb.key('down');
   T.eq(at(), 'space');
-  kb.key('down');
-  T.eq(at(), 'space', 'no row below: stays');
   kb.key('up');
   T.eq(at(), 'c:8', 'back up to where it came from (the place was kept)');
+});
+
+T.runAsync('▲ ▼ go round in every layout, docked too, landing on the key under the same place', async () => {
+  const { kb, box } = load();
+  const at = () => kb.current.dataset.tenfootKey;
+  kb.open(box('t'), { layout: 'text', docked: true });
+  kb.key('up');
+  T.eq(at(), 'shift', 'docked, from A: up to Shift');
+  kb.key('up');
+  T.eq(at(), 'space', 'and round to Space, on the search page\'s keyboard');
+  kb.key('down');
+  T.eq(at(), 'shift', 'and ▼ back round');
+  for (let i = 0; i < 4; i += 1) kb.key('right');
+  T.eq(at(), 'backspace');
+  kb.key('up');
+  T.eq(at(), 'done', 'from the right of the top row: Done');
+  kb.key('down');
+  T.eq(at(), 'backspace');
+  kb.close();
+  kb.open(box('d1'), { layout: 'digits' });
+  kb.key('up');
+  T.eq(at(), 'c:2', 'the number pad: from 5 up to 2');
+  kb.key('up');
+  T.eq(at(), 'c:0', 'and round to 0');
+  kb.key('down');
+  T.eq(at(), 'c:2', 'and back');
+  kb.close();
+  kb.open(box('e'), { layout: 'email' });
+  for (let i = 0; i < 2; i += 1) kb.key('up');
+  T.eq(at(), 'c:@gmail.com', 'email: the row of endings is the top');
+  kb.key('up');
+  T.eq(at(), 'c:.com', 'and round to .com');
 });
 
 T.runAsync('docked: stays up beside the page; the selection leaves and comes back; ◀ ▶ past its edges and Done are the page\'s; Back is not its own; a real letter brings it back', async () => {

@@ -390,7 +390,7 @@
 
     // ◀ ▶ go along the row and round its ends (docked, past them, which the page
     // script takes up); ▲ ▼ go to the key nearest the same place in the next row,
-    // past a key that spans rows, and stop at the top and the bottom.
+    // past a key that spans rows, and round from the top to the bottom and back.
     function move(action) {
       const row = rows[at.r];
       const n = row.keys.length;
@@ -405,7 +405,8 @@
         const d = action === "down" ? 1 : -1;
         const from = row.keys[at.i];
         if (column === null) column = centre(at.r, at.i);
-        for (let r = at.r + d; r >= 0 && r < rows.length; r += d) {
+        for (let step = 1; step < rows.length; step += 1) {
+          const r = (at.r + d * step + rows.length) % rows.length;
           const i = nearest(r);
           if (rows[r].keys[i] !== from) {
             focusAt(r, i, true);

@@ -165,7 +165,7 @@ place of Space (no capitals); a password box has
 back); a PIN a number pad that fills its digit boxes in turn. The selection, a
 solid pill with no ring, starts on *a* (*5* on the pad). ◀ ▶ go along a row and
 round its ends; ▲ ▼ go straight up and down, keep their place across rows
-and stop at the top and the bottom. OK types the key; **Menu takes out the
+and go round from the top row to the bottom row and back, docked too. OK types the key; **Menu takes out the
 letter before the cursor**; a held OK or arrow repeats as the browser repeats it
 (a held move is slowed by the page script as everywhere). A real keyboard types
 into the box while it is open. *Done* closes it (the caller does what

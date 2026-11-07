@@ -348,8 +348,9 @@ use ([targets.md](./targets.md)).
   turns it readable and back; a PIN gets a number pad whose digits go into
   the PIN screen's boxes in turn (shown as dots on the panel's top line), and
   *Done* presses Dropout's button. The selection starts on *a* (*5* on the pad).
-  ◀ ▶ go along a row and round its ends; ▲ ▼ go straight up and down and stop at
-  the top and bottom. OK types; **the remote's Menu takes out the letter before the
+  ◀ ▶ go along a row and round its ends; ▲ ▼ go straight up and down and round
+  from the top row to the bottom row and back, keeping their place: ▲ from the left of
+  the top row lands on *Space*, from the right on *Done*. OK types; **the remote's Menu takes out the letter before the
   cursor**, from wherever the selection is, and a line along the foot says so.
   *Done* closes it and does what Enter in the box does
   (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*), Escape closes it and the selection is back on the
