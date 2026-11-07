@@ -67,7 +67,7 @@ T.run('while typing, only back leaves the field — even "/" belongs to the fiel
   T.eq([a('/', e), a('ArrowLeft', e), a('Enter', e), a('MediaPlayPause', e)], [null, null, null, null]);
 });
 
-T.run('◀ leaves a field only when the text cursor is at its very start (N2)', () => {
+T.run('◀ leaves a field only when the text cursor is at its very start', () => {
   T.eq(a('ArrowLeft', { editable: true, atStart: true }), 'left');
   T.eq(a('ArrowLeft', { editable: true, atStart: false }), null, 'anywhere else it moves the cursor');
   T.eq([a('ArrowRight', { editable: true, atStart: true }), a('ArrowDown', { editable: true, atStart: true })], [null, null]);
@@ -78,7 +78,7 @@ T.run('◀ leaves a field only when the text cursor is at its very start (N2)', 
   T.eq(K.caretAtStart(null), false);
 });
 
-T.run('▼ and ▲ leave a one-line field (N1; the sign-in form); in a textarea they move the cursor', () => {
+T.run('▼ and ▲ leave a one-line field (the sign-in form); in a textarea they move the cursor', () => {
   T.eq(a('ArrowDown', { editable: true, singleLine: true }), 'down');
   T.eq(a('ArrowDown', { editable: true, singleLine: false }), null);
   T.eq(a('ArrowUp', { editable: true, singleLine: true }), 'up');

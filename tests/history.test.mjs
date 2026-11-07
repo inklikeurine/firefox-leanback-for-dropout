@@ -205,7 +205,7 @@ T.run('the episode Dropout plays next is kept with the progress, its numbers rea
   T.notOk(s.entries.s1e1.next, 'only an https video address');
 });
 
-T.run('pickUp (S8): the most recent episode in progress, else the one after the last finished', () => {
+T.run('pickUp: the most recent episode in progress, else the one after the last finished', () => {
   const ep = (s, n, extra = {}) => ({ url: G(s, n), season: s, episode: n, title: `S${s}E${n}`, percent: null, ...extra });
   const onScreen = [1, 2, 3, 4].map((n) => ep(2, n));
   const entry = (s, n, position, at, extra = {}) => [`s${s}e${n}`, { url: G(s, n), duration: 1000, local: { position, at }, ...extra }];

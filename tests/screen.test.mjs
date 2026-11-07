@@ -26,7 +26,7 @@ async function boot({ html = fixture('collection.html'), url = `${B}/new-release
     else send({ ok: true });
     return false;
   });
-  const dom = makeDom({ html, url, browser: shim.browser });
+  const dom = makeDom({ clock: true, html, url, browser: shim.browser });
   const win = dom.window;
   win.__went = [];
   win.history.go = (d) => win.__went.push(d);
@@ -44,18 +44,18 @@ const hrefOf = (el) => (el && el.getAttribute('href')) || null;
 const ep = (n) => `${B}/new-releases/videos/nr-ep-${n}`;
 
 T.run('readPage: the title, each tile once with its link, picture, title, length, badge and bar, and whether there is more', () => {
-  const dom = makeDom({ html: fixture('collection.html'), url: `${B}/new-releases` });
+  const dom = makeDom({ clock: true, html: fixture('collection.html'), url: `${B}/new-releases` });
   dom.runScripts(['lib/common.js', 'content/cards.js', 'content/screen.js', 'content/readers.js'].map((f) => T.extFile(f)));
   const r = dom.window.TenfootReaders.readPage(dom.window.document, rules.screen);
   T.eq([r.root, r.title, r.items.length, r.more], [true, 'New Releases', 12, true]);
   T.eq(r.items[1], { key: ep(2), href: ep(2), title: 'New episode 2', subtitle: '', image: `${B}/art-2.svg`, duration: 1322, durationText: '22:02', percent: 30, badge: 'New' });
   T.eq([r.items[3].badge, r.items[3].percent], ['', null]);
-  const none = makeDom({ html: '<!doctype html><html><body><p>nothing</p></body></html>', url: `${B}/x` });
+  const none = makeDom({ clock: true, html: '<!doctype html><html><body><p>nothing</p></body></html>', url: `${B}/x` });
   none.runScripts(['lib/common.js', 'content/cards.js', 'content/screen.js', 'content/readers.js'].map((f) => T.extFile(f)));
   T.eq(none.window.TenfootReaders.readPage(none.window.document, rules.screen), { root: false, title: '', items: [], more: false });
 });
 
-T.runAsync('a list (New Releases): Leanback draws it, the rail beside it, Dropout\'s top bar and footer hidden (G6, G8)', async () => {
+T.runAsync('a list (New Releases): Leanback draws it, the rail beside it, Dropout\'s top bar and footer hidden', async () => {
   const p = await boot();
   const s = await p.state();
   T.eq([s.kind, Boolean(s.rail), s.rail.page], ['series', true, null], 'the rail on every page that plays no video (the owner, 2026-10-03); no entry lit');
@@ -186,7 +186,7 @@ const typeIn = async (p, text) => {
 };
 
 T.run('searchModel: Leanback\'s box with Dropout\'s words, the filters, the results, the empty message, Load More; null without Dropout\'s box', () => {
-  const dom = makeDom({ html: fixture('search.html'), url: `${B}/search?q=test` });
+  const dom = makeDom({ clock: true, html: fixture('search.html'), url: `${B}/search?q=test` });
   dom.runScripts(['lib/common.js', 'content/cards.js', 'content/screen.js', 'content/readers.js'].map((f) => T.extFile(f)));
   const S = dom.window.TenfootReaders;
   const m = S.searchModel(dom.window.document, rules.screen.search);
@@ -197,7 +197,7 @@ T.run('searchModel: Leanback\'s box with Dropout\'s words, the filters, the resu
   T.eq([it.length, m.sections[0].columns], [8, 3]);
   T.eq([it[1].href, it[1].title, it[1].subtitle, it[1].image], [R_(1), 'Test Kitchen', '', `${B}/art-2.svg`], 'the visible title; Dropout\'s blank subtitle is blank');
   T.eq([m.empty, Boolean(m.more)], ['', true]);
-  const none = makeDom({ html: '<!doctype html><html><body><input type="search"></body></html>', url: `${B}/search` });
+  const none = makeDom({ clock: true, html: '<!doctype html><html><body><input type="search"></body></html>', url: `${B}/search` });
   none.runScripts(['lib/common.js', 'content/cards.js', 'content/screen.js', 'content/readers.js'].map((f) => T.extFile(f)));
   T.eq(none.window.TenfootReaders.searchModel(none.window.document, rules.screen.search), null, 'not Dropout\'s search app: the page stays as it is');
 });

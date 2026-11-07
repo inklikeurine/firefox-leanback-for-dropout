@@ -5,7 +5,7 @@
 import { T, makeDom } from '../../firefox-tools/harness/lib.mjs';
 
 function load() {
-  const dom = makeDom({ html: '<!doctype html><html><body><p>page</p></body></html>', url: 'https://watch.dropout.tv/browse' });
+  const dom = makeDom({ clock: true, html: '<!doctype html><html><body><p>page</p></body></html>', url: 'https://watch.dropout.tv/browse' });
   dom.runScripts([T.extFile('lib/common.js'), T.extFile('nav/panel.js')]);
   return { win: dom.window, doc: dom.window.document, P: dom.window.TenfootPanel };
 }
@@ -26,6 +26,7 @@ const LEVEL = {
 T.run('a level: switches, values with a chevron, ticks, group headings, a separator', () => {
   const { doc, P } = load();
   const panel = P.createPanel(doc, { label: 'Settings' });
+  panel.open();   // as its owners do: open, then draw (a hidden panel can't take the focus)
   panel.render(LEVEL);
   const el = panel.element;
   T.eq(el.parentElement, doc.documentElement, 'outside the page\'s body');

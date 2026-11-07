@@ -4,7 +4,7 @@
 import { T, makeDom } from '../../firefox-tools/harness/lib.mjs';
 
 function load(browser) {
-  const dom = makeDom({ html: '<!doctype html><html><body><p class="a" id="one">One&nbsp; <b>two</b></p><p class="b">three</p></body></html>', url: 'https://watch.dropout.tv/browse', browser });
+  const dom = makeDom({ clock: true, html: '<!doctype html><html><body><p class="a" id="one">One&nbsp; <b>two</b></p><p class="b">three</p></body></html>', url: 'https://watch.dropout.tv/browse', browser });
   dom.runScripts([T.extFile('lib/common.js')]);
   return { doc: dom.window.document, C: dom.window.TenfootCommon };
 }

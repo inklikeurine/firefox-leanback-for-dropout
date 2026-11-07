@@ -1,19 +1,12 @@
-// Every shipped script, linted for names that are not defined (a typo, or a
-// helper moved to another file) and names defined but never used; and the
-// page script's parts (content/page*.js), which call each other through
+// The page script's parts (content/page*.js), which call each other through
 // one-line stubs (`const goTop = (...a) => P.goTop(...a)`): every P.<name>
 // called has exactly one part that provides it. A missing stub or provider
 // is a ReferenceError only on the path that uses it, so the other suites
-// can pass without reaching it.
+// can pass without reaching it. (Names undefined or unused in any shipped
+// script are the validator's: firefox-tools/tools/check.mjs.)
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { T } from '../../firefox-tools/harness/lib.mjs';
-
-// eslint and globals are installed with the shared tools, not in this repo.
-const requireTool = createRequire(path.join(T.harnessDir, 'lib.mjs'));
-const { ESLint } = requireTool('eslint');
-const globals = requireTool('globals');
 
 function scripts(dir, rel = '') {
   const out = [];
@@ -27,32 +20,6 @@ function scripts(dir, rel = '') {
 }
 
 const FILES = scripts(T.extDir);
-
-T.runAsync('no undefined names, no unused ones, in any shipped script', async () => {
-  const eslint = new ESLint({
-    cwd: T.extDir,
-    overrideConfigFile: true,
-    overrideConfig: [{
-      files: ['**/*.js'],
-      languageOptions: {
-        ecmaVersion: 2024,
-        sourceType: 'script',
-        globals: { ...globals.browser, ...globals.webextensions, cloneInto: 'readonly', exportFunction: 'readonly' }
-      },
-      rules: {
-        'no-undef': 'error',
-        'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
-        'no-redeclare': ['error', { builtinGlobals: false }],
-        'no-dupe-keys': 'error',
-        'no-unreachable': 'error'
-      }
-    }]
-  });
-  const results = await eslint.lintFiles(FILES);
-  const problems = results.flatMap((r) => r.messages.map((m) => `${path.relative(T.extDir, r.filePath)}:${m.line} ${m.message}`));
-  T.ok(FILES.length > 20, `found ${FILES.length} scripts`);
-  T.eq(problems, []);
-}, 60000);
 
 T.run('the page script\'s parts: every P.<name> called has exactly one provider', () => {
   const parts = FILES.filter((f) => /^content\/page(-[a-z]+)?\.js$/.test(f));

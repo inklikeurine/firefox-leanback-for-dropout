@@ -43,7 +43,7 @@ T.run('lookOf: the theme\'s colours; Theme Color, unless a holiday\'s colour is 
 });
 
 T.run('apply: the colours as CSS properties and the rest as attributes on <html>', () => {
-  const { document } = makeDom();
+  const { document } = makeDom({ clock: true });
   const root = document.documentElement;
   Th.apply(root, { ...S.normalize(null), theme: 'midnight', ringColor: '#b9a6ff', holidays: 'winter', highContrast: false, reduceMotion: 'on', uiScale: 115 }, day(7, 4));
   T.eq(root.style.getPropertyValue('--tenfoot-accent'), '#ff8a8a', 'the holiday picked wins the accent');
@@ -55,7 +55,7 @@ T.run('apply: the colours as CSS properties and the rest as attributes on <html>
 });
 
 T.run('applyPlayer: the caption style and the video\'s colour filter, its SVG filters kept in the frame once', () => {
-  const { document } = makeDom();
+  const { document } = makeDom({ clock: true });
   const root = document.documentElement;
   Th.applyPlayer(root, { ...S.normalize(null), captionSize: 'larger', captionColor: 'yellow', captionBackground: 'black', videoFilter: 'deuteranopia' });
   T.eq([root.dataset.tenfootCaptionSize, root.dataset.tenfootCaptionColor, root.dataset.tenfootCaptionBg, root.dataset.tenfootFilter], ['larger', 'yellow', 'black', 'deuteranopia']);

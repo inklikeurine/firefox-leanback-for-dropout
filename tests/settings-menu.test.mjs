@@ -29,13 +29,8 @@ T.run('the list: every setting in order under its group, then Clear Continue Wat
   const { m } = menu();
   const v = m.view();
   T.eq(v.title, 'Leanback Settings');
-  T.eq(v.entries.map((e) => e.label), [
-    'Autoplay Next Episode', 'Seek Step',
-    'Shows Open On', 'Skip dropout.tv Home', 'Back On Home',
-    'Theme', 'Theme Color', 'Holidays', 'Enlarge Selection', 'Ring Width', 'Button Hints',
-    'Accessibility',
-    'Clear Continue Watching',
-  ]);
+  // The settings themselves, in order, are settings.test.mjs's (the one list).
+  T.eq(v.entries.map((e) => e.label), [...ROWS.map((r) => r.label), 'Accessibility', 'Clear Continue Watching']);
   T.eq([...new Set(v.entries.map((e) => e.group).filter(Boolean))], ['Playback', 'Browsing', 'Look']);
   T.eq(v.entries[0], { id: 'autoplayNext', label: 'Autoplay Next Episode', kind: 'toggle', group: 'Playback', on: true });
   T.eq(v.entries.find((e) => e.id === 'seekStep').value, '10 s');
@@ -98,7 +93,7 @@ T.run('Accessibility: a menu of its own — Display, Captions, Video; a choice i
   m.key('select');
   const v = m.view();
   T.eq(v.title, 'Accessibility');
-  T.eq(v.entries.map((e) => e.label), ['Interface Size', 'High Contrast', 'Reduce Motion', 'Caption Size', 'Caption Color', 'Caption Background', 'Color Filter (Experimental)']);
+  T.eq(v.entries.map((e) => e.label), S.ROWS.filter((r) => r.menu === 'accessibility').map((r) => r.label));
   T.eq([...new Set(v.entries.map((e) => e.group))], ['Display', 'Captions', 'Video']);
   m.key('down');
   m.key('select');

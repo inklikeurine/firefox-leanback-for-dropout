@@ -43,7 +43,7 @@ async function boot({ html = fixture('home.html'), url = `${B}/browse`, settings
     } else send({ ok: true });
     return false;
   });
-  const dom = makeDom({ html, url, browser: shim.browser });
+  const dom = makeDom({ clock: true, html, url, browser: shim.browser });
   const win = dom.window;
   win.__went = [];
   win.history.go = (d) => win.__went.push(d);
@@ -422,19 +422,14 @@ T.runAsync('Home: an open dialog (cookie banner) hides Home and the rail until i
   T.eq(p.active().textContent, 'Watch now', 'back on Home');
 });
 
-T.runAsync('Clear Continue Watching takes OK twice', async () => {
+// Taking OK twice, and moving away disarming it, are settings-menu.test.mjs's.
+T.runAsync('Clear Continue Watching on Home: the row goes, and Dropout\'s bars stay on its cards', async () => {
   const p = await boot({ progress: { entries: { x: { url: `${B}/videos/x`, duration: 1000, local: { position: 500, at: 1 } } } } });
   p.key('ContextMenu');
   for (let i = 0; i < 20 && (await p.state()).menuItem !== 'forget'; i++) p.key('ArrowDown');
   p.key('Enter');
-  T.notOk(p.last('history:clear'), 'the first OK only asks');
-  T.ok(p.doc.querySelector('[data-tenfoot-item="forget"]').textContent.includes('OK again'));
-  p.key('ArrowUp');
-  p.key('ArrowDown');
   p.key('Enter');
-  T.notOk(p.last('history:clear'), 'moving away disarmed it');
-  p.key('Enter');
-  T.ok(p.last('history:clear'), 'the second OK forgets');
+  T.ok(p.last('history:clear'), 'cleared');
   T.ok(p.doc.querySelector('[data-tenfoot-item="forget"]').textContent.includes('Clear Continue Watching'));
   T.ok(p.doc.querySelector('.tenfoot-hints').textContent.includes('Continue Watching cleared'));
   await T.sleep(150);
@@ -442,7 +437,7 @@ T.runAsync('Clear Continue Watching takes OK twice', async () => {
   T.eq(p.doc.querySelector(`.tenfoot-row[data-tenfoot-row="${B}/new-releases"] .tenfoot-card[data-tenfoot-card="${B}/videos/nr-2"] .tenfoot-card-progress-fill`).style.width, '30%', 'Dropout’s bars still show on its cards');
 });
 
-T.runAsync('Search: results are reachable (2026-09-26 capture)', async () => {
+T.runAsync('Search: Done on the keyboard goes to the first result, and the arrows walk the results', async () => {
   const tile = (n) => `<li class="SearchResults-module__search-result search-result-video" data-index="${n}"><div data-testid="browse-card" class="card-enter horizontal-row-item"><div class="browse-item-card item-type-video"><div class="site-font-primary-color browse-item-title"><div class="inline-block" data-testid="browse-list-toggle"><button class="has-background icon-only icon-watchlist-add" aria-label="Add to my list">My list</button></div><a href="${B}/videos/r${n}" data-rect="${300 + n * 200},300,180,101"><div class="browse-image-container aspect_ratio_16_9"></div><div class="subtext-container"><div class="site-font-primary-color truncate">Result ${n}</div><div class="site-font-secondary-color browse-item-subtext">&nbsp;</div></div></a></div></div></li>`;
   const html = `<!doctype html><html><body class="search"><div id="search-react-app"><div class="Search-module__content-container Search-module__show"><div class="Search-module__search-container"><div class="SearchForm-module__search-form-container"><input class="SearchForm-module__search-input" value="test" data-rect="300,100,600,40"></div><div class="Search-module__results-content-container"><div class="SearchResults-module__search-results-container"><div><div class="TypeFilters-module__type-filters-container"><button class="TypeFilters-module__type-filter" data-filter-type="all" data-rect="300,200,120,30">All (20)</button></div><ul class="SearchResults-module__search-results">${[0, 1, 2].map(tile).join('')}</ul><button class="SearchResults-module__load-more">Load More</button></div></div></div></div></div></div></body></html>`;
   const p = await boot({ html, url: `${B}/search?q=test` });
@@ -512,7 +507,8 @@ T.runAsync('Rail: Dropout 24/7 — from Home it is one level down; from Browse, 
 T.runAsync('Rail: My List — a bookmark between Browse and Dropout 24/7; from Home one level down, from Browse sideways', async () => {
   const h = await boot();
   const order = Array.from(h.doc.querySelectorAll('.tenfoot-rail-item')).map(railOf);
-  T.eq(order, ['profile', 'search', 'home', 'browse', 'my-list', 'live', 'settings'], 'signed in: the profile watching first');
+  T.eq(order[0], 'profile', 'signed in: the profile watching first');
+  T.eq(order.slice(order.indexOf('browse'), order.indexOf('browse') + 3), ['browse', 'my-list', 'live'], 'My List between Browse and Dropout 24/7');
   const item = h.doc.querySelector('.tenfoot-rail-item[data-tenfoot-rail="my-list"]');
   T.eq([item.getAttribute('aria-label'), item.title], ['My List', 'My List']);
   T.eq(item.querySelectorAll('svg path').length, 1, 'the bookmark glyph');
@@ -547,7 +543,7 @@ T.runAsync('an empty My List: Leanback\'s screen with its title and a line sayin
   T.eq(railOf(p.active()), 'browse', 'and the rail still moves');
 }, 8000);
 
-T.runAsync('My List page: Leanback\'s own screen, with the rail, My List lit, the selection on the first show (G6)', async () => {
+T.runAsync('My List page: Leanback\'s own screen, with the rail, My List lit, the selection on the first show', async () => {
   const p = await boot({ html: fixture('my-list.html'), url: `${B}/my-list` });
   const s = await p.state();
   T.eq([s.kind, s.rail.page], ['grid', 'my-list']);

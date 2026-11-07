@@ -127,7 +127,11 @@ The header is server-rendered; everything below it is one React tree in
 - **Rows move by transform, not native scroll**, so `scrollIntoView` does not
   bring an off-screen tile into view. Leanback's own Home does not need them;
   when Home cannot be drawn, the extension clicks the row's own arrow controls
-  (`scrollNext` / `scrollPrev` in the rules).
+  (`scrollNext` / `scrollPrev` in the rules): a row's are the slider's
+  `button.slick-prev` / `button.slick-next`; `.carousel-arrow--left` /
+  `--right` are the banner's.
+- **The banner's slides sit outside `.carousel-layout-container`**, which
+  holds only its dots (`.coin`) and arrows.
 - `data-props` on the root lists only the first page of row definitions
   (with `items_count` per row) and no progress dates; Leanback does not read
   it.

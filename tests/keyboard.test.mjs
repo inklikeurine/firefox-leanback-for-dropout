@@ -6,7 +6,7 @@
 import { T, makeDom } from '../../firefox-tools/harness/lib.mjs';
 
 function load() {
-  const dom = makeDom({
+  const dom = makeDom({ clock: true,
     html: '<!doctype html><html><body><form><input id="t" type="text"><input id="e" type="email"><input id="p" type="password"><input id="d1" inputmode="numeric"><input id="d2" inputmode="numeric"><input id="d3" inputmode="numeric"><input id="d4" inputmode="numeric"></form></body></html>',
     url: 'https://watch.dropout.tv/login'
   });
@@ -75,7 +75,7 @@ T.runAsync('the remote: ◀ ▶ go round the row; ▲ ▼ go straight up and dow
 });
 
 T.runAsync('the line of keys along the foot can be left out and brought back, open or closed', async () => {
-  const dom = makeDom({ html: '<!doctype html><html><body><input id="t"></body></html>', url: 'https://watch.dropout.tv/login' });
+  const dom = makeDom({ clock: true, html: '<!doctype html><html><body><input id="t"></body></html>', url: 'https://watch.dropout.tv/login' });
   dom.runScripts([T.extFile('lib/common.js'), T.extFile('nav/keyboard.js')]);
   const kb = dom.window.TenfootKeyboard.createKeyboard(dom.window.document, { hints: false });
   const hint = kb.element.querySelector('.tenfoot-kb-hint');
@@ -149,7 +149,7 @@ T.runAsync('▲ ▼ go round in every layout, docked too, landing on the key und
 });
 
 T.runAsync('docked: stays up beside the page; the selection leaves and comes back; ◀ ▶ past its edges and Done are the page\'s; Back is not its own; a real letter brings it back', async () => {
-  const dom = makeDom({ html: '<!doctype html><html><body><input id="t" placeholder="Search"></body></html>', url: 'https://watch.dropout.tv/search' });
+  const dom = makeDom({ clock: true, html: '<!doctype html><html><body><input id="t" placeholder="Search"></body></html>', url: 'https://watch.dropout.tv/search' });
   dom.runScripts([T.extFile('lib/common.js'), T.extFile('nav/keyboard.js')]);
   const doc = dom.window.document;
   const told = [];

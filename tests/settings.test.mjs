@@ -91,7 +91,8 @@ T.runAsync('watch fires for local "settings" changes only, with a normalised obj
   T.eq(seen.length, 1, 'unsubscribed');
 });
 
-T.run('the one list (C1): every setting but the on/off and troubleshooting switches, each with its words and group', () => {
+T.run('the one list: every setting but the on/off and troubleshooting switches, each with its words and group', () => {
+  // the whole list: the one test that pins every setting, in order, and its group
   T.eq(S.ROWS.map((r) => r.id), ['autoplayNext', 'seekStep', 'startMuted', 'seasonStart', 'skipMarketingSite', 'exitHook', 'theme', 'ringColor', 'holidays', 'focusZoom', 'ringWidth', 'hintBar',
     'uiScale', 'highContrast', 'reduceMotion', 'captionSize', 'captionColor', 'captionBackground', 'videoFilter']);
   T.eq(S.ROWS.map((r) => r.group), ['Playback', 'Playback', 'Playback', 'Browsing', 'Browsing', 'Browsing', 'Look', 'Look', 'Look', 'Look', 'Look', 'Look',

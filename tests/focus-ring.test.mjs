@@ -4,10 +4,9 @@
 import { T, makeDom } from '../../firefox-tools/harness/lib.mjs';
 
 const PAD = 6; // ring width 4 + 2
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function setup({ reduced = false } = {}) {
-  const d = makeDom({
+  const d = makeDom({ clock: true,
     html: '<!doctype html><html><body><div id="track"><a id="a" data-rect="100,200,352,198">A</a><a id="b" data-rect="472,200,352,198">B</a></div></body></html>',
   });
   const win = d.window;
@@ -43,7 +42,7 @@ T.runAsync('the ring glides to the next target and ends exactly on it', async ()
   p.ring.follow(p.$('b'));
   const x = p.box()[0];
   T.ok(x >= 100 - PAD && x < 472 - PAD - 100, `it starts from where it was (at ${x})`);
-  await sleep(200);
+  await T.sleep(200);
   T.eq(p.box(), [472 - PAD, 200 - PAD, 352 + PAD * 2, 198 + PAD * 2]);
 });
 
@@ -60,7 +59,7 @@ T.runAsync('a row still sliding: the ring aims where the card will stop, not whe
   p.computed.set(track, { transform: 'matrix(1, 0, 0, 1, -300, 0)' });
   p.$('b').setAttribute('data-rect', '172,200,352,198');
   p.ring.refresh();
-  await sleep(50);
+  await T.sleep(50);
   T.eq(p.box()[0], 100 - PAD);
 });
 

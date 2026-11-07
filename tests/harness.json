@@ -24,285 +24,600 @@
   "wait": 1500,
   "timeout": 20000,
   "evals": [
-    "(await loadRules()).site === 'dropout'",
-    "(globalThis.__fx = __harness.fixtureTabId, globalThis.__page = (m) => browser.tabs.sendMessage(__fx, m, { frameId: 0 }), globalThis.__act = (a) => __page({ type: 'page:action', action: a }), true)",
-    "(function (s) { return s.ok && s.enabled === true && s.kind === 'browse' && s.ring === true && s.home && s.home.ready === true && s.home.shown === true && s.focused && s.focused.text === 'Watch now'; })(await __page({ type: 'page:state' }))",
-    "(function (s) { return typeof s.zoomed === 'string' && s.zoomed.startsWith('matrix(1.05'); })(await __page({ type: 'page:state' }))",
-    "(await __page({ type: 'page:state' })).focused.color === 'rgb(26, 26, 5)'",
-    "(await __act('right')).focused.text === '›'",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button:focus') && getComputedStyle(t).backgroundColor === 'rgba(255, 255, 255, 0.08)'; })()\" }); return r === true; })()",
-    "(function (s) { return s.focused.text === 'Trailer' && s.focused.color === 'rgb(255, 255, 255)'; })(await __act('right'))",
-    "(await __act('left'), await __act('left')).focused.text === 'Watch now'",
-    "(function (s) { return s.home.rows.map((r) => r.title).join('|') === 'Continue Watching|New Releases|Trending' && s.home.rows[1].count === 13 && s.home.rows[1].viewAll === true && s.rail.page === 'home'; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const img = document.querySelector('.tenfoot-row[data-tenfoot-row=\\\"https://watch.dropout.tv/trending\\\"] .tenfoot-card[data-tenfoot-card=\\\"https://watch.dropout.tv/game-changer\\\"] .tenfoot-card-art'); return img.getAttribute('src') === 'https://watch.dropout.tv/art-1.svg'; })()\" }); return r === true; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cs = getComputedStyle(document.querySelector('.tenfoot-rail-item[data-tenfoot-page=\\\"true\\\"]')); return cs.backgroundColor + '|' + cs.color; })()\" }); return r === 'rgba(0, 0, 0, 0)|rgb(254, 234, 59)'; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const u = innerWidth / 1920 * 0.8; return Math.abs(document.querySelector('.tenfoot-rail').getBoundingClientRect().width - 89.6 * u) <= 1 && Math.abs(document.querySelector('.tenfoot-card').getBoundingClientRect().width - 352 * u) <= 1; })()\" }); return r === true; })()",
-    "(function (h) { return Boolean(h && h.entries['nr-2'] && h.entries['nr-2'].dropout.percent === 30 && h.entries['lie-detector-1'].dropout.percent === 40); })((await browser.storage.local.get('progress:0'))['progress:0'])",
-    "(await __act('down')).focused.href === 'https://watch.dropout.tv/videos/lie-detector-1'",
-    "sleep 0.4",
-    "(globalThis.__top = (await __page({ type: 'page:state' })).focused.rect.top, __top > 0 && __top < 200)",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; const want = parseFloat(getComputedStyle(t).borderTopLeftRadius) * 1.05 + 6; const got = parseFloat(getComputedStyle(document.querySelector('.tenfoot-ring')).borderTopLeftRadius); return want > 6 && Math.abs(got - want) <= 0.5; })()\" }); return r === true; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const home = document.querySelector('.tenfoot-home'); const h = parseFloat(getComputedStyle(document.querySelector('.tenfoot-home-view'), '::after').height); return JSON.stringify({ on: home.dataset.tenfootScrolled === 'true', tall: Math.abs(h - innerHeight * 0.07) <= 1 }); })()\" }); const v = JSON.parse(r); return v.on === true && v.tall === true; })()",
-    "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { focusZoom: 25 }) }), true)",
-    "sleep 0.6",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const link = document.querySelector('.tenfoot-card-link.tenfoot-scaled'); const card = link.parentNode; const h = card.closest('.tenfoot-row').querySelector('.tenfoot-row-title').getBoundingClientRect(); const t = card.querySelector('.tenfoot-card-title').getBoundingClientRect(); const ring = document.querySelector('.tenfoot-ring').getBoundingClientRect(); return ring.top >= h.bottom && ring.bottom <= t.top; })()\" }); return r === true; })()",
-    "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { focusZoom: 5 }) }), true)",
-    "sleep 0.6",
-    "(await __act('down')).focused.href === 'https://watch.dropout.tv/videos/nr-1'",
-    "sleep 0.4",
-    "Math.abs((await __page({ type: 'page:state' })).focused.rect.top - __top) <= 2",
-    "sleep 0.6",
-    "(function (s) { return s.home.rows.length === 5 && s.home.loading === false && s.home.more === false && Math.abs(s.focused.rect.top - __top) <= 2; })(await __page({ type: 'page:state' }))",
-    "(await __act('right'), await __act('right')).focused.href === 'https://watch.dropout.tv/videos/nr-3'",
-    "sleep 0.4",
-    "(globalThis.__left = (await __page({ type: 'page:state' })).focused.rect.left, __left > 0)",
-    "(await __act('right')).focused.href === 'https://watch.dropout.tv/videos/nr-4'",
-    "sleep 0.4",
-    "Math.abs((await __page({ type: 'page:state' })).focused.rect.left - __left) <= 2",
-    "(function (s) { return s.rail && s.rail.active === true && s.rail.item === 'home'; })((await __act('left'), await __act('left'), await __act('left'), await __act('left')))",
-    "(await __act('down')).rail.item === 'browse'",
-    "sleep 0.3",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button:focus') && getComputedStyle(t).backgroundColor === 'rgba(0, 0, 0, 0)'; })()\" }); return r === true; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; const want = parseFloat(getComputedStyle(t).borderTopLeftRadius) * 1.05 + 6; const got = parseFloat(getComputedStyle(document.querySelector('.tenfoot-ring')).borderTopLeftRadius); return want > 6 && Math.abs(got - want) <= 0.5; })()\" }); return r === true; })()",
-    "(await __act('down')).rail.item === 'my-list'",
-    "(function (s) { return s.rail.active === false && s.focused.href === 'https://watch.dropout.tv/videos/nr-1'; })(await __act('back'))",
-    "(function (s) { return Array.isArray(s.menu) && !s.menu.includes('theater') && s.menu.includes('forget') && !s.menu.includes('disable') && !s.menu.includes('startMuted') && !s.menu.includes('search') && s.menuItem === 'autoplayNext'; })(await __act('menu'))",
-    "(await __act('down')).menuItem === 'seekStep'",
-    "(async () => { await new Promise((r) => setTimeout(r, 400)); const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const p = document.querySelector('.tenfoot-settings'); const b = p.getBoundingClientRect(); const cur = p.querySelector('[data-tenfoot-current=\\\"true\\\"]'); const sw = p.querySelector('[data-tenfoot-item=\\\"autoplayNext\\\"] .tenfoot-switch'); return [Math.round(b.right) === innerWidth && Math.abs(b.width - Math.min(innerWidth * 0.92, Math.max(340, innerWidth / 1920 * 660))) < 2, Math.round(b.top) === 0 && Math.round(b.bottom) === innerHeight, getComputedStyle(cur).backgroundColor, cur.dataset.tenfootItem, getComputedStyle(sw).backgroundColor].join('|'); })()\" }); return r === 'true|true|rgb(254, 234, 59)|seekStep|rgb(254, 234, 59)'; })()",
-    "(function (s) { return !s.menu.includes('playerChrome'); })(await __page({ type: 'page:state' }))",
-    "(function (s) { return s.menu === null && s.focused.href === 'https://watch.dropout.tv/videos/nr-1'; })(await __act('back'))",
-    "(function (s) { return Array.isArray(s.menu) && s.menu.includes('seasonStart'); })(await __act('menu'))",
-    "(function (s) { return s.menu === null && s.focused.href === 'https://watch.dropout.tv/videos/nr-1'; })(await __act('left'))",
-    "(await __act('up'), await __act('up'), await __act('up')).focused.text === 'Watch now'",
-    "sleep 0.4",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const home = document.querySelector('.tenfoot-home'); const h = parseFloat(getComputedStyle(document.querySelector('.tenfoot-home-view'), '::after').height); return JSON.stringify({ on: home.dataset.tenfootScrolled === 'true', tall: Math.abs(h - innerHeight * 0.07) <= 1 }); })()\" }); const v = JSON.parse(r); return v.on === false && v.tall === false; })()",
-    "(await __page({ type: 'page:state' })).focused.rect.top > 150",
-    "(function (s) { return s.consumed === true && s.kind === 'browse' && s.focused.text === 'Watch now'; })(await __act('back'))",
-    "(function (s) { return s.hints === true && s.ring === true; })(await __page({ type: 'page:state' }))",
-    "sleep 2.3",
-    "(function (s) { return s.hints === false && s.ring === true; })(await __page({ type: 'page:state' }))",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/search?q=test' }), true)",
-    "sleep 1.5",
-    "(function (s) { return s.kind === 'search' && s.rail && s.rail.page === 'search' && s.home && s.home.layout === 'search' && s.home.search.text === 'test' && s.home.search.filter === 'All (8)' && s.focused && s.focused.tag === 'button'; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const k = document.querySelector('.tenfoot-kb'); return !k.hidden && k.contains(document.activeElement) && document.activeElement.dataset.tenfootKey === 'c:a' && document.querySelector('.tenfoot-screen-field').hidden && k.querySelector('.tenfoot-kb-preview').textContent === 'test' && getComputedStyle(document.querySelector('.site-header')).display === 'none'; })()\" }); return r === true; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const k = document.querySelector('.tenfoot-kb'); const q = (s) => k.querySelector(s); const box = q('.tenfoot-kb-preview').getBoundingClientRect(), line = q('.tenfoot-kb-line').getBoundingClientRect(); const u = k.getBoundingClientRect().width / 825; return [Math.abs(line.width - box.width) < 1, line.height < box.height / 10, getComputedStyle(q('.tenfoot-kb-line')).backgroundColor === getComputedStyle(q('.tenfoot-kb-preview')).backgroundColor, getComputedStyle(q('.tenfoot-kb-hint')).display, q('.tenfoot-kb-key--digit').getBoundingClientRect().height > u * 120].join('|'); })()\" }); return r === 'true|true|true|none|true'; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('.tenfoot-kb [data-tenfoot-key=\\\\'done\\\\']').click(); 'ok'\" }); return r === 'ok'; })()",
-    "(function (s) { return s.focused.tag === 'a' && Boolean(s.focused.href); })(await __page({ type: 'page:state' }))",
-    "(function (s) { return s.focused.tag === 'button'; })(await __act('left'))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-screen-field-input'); f.value = 'kitchen'; f.dispatchEvent(new Event('input', { bubbles: true })); return document.querySelector('input.SearchForm-module__search-input').value; })()\" }); return r === 'kitchen'; })()",
-    "sleep 0.6",
-    "(function (s) { return s.kind === 'search' && s.home.count === 1 && s.home.search.site === 'kitchen' && s.home.search.filters.join('|') === 'All (1)|Videos (1)' && s.focused && s.focused.tag === 'button'; })(await __page({ type: 'page:state' }))",
-    "/\\/search\\?q=kitchen$/.test((await browser.tabs.get(__fx)).url)",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-screen-field-input'); f.value = 'test'; f.dispatchEvent(new Event('input', { bubbles: true })); return true; })()\" }); return r === true; })()",
-    "sleep 0.6",
-    "(function (s) { return s.home.count === 11 && s.home.search.filters.join('|') === 'All (11)|Videos (11)'; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-screen-field-input'); const n = history.length; f.value = 'test'; f.dispatchEvent(new Event('input', { bubbles: true })); return [n, history.length, typeof window.navigation, location.search].join('|'); })()\" }); const [a, b, nav, q] = r.split('|'); return Number(b) === Number(a) + 1 && nav === 'object' && q === '?q=test'; })()",
-    "sleep 0.6",
-    "(function (s) { return s.focused.tag === 'a' && Boolean(s.focused.href); })(await __act('right'))",
-    "(function (s) { return s.focused.tag === 'a' && Boolean(s.focused.href); })(await __act('right'))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-screen'); const cards = Array.from(L.querySelectorAll('.tenfoot-card')).map((c) => c.getBoundingClientRect()); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); const kb = document.querySelector('.tenfoot-kb').getBoundingClientRect(); const pills = L.querySelector('.tenfoot-screen-pills').getBoundingClientRect(); return cards.length >= 7 && kb.left >= rail.right - 1 && Math.round(kb.height) === innerHeight && cards[0].left >= kb.right && cards.slice(0, 3).every((r) => Math.abs(r.top - cards[0].top) < 1) && cards[3].top > cards[0].bottom && Math.abs(cards[3].left - cards[0].left) < 1 && pills.bottom <= cards[0].top && cards[2].right <= innerWidth; })()\" }); return r === true; })()",
-    "(function (s) { return s.rail && s.rail.active === true && s.rail.item === 'search'; })((await __act('left'), await __act('left'), await __act('left'), await __act('left')))",
-    "(await __act('down')).rail.item === 'home'",
-    "(await __act('select'), true)",
-    "sleep 2",
-    "(async () => { const s = await __page({ type: 'page:state' }); return (await browser.tabs.get(__fx)).url === 'https://watch.dropout.tv/browse' && s.kind === 'browse'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer' }), true)",
-    "sleep 2.5",
-    "/\\/game-changer\\/season:3$/.test((await browser.tabs.get(__fx)).url)",
-    "(function (s) { return s.kind === 'series' && s.home && s.home.kind === 'screen' && s.show && s.show.layout === 'show' && s.show.seasons.join('|') === 'Season 3|Season 2|Season 1' && s.show.current === 'Season 3' && s.focused && s.focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => document.documentElement.hasAttribute('data-tenfoot-ready') && getComputedStyle(document.body).visibility === 'visible')()\" }); return r === true; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-screen'); const c = (n) => L.querySelector('.tenfoot-card[data-tenfoot-card=\\\"https://watch.dropout.tv/game-changer/season:1/videos/ep' + n + '\\\"]').getBoundingClientRect(); const r = [1, 2, 3, 4, 5, 6].map(c); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); return r.slice(0, 5).every((x, k) => x.top === r[0].top && (k === 0 || x.left > r[k - 1].left)) && r[5].top > r[0].bottom && Math.abs(r[5].left - r[0].left) < 1 && r[4].right <= innerWidth && r[0].left > rail.right && r[0].bottom <= innerHeight; })()\" }); return r === true; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-screen'); const pills = L.querySelector('.tenfoot-screen-pills').getBoundingClientRect(); const acts = L.querySelector('.tenfoot-hero-actions').getBoundingClientRect(); const card = L.querySelector('.tenfoot-card').getBoundingClientRect(); const cur = getComputedStyle(L.querySelector('.tenfoot-season[aria-current=\\\"true\\\"]')); const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return pills.top >= acts.bottom && pills.bottom <= card.top && cur.backgroundColor === 'rgb(254, 234, 59)' && Boolean(hit && hit.closest('.tenfoot-screen')) && getComputedStyle(document.querySelector('.site-header')).display === 'none' && L.querySelector('.tenfoot-hero-title').textContent === 'Game Changer' && /hero-1\\\\.svg$/.test(L.querySelector('.tenfoot-hero-art').getAttribute('src')); })()\" }); return r === true; })()",
-    "(await __act('right')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep2'",
-    "(function (s) { return s.home.count === 8 && s.home.more === false && s.show.order === 'episode-1-first' && s.rail && s.rail.page === null; })(await __page({ type: 'page:state' }))",
-    "(await __act('down')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep7'",
-    "(await __act('up')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep2'",
-    "(await __act('left')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'",
-    "(function (s) { return s.rail && s.rail.active === true; })(await __act('left'))",
-    "(await __act('right')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'",
-    "(function (s) { return s.focused.tag === 'button' && s.focused.text === 'Season 3'; })(await __act('up'))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-season:focus') && getComputedStyle(t).backgroundColor === 'rgb(254, 234, 59)'; })()\" }); return r === true; })()",
-    "(await __act('right')).focused.text === 'Season 2'",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-season:focus') && getComputedStyle(t).backgroundColor === 'rgba(0, 0, 0, 0)'; })()\" }); return r === true; })()",
-    "(function (s) { return s.focused.tag === 'a' && /^Play S\\d+ E1$/.test(s.focused.text) && s.show.resume && s.show.resume.action === 'first' && s.show.resume.href === s.focused.href; })(await __act('up'))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-hero-primary:focus') && getComputedStyle(t).backgroundColor === 'rgb(254, 234, 59)' && getComputedStyle(t).color === 'rgb(26, 26, 5)'; })()\" }); return r === true; })()",
-    "(await __act('right')).focused.text === 'Trailer'",
-    "(await __act('right')).focused.text === 'My List'",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button.tenfoot-hero-action:focus') && getComputedStyle(t).backgroundColor === 'rgba(255, 255, 255, 0.08)'; })()\" }); return r === true; })()",
-    "(await __act('left')).focused.text === 'Trailer'",
-    "(await __act('down')).focused.text === 'Season 2'",
-    "(await __act('select'), true)",
-    "sleep 2",
-    "/\\/game-changer\\/season:2$/.test((await browser.tabs.get(__fx)).url)",
-    "(function (s) { return s.show.current === 'Season 2' && s.show.heading.startsWith('Season 2: All About') && s.focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'; })(await __page({ type: 'page:state' }))",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1' }), true)",
-    "sleep 2",
-    "(function (s) { return s.kind === 'video' && s.watch === 'details' && s.theater === false && s.playerFocused === false && s.playerReady === true && s.focused && s.focused.text === 'Watch' && s.rail !== null && s.rail.active === false; })(await __page({ type: 'page:state' }))",
-    "(function (s) { return s.home && s.home.layout === 'episode' && s.home.episode.show === 'Game Changer' && s.home.episode.actions.join('|') === 'Watch|My List|Episodes' && s.home.episode.image === 'https://watch.dropout.tv/art-5.svg'; })(await __page({ type: 'page:state' }))",
-    "(function (h) { return Boolean(h && h.entries.ep1 && /\\/videos\\/ep1$/.test(h.entries.ep1.url)); })((await browser.storage.local.get('progress:0'))['progress:0'])",
-    "typeof (await getRegistry())[String(__fx)] === 'number' && (await getRegistry())[String(__fx)] > 0",
-    "(function (r) { return r.ok === true && r.state.present === true && r.state.paused === true && r.state.held === true && r.state.title === 'Fixture episode'; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const pic = document.querySelector('.tenfoot-screen-picture').getBoundingClientRect(); const body = document.querySelector('.tenfoot-screen .tenfoot-hero-body').getBoundingClientRect(); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); const hit = document.elementFromPoint(pic.left + pic.width / 2, pic.top + pic.height / 2); const ring = document.querySelector('.tenfoot-ring'); const watch = document.activeElement.getBoundingClientRect(); const rr = ring.getBoundingClientRect(); return [pic.left >= body.right, body.left >= rail.right, Math.abs(pic.width / pic.height - 16 / 9) < 0.02, pic.width > innerWidth * 0.3, pic.top >= 0 && pic.bottom <= innerHeight, Boolean(hit) && Boolean(hit.closest('.tenfoot-screen-picture')), document.querySelector('.tenfoot-screen-picture img').getAttribute('src'), !ring.hidden && rr.left <= watch.left && rr.right >= watch.right, getComputedStyle(document.activeElement).backgroundColor, getComputedStyle(document.activeElement).color, document.documentElement.classList.contains('tenfoot-theater')].join('|'); })()\" }); return r === 'true|true|true|true|true|true|https://watch.dropout.tv/art-5.svg|true|rgb(254, 234, 59)|rgb(26, 26, 5)|false'; })()",
-    "(function (s) { return Array.isArray(s.menu) && s.menu.includes('seekStep') && !s.menu.includes('theater'); })(await __act('menu'))",
-    "(function (s) { return s.menu === null && s.focused.text === 'Watch'; })(await __act('back'))",
-    "(function (s) { return s.watch === 'playing' && s.theater === true && s.playerFocused === true; })(await __act('select'))",
-    "sleep 0.2",
-    "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const o = document.querySelector('.tenfoot-osd'); return o && !o.hidden ? o.textContent : 'hidden'; })() : null\" }); return r.some((t) => t === 'Game ChangerEpisode'); })()",
-    "(function (r) { return r.ok === true && r.state.held === false; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === true; })()",
-    "(await __act('menu')).menu === null",
-    "(function (r) { return r.state.transport === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async function () { await __act('back'); await __act('back'); const r = await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }); return r.state.transport === false; })()",
-    "(async function () { await __act('back'); await new Promise((r) => setTimeout(r, 400)); const s = await __page({ type: 'page:state' }); return s.watch === 'details' && s.theater === false && s.playerFocused === false && s.focused && s.focused.text === 'Watch'; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === false; })()",
-    "(function (r) { return r.state.held === true && r.state.paused === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async () => { const cur = (await browser.storage.local.get('progress:0'))['progress:0'] || { entries: {} }; await browser.storage.local.set({ 'progress:0': Object.assign({}, cur, { entries: Object.assign({}, cur.entries, { ep1: { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1', duration: 1500, local: { position: 600, at: Date.now() } } }) }) }); return true; })()",
-    "sleep 0.5",
-    "(async () => { const s = await __page({ type: 'page:state' }); const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const a = document.activeElement.getBoundingClientRect(); const rr = document.querySelector('.tenfoot-ring').getBoundingClientRect(); return rr.left <= a.left && rr.right >= a.right && rr.top <= a.top && rr.bottom >= a.bottom; })()\" }); return s.focused.text === 'Resume' && s.home.episode.actions.join('|') === 'Resume|Start Over|My List|Episodes|Clear Progress' && s.home.episode.left === '15:00 left' && r === true; })()",
-    "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
-    "(function (r) { return r.ok === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
-    "(await browser.tabs.goBack(__fx), true)",
-    "sleep 0.5",
-    "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details' && s.theater === false && /\\/videos\\/ep1$/.test((await browser.tabs.get(__fx)).url); })()",
-    "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { autoplayNext: false }) }), true)",
-    "sleep 0.3",
-    "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
-    "(function (r) { return r.ok === true && r.state.currentTime === 0; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'seek', by: -10 }))",
-    "(function (r) { return r.state.transport === false && r.state.present === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const c = document.querySelector('.tenfoot-upnext'); return c && !c.hidden ? c.querySelector('.tenfoot-upnext-line').textContent + '|' + getComputedStyle(c).position : 'hidden'; })() : null\" }); return r.some((t) => t === 'Fixture episode 2|fixed'); })()",
-    "(await __page({ type: 'page:episode', delta: 1 })).done === true",
-    "sleep 2",
-    "(await browser.tabs.get(__fx)).url === 'https://watch.dropout.tv/game-changer/season:1/videos/ep2'",
-    "(function (s) { return s.kind === 'video' && s.watch === 'playing' && s.theater === true; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === true; })()",
-    "(await browser.tabs.goBack(__fx), true)",
-    "sleep 0.5",
-    "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details' && /\\/videos\\/ep2$/.test((await browser.tabs.get(__fx)).url); })()",
-    "(await browser.tabs.goBack(__fx), true)",
-    "sleep 2",
-    "/\\/game-changer\\/season:2$/.test((await browser.tabs.get(__fx)).url)",
-    "(async () => { const s = await __page({ type: 'page:state' }); globalThis.__before = s.focused && s.focused.href; return Boolean(globalThis.__before); })()",
-    "press ArrowRight",
-    "sleep 0.4",
-    "(async () => { const s = await __page({ type: 'page:state' }); return Boolean(s.focused && s.focused.href) && s.focused.href !== globalThis.__before; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1' }), true)",
-    "sleep 2",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep2' }), true)",
-    "sleep 2",
-    "(await browser.tabs.goBack(__fx), true)",
-    "sleep 3",
-    "/\\/game-changer\\/season:2$/.test((await browser.tabs.get(__fx)).url)",
-    "(await __page({ type: 'page:state' })).kind === 'series'",
-    "(await __act('back'), true)",
-    "sleep 2",
-    "(function (s) { return s.kind === 'browse'; })(await __page({ type: 'page:state' }))",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/browse?late-banner' }), true)",
-    "sleep 2.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.documentElement.getAttribute('data-fixture-landed')\" }); return r === 'card'; })()",
-    "(function (s) { return s.kind === 'browse' && s.home && s.home.row === 'hero' && s.focused && s.focused.text === 'Watch now'; })(await __page({ type: 'page:state' }))",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/my-list' }), true)",
-    "sleep 2",
-    "(function (s) { return s.kind === 'grid' && s.rail && s.rail.page === 'my-list' && s.focused && s.focused.href === 'https://watch.dropout.tv/aparna-nancherla-hopeful-potato'; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const b = document.querySelector('.tenfoot-rail-item[data-tenfoot-rail=\\\"my-list\\\"]'); const prev = b.previousElementSibling, next = b.nextElementSibling; const svg = b.querySelector('svg').getBoundingClientRect(); const cs = getComputedStyle(b); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); const tile = document.activeElement.getBoundingClientRect(); return [prev.dataset.tenfootRail, next.dataset.tenfootRail, b.getAttribute('aria-label'), svg.width > 10 && svg.height > 10, cs.color, tile.left >= rail.right].join('|'); })()\" }); return r === 'browse|live|My List|true|rgb(254, 234, 59)|true'; })()",
-    "(await __act('right')).focused.href === 'https://watch.dropout.tv/game-changer'",
-    "(function (s) { return s.rail.active === true && s.rail.item === 'my-list'; })((await __act('left'), await __act('left')))",
-    "(function (s) { return s.rail.active === false && s.focused.href === 'https://watch.dropout.tv/aparna-nancherla-hopeful-potato'; })(await __act('right'))",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/new-releases' }), true)",
-    "sleep 2",
-    "(function (s) { return s.kind === 'series' && s.home && s.home.kind === 'screen' && s.home.title === 'New Releases' && s.home.count === 18 && s.rail && s.rail.page === null && s.focused && s.focused.href === 'https://watch.dropout.tv/new-releases/videos/nr-ep-1'; })(await __page({ type: 'page:state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cards = [...document.querySelectorAll('.tenfoot-screen .tenfoot-card')].map((c) => c.getBoundingClientRect()); const u = innerWidth / 1920 * 0.8; const layer = document.querySelector('.tenfoot-screen').getBoundingClientRect(); const firstRow = cards.slice(0, 5).every((c) => Math.abs(c.top - cards[0].top) < 1); return [firstRow, cards[5].top > cards[0].bottom, Math.abs(cards[1].left - cards[0].left - 380 * u) < 2, Math.abs(cards[0].width - 352 * u) < 2, layer.width === innerWidth && layer.height === innerHeight, getComputedStyle(document.querySelector('.site-header')).display, getComputedStyle(document.querySelector('footer.footer--site')).display].join('|'); })()\" }); return r === 'true|true|true|true|true|none|none'; })()",
-    "(await __act('down')).focused.href === 'https://watch.dropout.tv/new-releases/videos/nr-ep-6'",
-    "sleep 0.4",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const layer = document.querySelector('.tenfoot-screen'); const card = document.activeElement.getBoundingClientRect(); return layer.getAttribute('data-tenfoot-scrolled') === 'true' && card.top < innerHeight * 0.2 && card.top > 0; })()\" }); return r === true; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/dropout-247/events/dropout-24-7' }), true)",
-    "sleep 2.5",
-    "(function (s) { return s.kind === 'video' && s.watch === 'details' && s.theater === false && s.focused && s.focused.text === 'Watch' && s.home.episode.title === 'Dropout 24/7' && s.home.episode.actions.join('|') === 'Watch' && s.rail !== null; })(await __page({ type: 'page:state' }))",
-    "(function (r) { return r.state.held === true && r.state.paused === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return [Boolean(hit) && hit.tagName !== 'IFRAME' && Boolean(hit.closest('.tenfoot-screen')), /always-on/.test(document.querySelector('.tenfoot-screen .tenfoot-hero-text').textContent), document.documentElement.classList.contains('tenfoot-theater')].join('|'); })()\" }); return r === 'true|true|false'; })()",
-    "(function (s) { return s.watch === 'playing' && s.theater === true && s.playerFocused === true; })(await __act('select'))",
-    "sleep 0.3",
-    "(function (r) { return r.state.held === false; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async function () { await __act('back'); await new Promise((r) => setTimeout(r, 400)); const s = await __page({ type: 'page:state' }); return s.watch === 'details' && s.theater === false && s.focused && s.focused.text === 'Watch'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/dropout-24-7' }), true)",
-    "sleep 2",
-    "(function (s) { return s.kind === 'hub' && s.focused && s.focused.text === 'Watch' && s.rail && s.rail.page === 'live'; })(await __page({ type: 'page:state' }))",
-    "(await __act('select'), true)",
-    "sleep 2",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-inplace iframe'); if (!f) return 'none'; const b = f.getBoundingClientRect(); return [f.src.startsWith('https://embed.vhx.tv/videos/612228'), Math.round(b.width) === innerWidth && Math.round(b.height) === innerHeight, Boolean(history.state && history.state.tenfootPlay), /dropout-24-7$/.test(location.pathname)].join('|'); })()\" }); return r === 'true|true|true|true'; })()",
-    "(function (s) { return s.playerFocused === true && s.navigation === null; })(await __page({ type: 'page:state' }))",
-    "(function (r) { return r.ok === true && r.state.held === false && r.state.present === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
-    "(async function () { await __act('back'); await new Promise((r) => setTimeout(r, 500)); const s = await __page({ type: 'page:state' }); const [gone] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('.tenfoot-inplace') === null\" }); return gone === true && s.kind === 'hub' && s.playerFocused === false && s.focused && s.focused.text === 'Watch'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-signin'); if (!L) return 'no layer'; const cs = getComputedStyle(L); const b = L.getBoundingClientRect(); const e = L.querySelector('#tenfoot-signin-email'); const p = L.querySelector('#tenfoot-signin-password'); const f = L.querySelector('form'); return [cs.display, cs.position, b.width === innerWidth && b.height === innerHeight, document.activeElement === e, e.type + '/' + e.name + '/' + e.getAttribute('autocomplete'), p.type + '/' + p.name + '/' + p.getAttribute('autocomplete'), f.contains(e) && f.contains(p), L.querySelector('h1').textContent, !!document.querySelector('#login--box-container')].join('|'); })()\" }); return r === 'flex|fixed|true|true|email/email/username|password/password/current-password|true|Sign in|true'; })()",
-    "(async () => { const s = await __page({ type: 'page:state' }); return s.kind === 'signin' && s.focused && s.focused.id === 'tenfoot-signin-email'; })()",
-    "(await __act('down'), (await __page({ type: 'page:state' })).focused.id === 'tenfoot-signin-password')",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); document.querySelector('.tenfoot-signin-submit').textContent\" }); return r === 'Signing in…'; })()",
-    "sleep 1",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const p = window.wrappedJSObject.__posted; return [p.length, p[0].form, p[1].form, p[1].email, p[1].password, document.body.getAttribute('data-signed-in')].join('|'); })()\" }); return r === '2|next|password|fixture@example.test|not-a-real-password|true'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login?wrong' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 1",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const e = document.querySelector('.tenfoot-signin-error'); return [e.hidden, e.textContent, document.querySelector('#tenfoot-signin-email').value, document.querySelector('#tenfoot-signin-password').value === '', document.activeElement.id, document.querySelector('.tenfoot-signin-submit').textContent, document.body.hasAttribute('data-signed-in')].join('|'); })()\" }); return r === 'false|Invalid email or password.|fixture@example.test|true|tenfoot-signin-password|Sign in|false'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login?wrongpage' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 2",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const e = document.querySelector('.tenfoot-signin-error'); return [location.search, e.hidden, e.textContent, document.querySelector('#tenfoot-signin-email').value, document.querySelector('#tenfoot-signin-password').value === '', document.activeElement.id].join('|'); })()\" }); return r === '?error|false|Invalid email or password.|fixture@example.test|true|tenfoot-signin-password'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login?hang' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 21",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const e = document.querySelector('.tenfoot-signin-error'); const p = window.wrappedJSObject.__posted; return [e.textContent, document.querySelector('#tenfoot-signin-email').value, document.querySelector('.tenfoot-signin-submit').textContent, document.querySelector('#signin-password-submit').disabled, p.length].join('|'); })()\" }); return r === \"Dropout isn't answering. Check the TV's internet connection, then try again.|fixture@example.test|Sign in|true|2\"; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); [document.querySelector('.tenfoot-signin-submit').textContent, document.querySelector('.tenfoot-signin-error').textContent].join('|')\" }); return r === 'Signing in…|'; })()",
-    "sleep 1",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const p = window.wrappedJSObject.__posted; return [p.length, Array.from({ length: p.length }, (_, k) => p[k].form).join(','), document.querySelector('.tenfoot-signin-submit').textContent].join('|'); })()\" }); return r === '3|next,password,password|Signing in…'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/forgot_password' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-signin'); if (!L) return 'no layer'; const e = L.querySelector('#tenfoot-signin-email'); return [getComputedStyle(L).display, L.querySelector('h1').textContent, e.type + '/' + e.name + '/' + e.getAttribute('autocomplete'), !!L.querySelector('input[type=password]'), document.activeElement === e, [...L.querySelectorAll('.tenfoot-signin-buttons > *')].map((b) => b.textContent).join(',')].join('|'); })()\" }); return r === 'flex|Reset password|email/email/username|false|true|Send reset email,Back to sign in'; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 2",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const m = document.querySelector('.tenfoot-signin-error'); const p = window.wrappedJSObject.__posted; return [location.search, p.length, p[0].form, p[0].email, m.hidden, m.textContent, m.dataset.tone, document.querySelector('.tenfoot-signin-field').hidden, document.activeElement.textContent].join('|'); })()\" }); return r === '?sent|1|forgot|fixture@example.test|false|Check your email on your phone or computer. Set the new password there, then sign in here.|notice|true|Back to sign in'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/forgot_password' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'unknown@example.test'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 2",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const m = document.querySelector('.tenfoot-signin-error'); return [location.search, m.textContent, m.dataset.tone, document.querySelector('#tenfoot-signin-email').value, document.activeElement.id].join('|'); })()\" }); return r === '?error|We couldn\\'t find an account with that email.|error|unknown@example.test|tenfoot-signin-email'; })()",
-    "(async () => { await browser.tabs.executeScript(__fx, { code: \"sessionStorage.clear(); 'ok'\" }); return true; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login' }), true)",
-    "sleep 1.5",
-    "press Enter",
-    "sleep 0.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const k = document.querySelector('.tenfoot-kb'); if (!k || k.hidden) return 'closed'; const b = k.getBoundingClientRect(); const em = document.querySelector('#tenfoot-signin-email').getBoundingClientRect(); return [getComputedStyle(k).display, Math.round(b.bottom) === innerHeight, b.height === innerHeight, em.left >= b.right, document.documentElement.getAttribute('data-tenfoot-keyboard'), !!k.querySelector('[data-tenfoot-key=\\\\'c:.com\\\\']'), document.activeElement.dataset.tenfootKey].join('|'); })()\" }); return r === 'flex|true|true|true|on|true|c:a'; })()",
-    "press ArrowRight",
-    "press Enter",
-    "sleep 0.3",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value\" }); return r === 'b'; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('.tenfoot-kb [data-tenfoot-key=\\\\'done\\\\']').click(); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 0.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"[document.querySelector('.tenfoot-kb').hidden, document.activeElement.id, document.documentElement.getAttribute('data-tenfoot-keyboard')].join('|')\" }); return r === 'true|tenfoot-signin-password|'; })()",
-    "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/settings/manage/profile' }), true)",
-    "sleep 1.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const s = [...document.querySelectorAll('.tenfoot-hero-action')].find((b) => /Save/.test(b.textContent)); const cs = getComputedStyle(s); return [s.getAttribute('aria-disabled'), cs.backgroundColor, document.activeElement.value].join('|'); })()\" }); return r === 'true|rgba(255, 255, 255, 0.08)|Sam'; })()",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"const f = document.activeElement; f.value = 'Samuel'; f.dispatchEvent(new Event('input', { bubbles: true })); 'ok'\" }); return r === 'ok'; })()",
-    "sleep 0.5",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const s = [...document.querySelectorAll('.tenfoot-hero-action')].find((b) => /Save/.test(b.textContent)); return [s.getAttribute('aria-disabled'), getComputedStyle(s).backgroundColor].join('|'); })()\" }); return r === '|rgb(254, 234, 59)'; })()",
-    "press ArrowDown",
-    "press Enter",
-    "sleep 1.6",
-    "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const s = [...document.querySelectorAll('.tenfoot-hero-action')].find((b) => /Sav/.test(b.textContent)); return [s.textContent, !!s.querySelector('svg.tenfoot-hero-glyph'), window.wrappedJSObject.__saved.join(',')].join('|'); })()\" }); return r === 'Saved!|false|Samuel'; })()"
+    {
+      "journey": "Starting up"
+    },
+    {
+      "step": "the background reads Dropout's site file and reaches the page",
+      "check": [
+        "(await loadRules()).site === 'dropout'",
+        "(globalThis.__fx = __harness.fixtureTabId, globalThis.__page = (m) => browser.tabs.sendMessage(__fx, m, { frameId: 0 }), globalThis.__act = (a) => __page({ type: 'page:action', action: a }), true)"
+      ]
+    },
+    {
+      "journey": "Home"
+    },
+    {
+      "step": "Home is drawn, with the banner's Watch now selected",
+      "check": [
+        "(function (s) { return s.ok && s.enabled === true && s.kind === 'browse' && s.ring === true && s.home && s.home.ready === true && s.home.shown === true && s.focused && s.focused.text === 'Watch now'; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "step": "the selection is enlarged and drawn in the theme's colours",
+      "check": [
+        "(function (s) { return typeof s.zoomed === 'string' && s.zoomed.startsWith('matrix(1.05'); })(await __page({ type: 'page:state' }))",
+        "(await __page({ type: 'page:state' })).focused.color === 'rgb(26, 26, 5)'"
+      ]
+    },
+    {
+      "step": "▶ moves along the banner's buttons, each drawn selected or not, and ◀ comes back",
+      "check": [
+        "(await __act('right')).focused.text === '›'",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button:focus') && getComputedStyle(t).backgroundColor === 'rgba(255, 255, 255, 0.08)'; })()\" }); return r === true; })()",
+        "(function (s) { return s.focused.text === 'Trailer' && s.focused.color === 'rgb(255, 255, 255)'; })(await __act('right'))",
+        "(await __act('left'), await __act('left')).focused.text === 'Watch now'"
+      ]
+    },
+    {
+      "step": "a show's card shows its wide picture; the rail and the cards are sized for the screen",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const img = document.querySelector('.tenfoot-row[data-tenfoot-row=\\\"https://watch.dropout.tv/trending\\\"] .tenfoot-card[data-tenfoot-card=\\\"https://watch.dropout.tv/game-changer\\\"] .tenfoot-card-art'); return img.getAttribute('src') === 'https://watch.dropout.tv/art-1.svg'; })()\" }); return r === true; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cs = getComputedStyle(document.querySelector('.tenfoot-rail-item[data-tenfoot-page=\\\"true\\\"]')); return cs.backgroundColor + '|' + cs.color; })()\" }); return r === 'rgba(0, 0, 0, 0)|rgb(254, 234, 59)'; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const u = innerWidth / 1920 * 0.8; return Math.abs(document.querySelector('.tenfoot-rail').getBoundingClientRect().width - 89.6 * u) <= 1 && Math.abs(document.querySelector('.tenfoot-card').getBoundingClientRect().width - 352 * u) <= 1; })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "Dropout's progress bars go into the watch history",
+      "check": [
+        "(function (h) { return Boolean(h && h.entries['nr-2'] && h.entries['nr-2'].dropout.percent === 30 && h.entries['lie-detector-1'].dropout.percent === 40); })((await browser.storage.local.get('progress:0'))['progress:0'])"
+      ]
+    },
+    {
+      "step": "▼ goes to Continue Watching, and the row settles near the top",
+      "check": [
+        "(await __act('down')).focused.href === 'https://watch.dropout.tv/videos/lie-detector-1'",
+        "sleep 0.4",
+        "(globalThis.__top = (await __page({ type: 'page:state' })).focused.rect.top, __top > 0 && __top < 200)"
+      ]
+    },
+    {
+      "step": "the ring's corners match the selected card's",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; const want = parseFloat(getComputedStyle(t).borderTopLeftRadius) * 1.05 + 6; const got = parseFloat(getComputedStyle(document.querySelector('.tenfoot-ring')).borderTopLeftRadius); return want > 6 && Math.abs(got - want) <= 0.5; })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "Home scrolls under a fade at the top",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const home = document.querySelector('.tenfoot-home'); const h = parseFloat(getComputedStyle(document.querySelector('.tenfoot-home-view'), '::after').height); return JSON.stringify({ on: home.dataset.tenfootScrolled === 'true', tall: Math.abs(h - innerHeight * 0.07) <= 1 }); })()\" }); const v = JSON.parse(r); return v.on === true && v.tall === true; })()"
+      ]
+    },
+    {
+      "step": "a larger Enlarge Selection keeps the card clear of its row's title",
+      "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { focusZoom: 25 }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const link = document.querySelector('.tenfoot-card-link.tenfoot-scaled'); const card = link.parentNode; const h = card.closest('.tenfoot-row').querySelector('.tenfoot-row-title').getBoundingClientRect(); const t = card.querySelector('.tenfoot-card-title').getBoundingClientRect(); const ring = document.querySelector('.tenfoot-ring').getBoundingClientRect(); return ring.top >= h.bottom && ring.bottom <= t.top; })()\" }); return r === true; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { focusZoom: 5 }) }), true)",
+        "sleep 0.6"
+      ]
+    },
+    {
+      "step": "▼ again: the next row settles at the same height",
+      "check": [
+        "(await __act('down')).focused.href === 'https://watch.dropout.tv/videos/nr-1'",
+        "sleep 0.4",
+        "Math.abs((await __page({ type: 'page:state' })).focused.rect.top - __top) <= 2"
+      ]
+    },
+    {
+      "step": "Dropout's Show more brings the rest of the rows",
+      "check": [
+        "sleep 0.6",
+        "(function (s) { return s.home.rows.length === 5 && s.home.loading === false && s.home.more === false && Math.abs(s.focused.rect.top - __top) <= 2; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "step": "along a row the selected card keeps its place and the row slides",
+      "check": [
+        "(await __act('right'), await __act('right')).focused.href === 'https://watch.dropout.tv/videos/nr-3'",
+        "sleep 0.4",
+        "(globalThis.__left = (await __page({ type: 'page:state' })).focused.rect.left, __left > 0)",
+        "(await __act('right')).focused.href === 'https://watch.dropout.tv/videos/nr-4'",
+        "sleep 0.4",
+        "Math.abs((await __page({ type: 'page:state' })).focused.rect.left - __left) <= 2"
+      ]
+    },
+    {
+      "step": "◀ from a row's first card is the rail; ▼ walks it, its entries drawn as not selected",
+      "check": [
+        "(function (s) { return s.rail && s.rail.active === true && s.rail.item === 'home'; })((await __act('left'), await __act('left'), await __act('left'), await __act('left')))",
+        "(await __act('down')).rail.item === 'browse'",
+        "sleep 0.3",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button:focus') && getComputedStyle(t).backgroundColor === 'rgba(0, 0, 0, 0)'; })()\" }); return r === true; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; const want = parseFloat(getComputedStyle(t).borderTopLeftRadius) * 1.05 + 6; const got = parseFloat(getComputedStyle(document.querySelector('.tenfoot-ring')).borderTopLeftRadius); return want > 6 && Math.abs(got - want) <= 0.5; })()\" }); return r === true; })()",
+        "(await __act('down')).rail.item === 'my-list'"
+      ]
+    },
+    {
+      "step": "Back from the rail goes back to the card",
+      "check": [
+        "(function (s) { return s.rail.active === false && s.focused.href === 'https://watch.dropout.tv/videos/nr-1'; })(await __act('back'))"
+      ]
+    },
+    {
+      "step": "Leanback Settings opens beside Home and fits on the screen; Back closes it",
+      "check": [
+        "(function (s) { return Array.isArray(s.menu) && !s.menu.includes('theater') && s.menu.includes('forget') && !s.menu.includes('disable') && !s.menu.includes('startMuted') && !s.menu.includes('search') && s.menuItem === 'autoplayNext'; })(await __act('menu'))",
+        "(await __act('down')).menuItem === 'seekStep'",
+        "(async () => { await new Promise((r) => setTimeout(r, 400)); const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const p = document.querySelector('.tenfoot-settings'); const b = p.getBoundingClientRect(); const cur = p.querySelector('[data-tenfoot-current=\\\"true\\\"]'); const sw = p.querySelector('[data-tenfoot-item=\\\"autoplayNext\\\"] .tenfoot-switch'); return [Math.round(b.right) === innerWidth && Math.abs(b.width - Math.min(innerWidth * 0.92, Math.max(340, innerWidth / 1920 * 660))) < 2, Math.round(b.top) === 0 && Math.round(b.bottom) === innerHeight, getComputedStyle(cur).backgroundColor, cur.dataset.tenfootItem, getComputedStyle(sw).backgroundColor].join('|'); })()\" }); return r === 'true|true|rgb(254, 234, 59)|seekStep|rgb(254, 234, 59)'; })()",
+        "(function (s) { return s.menu === null && s.focused.href === 'https://watch.dropout.tv/videos/nr-1'; })(await __act('back'))"
+      ]
+    },
+    {
+      "step": "▲ back to the banner, and the fade goes when Home is at the top",
+      "check": [
+        "(await __act('up'), await __act('up'), await __act('up')).focused.text === 'Watch now'",
+        "sleep 0.4",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const home = document.querySelector('.tenfoot-home'); const h = parseFloat(getComputedStyle(document.querySelector('.tenfoot-home-view'), '::after').height); return JSON.stringify({ on: home.dataset.tenfootScrolled === 'true', tall: Math.abs(h - innerHeight * 0.07) <= 1 }); })()\" }); const v = JSON.parse(r); return v.on === false && v.tall === false; })()",
+        "(await __page({ type: 'page:state' })).focused.rect.top > 150"
+      ]
+    },
+    {
+      "step": "Back on Home runs the exit hook and stays on Home",
+      "check": [
+        "(function (s) { return s.consumed === true && s.kind === 'browse' && s.focused.text === 'Watch now'; })(await __act('back'))"
+      ]
+    },
+    {
+      "step": "the button hints show, then go after a while; the ring stays",
+      "check": [
+        "(function (s) { return s.hints === true && s.ring === true; })(await __page({ type: 'page:state' }))",
+        "sleep 2.3",
+        "(function (s) { return s.hints === false && s.ring === true; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "journey": "Search"
+    },
+    {
+      "step": "Search opens with the keyboard beside the results, its keys selected",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/search?q=test' }), true)",
+        "sleep 1.5",
+        "(function (s) { return s.kind === 'search' && s.rail && s.rail.page === 'search' && s.home && s.home.layout === 'search' && s.home.search.text === 'test' && s.home.search.filter === 'All (8)' && s.focused && s.focused.tag === 'button'; })(await __page({ type: 'page:state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const k = document.querySelector('.tenfoot-kb'); return !k.hidden && k.contains(document.activeElement) && document.activeElement.dataset.tenfootKey === 'c:a' && document.querySelector('.tenfoot-screen-field').hidden && k.querySelector('.tenfoot-kb-preview').textContent === 'test' && getComputedStyle(document.querySelector('.site-header')).display === 'none'; })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "the keyboard's box and its line sit where they should on the keys",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const k = document.querySelector('.tenfoot-kb'); const q = (s) => k.querySelector(s); const box = q('.tenfoot-kb-preview').getBoundingClientRect(), line = q('.tenfoot-kb-line').getBoundingClientRect(); const u = k.getBoundingClientRect().width / 825; return [Math.abs(line.width - box.width) < 1, line.height < box.height / 10, getComputedStyle(q('.tenfoot-kb-line')).backgroundColor === getComputedStyle(q('.tenfoot-kb-preview')).backgroundColor, getComputedStyle(q('.tenfoot-kb-hint')).display, q('.tenfoot-kb-key--digit').getBoundingClientRect().height > u * 120].join('|'); })()\" }); return r === 'true|true|true|none|true'; })()"
+      ]
+    },
+    {
+      "step": "Done goes to the results, ◀ back to the keys",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('.tenfoot-kb [data-tenfoot-key=\\\\'done\\\\']').click(); 'ok'\" }); return r === 'ok'; })()",
+        "(function (s) { return s.focused.tag === 'a' && Boolean(s.focused.href); })(await __page({ type: 'page:state' }))",
+        "(function (s) { return s.focused.tag === 'button'; })(await __act('left'))"
+      ]
+    },
+    {
+      "step": "typing goes into Dropout's own search box, and the results follow",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-screen-field-input'); f.value = 'kitchen'; f.dispatchEvent(new Event('input', { bubbles: true })); return document.querySelector('input.SearchForm-module__search-input').value; })()\" }); return r === 'kitchen'; })()",
+        "sleep 0.6",
+        "(function (s) { return s.kind === 'search' && s.home.count === 1 && s.home.search.site === 'kitchen' && s.home.search.filters.join('|') === 'All (1)|Videos (1)' && s.focused && s.focused.tag === 'button'; })(await __page({ type: 'page:state' }))",
+        "/\\/search\\?q=kitchen$/.test((await browser.tabs.get(__fx)).url)"
+      ]
+    },
+    {
+      "step": "a new search brings new results, and the history keeps one step",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-screen-field-input'); f.value = 'test'; f.dispatchEvent(new Event('input', { bubbles: true })); return true; })()\" }); return r === true; })()",
+        "sleep 0.6",
+        "(function (s) { return s.home.count === 11 && s.home.search.filters.join('|') === 'All (11)|Videos (11)'; })(await __page({ type: 'page:state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-screen-field-input'); const n = history.length; f.value = 'test'; f.dispatchEvent(new Event('input', { bubbles: true })); return [n, history.length, typeof window.navigation, location.search].join('|'); })()\" }); const [a, b, nav, q] = r.split('|'); return Number(b) === Number(a) + 1 && nav === 'object' && q === '?q=test'; })()",
+        "sleep 0.6"
+      ]
+    },
+    {
+      "step": "the results are three across, beside the rail",
+      "check": [
+        "(function (s) { return s.focused.tag === 'a' && Boolean(s.focused.href); })(await __act('right'))",
+        "(function (s) { return s.focused.tag === 'a' && Boolean(s.focused.href); })(await __act('right'))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-screen'); const cards = Array.from(L.querySelectorAll('.tenfoot-card')).map((c) => c.getBoundingClientRect()); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); const kb = document.querySelector('.tenfoot-kb').getBoundingClientRect(); const pills = L.querySelector('.tenfoot-screen-pills').getBoundingClientRect(); return cards.length >= 7 && kb.left >= rail.right - 1 && Math.round(kb.height) === innerHeight && cards[0].left >= kb.right && cards.slice(0, 3).every((r) => Math.abs(r.top - cards[0].top) < 1) && cards[3].top > cards[0].bottom && Math.abs(cards[3].left - cards[0].left) < 1 && pills.bottom <= cards[0].top && cards[2].right <= innerWidth; })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "Home on the rail goes back to Home",
+      "check": [
+        "(function (s) { return s.rail && s.rail.active === true && s.rail.item === 'search'; })((await __act('left'), await __act('left'), await __act('left'), await __act('left')))",
+        "(await __act('down')).rail.item === 'home'",
+        "(await __act('select'), true)",
+        "sleep 2",
+        "(async () => { const s = await __page({ type: 'page:state' }); return (await browser.tabs.get(__fx)).url === 'https://watch.dropout.tv/browse' && s.kind === 'browse'; })()"
+      ]
+    },
+    {
+      "journey": "A show"
+    },
+    {
+      "step": "a show's bare address opens on its newest season",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer' }), true)",
+        "sleep 2.5",
+        "/\\/game-changer\\/season:3$/.test((await browser.tabs.get(__fx)).url)"
+      ]
+    },
+    {
+      "step": "the show is drawn, and shown only once it is ready",
+      "check": [
+        "(function (s) { return s.kind === 'series' && s.home && s.home.kind === 'screen' && s.show && s.show.layout === 'show' && s.show.seasons.join('|') === 'Season 3|Season 2|Season 1' && s.show.current === 'Season 3' && s.focused && s.focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'; })(await __page({ type: 'page:state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => document.documentElement.hasAttribute('data-tenfoot-ready') && getComputedStyle(document.body).visibility === 'visible')()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "episodes five across; the seasons and the buttons laid out",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-screen'); const c = (n) => L.querySelector('.tenfoot-card[data-tenfoot-card=\\\"https://watch.dropout.tv/game-changer/season:1/videos/ep' + n + '\\\"]').getBoundingClientRect(); const r = [1, 2, 3, 4, 5, 6].map(c); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); return r.slice(0, 5).every((x, k) => x.top === r[0].top && (k === 0 || x.left > r[k - 1].left)) && r[5].top > r[0].bottom && Math.abs(r[5].left - r[0].left) < 1 && r[4].right <= innerWidth && r[0].left > rail.right && r[0].bottom <= innerHeight; })()\" }); return r === true; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-screen'); const pills = L.querySelector('.tenfoot-screen-pills').getBoundingClientRect(); const acts = L.querySelector('.tenfoot-hero-actions').getBoundingClientRect(); const card = L.querySelector('.tenfoot-card').getBoundingClientRect(); const cur = getComputedStyle(L.querySelector('.tenfoot-season[aria-current=\\\"true\\\"]')); const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return pills.top >= acts.bottom && pills.bottom <= card.top && cur.backgroundColor === 'rgb(254, 234, 59)' && Boolean(hit && hit.closest('.tenfoot-screen')) && getComputedStyle(document.querySelector('.site-header')).display === 'none' && L.querySelector('.tenfoot-hero-title').textContent === 'Game Changer' && /hero-1\\\\.svg$/.test(L.querySelector('.tenfoot-hero-art').getAttribute('src')); })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "the arrows walk the episodes, and ◀ from the first column is the rail",
+      "check": [
+        "(await __act('right')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep2'",
+        "(await __act('down')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep7'",
+        "(await __act('up')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep2'",
+        "(await __act('left')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'",
+        "(function (s) { return s.rail && s.rail.active === true; })(await __act('left'))",
+        "(await __act('right')).focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'"
+      ]
+    },
+    {
+      "step": "▲ goes to the seasons, the one on screen lit",
+      "check": [
+        "(function (s) { return s.focused.tag === 'button' && s.focused.text === 'Season 3'; })(await __act('up'))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-season:focus') && getComputedStyle(t).backgroundColor === 'rgb(254, 234, 59)'; })()\" }); return r === true; })()",
+        "(await __act('right')).focused.text === 'Season 2'",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-season:focus') && getComputedStyle(t).backgroundColor === 'rgba(0, 0, 0, 0)'; })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "▲ again: Play first, in yellow; Trailer and My List drawn as buttons",
+      "check": [
+        "(function (s) { return s.focused.tag === 'a' && /^Play S\\d+ E1$/.test(s.focused.text) && s.show.resume && s.show.resume.action === 'first' && s.show.resume.href === s.focused.href; })(await __act('up'))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-hero-primary:focus') && getComputedStyle(t).backgroundColor === 'rgb(254, 234, 59)' && getComputedStyle(t).color === 'rgb(26, 26, 5)'; })()\" }); return r === true; })()",
+        "(await __act('right')).focused.text === 'Trailer'",
+        "(await __act('right')).focused.text === 'My List'",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button.tenfoot-hero-action:focus') && getComputedStyle(t).backgroundColor === 'rgba(255, 255, 255, 0.08)'; })()\" }); return r === true; })()",
+        "(await __act('left')).focused.text === 'Trailer'"
+      ]
+    },
+    {
+      "step": "OK on a season opens that season's page",
+      "check": [
+        "(await __act('down')).focused.text === 'Season 2'",
+        "(await __act('select'), true)",
+        "sleep 2",
+        "/\\/game-changer\\/season:2$/.test((await browser.tabs.get(__fx)).url)",
+        "(function (s) { return s.show.current === 'Season 2' && s.show.heading.startsWith('Season 2: All About') && s.focused.href === 'https://watch.dropout.tv/game-changer/season:1/videos/ep1'; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "journey": "An episode"
+    },
+    {
+      "step": "an episode opens on its details page, the video held in the player's frame",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1' }), true)",
+        "sleep 2",
+        "(function (s) { return s.kind === 'video' && s.watch === 'details' && s.theater === false && s.playerFocused === false && s.playerReady === true && s.focused && s.focused.text === 'Watch' && s.rail !== null && s.rail.active === false; })(await __page({ type: 'page:state' }))",
+        "(function (s) { return s.home && s.home.layout === 'episode' && s.home.episode.show === 'Game Changer' && s.home.episode.actions.join('|') === 'Watch|My List|Episodes' && s.home.episode.image === 'https://watch.dropout.tv/art-5.svg'; })(await __page({ type: 'page:state' }))",
+        "(function (h) { return Boolean(h && h.entries.ep1 && /\\/videos\\/ep1$/.test(h.entries.ep1.url)); })((await browser.storage.local.get('progress:0'))['progress:0'])",
+        "typeof (await getRegistry())[String(__fx)] === 'number' && (await getRegistry())[String(__fx)] > 0",
+        "(function (r) { return r.ok === true && r.state.present === true && r.state.paused === true && r.state.held === true && r.state.title === 'Fixture episode'; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))"
+      ]
+    },
+    {
+      "step": "the details page is laid out: the picture on the right, the words beside the rail",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const pic = document.querySelector('.tenfoot-screen-picture').getBoundingClientRect(); const body = document.querySelector('.tenfoot-screen .tenfoot-hero-body').getBoundingClientRect(); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); const hit = document.elementFromPoint(pic.left + pic.width / 2, pic.top + pic.height / 2); const ring = document.querySelector('.tenfoot-ring'); const watch = document.activeElement.getBoundingClientRect(); const rr = ring.getBoundingClientRect(); return [pic.left >= body.right, body.left >= rail.right, Math.abs(pic.width / pic.height - 16 / 9) < 0.02, pic.width > innerWidth * 0.3, pic.top >= 0 && pic.bottom <= innerHeight, Boolean(hit) && Boolean(hit.closest('.tenfoot-screen-picture')), document.querySelector('.tenfoot-screen-picture img').getAttribute('src'), !ring.hidden && rr.left <= watch.left && rr.right >= watch.right, getComputedStyle(document.activeElement).backgroundColor, getComputedStyle(document.activeElement).color, document.documentElement.classList.contains('tenfoot-theater')].join('|'); })()\" }); return r === 'true|true|true|true|true|true|https://watch.dropout.tv/art-5.svg|true|rgb(254, 234, 59)|rgb(26, 26, 5)|false'; })()"
+      ]
+    },
+    {
+      "step": "Watch plays the video in the full window and shows its title",
+      "check": [
+        "(function (s) { return s.watch === 'playing' && s.theater === true && s.playerFocused === true; })(await __act('select'))",
+        "sleep 0.2",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const o = document.querySelector('.tenfoot-osd'); return o && !o.hidden ? o.textContent : 'hidden'; })() : null\" }); return r.some((t) => t === 'Game ChangerEpisode'); })()",
+        "(function (r) { return r.ok === true && r.state.held === false; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "the menu button is the player's; Back walks out of the player to the details page",
+      "check": [
+        "(await __act('menu')).menu === null",
+        "(function (r) { return r.state.transport === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
+        "(async function () { await __act('back'); await __act('back'); const r = await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }); return r.state.transport === false; })()",
+        "(async function () { await __act('back'); await new Promise((r) => setTimeout(r, 400)); const s = await __page({ type: 'page:state' }); return s.watch === 'details' && s.theater === false && s.playerFocused === false && s.focused && s.focused.text === 'Watch'; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === false; })()",
+        "(function (r) { return r.state.held === true && r.state.paused === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))"
+      ]
+    },
+    {
+      "step": "a part-watched episode shows its progress on the details page",
+      "check": [
+        "(async () => { const cur = (await browser.storage.local.get('progress:0'))['progress:0'] || { entries: {} }; await browser.storage.local.set({ 'progress:0': Object.assign({}, cur, { entries: Object.assign({}, cur.entries, { ep1: { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1', duration: 1500, local: { position: 600, at: Date.now() } } }) }) }); return true; })()",
+        "sleep 0.5",
+        "(async () => { const s = await __page({ type: 'page:state' }); const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const a = document.activeElement.getBoundingClientRect(); const rr = document.querySelector('.tenfoot-ring').getBoundingClientRect(); return rr.left <= a.left && rr.right >= a.right && rr.top <= a.top && rr.bottom >= a.bottom; })()\" }); return s.focused.text === 'Resume' && s.home.episode.actions.join('|') === 'Resume|Start Over|My List|Episodes|Clear Progress' && s.home.episode.left === '15:00 left' && r === true; })()"
+      ]
+    },
+    {
+      "step": "Firefox's own Back while it plays goes to the details page",
+      "check": [
+        "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
+        "(function (r) { return r.ok === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 0.5",
+        "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details' && s.theater === false && /\\/videos\\/ep1$/.test((await browser.tabs.get(__fx)).url); })()"
+      ]
+    },
+    {
+      "step": "with Play Next Episode off, the up-next card shows near the end",
+      "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { autoplayNext: false }) }), true)",
+        "sleep 0.3",
+        "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
+        "(function (r) { return r.ok === true && r.state.currentTime === 0; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'seek', by: -10 }))",
+        "(function (r) { return r.state.transport === false && r.state.present === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const c = document.querySelector('.tenfoot-upnext'); return c && !c.hidden ? c.querySelector('.tenfoot-upnext-line').textContent + '|' + getComputedStyle(c).position : 'hidden'; })() : null\" }); return r.some((t) => t === 'Fixture episode 2|fixed'); })()"
+      ]
+    },
+    {
+      "step": "the next episode plays straight away, a step of its own in the history",
+      "check": [
+        "(await __page({ type: 'page:episode', delta: 1 })).done === true",
+        "sleep 2",
+        "(await browser.tabs.get(__fx)).url === 'https://watch.dropout.tv/game-changer/season:1/videos/ep2'",
+        "(function (s) { return s.kind === 'video' && s.watch === 'playing' && s.theater === true; })(await __page({ type: 'page:state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "Back from it: its details page, then the season",
+      "check": [
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 0.5",
+        "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details' && /\\/videos\\/ep2$/.test((await browser.tabs.get(__fx)).url); })()",
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 2",
+        "/\\/game-changer\\/season:2$/.test((await browser.tabs.get(__fx)).url)"
+      ]
+    },
+    {
+      "step": "a real key press after Back moves the selection: the page is not frozen",
+      "check": [
+        "(async () => { const s = await __page({ type: 'page:state' }); globalThis.__before = s.focused && s.focused.href; return Boolean(globalThis.__before); })()",
+        "press ArrowRight",
+        "sleep 0.4",
+        "(async () => { const s = await __page({ type: 'page:state' }); return Boolean(s.focused && s.focused.href) && s.focused.href !== globalThis.__before; })()"
+      ]
+    },
+    {
+      "step": "Back from an episode reached from another goes past both, to the season",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1' }), true)",
+        "sleep 2",
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep2' }), true)",
+        "sleep 2",
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 3",
+        "/\\/game-changer\\/season:2$/.test((await browser.tabs.get(__fx)).url)",
+        "(await __page({ type: 'page:state' })).kind === 'series'"
+      ]
+    },
+    {
+      "step": "Back from the season goes Home",
+      "check": [
+        "(await __act('back'), true)",
+        "sleep 2",
+        "(function (s) { return s.kind === 'browse'; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "journey": "Lists"
+    },
+    {
+      "step": "Home whose banner arrives late still starts on Watch now",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/browse?late-banner' }), true)",
+        "sleep 2.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.documentElement.getAttribute('data-fixture-landed')\" }); return r === 'card'; })()",
+        "(function (s) { return s.kind === 'browse' && s.home && s.home.row === 'hero' && s.focused && s.focused.text === 'Watch now'; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "step": "My List is drawn with the rail beside it, My List lit",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/my-list' }), true)",
+        "sleep 2",
+        "(function (s) { return s.kind === 'grid' && s.rail && s.rail.page === 'my-list' && s.focused && s.focused.href === 'https://watch.dropout.tv/aparna-nancherla-hopeful-potato'; })(await __page({ type: 'page:state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const b = document.querySelector('.tenfoot-rail-item[data-tenfoot-rail=\\\"my-list\\\"]'); const prev = b.previousElementSibling, next = b.nextElementSibling; const svg = b.querySelector('svg').getBoundingClientRect(); const cs = getComputedStyle(b); const rail = document.querySelector('.tenfoot-rail').getBoundingClientRect(); const tile = document.activeElement.getBoundingClientRect(); return [prev.dataset.tenfootRail, next.dataset.tenfootRail, b.getAttribute('aria-label'), svg.width > 10 && svg.height > 10, cs.color, tile.left >= rail.right].join('|'); })()\" }); return r === 'browse|live|My List|true|rgb(254, 234, 59)|true'; })()",
+        "(await __act('right')).focused.href === 'https://watch.dropout.tv/game-changer'",
+        "(function (s) { return s.rail.active === true && s.rail.item === 'my-list'; })((await __act('left'), await __act('left')))",
+        "(function (s) { return s.rail.active === false && s.focused.href === 'https://watch.dropout.tv/aparna-nancherla-hopeful-potato'; })(await __act('right'))"
+      ]
+    },
+    {
+      "step": "New Releases is drawn as a grid that scrolls under the top",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/new-releases' }), true)",
+        "sleep 2",
+        "(function (s) { return s.kind === 'series' && s.home && s.home.kind === 'screen' && s.home.title === 'New Releases' && s.home.count === 18 && s.rail && s.rail.page === null && s.focused && s.focused.href === 'https://watch.dropout.tv/new-releases/videos/nr-ep-1'; })(await __page({ type: 'page:state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cards = [...document.querySelectorAll('.tenfoot-screen .tenfoot-card')].map((c) => c.getBoundingClientRect()); const u = innerWidth / 1920 * 0.8; const layer = document.querySelector('.tenfoot-screen').getBoundingClientRect(); const firstRow = cards.slice(0, 5).every((c) => Math.abs(c.top - cards[0].top) < 1); return [firstRow, cards[5].top > cards[0].bottom, Math.abs(cards[1].left - cards[0].left - 380 * u) < 2, Math.abs(cards[0].width - 352 * u) < 2, layer.width === innerWidth && layer.height === innerHeight, getComputedStyle(document.querySelector('.site-header')).display, getComputedStyle(document.querySelector('footer.footer--site')).display].join('|'); })()\" }); return r === 'true|true|true|true|true|none|none'; })()",
+        "(await __act('down')).focused.href === 'https://watch.dropout.tv/new-releases/videos/nr-ep-6'",
+        "sleep 0.4",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const layer = document.querySelector('.tenfoot-screen'); const card = document.activeElement.getBoundingClientRect(); return layer.getAttribute('data-tenfoot-scrolled') === 'true' && card.top < innerHeight * 0.2 && card.top > 0; })()\" }); return r === true; })()"
+      ]
+    },
+    {
+      "journey": "Dropout 24/7"
+    },
+    {
+      "step": "the 24/7 event opens on its details page, the stream held behind it",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/dropout-247/events/dropout-24-7' }), true)",
+        "sleep 2.5",
+        "(function (s) { return s.kind === 'video' && s.watch === 'details' && s.theater === false && s.focused && s.focused.text === 'Watch' && s.home.episode.title === 'Dropout 24/7' && s.home.episode.actions.join('|') === 'Watch' && s.rail !== null; })(await __page({ type: 'page:state' }))",
+        "(function (r) { return r.state.held === true && r.state.paused === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return [Boolean(hit) && hit.tagName !== 'IFRAME' && Boolean(hit.closest('.tenfoot-screen')), /always-on/.test(document.querySelector('.tenfoot-screen .tenfoot-hero-text').textContent), document.documentElement.classList.contains('tenfoot-theater')].join('|'); })()\" }); return r === 'true|true|false'; })()"
+      ]
+    },
+    {
+      "step": "Watch plays the stream, and Back comes back to the details page",
+      "check": [
+        "(function (s) { return s.watch === 'playing' && s.theater === true && s.playerFocused === true; })(await __act('select'))",
+        "sleep 0.3",
+        "(function (r) { return r.state.held === false; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
+        "(async function () { await __act('back'); await new Promise((r) => setTimeout(r, 400)); const s = await __page({ type: 'page:state' }); return s.watch === 'details' && s.theater === false && s.focused && s.focused.text === 'Watch'; })()"
+      ]
+    },
+    {
+      "step": "the 24/7 page plays the stream in place, and Back takes it away",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/dropout-24-7' }), true)",
+        "sleep 2",
+        "(function (s) { return s.kind === 'hub' && s.focused && s.focused.text === 'Watch' && s.rail && s.rail.page === 'live'; })(await __page({ type: 'page:state' }))",
+        "(await __act('select'), true)",
+        "sleep 2",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const f = document.querySelector('.tenfoot-inplace iframe'); if (!f) return 'none'; const b = f.getBoundingClientRect(); return [f.src.startsWith('https://embed.vhx.tv/videos/612228'), Math.round(b.width) === innerWidth && Math.round(b.height) === innerHeight, Boolean(history.state && history.state.tenfootPlay), /dropout-24-7$/.test(location.pathname)].join('|'); })()\" }); return r === 'true|true|true|true'; })()",
+        "(function (s) { return s.playerFocused === true && s.navigation === null; })(await __page({ type: 'page:state' }))",
+        "(function (r) { return r.ok === true && r.state.held === false && r.state.present === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'state' }))",
+        "(async function () { await __act('back'); await new Promise((r) => setTimeout(r, 500)); const s = await __page({ type: 'page:state' }); const [gone] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('.tenfoot-inplace') === null\" }); return gone === true && s.kind === 'hub' && s.playerFocused === false && s.focused && s.focused.text === 'Watch'; })()"
+      ]
+    },
+    {
+      "journey": "Sign-in"
+    },
+    {
+      "step": "the sign-in screen is drawn, with Email selected",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login' }), true)",
+        "sleep 1.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-signin'); if (!L) return 'no layer'; const cs = getComputedStyle(L); const b = L.getBoundingClientRect(); const e = L.querySelector('#tenfoot-signin-email'); const p = L.querySelector('#tenfoot-signin-password'); const f = L.querySelector('form'); return [cs.display, cs.position, b.width === innerWidth && b.height === innerHeight, document.activeElement === e, e.type + '/' + e.name + '/' + e.getAttribute('autocomplete'), p.type + '/' + p.name + '/' + p.getAttribute('autocomplete'), f.contains(e) && f.contains(p), L.querySelector('h1').textContent, !!document.querySelector('#login--box-container')].join('|'); })()\" }); return r === 'flex|fixed|true|true|email/email/username|password/password/current-password|true|Sign in|true'; })()",
+        "(async () => { const s = await __page({ type: 'page:state' }); return s.kind === 'signin' && s.focused && s.focused.id === 'tenfoot-signin-email'; })()",
+        "(await __act('down'), (await __page({ type: 'page:state' })).focused.id === 'tenfoot-signin-password')"
+      ]
+    },
+    {
+      "step": "Sign in posts both of Dropout's steps",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); document.querySelector('.tenfoot-signin-submit').textContent\" }); return r === 'Signing in…'; })()",
+        "sleep 1",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const p = window.wrappedJSObject.__posted; return [p.length, p[0].form, p[1].form, p[1].email, p[1].password, document.body.getAttribute('data-signed-in')].join('|'); })()\" }); return r === '2|next|password|fixture@example.test|not-a-real-password|true'; })()"
+      ]
+    },
+    {
+      "step": "a wrong password shows Dropout's error, the email kept",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login?wrong' }), true)",
+        "sleep 1.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
+        "sleep 1",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const e = document.querySelector('.tenfoot-signin-error'); return [e.hidden, e.textContent, document.querySelector('#tenfoot-signin-email').value, document.querySelector('#tenfoot-signin-password').value === '', document.activeElement.id, document.querySelector('.tenfoot-signin-submit').textContent, document.body.hasAttribute('data-signed-in')].join('|'); })()\" }); return r === 'false|Invalid email or password.|fixture@example.test|true|tenfoot-signin-password|Sign in|false'; })()"
+      ]
+    },
+    {
+      "step": "a wrong password answered with a new page shows the error from that page",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login?wrongpage' }), true)",
+        "sleep 1.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
+        "sleep 2",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const e = document.querySelector('.tenfoot-signin-error'); return [location.search, e.hidden, e.textContent, document.querySelector('#tenfoot-signin-email').value, document.querySelector('#tenfoot-signin-password').value === '', document.activeElement.id].join('|'); })()\" }); return r === '?error|false|Invalid email or password.|fixture@example.test|true|tenfoot-signin-password'; })()"
+      ]
+    },
+    {
+      "step": "the password reset posts, and Dropout's answer is shown",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/forgot_password' }), true)",
+        "sleep 1.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const L = document.querySelector('.tenfoot-signin'); if (!L) return 'no layer'; const e = L.querySelector('#tenfoot-signin-email'); return [getComputedStyle(L).display, L.querySelector('h1').textContent, e.type + '/' + e.name + '/' + e.getAttribute('autocomplete'), !!L.querySelector('input[type=password]'), document.activeElement === e, [...L.querySelectorAll('.tenfoot-signin-buttons > *')].map((b) => b.textContent).join(',')].join('|'); })()\" }); return r === 'flex|Reset password|email/email/username|false|true|Send reset email,Back to sign in'; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
+        "sleep 2",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const m = document.querySelector('.tenfoot-signin-error'); const p = window.wrappedJSObject.__posted; return [location.search, p.length, p[0].form, p[0].email, m.hidden, m.textContent, m.dataset.tone, document.querySelector('.tenfoot-signin-field').hidden, document.activeElement.textContent].join('|'); })()\" }); return r === '?sent|1|forgot|fixture@example.test|false|Check your email on your phone or computer. Set the new password there, then sign in here.|notice|true|Back to sign in'; })()"
+      ]
+    },
+    {
+      "step": "an email the reset does not know shows Dropout's error",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/forgot_password' }), true)",
+        "sleep 1.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'unknown@example.test'; document.querySelector('.tenfoot-signin-submit').click(); 'ok'\" }); return r === 'ok'; })()",
+        "sleep 2",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const m = document.querySelector('.tenfoot-signin-error'); return [location.search, m.textContent, m.dataset.tone, document.querySelector('#tenfoot-signin-email').value, document.activeElement.id].join('|'); })()\" }); return r === '?error|We couldn\\'t find an account with that email.|error|unknown@example.test|tenfoot-signin-email'; })()"
+      ]
+    },
+    {
+      "step": "a real Enter on Email opens the keyboard; a key types, Done goes on to Password",
+      "check": [
+        "(async () => { await browser.tabs.executeScript(__fx, { code: \"sessionStorage.clear(); 'ok'\" }); return true; })()",
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/login' }), true)",
+        "sleep 1.5",
+        "press Enter",
+        "sleep 0.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const k = document.querySelector('.tenfoot-kb'); if (!k || k.hidden) return 'closed'; const b = k.getBoundingClientRect(); const em = document.querySelector('#tenfoot-signin-email').getBoundingClientRect(); return [getComputedStyle(k).display, Math.round(b.bottom) === innerHeight, b.height === innerHeight, em.left >= b.right, document.documentElement.getAttribute('data-tenfoot-keyboard'), !!k.querySelector('[data-tenfoot-key=\\\\'c:.com\\\\']'), document.activeElement.dataset.tenfootKey].join('|'); })()\" }); return r === 'flex|true|true|true|on|true|c:a'; })()",
+        "press ArrowRight",
+        "press Enter",
+        "sleep 0.3",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value\" }); return r === 'b'; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('.tenfoot-kb [data-tenfoot-key=\\\\'done\\\\']').click(); 'ok'\" }); return r === 'ok'; })()",
+        "sleep 0.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"[document.querySelector('.tenfoot-kb').hidden, document.activeElement.id, document.documentElement.getAttribute('data-tenfoot-keyboard')].join('|')\" }); return r === 'true|tenfoot-signin-password|'; })()"
+      ]
+    },
+    {
+      "journey": "Edit Profile"
+    },
+    {
+      "step": "Save is grey until the name changes, then yellow; OK saves and says Saved",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/settings/manage/profile' }), true)",
+        "sleep 1.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const s = [...document.querySelectorAll('.tenfoot-hero-action')].find((b) => /Save/.test(b.textContent)); const cs = getComputedStyle(s); return [s.getAttribute('aria-disabled'), cs.backgroundColor, document.activeElement.value].join('|'); })()\" }); return r === 'true|rgba(255, 255, 255, 0.08)|Sam'; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"const f = document.activeElement; f.value = 'Samuel'; f.dispatchEvent(new Event('input', { bubbles: true })); 'ok'\" }); return r === 'ok'; })()",
+        "sleep 0.5",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const s = [...document.querySelectorAll('.tenfoot-hero-action')].find((b) => /Save/.test(b.textContent)); return [s.getAttribute('aria-disabled'), getComputedStyle(s).backgroundColor].join('|'); })()\" }); return r === '|rgb(254, 234, 59)'; })()",
+        "press ArrowDown",
+        "press Enter",
+        "sleep 1.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const s = [...document.querySelectorAll('.tenfoot-hero-action')].find((b) => /Sav/.test(b.textContent)); return [s.textContent, !!s.querySelector('svg.tenfoot-hero-glyph'), window.wrappedJSObject.__saved.join(',')].join('|'); })()\" }); return r === 'Saved!|false|Samuel'; })()"
+      ]
+    }
   ],
   "optionsEvals": [
-    "document.title === 'Leanback for Dropout settings'",
-    "document.getElementById('enabled').checked === true",
-    "document.getElementById('seekStep').value === '10'",
-    "document.getElementById('theater') === null",
-    "document.getElementById('ringColor').value === '#feea3b'",
-    "document.getElementById('hintBar').checked === false",
-    "document.getElementById('playerChrome').value === 'leanback'",
-    "document.getElementById('forget').textContent === 'Clear Continue Watching'",
-    "document.getElementById('seasonStart').value === 'latest'"
+    {
+      "journey": "The options page"
+    },
+    {
+      "step": "it opens with the settings as saved",
+      "check": [
+        "document.title === 'Leanback for Dropout settings'",
+        "document.getElementById('enabled').checked === true",
+        "document.getElementById('seekStep').value === '10'",
+        "document.getElementById('theater') === null",
+        "document.getElementById('ringColor').value === '#feea3b'",
+        "document.getElementById('hintBar').checked === false",
+        "document.getElementById('playerChrome').value === 'leanback'",
+        "document.getElementById('forget').textContent === 'Clear Continue Watching'",
+        "document.getElementById('seasonStart').value === 'latest'"
+      ]
+    }
   ],
   "screenshot": false
 }
