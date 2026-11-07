@@ -306,3 +306,36 @@ export const POLICY = '<!doctype html><html><body class="logged-out sites-privac
   '<header class="site-header" data-rect="0,40,1280,60"><a href="/browse" data-rect="20,55,80,30">Browse</a></header>' +
   '<div class="content-container"><section><div id="customer-agreements"><h1>Privacy Policy</h1><p>Words. <a href="https://example.test/" data-rect="100,300,80,20">a link</a></p></div></section></div></main>' +
   '<footer class="footer--site"><a href="/tos" data-rect="20,700,60,20">Terms</a></footer></body></html>';
+
+// Dropout's Home as Leanback would meet it if Dropout changed its markup so
+// that Leanback's own Home could not read it (here: its React root renamed).
+// Leanback then leaves the page as Dropout's and drives it with the arrows and
+// the ring. The page is the Home test page, in the shape of Dropout's.
+export const unreadHome = () => fixture('home.html').replace('id="browse-component"', 'id="browse-component-renamed"');
+
+// jsdom has no layout: give that page the boxes a 1280-wide window shows. The
+// header's links along the top, the banner's buttons (of the slide showing)
+// under them, then one
+// shelf per row, five cards across, the rest off to the right, with the
+// row's own arrows (slick-prev / slick-next) at its ends.
+export function layOutUnreadHome(win) {
+  const doc = win.document;
+  const rect = (el, r) => { if (el) el.setAttribute('data-rect', r.join(',')); };
+  doc.querySelectorAll('.site-header a[href]').forEach((a, i) => rect(a, [20 + 120 * i, 15, 100, 30]));
+  const slide = doc.querySelector('.carousel .featured-carousel-slide:not(.hidden)');
+  slide.querySelectorAll('.slide-buttons a[href], .slide-buttons button').forEach((b, i) => rect(b, [40 + 180 * i, 300, 160, 48]));
+  doc.querySelectorAll('.browse-row').forEach((row, i) => {
+    const top = 420 + 330 * i;
+    rect(row.querySelector('.horizontal-row-container.horizontal-row'), [0, top, 1280, 300]);
+    row.querySelectorAll('.slick-slide:not(.slick-cloned) .horizontal-row-item').forEach((it, k) => {
+      rect(it, [40 + 248 * k, top, 240, 300]);
+      rect(it.querySelector('a[href]'), [40 + 248 * k, top, 240, 300]);
+    });
+    rect(row.querySelector('.slick-prev'), [0, top + 120, 40, 60]);
+    rect(row.querySelector('.slick-next'), [1240, top + 120, 40, 60]);
+  });
+}
+
+// The card links of one shelf of that page, in order (row 0 is My list).
+export const shelf = (doc, i) => [...doc.querySelectorAll('.browse-row')[i].querySelectorAll('.slick-slide:not(.slick-cloned) .horizontal-row-item a[href]')]
+  .filter((a, k, all) => all.findIndex((b) => b.closest('.horizontal-row-item') === a.closest('.horizontal-row-item')) === k);

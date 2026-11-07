@@ -322,7 +322,7 @@ T.runAsync('after signing in: "Who is watching?" first (once, from whatever page
   // A profile was chosen: whatever Dropout opens next, Home.
   const c = await boot({ html: fixture('video.html'), url: URLS.video, before: note('chose') });
   T.eq([(await c.state()).navigation, c.win.sessionStorage.getItem(HOME_KEY)], [rules.browseUrl, null], 'Home, once');
-  const home = await boot({ html: fixture('browse.html'), url: URLS.browse, before: note('chose') });
+  const home = await boot({ html: fixture('home.html'), url: URLS.browse, before: note('chose') });
   T.eq([(await home.state()).navigation, home.win.sessionStorage.getItem(HOME_KEY)], [null, null], 'already Home: nothing to do');
   // Not in a sign-in: nothing moves.
   const q = await boot({ html: fixture('video.html'), url: URLS.video });

@@ -85,4 +85,21 @@ T.runAsync('search: results and filters are reachable, and load more is found', 
   T.ok(sel(search.loadMore).includes('SearchResults-module__load-more'), 'the results\' own Load More');
 });
 
+T.runAsync('search: the field keeps the keyboard; ▼ and Escape leave it for the results, ▲ comes back (N1)', async () => {
+  const html = '<!doctype html><html><body><header class="site-header" data-rect="0,0,1280,60"><a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a></header><input type="search" id="q" data-rect="40,100,400,40"><div class="browse-item-card"><a href="/x" class="browse-item-link" id="res1" data-rect="40,200,380,214">R1</a></div></body></html>';
+  const p = await boot({ html, url: 'https://watch.dropout.tv/search' });
+  T.eq((await p.state()).kind, 'search');
+  T.eq(p.doc.activeElement.id, 'q');
+  T.notOk(p.key('ArrowRight').defaultPrevented, '▶ belongs to the field');
+  T.ok(p.key('ArrowDown').defaultPrevented, '▼ is Leanback\'s: a one-line field has no line below');
+  T.eq(p.doc.activeElement.id, 'res1', 'down to the results');
+  p.key('ArrowUp');
+  T.eq(p.doc.activeElement.id, 'q', '▲ back into the box');
+  T.notOk(p.key('/').defaultPrevented);
+  T.ok(p.key('Escape').defaultPrevented);
+  T.eq(p.doc.activeElement.id, 'res1');
+  T.ok(p.key('/').defaultPrevented);
+  T.eq((await p.state()).navigation, rules.browseUrl, '"/" again closes search and returns you (item 9)');
+});
+
 await T.exit();

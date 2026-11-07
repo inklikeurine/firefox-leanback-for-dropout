@@ -199,8 +199,8 @@
       "rows": ".horizontal-row-container, .carousel-layout-container",
       "rowItem": ".horizontal-row-item, .featured-carousel-slide",
       "target": "a[href]",
-      "scrollNext": ".carousel-arrow--right",
-      "scrollPrev": ".carousel-arrow--left",
+      "scrollNext": [".carousel-arrow--right", ".slick-next"],
+      "scrollPrev": [".carousel-arrow--left", ".slick-prev"],
       "initialFocus": ".horizontal-row-container .horizontal-row-item a[href]"
     },
     "grid": {

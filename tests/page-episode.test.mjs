@@ -457,4 +457,44 @@ T.runAsync('Dropout 24/7\'s stream opens on its details page — its name, its w
   T.eq(p.last('history:meta'), undefined, 'a live stream is not a video for the watch history');
 });
 
+T.runAsync('the season line under the title, Episodes going to that season; My List presses Dropout\'s own and turns to a tick; turning Leanback off lets the player go', async () => {
+  const html = fixture('video.html').replace('<h1 class="video-title">', '<h5 class="badges-container"><a href="https://watch.dropout.tv/game-changer/season:1"> Season 1, Episode 4 </a> • <a class="meta-data-link" data-similar-items-site="1">28-Feb-2020</a></h5><h1 class="video-title">');
+  const p = await boot({ html, url: URLS.video });
+  T.eq((await p.state()).home.episode.meta, 'Season 1, Episode 4 · 28-Feb-2020');
+  const pressed = [];
+  p.$('video-mylist').addEventListener('click', () => { pressed.push(1); p.$('video-mylist').classList.replace('icon-watchlist-add', 'icon-watchlist-remove'); });
+  p.key('ArrowRight');
+  p.key('Enter');
+  await T.sleep(200);
+  T.eq([pressed.length, p.doc.activeElement.textContent, p.doc.activeElement.getAttribute('aria-label'), p.doc.activeElement.dataset.tenfootListed], [1, 'My List', 'Remove from My List', 'true'], 'Dropout\'s button pressed; the state follows it');
+  p.key('ArrowRight');
+  T.eq(p.doc.activeElement.getAttribute('href'), 'https://watch.dropout.tv/game-changer/season:1', 'Episodes: the season the line names');
+  await p.shim.changeStorage({ settings: { newValue: { enabled: false } } });
+  await T.sleep(20);
+  T.eq(p.last('player:hold').on, false, 'the player is Dropout\'s again');
+  T.eq(p.doc.querySelector('.tenfoot-screen'), null);
+});
+
+T.runAsync('video (not drawn): Dropout\'s page plays at once with no rail; ▼ out of the player is Dropout\'s page, ▲ the video again (item 6)', async () => {
+  // No title to draw the details from: Dropout's page, driven as it is.
+  const p = await boot({ html: fixture('video.html').replace('<h1 class="video-title">Episode</h1>', ''), url: URLS.video });
+  let s = await p.state();
+  T.eq([s.watch, s.theater, s.playerFocused, s.rail, p.win.history.length], ['playing', true, true, null, 1]);
+  await p.msg({ type: 'page:focus', hint: 'below' });
+  T.eq((await p.state()).focused.id, 'series-link', 'the link back to the show, not the tags nearest below the player (bug 2)');
+  // Push the player off the top, as scrolling does: geometry alone then
+  // prefers a header link, which is what the owner hit.
+  p.$('mount').setAttribute('data-rect', '0,-700,1280,720');
+  p.$('watch-player').setAttribute('data-rect', '0,-700,1280,720');
+  p.key('ArrowUp');
+  p.key('ArrowUp');
+  p.key('ArrowUp');
+  s = await p.state();
+  T.eq([s.theater, s.playerFocused], [true, true], 'back in the player, not on a header link');
+  p.key('Escape');
+  await T.sleep(30);
+  s = await p.state();
+  T.eq([s.theater, s.focused.id], [false, 'mount'], 'Back: Dropout\'s page under the video first');
+});
+
 await T.exit();

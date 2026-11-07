@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { T, loadScripts, makeDom } from '../../firefox-tools/harness/lib.mjs';
+import { unreadHome, layOutUnreadHome } from './page-support.mjs';
 
 const ctx = loadScripts([T.extFile('nav/site-rules.js'), T.extFile('nav/spatial.js')]);
 const S = ctx.TenfootSpatial;
@@ -105,19 +106,17 @@ T.run('rows: a viewport prefers on-screen items, an empty row is skipped', () =>
 });
 
 // DOM collection over the fixtures.
-T.run('collect: browse fixture yields rows with one target per tile, plus header links', () => {
-  const dom = makeDom({ clock: true, html: fixture('browse.html'), url: 'https://watch.dropout.tv/browse' });
+T.run('collect: Dropout\'s own Home gives one row per shelf, one target per card, plus the top bar\'s links', () => {
+  const dom = makeDom({ clock: true, html: unreadHome(), url: 'https://watch.dropout.tv/browse' });
+  layOutUnreadHome(dom.window);
   const win = dom.window;
-  const ctx2 = win;
   dom.runScripts([T.extFile('nav/site-rules.js'), T.extFile('nav/spatial.js')]);
-  const { candidates, rows } = ctx2.TenfootSpatial.collect(win.document, rules.pages.browse, { win, common: rules.common.focusable });
-  T.eq(rows.length, 3, 'carousel + two rows');
-  T.eq(rows.map((r) => r.items.length), [1, 4, 5]);
-  T.eq(rows[1].items[0].el.id, 'r1c1');
-  const ids = candidates.map((c) => c.el.id || c.el.getAttribute('href'));
-  T.ok(ids.includes('/browse') && ids.includes('/search') && ids.includes('/login'), 'header links are candidates');
-  T.eq(candidates.filter((c) => c.el.classList.contains('carousel-arrow')).length, 0, 'arrow buttons are not candidates');
-  T.eq(candidates.length, 10 + 3);
+  const { candidates, rows } = win.TenfootSpatial.collect(win.document, rules.pages.browse, { win, common: rules.common.focusable });
+  T.eq(rows.map((r) => r.items.length), [2, 12, 5], 'My list, New Releases, Trending: Dropout\'s copies of cards (slick-cloned) are left out');
+  T.eq(rows[0].items[0].el.getAttribute('href'), 'https://watch.dropout.tv/game-changer');
+  const header = candidates.filter((c) => c.el.closest('.site-header')).map((c) => c.el.getAttribute('href'));
+  T.eq(header, ['https://watch.dropout.tv/browse', 'https://watch.dropout.tv/dimension-20', 'https://watch.dropout.tv/search'], 'the top bar\'s links are candidates');
+  T.eq(candidates.filter((c) => c.el.matches('.slick-arrow')).length, 0, 'a shelf\'s arrows are not');
 });
 
 T.run('collect: series fixture dedupes the two links of a tile and includes the selects', () => {

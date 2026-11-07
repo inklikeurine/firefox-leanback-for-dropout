@@ -3,7 +3,7 @@ import { T } from '../../firefox-tools/harness/lib.mjs';
 import { fixture, URLS, moveTo, boot, watch } from './page-support.mjs';
 
 T.runAsync('the look: Theme Color is the accent of every page and the ring; a holiday picked shows its own', async () => {
-  const p = await boot({ html: fixture('browse.html'), url: URLS.browse, settings: { ringColor: '#7cc6fe' } });
+  const p = await boot({ html: fixture('home.html'), url: URLS.browse, settings: { ringColor: '#7cc6fe' } });
   const root = p.doc.documentElement;
   T.eq([root.style.getPropertyValue('--tenfoot-accent'), root.style.getPropertyValue('--tenfoot-ring-color')], ['#7cc6fe', '#7cc6fe']);
   await p.shim.changeStorage({ settings: { newValue: { ringColor: '#7cc6fe', holidays: 'halloween', theme: 'oled' } } });
