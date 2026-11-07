@@ -11,7 +11,7 @@ const SHOW = rules.pages.series.show;
 const B = 'https://watch.dropout.tv';
 
 function load(html, url = `${B}/a-show`) {
-  const dom = makeDom({ html, url });
+  const dom = makeDom({ clock: true, html, url });
   dom.runScripts(['lib/common.js', 'lib/history.js', 'content/cards.js', 'content/show.js'].map((f) => T.extFile(f)));
   return { win: dom.window, doc: dom.window.document, S: dom.window.TenfootShow, H: dom.window.TenfootHistory };
 }

@@ -43,7 +43,7 @@ async function boot({ html = fixture('home.html'), url = `${B}/browse`, settings
     } else send({ ok: true });
     return false;
   });
-  const dom = makeDom({ html, url, browser: shim.browser });
+  const dom = makeDom({ clock: true, html, url, browser: shim.browser });
   const win = dom.window;
   win.__went = [];
   win.history.go = (d) => win.__went.push(d);

@@ -106,7 +106,7 @@ T.run('rows: a viewport prefers on-screen items, an empty row is skipped', () =>
 
 // DOM collection over the fixtures.
 T.run('collect: browse fixture yields rows with one target per tile, plus header links', () => {
-  const dom = makeDom({ html: fixture('browse.html'), url: 'https://watch.dropout.tv/browse' });
+  const dom = makeDom({ clock: true, html: fixture('browse.html'), url: 'https://watch.dropout.tv/browse' });
   const win = dom.window;
   const ctx2 = win;
   dom.runScripts([T.extFile('nav/site-rules.js'), T.extFile('nav/spatial.js')]);
@@ -121,7 +121,7 @@ T.run('collect: browse fixture yields rows with one target per tile, plus header
 });
 
 T.run('collect: series fixture dedupes the two links of a tile and includes the selects', () => {
-  const dom = makeDom({ html: fixture('series.html'), url: 'https://watch.dropout.tv/game-changer' });
+  const dom = makeDom({ clock: true, html: fixture('series.html'), url: 'https://watch.dropout.tv/game-changer' });
   const win = dom.window;
   dom.runScripts([T.extFile('nav/site-rules.js'), T.extFile('nav/spatial.js')]);
   const { candidates, rows } = win.TenfootSpatial.collect(win.document, rules.pages.series, { win, common: rules.common.focusable });
@@ -134,7 +134,7 @@ T.run('collect: series fixture dedupes the two links of a tile and includes the 
 });
 
 T.run('collect: extra elements and invisible ones', () => {
-  const dom = makeDom({ html: fixture('video.html'), url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1' });
+  const dom = makeDom({ clock: true, html: fixture('video.html'), url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1' });
   const win = dom.window;
   dom.runScripts([T.extFile('nav/site-rules.js'), T.extFile('nav/spatial.js')]);
   const mount = win.document.getElementById('mount');

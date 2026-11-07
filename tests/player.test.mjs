@@ -26,7 +26,7 @@ async function boot(opts = {}) {
     else send({ ok: true });
     return false;
   });
-  const dom = makeDom({ html, url: 'https://embed.vhx.tv/videos/612228?api=1&autoplay=0', browser: shim.browser });
+  const dom = makeDom({ clock: true, html, url: 'https://embed.vhx.tv/videos/612228?api=1&autoplay=0', browser: shim.browser });
   const win = dom.window;
   if (ottData) {
     win.OTTData = { video: { id: 612228, title: 'Fixture episode', duration: 0.5, url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep1', is_trailer: trailer ? 'true' : 'false' }, up_next: upNext || { url: 'https://watch.dropout.tv/game-changer/season:1/videos/ep2', title: 'Ep 2' } };
@@ -910,7 +910,7 @@ T.runAsync('the panel does not lose the player\'s rows to one unlucky read', asy
   // The player's menu is busy the first time it is asked — something else
   // driving it, or a re-render mid-click — and comes back a moment later.
   body.replaceChildren();
-  setTimeout(() => body.replaceChildren(...real), 120);
+  win.setTimeout(() => body.replaceChildren(...real), 120);
   key('ArrowDown');
   key('ArrowRight');
   key('Enter');

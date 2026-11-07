@@ -58,7 +58,7 @@ async function boot({ html, url, settings = null, playerState = null, fresh = fa
     } else send({ ok: true });
     return false;
   });
-  const dom = makeDom({ html, url, browser: shim.browser });
+  const dom = makeDom({ clock: true, html, url, browser: shim.browser });
   const win = dom.window;
   // content/show.css's first rule: jsdom does not load the extension's CSS,
   // and what Leanback hides must drop out of navigation here too.
@@ -1466,7 +1466,7 @@ T.runAsync('a second injection is a no-op; the rules failing to load leaves the 
   T.eq(p.shim.listeners.message.length, n);
   const shim = makeBrowserShim();
   shim.browser.runtime.onMessage.addListener((m, s, send) => { send({ ok: false, error: 'nope' }); return false; });
-  const dom = makeDom({ html: fixture('browse.html'), url: URLS.browse, browser: shim.browser });
+  const dom = makeDom({ clock: true, html: fixture('browse.html'), url: URLS.browse, browser: shim.browser });
   dom.runScripts(FILES);
   await T.sleep(40);
   T.eq(dom.document.documentElement.dataset.tenfoot, 'off');

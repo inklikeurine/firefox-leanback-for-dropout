@@ -6,7 +6,7 @@
 import { T, makeDom } from '../../firefox-tools/harness/lib.mjs';
 
 function load() {
-  const dom = makeDom({ html: '<!doctype html><html><body><p>page</p></body></html>', url: 'https://watch.dropout.tv/browse' });
+  const dom = makeDom({ clock: true, html: '<!doctype html><html><body><p>page</p></body></html>', url: 'https://watch.dropout.tv/browse' });
   dom.runScripts([T.extFile('lib/common.js'), T.extFile('nav/ask.js')]);
   return { win: dom.window, doc: dom.window.document, A: dom.window.TenfootAsk };
 }
