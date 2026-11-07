@@ -74,6 +74,31 @@ T.runAsync('the remote: ◀ ▶ go round the row; ▲ ▼ go straight up and dow
   T.eq(at(), 'c:8', 'back up to where it came from (the place was kept)');
 });
 
+T.runAsync('a thin line in a row of its own between the letters and the digits, on every page but the number pad; the moves go past it', async () => {
+  const { kb, k, box } = load();
+  const line = () => kb.element.querySelector('.tenfoot-kb-line');
+  const start = (id) => Number(k(id).style.gridRowStart);
+  kb.open(box('t'));
+  T.eq(kb.element.querySelectorAll('.tenfoot-kb-line').length, 1, 'one line');
+  T.eq(line().getAttribute('aria-hidden'), 'true', 'nothing to read out');
+  T.eq([start('c:y'), Number(line().style.gridRowStart), start('c:1')], [6, 7, 8], 'between the last letters and the first digits');
+  T.eq(start('space'), 10, 'the rows under it move down one');
+  T.eq(k('done').parentElement.style.getPropertyValue('--tf-kb-above'), '6');
+  T.eq(k('done').parentElement.style.getPropertyValue('--tf-kb-below'), '3');
+  for (let i = 0; i < 5; i += 1) kb.key('down');
+  T.eq(kb.current.dataset.tenfootKey, 'c:1', 'one ▼ goes from the letters straight to the digits');
+  kb.key('up');
+  T.eq(kb.current.dataset.tenfootKey, 'c:y', 'and one ▲ back');
+  k('page').click();
+  T.eq([kb.element.querySelectorAll('.tenfoot-kb-line').length, Number(line().style.gridRowStart), start('c:1')], [1, 7, 8], 'the symbols page has it too, once');
+  kb.close();
+  kb.open(box('e'), { layout: 'email' });
+  T.eq([Number(line().style.gridRowStart), start('c:1')], [8, 9], 'and email, under its extra row');
+  kb.close();
+  kb.open(box('d1'), { layout: 'digits' });
+  T.eq([line(), start('c:1')], [null, 1], 'the number pad is all digits: no line');
+});
+
 T.runAsync('▲ ▼ go round in every layout, docked too, landing on the key under the same place', async () => {
   const { kb, box } = load();
   const at = () => kb.current.dataset.tenfootKey;

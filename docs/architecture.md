@@ -680,6 +680,8 @@ resolves `"done"` or null.
 - **Keys** are data, not markup: `rowsFor(layout, page)` gives the rows
   of `{id, label, w, kind}`; `w` is a width in grid columns. Each button is
   placed by `grid-column` and `grid-row-*`, so the CSS draws what the code counts.
+  `.tenfoot-kb-line`, above the first row of digits when there are keys above them,
+  has a slim grid row of its own and is not a key: the moves and `state.rows` don't see it.
 - **Moves use those numbers, not the page's geometry**: each key's centre is
   counted from the middle of its row, ▲ ▼ pick the nearest centre in the next
   row (a tie goes left) and remember the place across

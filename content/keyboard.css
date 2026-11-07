@@ -72,6 +72,20 @@ html[data-tenfoot-rail="on"]:not([data-tenfoot-modal]) .tenfoot-kb {
   grid-template-rows: repeat(var(--tf-kb-rows, 9), minmax(0, 1fr));
   gap: calc(var(--tf-u, 0.04vw) * 4) calc(var(--tf-u, 0.04vw) * 8);
 }
+/* The line above the digits, as wide as the box at the top, in a slim row of its
+   own. A number pad has no keys above its digits, so no line. */
+.tenfoot-kb-keys:has(> .tenfoot-kb-line) {
+  flex-basis: calc((var(--tf-u, 0.04vw) * 105 + var(--tf-u, 0.04vw) * 4) * var(--tf-kb-rows, 9) + var(--tf-u, 0.04vw) * 24);
+  grid-template-rows: repeat(var(--tf-kb-above), minmax(0, 1fr)) calc(var(--tf-u, 0.04vw) * 20) repeat(var(--tf-kb-below), minmax(0, 1fr));
+}
+.tenfoot-kb-line {
+  grid-column: 1 / -1;
+  align-self: center;
+  height: max(2px, calc(var(--tf-u, 0.04vw) * 3));
+  border-radius: calc(var(--tf-u, 0.04vw) * 2);
+  background: var(--tf-dim, #9aa0ac);
+  opacity: 0.45;
+}
 html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key {
   display: flex;
   flex: none;
@@ -174,6 +188,10 @@ html[data-tenfoot="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-pressed="
 }
 html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key {
   color: #ffffff !important;
+}
+html[data-tenfoot-contrast="on"] .tenfoot-kb-line {
+  background: #ffffff;
+  opacity: 1;
 }
 html[data-tenfoot-contrast="on"] .tenfoot-kb button.tenfoot-kb-key[data-tenfoot-current="true"] {
   color: #000000 !important;

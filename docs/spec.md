@@ -340,7 +340,8 @@ use ([targets.md](./targets.md)).
   becomes a solid accent-colour pill with no ring, and for a moment on OK it
   answers. *Done* is accent-colour text until selected. The keys sit on a grid six
   across: *Shift*, a page of symbols (*#+=* / *abc*), ◀ ▶ to move in the text and
-  *Backspace*; the letters A to Z; two rows of digits; *Space* and *Done*. **Shift has three steps:** off (an outline),
+  *Backspace*; the letters A to Z; a thin line as wide as the box at the top, to set
+  the digits apart from what is above them (not on a number pad); two rows of digits; *Space* and *Done*. **Shift has three steps:** off (an outline),
   one capital (solid), caps lock (solid with a bar under it). A text box starts with a
   capital and takes one after a space. An email box has a row on top with
   `@gmail.com`, `@outlook.com` and `@icloud.com`, one press each, `@` among the

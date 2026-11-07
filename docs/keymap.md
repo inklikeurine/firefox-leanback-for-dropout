@@ -156,7 +156,7 @@ while it is open.
 A panel down the left of the screen, beside the rail (`nav/keyboard.js`), with
 what is being typed in at its top. On a grid six across: Shift, a page of symbols
 (the *#+=* / *abc* key), ◀ ▶ for the text cursor and Backspace; the letters A to
-Z; two rows of digits; Space and *Done*.
+Z; a thin line, which the selection goes past; two rows of digits; Space and *Done*.
 Shift has three steps: off, one capital, caps lock. A text box starts a name with
 a capital and again after a space; an email box has a row on top with
 `@gmail.com`, `@outlook.com` and `@icloud.com`, `@` among the letters and `.com` in

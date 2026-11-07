@@ -7,8 +7,8 @@
 // script already slows held moves.
 //
 // The keys sit on a grid six across, so ▲ ▼ go straight up and down: the keys
-// that act on the text, the letters (A to Z), the digits, then Space and Done. A
-// layout says what else there is: "text", "email" (a row of whole endings on top
+// that act on the text, the letters (A to Z), a thin line, the digits, then Space
+// and Done. A layout says what else there is: "text", "email" (a row of whole endings on top
 // and .com in place of Space), "password" (a Show / Hide key that turns the box
 // between hidden and readable), or "digits" (a number pad, for a PIN; a PIN's
 // separate digit boxes are given as a group, and each digit goes into the next
@@ -47,6 +47,7 @@
   const key = (id, label, w, extra) => Object.assign({ id, label, w }, extra);
   const ch = (c, w) => key(`c:${c}`, c, w || 1, { kind: "char", value: c });
   const chars = (line) => line.split(" ").map((c) => ch(c));
+  const isDigit = (spec) => spec.kind === "char" && /^\d$/.test(spec.value);
 
   // The rows of one page for a layout, as [{id, label, w, kind, value?}]. A key
   // that spans rows is the same object in each of them.
@@ -121,6 +122,7 @@
     let origType = "";
     let settle = null;
     let rows = []; // [{keys: [{spec, el, x}], width}]
+    let digitsAt = 0; // the row the digits start on, when there are keys above them
     let at = { r: 0, i: 0 };
     let column = null; // the x the selection keeps on ▲ ▼ across rows
     let pressedEl = null;
@@ -294,9 +296,15 @@
     function classOf(spec) {
       const kinds = [`tenfoot-kb-key--${spec.kind}`];
       if (spec.id === "space" || spec.kind === "show" || spec.kind === "page" || spec.kind === "shift" || spec.kind === "backspace" || spec.kind === "left" || spec.kind === "right") kinds.push("tenfoot-kb-key--fn");
-      if (spec.kind === "char" && /^\d$/.test(spec.value)) kinds.push("tenfoot-kb-key--digit");
+      if (isDigit(spec)) kinds.push("tenfoot-kb-key--digit");
       if (spec.kind === "char" && spec.value.length > 1) kinds.push("tenfoot-kb-key--chip");
       return `tenfoot-kb-key ${kinds.join(" ")}`;
+    }
+
+    // The grid line a row starts on: the line above the digits has a slim row of
+    // its own.
+    function lineOf(r) {
+      return r + 1 + (digitsAt && r >= digitsAt ? 1 : 0);
     }
 
     function makeKey(spec, r, x) {
@@ -304,7 +312,7 @@
       b.type = "button";
       b.dataset.tenfootKey = spec.id;
       b.style.gridColumn = `${x + 1} / span ${spec.w}`;
-      b.style.gridRowStart = String(r + 1);
+      b.style.gridRowStart = String(lineOf(r));
       if (spec.aria) b.setAttribute("aria-label", spec.aria);
       if (spec.icon) b.appendChild(Common.svgIcon(doc, ICONS[spec.icon], { strokeWidth: 2.5 }));
       b.addEventListener("click", (e) => {
@@ -333,6 +341,7 @@
       grid.textContent = "";
       const made = new Map(); // a key spanning rows is one button
       const specs = rowsFor(layout, page);
+      digitsAt = Math.max(0, specs.findIndex((row) => row.some(isDigit)));
       rows = specs.map((row, r) => {
         let x = 0;
         const keys = row.map((spec) => {
@@ -340,7 +349,7 @@
           if (!k) {
             k = { spec, el: makeKey(spec, r, x), x: x + spec.w / 2, from: r };
             made.set(spec, k);
-          } else k.el.style.gridRowEnd = String(r + 2);
+          } else k.el.style.gridRowEnd = String(lineOf(r) + 1);
           x += spec.w;
           return k;
         });
@@ -348,6 +357,14 @@
       });
       grid.style.setProperty("--tf-kb-cols", String(rows.length ? rows[0].width : 1));
       grid.style.setProperty("--tf-kb-rows", String(rows.length || 1));
+      if (digitsAt) {
+        grid.style.setProperty("--tf-kb-above", String(digitsAt));
+        grid.style.setProperty("--tf-kb-below", String(rows.length - digitsAt));
+        const line = el("div", "tenfoot-kb-line");
+        line.setAttribute("aria-hidden", "true");
+        line.style.gridRowStart = String(digitsAt + 1);
+        grid.appendChild(line);
+      }
       refreshKeys();
     }
 
