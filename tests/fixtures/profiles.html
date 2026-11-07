@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="csrf-token" content="fixture-token">
+<title></title>
+</head>
+<body class="site-background-color logged-in profile-picker profile-picker-show">
+<!-- Fixture in the shape of Dropout's profile picker (/profile/pick, read
+     2026-10-30 from an account with two profiles): a React root whose class
+     names are generated (sc-…), so only its structure is stable. Names and
+     pictures here are made up. The third profile has no picture: Dropout
+     shows its first letter. -->
+<main class="main-container">
+<div id="profile-picker-react-app" data-role="react-root" data-props="{&quot;redirect_to&quot;:&quot;/browse&quot;,&quot;initial_edit_mode&quot;:false,&quot;child_profiles_enabled&quot;:false,&quot;remember_profile_enabled&quot;:true,&quot;remember_profile&quot;:false,&quot;site_color&quot;:&quot;#feea3b&quot;,&quot;reason&quot;:null}"><div class="sc-uVWWZ gCtHVy"><div class="sc-hCPjZK kNCHwG">
+  <h1 class="sc-cfxfcM iMOVYT"><span>Who is watching?</span></h1>
+  <div class="sc-Nxspf gopnSg">
+    <button id="p0" class="sc-aXZVg sc-fjvvzt"><div class="sc-kdBSHD"><img src="https://fixture.test/art-1.svg" alt="Alex" class="sc-tagGq"></div><span class="sc-bbSZdi">Alex</span></button>
+    <button id="p1" class="sc-aXZVg sc-fjvvzt"><div class="sc-kdBSHD"><img src="https://fixture.test/art-2.svg" alt="Sam" class="sc-tagGq"></div><span class="sc-bbSZdi">Sam</span></button>
+    <button id="p2" class="sc-aXZVg sc-fjvvzt"><div class="sc-kdBSHD"><div class="sc-letter">r</div></div><span class="sc-bbSZdi">robin</span></button>
+    <button id="add" class="sc-aXZVg sc-fHjqPf"><div class="sc-hmdomO"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div><span class="sc-bXCLTC"><span>Add Profile</span></span></button>
+  </div>
+  <div style="position: relative;"><div style="position: relative;"><input id="remember-profile" name="r1" type="checkbox" value="r1"><label for="remember-profile"><span>Remember my profile</span></label></div></div>
+  <button id="manage" class="sc-aXZVg sc-gEvEer"><span>Manage Profiles</span></button>
+</div></div></div>
+</main>
+<script>
+  window.VHX = window.VHX || {};
+  window.VHX.config = {
+    api_url: "https://api.vhx.tv",
+    token: "[redacted-token]",
+    user_has_subscription: "true",
+    profile_index: 1
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="csrf-token" content="fixture-token">
+<title>Edit Profile fixture</title>
+</head>
+<body class="logged-in">
+<!-- Fixture in the shape of Dropout's Edit Profile (/settings/manage/profile, its
+     settings app, read 2026-10-31): the picture, the name, Save (disabled until
+     something changes, disabled again once saved) and Cancel, and Delete Profile.
+     Names and pictures are made up. -->
+<div id="app"><header data-testid="page-header-bar"><a href="/" aria-label="Back">←</a></header><main>
+  <nav aria-label="settings"><a href="/settings/manage/profile">Profile</a></nav>
+  <div data-testid="settings-content-column"><h2>Edit Profile</h2><p>Update this profile's name, picture, and Kid profile setting.</p>
+    <form id="editform"><button id="pic" type="button" aria-label="Change profile picture"><div><span>S</span><img src="https://fixture.test/art-2.svg"></div></button>
+      <label>Profile name</label><input id="profile-name" name="name" value="Sam">
+      <button id="save" type="submit" disabled>Save</button><button id="cancel" type="button">Cancel</button></form>
+    <button id="delete" type="button">Delete Profile</button></div>
+</main></div>
+<script>
+(function () {
+  var save = document.getElementById("save");
+  window.__saved = [];
+  // Dropout's app switches Save on by its disabled attribute alone.
+  document.getElementById("profile-name").addEventListener("input", function () { save.disabled = false; });
+  document.getElementById("editform").addEventListener("submit", function (e) {
+    e.preventDefault();
+    window.__saved.push(document.getElementById("profile-name").value);
+    save.disabled = true;
+  });
+})();
+</script>
+</body>
+</html>

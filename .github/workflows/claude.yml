@@ -8,8 +8,9 @@ name: Claude
 # secret (made with `claude setup-token`), so it draws on the same usage
 # limits as Claude Code on your computer.
 #
-# The private workshop (../_workshop/) is not here, so Claude follows the
-# "Without the workshop" rules in AGENTS.md.
+# Claude follows AGENTS.md. The shared tools (firefox-tools) are cloned next
+# to the repository, as on a developer's computer, so Claude can run the same
+# checks the pull request checks run.
 
 on:
   issue_comment:
@@ -44,14 +45,17 @@ jobs:
         with:
           fetch-depth: 1
 
-      # So Claude can run the same lint CI runs before it pushes
-      # (.claude/settings.json already allows `web-ext lint`).
+      # So Claude can run the validator, the tests and the live check before
+      # it pushes (.claude/settings.json allows the ../firefox-tools commands).
       - uses: actions/setup-node@v7
         with:
           node-version: 20
 
-      - name: Install web-ext
-        run: npm install --global web-ext
+      - name: Install the shared tools
+        run: |
+          git clone --depth 1 https://github.com/inklikeurine/firefox-tools ../firefox-tools
+          npm ci --prefix ../firefox-tools
+          npx --prefix ../firefox-tools playwright install --with-deps firefox
 
       - uses: anthropics/claude-code-action@v1
         with:
