@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live event fixture</title>
+<!-- Dropout 24/7's live page as Dropout draws it (2026-10-03 capture,
+     /dropout-247/events/dropout-24-7): the live player in section#live-event,
+     then #watch-info with the event's title and description, and share
+     buttons. No season, no show link, no My List, no Up Next. -->
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 16px sans-serif; }
+  [data-rect] { position: fixed; box-sizing: border-box; }
+  a { color: #1fb6c1; }
+  .site-header { background: #222; }
+  iframe { border: 0; }
+</style>
+</head>
+<body>
+<header class="site-header" data-rect="0,0,1280,60">
+  <nav class="navigation-container"><a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a></nav>
+</header>
+<main class="main-container">
+<section id="live-event" class="full-width-container background-black contain top-container" data-rect="0,60,1280,720">
+  <div class="row">
+    <div class="iframes-container fill-container-width">
+      <div class="embed column small-centered small-15 live-event-player" id="mount" data-rect="0,60,1280,720">
+        <iframe src="https://embed.vhx.tv/videos/612228?api=1&autoplay=0&collection_id=1486854&live=1" allow="encrypted-media; autoplay; fullscreen" id="watch-embed" class="sticky-player-child embed-content border-reset" title="Video Player" data-rect="0,60,1280,720"></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="watch-info" class="full-width-container" data-rect="0,800,1280,300">
+  <h1 class="head primary collection-title live-event-title"><strong>Dropout 24/7</strong></h1>
+  <div id="live-status-text" class="js-live-status-text"><div class="live-status-pending-text"></div></div>
+  <section class="contain column"><div class="text live-event-description" data-truncate>
+    <p>An always-on channel featuring your favorite Dropout content, ad-free.</p>
+    <p>FAQ here: <a target="_blank" href="https://www.dropout.tv/24-7-faq" id="faq" data-rect="40,900,300,30">https://www.dropout.tv/24-7-faq</a></p>
+  </div></section>
+  <div class="share-tools"><a href="#" class="btn btn-site-secondary" id="share-fb" data-rect="900,900,120,40">Facebook</a></div>
+</section>
+</main>
+<script src="/layout.js"></script>
+</body>
+</html>

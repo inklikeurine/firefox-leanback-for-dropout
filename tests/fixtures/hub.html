@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dropout 24/7 hub fixture</title>
+<!-- Dropout 24/7's page as Dropout draws it (2026-10-03 capture,
+     /dropout-24-7): Home's component with a single Live now banner and no
+     rows; the banner's picture and its Watch link to the stream's page. -->
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 16px sans-serif; }
+  [data-rect] { position: fixed; box-sizing: border-box; }
+  a { color: #eee; }
+  .site-header { background: #222; }
+</style>
+</head>
+<body>
+<header class="site-header" data-rect="0,0,1280,60">
+  <nav class="navigation-container"><a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a></nav>
+</header>
+<div id="browse-component" data-role="react-root">
+<div>
+<div class="carousel"><div class="carousel-slides">
+<div class="slide show-cursor-pointer" role="presentation"><div class="slide-bg"><div class="slide-layout-container slide-layout-featured"><span class="slide-bg-img-wrapper"><a href="https://watch.dropout.tv/dropout-247/events/dropout-24-7" class="block"><img class="slide-bg-img" src="https://watch.dropout.tv/hero-2.svg" alt="Slide"></a></span></div></div><div class="slide-layout-container"><div class="slide-content"><div data-testid="featured-carousel-slide" class="featured-carousel-slide"><div class="slide-title">Dropout 24/7</div><div class="slide-subtitle"><span class="block"><span>Live now</span></span></div><div class="slide-description">An always-on channel featuring your favorite Dropout content, ad-free.</div><div class="slide-buttons"><span><a class="btn btn-gray btn-site-primary slide-button" href="https://watch.dropout.tv/dropout-247/events/dropout-24-7" id="hub-watch"><span class="icon icon-play-white"></span><span role="presentation" class="slide-button-text"><span>Watch</span></span></a></span></div></div></div></div></div>
+</div></div>
+</div>
+</div>
+<script src="/layout.js"></script>
+</body>
+</html>

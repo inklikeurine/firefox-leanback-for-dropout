@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta property="og:image" content="https://watch.dropout.tv/art-5.svg">
+<title>Video fixture</title>
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 16px sans-serif; }
+  [data-rect] { position: fixed; box-sizing: border-box; }
+  a { color: #eee; display: block; background: #333; }
+  .site-header { background: #222; }
+  iframe { border: 0; }
+  /* Dropout's buttons (Foundation): white text, blue on hover and focus. */
+  button { background-color: #008cba; color: #ffffff; }
+  button:focus, button:hover { background-color: #007095; color: #ffffff; }
+</style>
+</head>
+<body>
+<header class="site-header" data-rect="0,0,1280,60">
+  <nav class="navigation-container">
+    <a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a>
+    <a href="/search" class="search-link" data-rect="120,15,80,30">Search</a>
+  </nav>
+</header>
+<main class="videos-show">
+  <div id="watch-player" class="top-container background-black" data-rect="0,60,1280,720">
+    <div class="embed" data-sticky-player id="mount" data-rect="0,60,1280,720">
+      <iframe id="frame" src="https://embed.vhx.tv/videos/612228?api=1&autoplay=0&collection_id=1" allow="autoplay" data-rect="0,60,1280,720"></iframe>
+    </div>
+  </div>
+  <div class="ott-up-next" id="page-upnext" hidden>
+    <a href="https://watch.dropout.tv/game-changer/season:1/videos/ep2" id="page-upnext-link" data-rect="900,600,300,120">Up next: Ep 2</a>
+  </div>
+  <div id="watch-info" data-rect="0,800,1280,300">
+    <div class="video-tags">
+      <a href="/tags/comedy" id="tag1" data-rect="40,785,90,24">comedy</a>
+      <a href="/tags/games" id="tag2" data-rect="140,785,90,24">games</a>
+    </div>
+    <div class="series-title"><a href="/game-changer" class="context-link" id="series-link" data-rect="40,830,200,30">Game Changer</a></div>
+    <h1 class="video-title">Episode</h1>
+    <section><div class="read-more-wrap" data-truncate><p>Sam asks the contestants to play a game they have never seen.</p><div class="meta-data-info"><a class="meta-data-link" href="#" data-similar-items-site="1">game shows</a></div></div></section>
+    <div class="video-content-actions"><button class="my-list btn btn-transparent custom-btn-action-my-list icon icon-watchlist-add" data-video-id="1" id="video-mylist">My list</button></div>
+    <div class="row"><h3 class="head secondary">Up Next in <a href="https://watch.dropout.tv/game-changer/season:1">Season 1</a></h3>
+      <ul class="large-block-grid-3"><li class="js-collection-item item-type-video" data-item-type="video"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep2" class="browse-item-link" id="up2"><div class="browse-image-container"><img alt="Ep 2 title" src="https://watch.dropout.tv/art-2.svg"><div class="browse-info-container"><div class="duration-container">21:03</div></div></div></a><div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep2"><strong title="Ep 2 title">Ep 2 title</strong></a></div></div></div></div></li><li class="js-collection-item item-type-video" data-item-type="video"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep3" class="browse-item-link" id="up3"><div class="browse-image-container"><img alt="Ep 3 title" src="https://watch.dropout.tv/art-3.svg"><div class="browse-info-container"><div class="duration-container">23:40</div></div></div></a><div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep3"><strong title="Ep 3 title">Ep 3 title</strong></a></div></div></div></div></li><li class="js-collection-item item-type-video" data-item-type="video"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep4" class="browse-item-link" id="up4"><div class="browse-image-container"><img alt="Ep 4 title" src="https://watch.dropout.tv/art-4.svg"><div class="browse-info-container"><div class="duration-container">20:55</div></div></div></a><div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep4"><strong title="Ep 4 title">Ep 4 title</strong></a></div></div></div></div></li></ul></div>
+    <div data-similar-items-site data-text-load-more="Load more">
+      <div class="browse-item-card"><a href="/game-changer/season:1/videos/ep2" class="browse-item-link" id="rel1" data-rect="40,860,380,214">Related 1</a></div>
+      <div class="browse-item-card"><a href="/game-changer/season:1/videos/ep3" class="browse-item-link" id="rel2" data-rect="440,860,380,214">Related 2</a></div>
+    </div>
+  </div>
+</main>
+<script src="/layout.js"></script>
+</body>
+</html>

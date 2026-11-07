@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Series fixture</title>
+<!-- A show's page as Dropout draws it (2026-09-27 captures): the header with
+     its buttons, the season control (oldest first) and sort, the episode grid
+     with Dropout's own tile markup. data-rect gives jsdom its geometry; in the
+     live check, what is inside [data-fixture-real-layout] is laid out for real
+     so Leanback's restyle is what is measured. -->
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 16px sans-serif; }
+  [data-rect]:not([data-fixture-real-layout] *) { position: fixed; box-sizing: border-box; }
+  main[data-fixture-real-layout] { padding: 70px 40px 40px; }
+  a { color: #eee; display: block; background: #333; }
+  /* Dropout's own rules that reach Leanback's restyle (see status.md): every
+     button turns blue on hover and focus; links are teal. */
+  button:hover, button:focus { background-color: #007095; }
+  a:link, a:visited { color: #1fb6c1; }
+  .site-header { background: #222; }
+  .collection-actions a, .collection-actions button { display: inline-block; }
+  .browse-image-container.aspect_ratio_16_9 { position: relative; height: 0; padding-bottom: 56.25%; }
+  .browse-image-container img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .duration-container { position: absolute; right: 6px; bottom: 6px; }
+  ul.large-block-grid-4 > li { float: left; width: 25%; list-style: none; }
+  .reveal-modal { display: none; background: #444; }
+  .reveal-modal.open { display: block; }
+</style>
+</head>
+<body class="site-background-color logged-in collections collections-show collection-game-changer" data-track-event="site_series">
+<header class="site-header" data-rect="0,0,1280,60">
+  <nav class="navigation-container">
+    <a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a>
+    <a href="/search" class="search-link" data-rect="120,15,80,30">Search</a>
+  </nav>
+</header>
+<main class="main-container" data-fixture-real-layout>
+<section class="site-background-color site-font-primary-color margin-bottom-large collection-header">
+  <section class="product-feature padding-horizontal-medium">
+    <div class="row relative">
+      <div class="collection-details-container columns">
+        <div class="collection-details grid-padding-left">
+          <h1 class="head primary site-font-primary-color collection-title">Game Changer</h1>
+          <h2 class="site-font-secondary-color collection-stats">3 Seasons</h2>
+          <div class="collection-description"><div class="site-font-secondary-color"><p>A game show where the game changes every time.</p></div></div>
+          <div class="collection-actions padding-bottom-small padding-top-large">
+            <a href="/game-changer/videos/game-changer-season-1-trailer" class="btn btn-transparent custom-btn-action-trailer" id="trailer" data-rect="40,100,160,40">Trailer</a>
+            <button class="my-list btn btn-transparent custom-btn-action-my-list icon icon-watchlist-add" data-series-id="1" id="mylist" data-rect="220,100,160,40">My list</button>
+            <a class="btn btn-transparent custom-btn-action-share" data-reveal-id="modal-game-changer" href="#" id="share" data-rect="400,100,120,40">Share</a>
+            <div class="reveal-modal share-modal-container" data-reveal id="modal-game-changer">
+              <a class="close-reveal-modal">×</a>
+              <a class="btn btn-facebook" href="https://www.facebook.com/sharer/sharer.php" title="Facebook">f</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hide-for-small-only cover-art"><img src="https://watch.dropout.tv/hero-1.svg" data-image-primary alt=""></div>
+    </div>
+  </section>
+  <section class="episode-container video-container padding-bottom-large padding-horizontal-medium">
+    <div class="row relative season-controls padding-bottom-medium padding-top-large">
+      <div class="columns text-left">
+        <div class="grid-padding-left">
+          <form autocomplete="off" class="select-dropdown-wrapper">
+            <select class="js-switch-season btn-dropdown-transparent" data-switch-season id="season" data-rect="40,160,200,36">
+              <option value="https://watch.dropout.tv/game-changer/season:1" selected>
+                Season 1
+              </option>
+              <option value="https://watch.dropout.tv/game-changer/season:2">
+                Season 2: All About "The Second One"
+              </option>
+              <option value="https://watch.dropout.tv/game-changer/season:3">
+                Season 3
+              </option>
+            </select>
+          </form>
+          <form autocomplete="off" class="select-dropdown-wrapper">
+            <select class="js-sort-items btn-dropdown-transparent" data-sort-by id="sort" data-rect="260,160,200,36">
+              <option value="https://watch.dropout.tv/game-changer">Sort by...</option>
+              <option value="https://watch.dropout.tv/game-changer?sort=alphabetical">Alphabetical</option>
+              <option value="https://watch.dropout.tv/game-changer?sort=release_date">Release date</option>
+            </select>
+          </form>
+        </div>
+      </div>
+      <div class="columns text-right">
+        <h2 class="site-font-secondary-color content-label" id="count">6 Episodes</h2>
+      </div>
+    </div>
+    <div class="row relative">
+      <div class="small-16 columns item-grid flush-row flush-grid">
+        <div class="row full-width padding-horizontal-medium">
+          <ul class="small-block-grid-1 medium-block-grid-3 large-block-grid-4 js-load-more-items-container" id="grid">
+            <li class="js-collection-item item-type-video" data-item-type="video" data-item-id="1"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep1" class="browse-item-link" id="ep1" data-rect="40,220,380,214"><div class="browse-image-container aspect_ratio_16_9"><button class="my-list icon medium icon-watchlist-add icon-only has-background" data-video-id="1" title="Add to my list"></button><img alt="Ep 1" src="https://watch.dropout.tv/art-1.svg"><span class="play-outer-circle"><i class="icon medium icon-play-inverse"></i></span><div class="browse-info-container"><div class="duration-container">22:14</div></div></div></a><div class="padding-small"><div class="site-font-primary-color browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep1"><strong title="Ep 1 title">Ep 1 title</strong></a></div><span class="site-font-secondary-color browse-item-subtext"><span class="media-identifier media-episode">Episode 1</span></span></div></div></div></li>
+            <li class="js-collection-item item-type-video" data-item-type="video" data-item-id="2"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep2" class="browse-item-link" id="ep2" data-rect="440,220,380,214"><div class="browse-image-container aspect_ratio_16_9"><button class="my-list icon medium icon-watchlist-add icon-only has-background" data-video-id="2" title="Add to my list"></button><img alt="Ep 2" src="https://watch.dropout.tv/art-2.svg"><div class="browse-info-container"><div class="duration-container">21:03</div></div></div></a><div class="padding-small"><div class="site-font-primary-color browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep2"><strong title="Ep 2 title">Ep 2 title</strong></a></div><span class="site-font-secondary-color browse-item-subtext"><span class="media-identifier media-episode">Episode 2</span></span></div></div></div></li>
+            <li class="js-collection-item item-type-video" data-item-type="video" data-item-id="3"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep3" class="browse-item-link" id="ep3" data-rect="840,220,380,214"><div class="browse-image-container aspect_ratio_16_9"><button class="my-list icon medium icon-watchlist-add icon-only has-background" data-video-id="3" title="Add to my list"></button><img alt="Ep 3" src="https://watch.dropout.tv/art-3.svg"><div class="browse-info-container"><div class="duration-container">23:40</div></div></div></a><div class="padding-small"><div class="site-font-primary-color browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep3"><strong title="Ep 3 title">Ep 3 title</strong></a></div><span class="site-font-secondary-color browse-item-subtext"><span class="media-identifier media-episode">Episode 3</span></span></div></div></div></li>
+            <li class="js-collection-item item-type-video" data-item-type="video" data-item-id="4"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep4" class="browse-item-link" id="ep4" data-rect="40,480,380,214"><div class="browse-image-container aspect_ratio_16_9"><button class="my-list icon medium icon-watchlist-add icon-only has-background" data-video-id="4" title="Add to my list"></button><img alt="Ep 4" src="https://watch.dropout.tv/art-4.svg"><div class="browse-info-container"><div class="duration-container">20:55</div></div></div></a><div class="padding-small"><div class="site-font-primary-color browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep4"><strong title="Ep 4 title">Ep 4 title</strong></a></div><span class="site-font-secondary-color browse-item-subtext"><span class="media-identifier media-episode">Episode 4</span></span></div></div></div></li>
+            <li class="js-collection-item item-type-video" data-item-type="video" data-item-id="5"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep5" class="browse-item-link" id="ep5" data-rect="440,480,380,214"><div class="browse-image-container aspect_ratio_16_9"><button class="my-list icon medium icon-watchlist-add icon-only has-background" data-video-id="5" title="Add to my list"></button><img alt="Ep 5" src="https://watch.dropout.tv/art-5.svg"><div class="browse-info-container"><div class="duration-container">24:10</div></div></div></a><div class="padding-small"><div class="site-font-primary-color browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep5"><strong title="Ep 5 title">Ep 5 title</strong></a></div><span class="site-font-secondary-color browse-item-subtext"><span class="media-identifier media-episode">Episode 5</span></span></div></div></div></li>
+            <li class="js-collection-item item-type-video" data-item-type="video" data-item-id="6"><div class="browse-item-card"><div class="grid-item-padding"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep6" class="browse-item-link" id="ep6" data-rect="840,480,380,214"><div class="browse-image-container aspect_ratio_16_9"><button class="my-list icon medium icon-watchlist-add icon-only has-background" data-video-id="6" title="Add to my list"></button><img alt="Ep 6" src="https://watch.dropout.tv/art-6.svg"><div class="browse-info-container"><div class="duration-container">22:47</div></div></div></a><div class="padding-small"><div class="site-font-primary-color browse-item-title"><a href="https://watch.dropout.tv/game-changer/season:1/videos/ep6"><strong title="Ep 6 title">Ep 6 title</strong></a></div><span class="site-font-secondary-color browse-item-subtext"><span class="media-identifier media-episode">Episode 6</span></span></div></div></div></li>
+          </ul>
+          <div class="row loadmore">
+            <a data-load-more="" data-load-more-target="js-load-more-items-container" class="js-load-more-link btn" href="/game-changer?page=2" id="loadmore" data-rect="540,720,200,40">Show More</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+</main>
+<div id="modal-trailer" class="reveal-modal large" data-reveal>
+  <div class="embed" data-vimeo-player></div>
+  <a class="close-reveal-modal" id="modal-close" data-rect="1100,120,40,40">×</a>
+  <a href="/game-changer" id="modal-link" data-rect="300,300,200,40">A link in the modal</a>
+</div>
+<script src="/layout.js"></script>
+</body>
+</html>
