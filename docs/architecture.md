@@ -709,7 +709,9 @@ resolves `"done"` or null.
   ◀ ▶ past its edges call `onEdge(dir)` instead of going round, and Done calls
   `onDone()`. `refresh()` follows the box when its text changes by other means.
 - **Looks**: `content/keyboard.css`, sizes from `--tf-u`, colours from the
-  theme variables. `--tf-kb-side` is the panel's width; while `<html>` carries
+  theme variables. `.tenfoot-kb-keys` grows to the panel's height, up to a `max-height`
+  counted from its rows, so the keys take up what the foot's line leaves.
+  `--tf-kb-side` is the panel's width; while `<html>` carries
   `data-tenfoot-keyboard="on"` the sign-in screen, a screen's view and Dropout's own
   page move over by it.
 
