@@ -1,0 +1,12 @@
+# The extension has no npm dependencies, so the only thing to keep current is
+# the GitHub Actions the workflows use (actions/checkout, setup-node, ...).
+# Dependabot opens one grouped pull request a month when any of them update.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
