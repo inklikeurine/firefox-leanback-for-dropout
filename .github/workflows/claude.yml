@@ -49,7 +49,7 @@ jobs:
       # it pushes (.claude/settings.json allows the ../firefox-tools commands).
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install the shared tools
         run: |
