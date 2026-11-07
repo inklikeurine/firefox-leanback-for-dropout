@@ -242,7 +242,8 @@ T.runAsync('Leanback\'s own rows: the same list as on a page; a choice opens its
   T.eq(panel.querySelector('.tenfoot-settings-title').textContent, 'Playback Settings', '◀ goes back up');
 });
 
-T.runAsync('Clear Continue Watching is in the playback panel too, and takes OK twice', async () => {
+// Taking OK twice, and ▶ never running it, are settings-menu.test.mjs's.
+T.runAsync('Clear Continue Watching is in the playback panel too, and says Cleared there', async () => {
   const { key, win, bg } = await boot();
   key('ArrowDown');
   key('ArrowRight');
@@ -253,14 +254,10 @@ T.runAsync('Clear Continue Watching is in the playback panel too, and takes OK t
   for (let i = 0; i < 5; i += 1) key('ArrowDown');
   key('ArrowRight');
   for (let i = 0; i < 14 && current().querySelector('.tenfoot-settings-label').textContent !== 'Clear Continue Watching'; i += 1) key('ArrowDown');
-  key('ArrowRight');
-  T.notOk(bg.some((m) => m.type === 'history:clear'), '▶ never runs it');
   key('Enter');
-  T.eq(current().querySelector('.tenfoot-settings-value').textContent, 'OK again to clear');
-  T.notOk(bg.some((m) => m.type === 'history:clear'), 'the first OK only asks');
   key('Enter');
   await T.sleep(10);
-  T.ok(bg.some((m) => m.type === 'history:clear'), 'the second clears');
+  T.ok(bg.some((m) => m.type === 'history:clear'), 'cleared');
   T.eq(current().querySelector('.tenfoot-settings-value').textContent, 'Cleared');
 });
 

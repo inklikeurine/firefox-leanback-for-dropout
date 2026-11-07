@@ -422,19 +422,14 @@ T.runAsync('Home: an open dialog (cookie banner) hides Home and the rail until i
   T.eq(p.active().textContent, 'Watch now', 'back on Home');
 });
 
-T.runAsync('Clear Continue Watching takes OK twice', async () => {
+// Taking OK twice, and moving away disarming it, are settings-menu.test.mjs's.
+T.runAsync('Clear Continue Watching on Home: the row goes, and Dropout\'s bars stay on its cards', async () => {
   const p = await boot({ progress: { entries: { x: { url: `${B}/videos/x`, duration: 1000, local: { position: 500, at: 1 } } } } });
   p.key('ContextMenu');
   for (let i = 0; i < 20 && (await p.state()).menuItem !== 'forget'; i++) p.key('ArrowDown');
   p.key('Enter');
-  T.notOk(p.last('history:clear'), 'the first OK only asks');
-  T.ok(p.doc.querySelector('[data-tenfoot-item="forget"]').textContent.includes('OK again'));
-  p.key('ArrowUp');
-  p.key('ArrowDown');
   p.key('Enter');
-  T.notOk(p.last('history:clear'), 'moving away disarmed it');
-  p.key('Enter');
-  T.ok(p.last('history:clear'), 'the second OK forgets');
+  T.ok(p.last('history:clear'), 'cleared');
   T.ok(p.doc.querySelector('[data-tenfoot-item="forget"]').textContent.includes('Clear Continue Watching'));
   T.ok(p.doc.querySelector('.tenfoot-hints').textContent.includes('Continue Watching cleared'));
   await T.sleep(150);

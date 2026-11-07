@@ -71,7 +71,8 @@ T.runAsync('settings open inside the page — never in another tab (item 2)', as
   T.eq((await p.state()).menu, null, 'back closes it — there is no list in between any more');
 });
 
-T.runAsync('a setting with several values opens its list; OK picks one, ticked; ◀ leaves it unchanged (C2)', async () => {
+// How the menu moves is settings-menu.test.mjs's; here, what the page draws and saves.
+T.runAsync('Leanback Settings on a page: a setting with several values has a chevron, opens a ticked list, and the value picked is saved and shown', async () => {
   const p = await boot({ html: fixture('home.html'), url: URLS.browse });
   p.key('ContextMenu');
   await moveTo(p, 'seekStep');
@@ -79,26 +80,16 @@ T.runAsync('a setting with several values opens its list; OK picks one, ticked; 
   T.eq(value('seekStep'), '10 s');
   T.ok(p.doc.querySelector('[data-tenfoot-item="seekStep"] .tenfoot-settings-mark svg'), 'a chevron: it opens a list');
   p.key('ArrowRight');
-  let s = await p.state();
   T.eq(p.doc.querySelector('.tenfoot-settings-title').textContent, 'Seek Step', '▶ opens it');
-  T.eq(s.menu, ['5', '10', '15', '30', '60', '120', '300']);
-  T.eq(s.menuItem, '10', 'on the value in force');
-  T.eq(p.doc.querySelector('[aria-checked="true"]').dataset.tenfootItem, '10', 'and it is ticked');
-  p.key('ArrowDown');
-  T.eq(p.shim.store.settings.seekStep, undefined, 'moving changes nothing');
-  p.key('ArrowLeft');
-  s = await p.state();
-  T.eq([s.menuItem, value('seekStep')], ['seekStep', '10 s'], '◀ goes back up, unchanged');
-  p.key('Enter');
+  T.eq(p.doc.querySelector('[aria-checked="true"]').dataset.tenfootItem, '10', 'the value in force is ticked');
   p.key('ArrowDown');
   p.key('Enter');
   await T.sleep(10);
-  T.eq(p.shim.store.settings.seekStep, 15, 'OK picks the value');
-  s = await p.state();
-  T.eq([s.menuItem, value('seekStep')], ['seekStep', '15 s'], 'and goes back up, showing it');
+  T.eq(p.shim.store.settings.seekStep, 15, 'OK saves the value');
+  T.eq(value('seekStep'), '15 s', 'and the list shows it');
 });
 
-T.runAsync('an on/off setting is a switch, and OK flips it (C2)', async () => {
+T.runAsync('Leanback Settings on a page: an on/off setting is drawn as a switch, and OK saves it and flips the switch', async () => {
   const p = await boot({ html: fixture('home.html'), url: URLS.browse });
   p.key('ContextMenu');
   await moveTo(p, 'skipMarketingSite');
@@ -108,9 +99,6 @@ T.runAsync('an on/off setting is a switch, and OK flips it (C2)', async () => {
   await T.sleep(10);
   T.eq(p.shim.store.settings.skipMarketingSite, false);
   T.eq([item().getAttribute('aria-checked'), item().querySelector('.tenfoot-switch').dataset.on], ['false', 'false']);
-  p.key('ArrowRight');
-  await T.sleep(10);
-  T.eq(p.shim.store.settings.skipMarketingSite, true, '▶ flips it too');
   T.eq((await p.state()).menuItem, 'skipMarketingSite', 'and the selection stays');
 });
 
