@@ -26,6 +26,7 @@ const LEVEL = {
 T.run('a level: switches, values with a chevron, ticks, group headings, a separator', () => {
   const { doc, P } = load();
   const panel = P.createPanel(doc, { label: 'Settings' });
+  panel.open();   // as its owners do: open, then draw (a hidden panel can't take the focus)
   panel.render(LEVEL);
   const el = panel.element;
   T.eq(el.parentElement, doc.documentElement, 'outside the page\'s body');
