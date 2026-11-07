@@ -1541,9 +1541,9 @@ T.runAsync('search: on the site\'s own search app (SearchForm-module__search-inp
   const p = await boot({ html, url: URLS.search });
   const s = await p.state();
   T.eq([s.kind, s.home && s.home.layout], ['search', 'search']);
-  T.ok(p.doc.activeElement.classList.contains('tenfoot-screen-field-input'),
-    'Leanback\'s box takes the focus the moment the page opens, got: ' + p.doc.activeElement.className);
-  T.eq(p.doc.activeElement.getAttribute('placeholder'), 'Search', 'with the site\'s placeholder');
+  T.ok(p.doc.activeElement.classList.contains('tenfoot-kb-key'),
+    'the keyboard takes the selection the moment the page opens, got: ' + p.doc.activeElement.className);
+  T.eq(p.doc.querySelector('.tenfoot-kb-placeholder').textContent, 'Search', 'its box with the site\'s placeholder');
   T.ok(p.doc.querySelector('input.SearchForm-module__search-input').isConnected, 'Dropout\'s box is still there, underneath');
 });
 
@@ -1887,10 +1887,9 @@ T.runAsync("Edit Profile: OK on the name opens the keyboard (text layout), what 
   p.doc.querySelector('.tenfoot-kb-panel').getBoundingClientRect = () => ({ left: 0, top: 630, right: 1280, bottom: 768, width: 1280, height: 138 });
   T.ok(p.key('Enter').defaultPrevented);
   T.ok(kbOpen(p), 'OK on the name box');
-  T.eq(p.doc.querySelector('.tenfoot-kb-key--char').dataset.tenfootKey, 'c:q');
+  T.eq(p.doc.activeElement.dataset.tenfootKey, 'c:a', 'the selection starts on the first letter');
   T.eq(p.doc.querySelector('.tenfoot-kb [data-tenfoot-key="space"]') !== null && p.doc.querySelector('.tenfoot-kb [data-tenfoot-key="show"]') === null, true, 'the text layout');
-  const lifted = p.doc.querySelector('.tenfoot-home-scroll').style.transform;
-  T.ok(/^translateY\(-\d+px\)$/.test(lifted) && Number(/-(\d+)/.exec(lifted)[1]) >= 100, 'the screen goes up so the box is above the keyboard: ' + lifted);
+  T.eq(p.doc.querySelector('.tenfoot-home-scroll').style.transform, '', 'the panel is beside the form: nothing moves up');
   kbKey(p, 'c:a'); kbKey(p, 'c:m');
   T.eq([name.value, p.$('profile-name').value], ['Sam' + 'am', 'Samam'], 'into Dropout\'s own box');
   kbKey(p, 'backspace'); kbKey(p, 'backspace');
@@ -1899,7 +1898,6 @@ T.runAsync("Edit Profile: OK on the name opens the keyboard (text layout), what 
   p.key('Escape');
   await T.sleep(10);
   T.notOk(kbOpen(p));
-  T.eq(p.doc.querySelector('.tenfoot-home-scroll').style.transform, '', 'the screen is back where it was');
   T.ok(p.doc.querySelector('.tenfoot-ask').hidden, 'no question asked');
   T.eq(p.doc.activeElement, name, 'the selection back on the box');
   const pressed = [];
@@ -2435,16 +2433,21 @@ T.runAsync('sign-in: OK on Email opens the keyboard (email layout) and the sign-
   T.ok(p.key('Enter').defaultPrevented, 'OK is the keyboard\'s');
   T.ok(kbOpen(p));
   T.eq(p.doc.documentElement.getAttribute('data-tenfoot-keyboard'), 'on', 'for the CSS that lifts the screen');
-  T.eq([...p.doc.querySelectorAll('.tenfoot-kb-row')].pop().querySelectorAll('[data-tenfoot-key="c:.com"]').length, 1, 'the email layout');
-  T.eq(p.doc.activeElement.dataset.tenfootKey, 'c:q', 'the selection is on its first key');
+  T.eq(p.doc.querySelectorAll('.tenfoot-kb [data-tenfoot-key="c:.com"], .tenfoot-kb [data-tenfoot-key="c:@gmail.com"]').length, 2, 'the email layout');
+  T.eq(p.doc.activeElement.dataset.tenfootKey, 'c:a', 'the selection starts on the first letter');
   T.ok(p.hints().textContent.includes('Type'), 'the hint bar: ' + p.hints().textContent);
   // The remote's keys are the keyboard's: ▶ moves along it, OK types.
   p.key('ArrowRight');
-  T.eq(p.doc.activeElement.dataset.tenfootKey, 'c:w');
+  T.eq(p.doc.activeElement.dataset.tenfootKey, 'c:b');
   p.key('Enter');
-  T.eq(box(p, 'tenfoot-signin-email').value, 'w', 'typed into Leanback\'s own box');
+  T.eq(box(p, 'tenfoot-signin-email').value, 'b', 'typed into Leanback\'s own box');
   kbKey(p, 'c:@'); kbKey(p, 'c:a'); kbKey(p, 'c:.com');
-  T.eq(box(p, 'tenfoot-signin-email').value, 'w@a.com');
+  T.eq(box(p, 'tenfoot-signin-email').value, 'b@a.com');
+  // The remote's Menu takes out the last letter; a real keyboard types too.
+  p.key('ContextMenu');
+  T.eq(box(p, 'tenfoot-signin-email').value, 'b@a.co', 'Menu is Backspace');
+  p.key('m');
+  T.eq(box(p, 'tenfoot-signin-email').value, 'b@a.com', 'a real keyboard types while it is up');
   // Done: the keyboard closes and Enter in the box happens: on to Password.
   kbKey(p, 'done');
   await T.sleep(20);

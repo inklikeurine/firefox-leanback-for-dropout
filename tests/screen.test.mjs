@@ -174,6 +174,10 @@ T.runAsync('sign-in, account, help and legal pages keep Dropout\'s top bar and f
 
 const R_ = (n) => `${B}/videos/result-${n}`;
 const field = (p) => p.doc.querySelector('.tenfoot-screen .tenfoot-screen-field-input');
+const kbOf = (p) => p.doc.querySelector('.tenfoot-kb');
+const kbKeyOf = (p, id) => kbOf(p).querySelector(`[data-tenfoot-key="${id}"]`);
+const onKeys = (p) => kbOf(p).contains(p.active());
+const toResults = (p) => kbKeyOf(p, 'done').click();
 const typeIn = async (p, text) => {
   const f = field(p);
   f.value = text;
@@ -186,11 +190,11 @@ T.run('searchModel: Leanback\'s box with Dropout\'s words, the filters, the resu
   dom.runScripts(['lib/common.js', 'content/cards.js', 'content/screen.js', 'content/readers.js'].map((f) => T.extFile(f)));
   const S = dom.window.TenfootReaders;
   const m = S.searchModel(dom.window.document, rules.screen.search);
-  T.eq([m.kind, m.field.value, m.field.placeholder, m.start], ['search', 'test', 'Search', 'field']);
+  T.eq([m.kind, m.field.value, m.field.placeholder, m.field.docked, m.start], ['search', 'test', 'Search', true, undefined], 'the box is on the docked keyboard');
   T.eq(m.pills.items.map((x) => [x.key, x.label, x.current]), [['all', 'All (8)', true], ['video', 'Videos (8)', false]]);
   T.ok(m.pills.items[1].proxy.matches('button.TypeFilters-module__type-filter'), 'a filter presses Dropout\'s own button');
   const it = m.sections[0].items;
-  T.eq([it.length, m.sections[0].columns], [8, 5]);
+  T.eq([it.length, m.sections[0].columns], [8, 3]);
   T.eq([it[1].href, it[1].title, it[1].subtitle, it[1].image], [R_(1), 'Test Kitchen', '', `${B}/art-2.svg`], 'the visible title; Dropout\'s blank subtitle is blank');
   T.eq([m.empty, Boolean(m.more)], ['', true]);
   const none = makeDom({ html: '<!doctype html><html><body><input type="search"></body></html>', url: `${B}/search` });
@@ -198,20 +202,22 @@ T.run('searchModel: Leanback\'s box with Dropout\'s words, the filters, the resu
   T.eq(none.window.TenfootReaders.searchModel(none.window.document, rules.screen.search), null, 'not Dropout\'s search app: the page stays as it is');
 });
 
-T.runAsync('search (drawn): Leanback\'s box with the words, the filters, the results as cards; the rail beside it; the selection in the box', async () => {
+T.runAsync('search (drawn): the keyboard docked beside the page with the words on it, the filters, the results as cards three across; the rail beside it; the selection on the keys', async () => {
   const p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test` });
   const s = await p.state();
   T.eq([s.kind, s.home.kind, s.home.layout, Boolean(s.rail)], ['search', 'screen', 'search', true]);
   T.eq(s.home.search, { text: 'test', site: 'test', filters: ['All (8)', 'Videos (8)'], filter: 'All (8)', empty: null });
-  T.eq(p.active(), field(p), 'the selection starts in the box, ready to type');
-  T.notOk(field(p).classList.contains('tenfoot-scaled'), 'ringed, not grown: a box does not zoom');
+  T.eq([kbOf(p).hidden, kbOf(p).getAttribute('data-tenfoot-docked'), p.doc.documentElement.getAttribute('data-tenfoot-keyboard-docked')], [false, 'true', 'on'], 'up as soon as the page is');
+  T.eq(p.active().dataset.tenfootKey, 'c:a', 'the selection starts on the keys, ready to type');
+  T.ok(p.doc.querySelector('.tenfoot-screen-field').hidden, 'the box is not on the screen');
+  T.eq(kbOf(p).querySelector('.tenfoot-kb-preview').textContent, 'test', 'its words are on the panel');
   T.notOk(p.doc.querySelector('.tenfoot-screen').dataset.tenfootNorail);
   T.eq(p.doc.querySelector('.tenfoot-screen .tenfoot-season[aria-current="true"]').textContent, 'All (8)');
   T.eq(p.doc.querySelectorAll('.tenfoot-screen .tenfoot-card').length >= 8, true);
   T.ok(p.doc.querySelector('.site-header').hasAttribute('data-tenfoot-chrome'), 'Dropout\'s top bar hidden');
 });
 
-T.runAsync('search (drawn): typing goes into Dropout\'s box; its results come back as cards, the address follows, and the selection stays in the box', async () => {
+T.runAsync('search (drawn): typing goes into Dropout\'s box; its results come back as cards beside the keyboard, the address follows, and the selection stays on the keys', async () => {
   const p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test` });
   const layer = p.doc.querySelector('.tenfoot-screen');
   await typeIn(p, 'kitchen');
@@ -220,13 +226,15 @@ T.runAsync('search (drawn): typing goes into Dropout\'s box; its results come ba
   const s = await p.state();
   T.eq([s.kind, s.home.count, s.home.search.site, s.home.search.filters], ['search', 1, 'kitchen', ['All (1)', 'Videos (1)']]);
   T.eq(p.doc.querySelector('.tenfoot-screen'), layer, 'the same screen: an address change while typing is not a new page');
-  T.eq(p.active(), field(p), 'still typing');
+  T.ok(onKeys(p), 'still typing');
   T.eq(p.doc.querySelector('.tenfoot-screen .tenfoot-card-title').textContent, 'Test Kitchen');
   await typeIn(p, '');
   const e = await p.state();
   T.eq([e.home.count, e.home.search.empty, e.home.search.filters], [0, 'Start typing to see results', []], 'an empty box: Dropout\'s own words, no filters');
-  T.notOk(p.key('ArrowDown').defaultPrevented, 'nothing below: ▼ stays the box\'s');
-  T.eq(p.active(), field(p));
+  toResults(p);
+  T.ok(onKeys(p), 'nothing to go to: Done leaves the selection on the keys');
+  for (let i = 0; i < 6; i += 1) p.key('ArrowRight');
+  T.ok(onKeys(p), 'and ▶ past the edge too');
 });
 
 T.runAsync('search (drawn): typing with the on-screen keyboard — the results coming back under it do not take the selection; the keyboard stays open and selected', async () => {
@@ -234,8 +242,7 @@ T.runAsync('search (drawn): typing with the on-screen keyboard — the results c
   const kb = () => p.doc.querySelector('.tenfoot-kb');
   const key = (id) => kb().querySelector(`[data-tenfoot-key="${id}"]`);
   await typeIn(p, '');
-  p.key('Enter');
-  T.ok(!kb().hidden, 'OK in the box opens the keyboard');
+  T.ok(!kb().hidden, 'the keyboard is up');
   for (const c of 'kitchen') key('c:' + c).click();
   await T.sleep(400);
   T.eq(p.doc.querySelector('input.SearchForm-module__search-input').value, 'Kitchen', 'Dropout\'s box has the words');
@@ -247,8 +254,9 @@ T.runAsync('search (drawn): typing with the on-screen keyboard — the results c
   T.ok(kb().contains(p.doc.activeElement), 'again after the next letter');
   key('done').click();
   await T.sleep(50);
-  T.ok(kb().hidden);
-  T.notOk(kb().contains(p.doc.activeElement), 'Done closes it and the selection leaves for the results');
+  T.ok(!kb().hidden, 'Done leaves it up');
+  T.notOk(kb().contains(p.doc.activeElement), 'and the selection goes to the first result');
+  T.eq(kb().querySelectorAll('[data-tenfoot-current]').length, 0, 'no key looks selected');
 });
 
 T.runAsync('search (drawn): Dropout\'s own page grabbing the focus as results load (again and again) never pulls the selection off the keyboard', async () => {
@@ -266,42 +274,65 @@ T.runAsync('search (drawn): Dropout\'s own page grabbing the focus as results lo
   T.ok(!kb().hidden, 'still open');
 });
 
-T.runAsync('search (drawn): ▼ (or OK, or Back) leaves the box for the filters, ▼ the results; ▲ comes back up; ◀ at the start of the box is the rail (N1, N2)', async () => {
+T.runAsync('search (drawn): Done goes to the first result; ▶ past the keys to where the selection last was; ◀ from the results back to the keys; ◀ past them to the rail; ▶ back; OK on the search glyph is the keys', async () => {
   const p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test` });
-  T.notOk(p.key('ArrowUp').defaultPrevented, '▲ and ▶ are the box\'s');
-  T.notOk(p.key('ArrowRight').defaultPrevented);
-  T.ok(p.key('ArrowDown').defaultPrevented);
-  T.eq(p.active().textContent, 'All (8)', 'the filter on screen');
-  p.key('ArrowDown');
-  T.eq(hrefOf(p.active()), R_(0));
+  T.eq(p.active().dataset.tenfootKey, 'c:a');
+  toResults(p);
+  T.eq(hrefOf(p.active()), R_(0), 'Done: the first result');
   p.key('ArrowRight');
   T.eq(hrefOf(p.active()), R_(1));
-  p.key('ArrowUp'); p.key('ArrowUp');
-  T.eq(p.active(), field(p), 'back in the box');
-  p.key('Enter');
-  T.ok(p.doc.querySelector('.tenfoot-kb') && !p.doc.querySelector('.tenfoot-kb').hidden, 'OK in a box not typed in opens the keyboard');
-  p.key('Escape');
-  T.ok(p.doc.querySelector('.tenfoot-kb').hidden, 'Escape closes it');
-  T.eq(p.active(), field(p), 'and the selection is back in the box');
-  p.key('k');
-  p.key('Enter');
-  T.eq(p.active().textContent, 'All (8)', 'typed in with a keyboard: OK in the box is down, as ▼');
   p.key('ArrowUp');
-  p.key('Escape');
-  T.eq(p.active().textContent, 'All (8)', 'Back in the box: down to the results too');
-  p.key('ArrowUp');
-  field(p).setSelectionRange(2, 2);
-  T.notOk(p.key('ArrowLeft').defaultPrevented, 'mid-word: the box\'s');
-  field(p).setSelectionRange(0, 0);
-  T.ok(p.key('ArrowLeft').defaultPrevented);
-  T.eq((await p.state()).rail.active, true, 'at the start: the rail');
+  T.eq(p.active().textContent, 'All (8)', 'the filters above the results');
+  T.ok(p.key('ArrowUp').defaultPrevented);
+  T.eq(p.active().textContent, 'All (8)', 'and nothing above them: the box is on the panel');
+  p.key('ArrowDown'); p.key('ArrowLeft');
+  T.eq(hrefOf(p.active()), R_(0));
+  p.key('ArrowLeft');
+  T.ok(onKeys(p), '◀ from the results: the keys');
+  T.eq(kbOf(p).querySelectorAll('[data-tenfoot-current]').length, 1, 'a key is selected again');
+  T.eq(p.active().dataset.tenfootKey, 'done', 'on the row the selection left, from the right');
   p.key('ArrowRight');
-  T.eq(p.active(), field(p), '▶ comes back to the box');
+  T.eq(hrefOf(p.active()), R_(0), '▶ past the right edge: where it was');
+  p.key('ArrowLeft');
+  for (let i = 0; i < 3; i += 1) p.key('ArrowLeft');
+  const s = await p.state();
+  T.eq(s.rail.active, true, '◀ past the left edge: the rail');
+  T.eq(kbOf(p).hidden, false, 'the keyboard stays');
+  p.key('ArrowRight');
+  T.ok(onKeys(p), '▶ from the rail: back on the keys');
+  for (let i = 0; i < 3; i += 1) p.key('ArrowLeft');
+  T.eq((await p.state()).rail.item, 'search');
+  p.key('Enter');
+  T.ok(onKeys(p), 'OK on the search glyph: the keys');
+  T.eq((await p.state()).rail.active, false);
+});
+
+T.runAsync('search (drawn): the remote\'s Menu deletes on the keys and opens the settings from the results; a real keyboard types on the keys and from the results; Back and "/" leave search', async () => {
+  const before = (win) => win.sessionStorage.setItem('tenfoot.trail', JSON.stringify([{ url: `${B}/browse`, kind: 'browse' }, { url: `${B}/search?q=test`, kind: 'search' }]));
+  let p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test`, before });
+  const box = () => p.doc.querySelector('input.SearchForm-module__search-input');
+  p.key('ContextMenu');
+  T.eq(box().value, 'tes', 'Menu on the keys');
+  T.ok(onKeys(p));
+  p.key('t');
+  T.eq(box().value, 'test', 'a real keyboard');
+  toResults(p);
+  p.key('s');
+  T.eq(box().value, 'tests', 'from the results: the letter, and the selection back on the keys');
+  T.ok(onKeys(p));
+  p.key('Escape');
+  await T.sleep(20);
+  T.ok(p.win.__went && p.win.__went.length === 1, 'Back from the keys leaves search');
+  p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test`, before });
+  p.key('/');
+  await T.sleep(20);
+  T.eq(p.win.__went, [-1], '"/" too, not a slash');
 });
 
 T.runAsync('search (drawn): OK on a filter presses Dropout\'s; the one on screen changes and the selection stays on it', async () => {
   const p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test` });
-  p.key('ArrowDown'); p.key('ArrowRight');
+  toResults(p);
+  p.key('ArrowUp'); p.key('ArrowRight');
   T.eq(p.active().textContent, 'Videos (8)');
   p.key('Enter');
   await T.sleep(300);
@@ -314,12 +345,13 @@ T.runAsync('search (drawn): OK on a filter presses Dropout\'s; the one on screen
 T.runAsync('search (drawn): Dropout\'s Load More is pressed near the end of the results, not while typing; the selection stays put; with no Dropout box, the page is driven as before', async () => {
   let p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test` });
   await T.sleep(300);
-  T.eq((await p.state()).home.count, 8, 'in the box: nothing more is loaded');
-  p.key('ArrowDown'); p.key('ArrowDown');
+  T.eq((await p.state()).home.count, 8, 'on the keys: nothing more is loaded');
+  toResults(p);
+  p.key('ArrowDown');
   await T.sleep(300);
   const s = await p.state();
-  T.eq([s.home.count, s.home.more], [12, false], 'among two rows of results: near the end');
-  T.eq(hrefOf(p.active()), R_(0), 'the selection stayed put');
+  T.eq([s.home.count, s.home.more], [12, false], 'among the rows of results: near the end');
+  T.eq(hrefOf(p.active()), R_(3), 'the selection stayed put');
   p = await boot({ html: '<!doctype html><html><body><input type="search" id="q" data-rect="40,100,400,40"></body></html>', url: `${B}/search` });
   T.eq([(await p.state()).home, p.active().id], [null, 'q']);
 });
@@ -365,7 +397,7 @@ T.runAsync('search: Back from the results, and "/", go past every search at once
   let p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test`, before: fromHome });
   await typeIn(p, 'kitchen');
   await typeIn(p, 'kit');
-  p.key('ArrowDown'); p.key('ArrowDown');
+  toResults(p);
   T.ok(p.active().getAttribute('href'), 'on a result');
   p.key('Escape');
   await T.sleep(20);
@@ -373,7 +405,7 @@ T.runAsync('search: Back from the results, and "/", go past every search at once
 
   p = await boot({ html: fixture('search.html'), url: `${B}/search?q=test`, before: fromHome });
   await typeIn(p, 'kitchen');
-  p.key('ArrowDown');
+  toResults(p);
   p.key('/');
   T.eq(p.win.__went, [-2], '"/" closes search the same way');
 
@@ -398,9 +430,7 @@ T.runAsync('search: Back from the results, and "/", go past every search at once
 // Backspace, a filter pressed), and letters typed faster than Leanback looks
 // add several steps between two looks: the trail was short of the history.
 const toHome = async (p) => {
-  field(p).focus();
-  field(p).setSelectionRange(0, 0);
-  p.key('ArrowLeft');
+  for (let i = 0; i < 7; i += 1) p.key('ArrowLeft');
   p.key('ArrowDown');
   T.eq((await p.state()).rail.item, 'home');
   p.key('Enter');
@@ -411,7 +441,6 @@ T.runAsync('search: typed with the on-screen keyboard (letters faster than Leanb
   const kb = () => p.doc.querySelector('.tenfoot-kb');
   const key = (id) => kb().querySelector(`[data-tenfoot-key="${id}"]`);
   await typeIn(p, '');
-  p.key('Enter');
   T.ok(!kb().hidden, 'the keyboard');
   for (const c of 'kitchen') key('c:' + c).click(); // one burst: six searches between two looks
   await T.sleep(300);
@@ -422,7 +451,9 @@ T.runAsync('search: typed with the on-screen keyboard (letters faster than Leanb
   key('done').click();
   await T.sleep(50);
   T.eq(p.win.location.search, '?q=Kitchen');
-  T.ok(/^All/.test(p.active().textContent), 'Done left the box for the filters: ' + p.active().textContent);
+  T.ok(p.active().getAttribute('href'), 'Done went to the first result');
+  p.key('ArrowUp');
+  T.ok(/^All/.test(p.active().textContent), 'the filters above it: ' + p.active().textContent);
   p.key('ArrowRight');
   T.ok(/^Videos/.test(p.active().textContent), p.active().textContent);
   p.key('Enter'); // another filter: Dropout's app searches again, the address unchanged
