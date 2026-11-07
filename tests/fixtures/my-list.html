@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My list fixture</title>
+<!-- The shape of watch.dropout.tv/my-list loaded fresh (2026-09-26 capture):
+     a server-rendered collection grid, the search overlay hidden above it,
+     and Dropout's "Remove from my list" button inside each tile's link. -->
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 16px sans-serif; }
+  [data-rect] { position: fixed; box-sizing: border-box; }
+  a { color: #eee; display: block; background: #333; }
+  .site-header { background: #222; }
+  .Search-module__hide { display: none; }
+  .browse-image-container img { width: 100%; }
+  .browse-image-container .my-list { position: absolute; right: 8px; top: 8px; }
+</style>
+</head>
+<body>
+<header class="site-header" data-rect="0,0,1280,60">
+  <nav class="navigation-container">
+    <a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a>
+    <a href="/search" class="search-link" data-rect="120,15,80,30">Search</a>
+  </nav>
+</header>
+<div id="search-react-app" data-role="react-root"><div class="Search-module__content-container Search-module__hide Search-module__overlay"><div class="Search-module__search-container"><div class="SearchForm-module__search-form-container"><input class="SearchForm-module__search-input custom-css-search-input" placeholder="Search" value=""></div></div></div></div>
+<section class="collection-category top-container">
+  <section class="collection-title-container category-container">
+    <h1 class="head primary collection-title uppercase">My list</h1>
+  </section>
+  <section class="collection-container">
+    <ul class="small-block-grid-1 medium-block-grid-2 large-block-grid-3 js-load-more-items-container">
+      <li class="js-collection-item item-type-movie" data-item-id="1"><div class="browse-item-card"><div class="grid-item-padding">
+        <a href="https://watch.dropout.tv/aparna-nancherla-hopeful-potato" class="browse-item-link" id="tile-1" data-rect="120,160,360,240"><div class="browse-image-container aspect_ratio_16_9"><button title="Remove from my list" class="my-list icon medium icon-only has-background icon-watchlist-remove" data-text-remove="Remove from my list" data-text-add="Add to my list" data-movie-id="1"></button><img src="/art-1.svg" alt="Aparna Nancherla: Hopeful Potato"></div></a>
+        <div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/aparna-nancherla-hopeful-potato"><strong>Aparna Nancherla: Hopeful Potato</strong></a></div><span class="browse-item-subtext">Movie</span></div>
+      </div></div></li>
+      <li class="js-collection-item item-type-series" data-item-id="2"><div class="browse-item-card"><div class="grid-item-padding">
+        <a href="https://watch.dropout.tv/game-changer" class="browse-item-link" id="tile-2" data-rect="500,160,360,240"><div class="browse-image-container aspect_ratio_16_9"><button title="Remove from my list" class="my-list icon medium icon-only has-background icon-watchlist-remove" data-text-remove="Remove from my list" data-text-add="Add to my list" data-series-id="2"></button><img src="/art-2.svg" alt="Game Changer"></div></a>
+        <div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/game-changer"><strong>Game Changer</strong></a></div><span class="browse-item-subtext">7 seasons</span></div>
+      </div></div></li>
+      <li class="js-collection-item item-type-series" data-item-id="3"><div class="browse-item-card"><div class="grid-item-padding">
+        <a href="https://watch.dropout.tv/dimension-20" class="browse-item-link" id="tile-3" data-rect="880,160,360,240"><div class="browse-image-container aspect_ratio_16_9"><button title="Remove from my list" class="my-list icon medium icon-only has-background icon-watchlist-remove" data-text-remove="Remove from my list" data-text-add="Add to my list" data-series-id="3"></button><img src="/art-3.svg" alt="Dimension 20"></div></a>
+        <div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/dimension-20"><strong>Dimension 20</strong></a></div><span class="browse-item-subtext">25 seasons</span></div>
+      </div></div></li>
+      <li class="js-collection-item item-type-series" data-item-id="4"><div class="browse-item-card"><div class="grid-item-padding">
+        <a href="https://watch.dropout.tv/very-important-people" class="browse-item-link" id="tile-4" data-rect="120,460,360,240"><div class="browse-image-container aspect_ratio_16_9"><button title="Remove from my list" class="my-list icon medium icon-only has-background icon-watchlist-remove" data-text-remove="Remove from my list" data-text-add="Add to my list" data-series-id="4"></button><img src="/art-4.svg" alt="Very Important People"></div></a>
+        <div class="padding-small"><div class="browse-item-title"><a href="https://watch.dropout.tv/very-important-people"><strong>Very Important People</strong></a></div><span class="browse-item-subtext">3 seasons</span></div>
+      </div></div></li>
+    </ul>
+  </section>
+</section>
+<script src="/layout.js"></script>
+</body>
+</html>

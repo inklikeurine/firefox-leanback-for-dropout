@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="csrf-token" content="fixture-token">
+<title>Dropout sign-in fixture</title>
+<style>
+.is-hidden, .signin-flow--hidden { display: none; }
+</style>
+</head>
+<body class="site-background-color logged-out">
+<!-- Fixture in the shape of Dropout's /login page (markup copied from the
+     2026-10-29 signed-out capture; the token is made up). Test-only behaviour
+     is in the script at the end: submitting never leaves the page, and what
+     was posted is kept in window.__posted. ?wrong makes "Sign in" answer with
+     Dropout's wrong-password error on the same page; ?wrongpage answers it
+     with a new page, /login?error, that shows the error as it loads (the
+     password form is a real post, so this is the likelier answer); ?silent
+     makes every submit go unanswered, ?hang only Sign in's. Unanswered, a
+     button with data-disable-with stays grey, as Rails' own script leaves it
+     while a post is under way. -->
+<main class="main-container">
+<div class="content-container padding-bottom-none login-box-default-border-top" id="login--box-container" style="border-top: 5px solid #feea3b">
+  <button class="slick-arrow slick-next signin_flow__back-arrow padding-reset signin-flow--hidden">
+    <i class="icon icon-arrow-left-inverse"></i>
+  </button>
+  <div class="signin-flow-container" data-text-blank-password="Please enter a password." data-text-errors-present="There were some errors!" data-text-short-password="Please enter a password longer than 5 characters." data-text-valid-email="Please enter a valid email." data-staff-sso-bypass="0">
+    <!-- Branded Content Header -->
+    <div class="signin-flow-container__branded-content-container">
+      <h1 class="site-title text-center margin-bottom-medium">
+  <a href="http://watch.dropout.tv" id="login-branded-site-title" style="color: #feea3b" class="login-branded-default-site-title">Dropout</a>
+</h1>
+      <h1 class="primary text-center margin-bottom-large login-black">
+          Sign in
+      </h1>
+      <div class="flash-error-container">
+  <div data-flash="" class="flash-msg-container is-inline
+    is-hidden
+    ">
+    <div class="flash-msg">
+    </div> 
+  </div>
+</div>
+    </div>
+    <!-- Signin Forms Container -->
+    <div class="signin-flow-container__forms-container">
+      <!-- Signin Form: Part 1 - Email Entry -->
+      <div class="signin-flow__email-form-container">
+        <form class="signin-flow__email-form" id="login-form-email">
+          <div class="signin-flow__email-field">
+            <label for="signin-email-input" class="signin-flow__email-field-label login-black">
+              Email address
+            </label>
+            <input type="email" name="signin-email-input" id="signin-email-input" value="" placeholder="Enter your email address" class="signin-flow__email-field-input required login-black" autofocus="">
+          </div>
+          <button type="submit" id="signin-email-submit" class="btn signin-flow__email-form-submit-btn darken" data-background-color="#feea3b" style="background-color: #feea3b">
+            Next
+          </button>
+          <!-- Prevent submit, validate email, show new view -->
+        </form>
+        <div class="signin-flow-container__additional-info">
+            <p class="signin-flow-container__additional-info--contact-support">
+              <a class="login-branded-link login-branded-default-link-color" style="color: #feea3b" href="/help/articles/trouble-logging-in-computer" target="_blank">
+                Need help?
+              </a>
+            </p>
+        </div>
+      </div>
+      <!-- Signin Form: Part 2 - Password Entry/Magic Link -->
+      <div class="signin-flow__password-form-container signin-flow--hidden">
+        <!-- Password login -->
+        <form class="signin_flow__password-form" id="login-form-password" action="/login" method="post" autocomplete="on">
+          <input type="hidden" name="email" id="email" class="hidden-email-password">
+          <input type="hidden" name="authenticity_token" value="[redacted-csrf]">
+          <input type="hidden" name="utf8" value="✓">
+          <div class="signin-flow__password-form-container">
+            <div class="signin-flow__password-form-additional-info">
+              <label for="password" class="signin-flow__password-form-additional-info-label login-black">
+                Password
+              </label>
+              <span class="signin-flow__password-form-email-info login-black"></span>
+            </div>
+            <input type="password" name="password" id="signin-password-input" value="" placeholder="Enter your password" class="required login-black">
+          </div>
+          <button type="submit" id="signin-password-submit" class="btn signin-flow__password-form-submit-btn darken" data-background-color="#feea3b" style="background-color: #feea3b" data-disable-with="Sending...">
+            Sign in
+          </button>
+          <p class="signin-flow__password-form-password-cta">
+            </p><div class="text-center login-black">
+              Don't know your password?  Never set one?
+            </div>
+            <div class="text-center">
+              <a href="/forgot_password" class="login-branded-link signin-flow__reset-password login-branded-default-link-color" style="color: #feea3b">
+                Reset your password
+              </a>
+            </div>
+          <p></p>
+        </form>
+        <div class="signin-flow__divider-container">
+          <div class="signin-flow__password-divider"></div>
+          <div class="signin-flow__password-box login-black">
+            or
+          </div>
+        </div>
+        <!-- Magic Link -->
+        <form class="signin-flow__magic-form" id="login-form-magic" action="/login/send_login_email" method="post" autocomplete="on">
+          <input type="hidden" name="email" id="hidden-email-magic">
+          <input type="hidden" name="authenticity_token" value="[redacted-csrf]">
+          <input type="hidden" name="utf8" value="✓">
+          <input type="hidden" name="passwordless" value="1">
+          <a type="submit" id="signin-magic-submit" class="btn signin-flow__password-form-magic-btn login-black" data-disable-with="Sending...">
+            Email me a sign in link
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+  </div>
+</main>
+<script>
+(function () {
+  var posted = window.__posted = [];
+  var wrong = /[?&]wrong\b/.test(location.search);
+  var silent = /[?&]silent\b/.test(location.search);
+  var hang = /[?&]hang\b/.test(location.search);
+  var wrongPage = /[?&]wrongpage\b/.test(location.search);
+  var $ = function (s) { return document.querySelector(s); };
+  var flash = function (text) {
+    var box = $(".flash-msg-container");
+    box.classList.remove("is-hidden");
+    box.querySelector(".flash-msg").textContent = text;
+  };
+  // Sent and under way: Rails greys the form's data-disable-with buttons.
+  var sending = function (form) {
+    form.querySelectorAll("[data-disable-with]").forEach(function (b) { b.disabled = true; });
+  };
+  if (/[?&]error\b/.test(location.search)) flash("Invalid email or password.");
+  // Part 1: Next copies the email into the hidden field and shows part 2.
+  $("#login-form-email").addEventListener("submit", function (e) {
+    e.preventDefault();
+    posted.push({ form: "next" });
+    if (silent) { sending(e.target); return; }
+    var email = $("#signin-email-input").value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) { flash("Please enter a valid email."); return; }
+    $("#email").value = email;
+    $("#hidden-email-magic").value = email;
+    $(".signin-flow__password-form-email-info").textContent = email;
+    $(".signin-flow__email-form-container").classList.add("signin-flow--hidden");
+    var step2 = $(".signin-flow__password-form-container.signin-flow--hidden");
+    if (step2) step2.classList.remove("signin-flow--hidden");
+    $(".signin_flow__back-arrow").classList.remove("signin-flow--hidden");
+  });
+  // Part 2: Sign in posts email + password; the fixture records it.
+  $("#login-form-password").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var pw = $("#signin-password-input").value;
+    posted.push({ form: "password", email: $("#email").value, password: pw, token: $("input[name=authenticity_token]").value });
+    if (silent || hang) { sending(e.target); return; }
+    if (wrongPage) { location.assign(location.pathname + "?error"); return; }
+    if (pw.length < 6) { flash("Please enter a password longer than 5 characters."); return; }
+    if (wrong) { flash("Invalid email or password."); return; }
+    $(".flash-msg-container").classList.add("is-hidden");
+    document.body.setAttribute("data-signed-in", "true");
+  });
+  $("#login-form-magic").addEventListener("submit", function (e) { e.preventDefault(); posted.push({ form: "magic" }); });
+  $("#signin-magic-submit").addEventListener("click", function () { posted.push({ form: "magic" }); });
+})();
+</script>
+</body>
+</html>

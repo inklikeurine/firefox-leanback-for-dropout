@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Browse fixture</title>
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 16px sans-serif; }
+  [data-rect] { position: fixed; box-sizing: border-box; }
+  a { color: #eee; display: block; background: #333; }
+  .site-header { background: #222; }
+  .tooltip { position: fixed; left: 0; top: 0; }
+</style>
+</head>
+<body>
+<header class="site-header" data-rect="0,0,1280,60">
+  <nav class="navigation-container">
+    <a href="/browse" class="browse-link" data-rect="20,15,80,30">Browse</a>
+    <a href="/search" class="search-link" data-rect="120,15,80,30">Search</a>
+    <div class="user-actions"><a href="/login" data-rect="1180,15,80,30">Sign in</a></div>
+  </nav>
+</header>
+<main class="browse-rows">
+  <section class="carousel">
+    <div class="carousel-layout-container" data-rect="0,80,1280,300">
+      <div class="carousel-slides">
+        <div class="featured-carousel-slide" data-testid="featured-carousel-slide">
+          <a href="/game-changer" id="hero" data-rect="40,90,1200,280">Hero: Game Changer</a>
+        </div>
+      </div>
+      <button class="carousel-arrow carousel-arrow--left" data-rect="0,200,40,60">&lt;</button>
+      <button class="carousel-arrow carousel-arrow--right" data-rect="1240,200,40,60">&gt;</button>
+    </div>
+  </section>
+  <section class="horizontal-row-container" id="row-1" data-rect="0,400,1280,220">
+    <div class="horizontal-row-header"><h2 class="row-head">Continue Watching</h2></div>
+    <div class="horizontal-row">
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/game-changer/season:1/videos/ep1" id="r1c1" data-rect="40,440,290,163">GC ep1</a><div class="tooltip">tip</div></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/dimension-20/season:1/videos/ep3" id="r1c2" data-rect="350,440,290,163">D20 ep3</a></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/make-some-noise" id="r1c3" data-rect="660,440,290,163">Make Some Noise</a></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/very-important-people" id="r1c4" data-rect="970,440,290,163">VIP</a></div></div>
+    </div>
+  </section>
+  <section class="horizontal-row-container" id="row-2" data-rect="0,640,1280,220">
+    <div class="horizontal-row-header"><h2 class="row-head">Series</h2></div>
+    <div class="horizontal-row">
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/game-changer" id="r2c1" data-rect="40,680,290,163">Game Changer</a></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/dimension-20" id="r2c2" data-rect="350,680,290,163">Dimension 20</a></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/um-actually" id="r2c3" data-rect="660,680,290,163">Um, Actually</a></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/dirty-laundry" id="r2c4" data-rect="970,680,290,163">Dirty Laundry</a></div></div>
+      <div class="horizontal-row-item"><div data-testid="browse-card"><a href="/breaking-news" id="r2c5" data-rect="1280,680,290,163">Breaking News (offscreen)</a></div></div>
+    </div>
+  </section>
+</main>
+<script src="/layout.js"></script>
+</body>
+</html>
