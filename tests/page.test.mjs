@@ -2905,4 +2905,17 @@ T.runAsync('policies: privacy, terms and cookies in Leanback\'s type, Dropout\'s
   }
 });
 
+T.runAsync('the on-screen keyboard\'s line of keys follows Button Hints: off, on, off again without reopening it', async () => {
+  const p = await boot({ html: fixture('search.html'), url: URLS.search, settings: { hintBar: false } });
+  const hint = p.doc.querySelector('.tenfoot-kb-hint');
+  T.ok(kbOpen(p), 'the keyboard is up on search');
+  T.eq(hint.hidden, true, 'hints off: no line along its foot');
+  await p.shim.changeStorage({ settings: { newValue: { hintBar: true } } });
+  await T.sleep(5);
+  T.eq(hint.hidden, false, 'turned on: there at once');
+  await p.shim.changeStorage({ settings: { newValue: { hintBar: false } } });
+  await T.sleep(5);
+  T.eq(hint.hidden, true, 'turned off: gone at once');
+});
+
 await T.exit();

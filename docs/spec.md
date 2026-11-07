@@ -352,7 +352,7 @@ use ([targets.md](./targets.md)).
   ◀ ▶ go along a row and round its ends; ▲ ▼ go straight up and down and round
   from the top row to the bottom row and back, keeping their place: ▲ from the left of
   the top row lands on *Space*, from the right on *Done*. OK types; **the remote's Menu takes out the letter before the
-  cursor**, from wherever the selection is, and a line along the foot says so.
+  cursor**, from wherever the selection is, and with *Button Hints* on a line along the foot says so.
   *Done* closes it and does what Enter in the box does
   (*Email* → *Password*, *Password* → *Sign in*, reset → *Send reset email*), Escape closes it and the selection is back on the
   box. Typing with a real keyboard goes into the box, the keyboard open or not;
@@ -545,8 +545,8 @@ use ([targets.md](./targets.md)).
     page. *Start Videos Muted* is on the options page only.
 - **Button hints.** Off by default. When on, a bottom strip shows the
   buttons that matter now: always up on pages, briefly on a press during
-  playback. Short notices ("No next episode") use the same strip, hints on
-  or off.
+  playback, and the on-screen keyboard has its line of keys along its foot.
+  Short notices ("No next episode") use the same strip, hints on or off.
 - **Player controls** (options page only): *The site's own player controls*
   leaves the player's own bar alone and draws nothing over the video, for
   troubleshooting.

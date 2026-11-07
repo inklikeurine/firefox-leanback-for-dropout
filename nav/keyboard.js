@@ -89,9 +89,10 @@
 
   /**
    * @param {Document} doc
-   * @param {{onFocus?: (el: Element) => void, onEdge?: (dir: "left"|"right") => void, onDone?: () => void, onEnter?: () => void}} [opts] —
-   *   onFocus: told of each key as it is selected; docked, onEdge: ◀ or ▶ past
-   *   its edge, onDone: Done pressed, onEnter: the selection came back to it
+   * @param {{hints?: boolean, onFocus?: (el: Element) => void, onEdge?: (dir: "left"|"right") => void, onDone?: () => void, onEnter?: () => void}} [opts] —
+   *   hints: false leaves out the line of keys along its foot (the Button Hints
+   *   setting); onFocus: told of each key as it is selected; docked, onEdge: ◀
+   *   or ▶ past its edge, onDone: Done pressed, onEnter: the selection came back to it
    */
   function createKeyboard(doc, opts) {
     const o = opts || {};
@@ -108,6 +109,7 @@
     preview.setAttribute("aria-hidden", "true");
     const grid = el("div", "tenfoot-kb-keys");
     const hint = el("div", "tenfoot-kb-hint");
+    hint.hidden = o.hints === false;
     panel.append(preview, grid, hint);
     layer.appendChild(panel);
     (doc.documentElement || doc.body).appendChild(layer);
@@ -627,6 +629,7 @@
       leave,
       enter,
       close: () => finish(null),
+      setHints: (on) => { hint.hidden = !on; },
       refocus: () => focusAt(at.r, at.i, true),
       contains: (n) => Boolean(n) && layer.contains(n),
       get isOpen() { return !layer.hidden && active; },

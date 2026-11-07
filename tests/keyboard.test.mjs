@@ -74,6 +74,23 @@ T.runAsync('the remote: ◀ ▶ go round the row; ▲ ▼ go straight up and dow
   T.eq(at(), 'c:8', 'back up to where it came from (the place was kept)');
 });
 
+T.runAsync('the line of keys along the foot can be left out and brought back, open or closed', async () => {
+  const dom = makeDom({ html: '<!doctype html><html><body><input id="t"></body></html>', url: 'https://watch.dropout.tv/login' });
+  dom.runScripts([T.extFile('lib/common.js'), T.extFile('nav/keyboard.js')]);
+  const kb = dom.window.TenfootKeyboard.createKeyboard(dom.window.document, { hints: false });
+  const hint = kb.element.querySelector('.tenfoot-kb-hint');
+  kb.open(dom.window.document.getElementById('t'));
+  T.eq(hint.hidden, true, 'left out from the start');
+  kb.setHints(true);
+  T.eq(hint.hidden, false, 'brought back while open');
+  T.ok(hint.textContent.includes('MenuDelete'), 'with its words');
+  kb.setHints(false);
+  T.eq(hint.hidden, true, 'and left out again');
+  kb.close();
+  kb.open(dom.window.document.getElementById('t'));
+  T.eq(hint.hidden, true, 'opening again does not bring it back');
+});
+
 T.runAsync('a thin line in a row of its own between the letters and the digits, on every page but the number pad; the moves go past it', async () => {
   const { kb, k, box } = load();
   const line = () => kb.element.querySelector('.tenfoot-kb-line');

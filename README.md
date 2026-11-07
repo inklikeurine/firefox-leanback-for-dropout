@@ -263,8 +263,8 @@ Step; under *Browsing*, Shows Open On · Skip dropout.tv Home · Back On Home
 closes the tab, except on a copy loaded from its folder for testing, where
 it does nothing); under *Look*, Theme This Page (on pages that have
 choices of their own) · Theme · Theme Color · Holidays · Enlarge Selection
-· Ring Width · Button Hints (a bar showing the keys that matter now; off
-unless turned on). Moving through the values of a look shows each at once;
+· Ring Width · Button Hints (a bar showing the keys that matter now, and the
+same along the foot of the on-screen keyboard; off unless turned on). Moving through the values of a look shows each at once;
 OK keeps it, Back puts it back. Then *Accessibility*: Interface Size · High
 Contrast · Reduce Motion · Caption Size · Caption Color · Caption
 Background · Color Filter (Experimental). At the foot, *Cookie

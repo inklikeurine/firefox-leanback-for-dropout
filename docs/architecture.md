@@ -945,7 +945,8 @@ tops the playback panel until used.
   for the context, on a scrim. Off by default (`hintBar`); when on, it stays
   up on pages and, during playback, appears on a keypress and hides 3 s
   later. Short notices ("No next episode", "Nothing to go back to") use the
-  same bar, hints on or off.
+  same bar, hints on or off. The on-screen keyboard's line along its foot follows
+  the same setting (`hints` when created, then `setHints()`).
 
 ## The transport bar and the settings panel
 

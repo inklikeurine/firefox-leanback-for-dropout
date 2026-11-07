@@ -1444,6 +1444,7 @@
     state.settings = s;
     applyLook(true);
     state.hints.setEnabled(s.hintBar);
+    state.keyboard.setHints(s.hintBar);
     if (prev.enabled !== s.enabled) applyEnabled(s.enabled);
   }
 
@@ -1478,6 +1479,7 @@
     state.ask = Ask.createAsk(document, { onFocus: (b) => state.ring.follow(b) });
     state.picker = Ask.createPicker(document, { onFocus: (b) => state.ring.follow(b) });
     state.keyboard = Keyboard.createKeyboard(document, {
+      hints: settings.hintBar,
       onFocus: () => state.ring.follow(null),
       onEdge: (dir) => P.keyboardEdge(dir),
       onDone: () => P.toResults(true),
