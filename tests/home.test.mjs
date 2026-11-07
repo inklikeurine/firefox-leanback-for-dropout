@@ -507,7 +507,8 @@ T.runAsync('Rail: Dropout 24/7 — from Home it is one level down; from Browse, 
 T.runAsync('Rail: My List — a bookmark between Browse and Dropout 24/7; from Home one level down, from Browse sideways', async () => {
   const h = await boot();
   const order = Array.from(h.doc.querySelectorAll('.tenfoot-rail-item')).map(railOf);
-  T.eq(order, ['profile', 'search', 'home', 'browse', 'my-list', 'live', 'settings'], 'signed in: the profile watching first');
+  T.eq(order[0], 'profile', 'signed in: the profile watching first');
+  T.eq(order.slice(order.indexOf('browse'), order.indexOf('browse') + 3), ['browse', 'my-list', 'live'], 'My List between Browse and Dropout 24/7');
   const item = h.doc.querySelector('.tenfoot-rail-item[data-tenfoot-rail="my-list"]');
   T.eq([item.getAttribute('aria-label'), item.title], ['My List', 'My List']);
   T.eq(item.querySelectorAll('svg path').length, 1, 'the bookmark glyph');

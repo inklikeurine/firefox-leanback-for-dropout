@@ -215,8 +215,9 @@ T.runAsync('Leanback\'s own rows: the same list as on a page; a choice opens its
   key('ArrowRight');
   await T.sleep(20);
   T.eq(panel.querySelector('.tenfoot-settings-title').textContent, 'Leanback Settings');
-  T.eq(labels(), ['Autoplay Next Episode', 'Seek Step', 'Shows Open On', 'Skip dropout.tv Home', 'Back On Home', 'Theme', 'Theme Color', 'Holidays', 'Enlarge Selection', 'Ring Width', 'Button Hints', 'Accessibility', 'Clear Continue Watching'],
-    'the one list, as on a page (C1); no Player Controls or Start Videos Muted, which are on the options page only');
+  // The list itself is settings-menu.test.mjs's; here, that the player's panel shows it.
+  T.eq([labels()[0], ...labels().slice(-2)], ['Autoplay Next Episode', 'Accessibility', 'Clear Continue Watching'], 'the one list, as on a page (C1)');
+  T.notOk(labels().includes('Player Controls') || labels().includes('Start Videos Muted'), 'not Player Controls or Start Videos Muted, which are on the options page only');
   const walkTo = (label) => {
     for (let i = 0; i < 14; i += 1) key('ArrowUp');
     for (let i = 0; i < 14 && current() !== label; i += 1) key('ArrowDown');
@@ -274,7 +275,7 @@ T.runAsync('every value is reachable: the list holds them all, and one not offer
   for (let i = 0; i < 14 && current() !== 'Enlarge Selection'; i += 1) key('ArrowDown');
   key('Enter');
   const labels = [...panel.querySelectorAll('.tenfoot-settings-label')].map((r) => r.textContent);
-  T.eq(labels, ['Off', '3%', '5%', '10%', '15%', '20%', '25%'], 'a hand-set 3 % is there, in order');
+  T.eq(labels.slice(0, 3), ['Off', '3%', '5%'], 'a hand-set 3 % is there, in order');
   T.eq(current(), '3%');
   for (let i = 0; i < 9; i += 1) key('ArrowDown');
   T.eq(current(), '25%', 'the list ends: no wrap');

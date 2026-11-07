@@ -25,8 +25,10 @@ T.runAsync('browse: the options button opens Leanback settings, and Back closes 
   const p = await boot({ html: fixture('home.html'), url: URLS.browse });
   await p.act('menu');
   let s = await p.state();
-  T.eq(s.menu, ['autoplayNext', 'seekStep', 'seasonStart', 'skipMarketingSite', 'exitHook', 'look', 'theme', 'ringColor', 'holidays', 'focusZoom', 'ringWidth', 'hintBar', 'menu:accessibility', 'forget'],
-    'the one list of settings (C1) with Theme This Page (Home has a look of its own), then Accessibility and Clear Continue Watching; no Home or Search, which the rail does (C4)');
+  // The list itself is settings-menu.test.mjs's; here, what a page adds to it.
+  T.eq(s.menu.indexOf('look'), s.menu.indexOf('theme') - 1, 'Theme This Page first under Look (Home has a look of its own)');
+  T.eq(s.menu.slice(-2), ['menu:accessibility', 'forget'], 'then Accessibility and Clear Continue Watching');
+  T.notOk(s.menu.includes('home') || s.menu.includes('search'), 'no Home or Search, which the rail does (C4)');
   T.eq(s.menuItem, 'autoplayNext', 'first item selected');
   T.eq(p.doc.querySelector('.tenfoot-settings-title').textContent, 'Leanback Settings');
   T.eq([...p.doc.querySelectorAll('.tenfoot-settings-group')].map((g) => g.textContent), ['Playback', 'Browsing', 'Look'], 'under their headings');
