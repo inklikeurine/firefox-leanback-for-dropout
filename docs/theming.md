@@ -154,8 +154,6 @@ Nothing looks different after 0.39.0; every theme then reaches everything.
 
 - **Themes as parts** in the Design Tokens shape: colours, type, shapes,
   decoration; a theme may declare which of its values the viewer can adjust.
-- **One order of precedence**: theme → Theme Color → holiday → Accessibility
-  (always last) → *Theme This Page*.
 - **Themes of the viewer's own** on the options page: seed colours, a
   typeface and corner style from Leanback's lists, checked for contrast.
 - **Holiday decorations** drawn by Leanback as overlays (a frame, a corner
