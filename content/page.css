@@ -493,6 +493,17 @@ html[data-tenfoot="on"][data-tenfoot-kind="profiles"] body {
   outline: none;
 }
 
+/* While a window of Ketch's is open (Customize Settings, Cookie Preferences)
+   it stops the page scrolling by pinning <body> where it is (an inline
+   position: fixed). That makes the body a layer of its own, and the window,
+   inside it, goes under everything of Leanback's outside it: the sign-in
+   screen, the screens, the keyboard. While Leanback is on, the body stays
+   unpinned; Leanback's screens do not scroll the page anyway. */
+html[data-tenfoot="on"] body[style*="fixed"] {
+  position: relative !important;
+  top: auto !important;
+}
+
 /* The cookie dialog (Ketch) in Leanback's look, and every window it opens
    (Customize Settings, a purpose's cookies): dark cards, Leanback's type,
    the main buttons in the theme's colour, the others outlined, the rows

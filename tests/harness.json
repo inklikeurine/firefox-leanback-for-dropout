@@ -515,6 +515,12 @@
       ]
     },
     {
+      "step": "a cookie window pinning the page (Ketch's Customize Settings) leaves the body unpinned, so the window is not under the sign-in screen",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.body.setAttribute('style', 'top: 0px; position: fixed; width: 100%;'); const pos = getComputedStyle(document.body).position; document.body.removeAttribute('style'); pos\" }); return r === 'relative'; })()"
+      ]
+    },
+    {
       "step": "Sign in posts both of Dropout's steps",
       "check": [
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.querySelector('#tenfoot-signin-email').value = 'fixture@example.test'; document.querySelector('#tenfoot-signin-password').value = 'not-a-real-password'; document.querySelector('.tenfoot-signin-submit').click(); document.querySelector('.tenfoot-signin-submit').textContent\" }); return r === 'Signing in…'; })()",
