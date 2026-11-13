@@ -203,10 +203,26 @@
 
     // The history moved between the details page and the step above it, at
     // the same address (Back, or Forward again).
+    // Firefox's Back with the playback settings panel open takes the panel's
+    // own step off (the frame closes the panel) — and may pass over the video
+    // playing's step too, when nobody used the page while it was current (a
+    // key press in the player frame does not always count for it). Then the
+    // video is not left: Leanback goes forward to that step again.
+    const PANEL_BACK_MS = 600;
+
     function followPlay() {
       if (state.kind !== "video" || !state.screen) return;
-      if (onPlayEntry()) startWatching(false);
-      else showDetails();
+      if (onPlayEntry()) {
+        startWatching(false);
+        return;
+      }
+      if (state.watch === "playing" && (state.playerPanel || Date.now() - state.playerPanelBackAt < PANEL_BACK_MS)) {
+        state.playerPanel = false;
+        state.playerPanelBackAt = 0;
+        history.forward();
+        return;
+      }
+      showDetails();
     }
 
     function sendHistoryMeta() {

@@ -64,6 +64,7 @@
     video: null,
     panelStep: false, // the settings panel stands on a step of its own in the history
     droppingPanelStep: false,
+    panelClosingByBack: false,
     observer: null,
     mutationTimer: 0,
     barIdleTimer: 0,
@@ -408,6 +409,10 @@
   }
 
   function syncPanelStep(open) {
+    // The page hears of it: if Firefox's Back passes over the video playing's
+    // own step as well as the panel's, it goes forward to it again.
+    send({ type: "page:panel", open: Boolean(open), byBack: !open && state.panelClosingByBack });
+    state.panelClosingByBack = false;
     if (open) {
       if (state.panelStep || onPanelStep()) return;
       try {
@@ -433,7 +438,9 @@
     state.panelStep = false;
     const b = state.bar;
     if (!b || !b.panelOpen) return;
+    state.panelClosingByBack = true;
     b.dispatch("back");
+    state.panelClosingByBack = false;
     // Still open, a level up: a step again for the next Back.
     if (b.panelOpen) syncPanelStep(true);
   }

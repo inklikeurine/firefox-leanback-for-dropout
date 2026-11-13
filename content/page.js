@@ -96,6 +96,8 @@
     screenRefocus: 0,
     historyLength: 0,
     menuStep: false, // the settings stand on a step of their own in the history
+    playerPanel: false, // the playback settings panel is open (content/player.js, page:panel)
+    playerPanelBackAt: 0, // when Firefox's Back last closed it
     droppingMenuStep: false,
     rail: null,
     railActive: false,
@@ -1356,10 +1358,19 @@
           ? Object.assign({ ok: true, hold: state.enabled && state.watch === "details" }, episodeDetails())
           : { ok: false, error: "Not an episode page" });
         return false;
+      case "page:panel":
+        // The playback settings panel (content/player.js), for followPlay().
+        state.playerPanel = Boolean(msg.open);
+        if (msg.byBack) state.playerPanelBackAt = Date.now();
+        reply({ ok: true });
+        return false;
       case "page:action": {
         // BrowserBack pressed while the player had the keys: the same as on
         // the page.
         if (msg.action === "browser-back") {
+          // The panel was not holding it: a Back of the page's own.
+          state.playerPanel = false;
+          state.playerPanelBackAt = 0;
           if (state.enabled) browserBack();
           reply(Object.assign(snapshot(), { consumed: false }));
           return false;

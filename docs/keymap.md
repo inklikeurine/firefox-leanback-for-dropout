@@ -302,7 +302,11 @@ at the same address, pushed on the key press that opened them (so the page
 under it counts as used): Firefox's Back takes that step off without leaving
 the page, and the settings go up a level, or close at their top, putting a
 step back while they stay open. Closed any other way (Menu, ◀ at the top,
-Escape), the step is taken off again.
+Escape), the step is taken off again. A key press in the player frame does not always count
+as using the page around it, so Firefox's Back may pass over the video
+playing's own step as well as the panel's; the page then goes forward to it
+again (the frame tells it the panel was open, `page:panel`), and the video is
+not left.
 
 Most air-mouse remotes have no media keys; their QWERTY pad is needed only to
 type a search or log in. What a typical one sends:

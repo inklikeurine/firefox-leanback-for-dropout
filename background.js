@@ -264,6 +264,7 @@ async function handleMessage(message, sender) {
     case "page:episode":
     case "page:action":
     case "page:info":
+    case "page:panel":
       return fromTab() || relayToPage(tabId, message);
     case "exit":
       return handleExit(sender, message.force);
