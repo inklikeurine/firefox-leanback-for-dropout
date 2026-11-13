@@ -7,6 +7,14 @@
 :root {
   --tf-kb-side: calc(var(--tf-u, 0.04vw) * 825);
 }
+/* A box Leanback's keyboard types into (data-tenfoot-kb-box): Firefox is told
+   it takes no typing through the system's input method (ime-mode: disabled), so
+   a TV's own on-screen keyboard (Plasma's, say), which opens when a box takes
+   the system's typing, stays shut. A real keyboard still types into it. With
+   Leanback off, the box is the system's again. */
+html[data-tenfoot="on"] input[data-tenfoot-kb-box] {
+  ime-mode: disabled !important;
+}
 .tenfoot-kb {
   position: fixed;
   left: 0;

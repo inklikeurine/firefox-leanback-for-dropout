@@ -1202,6 +1202,7 @@
     refreshScreen();
     stampChrome();
     syncForm();
+    P.markPinBoxes();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
     if (state.kind === "video") {

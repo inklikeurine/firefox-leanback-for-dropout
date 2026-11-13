@@ -141,6 +141,10 @@
     field.spellcheck = false;
     field.setAttribute("aria-label", "Search");
     field.setAttribute("data-tenfoot-nozoom", "");
+    // Leanback's keyboard types here; the system's stays shut
+    // (content/keyboard.css).
+    field.setAttribute("data-tenfoot-kb-box", "");
+    field.setAttribute("inputmode", "none");
     fieldBox.appendChild(field);
     field.addEventListener("input", () => {
       if (model && model.field) Common.typeInto(model.field.proxy, field.value);
