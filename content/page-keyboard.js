@@ -130,6 +130,18 @@
       return false;
     }
 
+    // Text arriving in one of those boxes some other way than its key presses:
+    // the system's own on-screen keyboard or input method (it sends the words,
+    // not keys), a phone's keyboard app, a paste. The box counts as typed in,
+    // as with a real keyboard, so the Enter that follows is the box's own (on
+    // Password, Sign in) rather than opening Leanback's keyboard over it. What
+    // Leanback's own keyboard types does not count.
+    function onBoxInput(e) {
+      if (!state.enabled) return;
+      if (state.keyboard && (state.keyboard.isOpen || state.keyboard.isDocked)) return;
+      if (layoutFor(e.target)) state.typedBox = e.target;
+    }
+
     // A pointer click on one of those boxes (the air mouse has no keyboard).
     // A script's own click has no detail.
     function onClick(e) {
@@ -144,7 +156,7 @@
       if (state.typedBox && state.typedBox !== el) state.typedBox = null;
     }
 
-    Object.assign(P, { onBoxKey, onClick, onSelect, dockKeyboard, undockKeyboard, toResults, keyboardEdge, keyboardEntered });
+    Object.assign(P, { onBoxInput, onBoxKey, onClick, onSelect, dockKeyboard, undockKeyboard, toResults, keyboardEdge, keyboardEntered });
   }
 
   globalThis.TenfootPageKeyboard = Object.freeze({ install });

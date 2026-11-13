@@ -1502,6 +1502,7 @@
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
     document.addEventListener("click", onClick, true);
+    document.addEventListener("input", (e) => P.onBoxInput(e), true);
     window.addEventListener("popstate", onPopState);
     window.addEventListener("beforeunload", onBeforeUnload, true);
     window.addEventListener("pagehide", () => { state.leaving = true; });
