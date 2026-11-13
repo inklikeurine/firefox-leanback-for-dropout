@@ -78,6 +78,7 @@
     pendingPlayerFocus: false,
     modal: null,
     modalReturn: null,
+    lastOutside: null, // the last stop selected outside any dialog: where a dialog's close comes back to
     menu: null,
     ask: null, // a question in a box (nav/ask.js): Sign out?, Delete profile?
     keyboard: null, // the on-screen keyboard (nav/keyboard.js)
@@ -894,7 +895,12 @@
     if (state.modal && state.modal.isConnected) state.modal.removeAttribute("data-tenfoot-dialog");
     if (m) m.setAttribute("data-tenfoot-dialog", "");
     if (m) {
-      state.modalReturn = currentEl();
+      // Where its close comes back to: the selection now, unless the dialog
+      // took it before the page script saw the dialog open (Ketch's windows
+      // do), or one dialog took over from another; then the last stop
+      // selected outside them.
+      const cur = currentEl();
+      if (!state.modal) state.modalReturn = cur && !inDialog(cur) ? cur : state.lastOutside;
       state.modal = m;
       // The dialog's own first choice, else its first stop for now.
       const start = modalStart(m);
@@ -909,8 +915,49 @@
       state.modalAwaitStart = false;
       const r = state.modalReturn;
       state.modalReturn = null;
-      if (r && r.isConnected) focusEl(r);
+      if (r && r.isConnected && !inDialog(r) && Spatial.isVisible(r, window)) {
+        // Back on the rail: the rail has the keys again (the dialog taking
+        // the selection took them from it).
+        if (state.rail && state.rail.contains(r)) state.railActive = true;
+        focusEl(r);
+      } else landAfterDialog();
     }
+  }
+
+  // Inside one of the site's dialogs (rules: common.modals)?
+  function inDialog(el) {
+    if (!el || !el.closest) return false;
+    return Rules.selectorList((state.rules.common || {}).modals).some((sel) => {
+      try {
+        return Boolean(el.closest(sel));
+      } catch (_err) {
+        return false;
+      }
+    });
+  }
+
+  // A dialog closed with nothing to come back to (what was selected went with
+  // it): the page's own first stop — the docked keyboard's keys, the
+  // screen's selection, sign-in's first box — so the remote never lands on
+  // nothing.
+  function landAfterDialog() {
+    if (state.keyboard && state.keyboard.isDocked) {
+      state.railActive = false;
+      state.keyboard.enter();
+      return;
+    }
+    if (state.signin) {
+      focusEl(state.signin.submit.hidden ? state.signin.alt : state.signin.email);
+      return;
+    }
+    if (state.screen) {
+      const t = state.screen.current || state.screen.initialTarget();
+      if (t) {
+        focusEl(t, { scroll: false });
+        return;
+      }
+    }
+    refocusPage();
   }
 
   function dispatchInModal(action) {
@@ -1082,6 +1129,7 @@
       return;
     }
     if (state.playerFocused) state.playerFocused = false;
+    if (!inDialog(t)) state.lastOutside = t;
     const box = overlay();
     if (box) {
       // An open question keeps the selection, a bounded number of times
