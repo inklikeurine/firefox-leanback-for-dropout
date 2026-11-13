@@ -41,6 +41,15 @@
 
 (function () {
   const LAYER_CLASS = "tenfoot-home";
+  // The glyphs a hero's buttons can carry (24 × 24, lib/common.js svgIcon).
+  const GLYPHS = Object.freeze({
+    check: { d: "M5 12.5l4.5 4.5L19 7" },
+    plus: { d: "M12 5v14M5 12h14" },
+    play: { d: "M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.4-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z", fill: true },
+    restart: { d: ["M4.5 12a7.5 7.5 0 1 0 2.2-5.3", "M4.5 3.5v4h4"], stroke: 2.5 },
+    episodes: { d: ["M9 6.5h11", "M9 12h11", "M9 17.5h11", "M4.5 6.5h.01", "M4.5 12h.01", "M4.5 17.5h.01"], stroke: 2.5 },
+    clear: { d: ["M6.5 6.5l11 11", "M17.5 6.5l-11 11"], stroke: 2.5 }
+  });
   const COLUMNS = 5;
   const PREFETCH_ROWS = 2;
   const MORE_TIMEOUT_MS = 6000;
@@ -287,8 +296,12 @@
         setAttr(node, "data-tenfoot-danger", a.danger ? "true" : null);
         setAttr(node, "aria-disabled", a.disabled ? "true" : null);
         const gname = a.glyph || (typeof a.listed === "boolean" ? (a.listed ? "check" : "plus") : "");
-        if (gname) {
-          // My List, a Saved: a drawn plus or tick, then the words. The glyph
+        // A glyph-only button (an episode's Start Over, Episodes, Clear
+        // Progress): round, its words under it while it is selected
+        // (content/home.css); its name is still the words.
+        setAttr(node, "data-tenfoot-icon", a.iconOnly && GLYPHS[gname] ? "true" : null);
+        if (gname && GLYPHS[gname]) {
+          // My List, Watch, a Saved: a drawn glyph, then the words. The glyph
           // is redrawn only when it changes, so the element keeps focus.
           let word = node.querySelector(".tenfoot-hero-word");
           if (!word) {
@@ -301,7 +314,7 @@
           const glyph = node.querySelector(".tenfoot-hero-glyph");
           if (!glyph || glyph.dataset.glyph !== want) {
             if (glyph) glyph.remove();
-            const g = Common.svgIcon(doc, want === "check" ? "M5 12.5l4.5 4.5L19 7" : "M12 5v14M5 12h14", { strokeWidth: 3 });
+            const g = Common.svgIcon(doc, GLYPHS[want].d, GLYPHS[want].fill ? { fill: true } : { strokeWidth: GLYPHS[want].stroke || 3 });
             g.setAttribute("class", "tenfoot-hero-glyph");
             g.dataset.glyph = want;
             node.insertBefore(g, word);

@@ -326,6 +326,37 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
   height: 1em;
   margin-right: 0.5em;
 }
+/* A glyph-only button (an episode's Start Over, Episodes, Clear Progress):
+   round, as tall as the others; its words under it while it is selected, so
+   the row stays short and each still says what it does. */
+.tenfoot-hero-button[data-tenfoot-icon] {
+  position: relative;
+  justify-content: center;
+  width: max(36px, calc(var(--tf-u) * 64));
+  height: max(36px, calc(var(--tf-u) * 64));
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+  font-size: max(18px, calc(var(--tf-u) * 30));
+}
+.tenfoot-hero-button[data-tenfoot-icon] .tenfoot-hero-glyph {
+  margin-right: 0;
+}
+.tenfoot-hero-button[data-tenfoot-icon] .tenfoot-hero-word {
+  position: absolute;
+  top: calc(100% + max(8px, calc(var(--tf-u) * 14)));
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--tf-text);
+  font-size: max(13px, calc(var(--tf-u) * 22));
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  visibility: hidden;
+}
+.tenfoot-hero-button[data-tenfoot-icon]:focus .tenfoot-hero-word {
+  visibility: visible;
+}
 .tenfoot-hero-next {
   justify-content: center;
   min-width: max(36px, calc(var(--tf-u) * 64));
@@ -572,6 +603,8 @@ html[data-tenfoot="on"][data-tenfoot-home="on"] body {
 .tenfoot-screen-hero[data-tenfoot-layout="details"] .tenfoot-hero-actions {
   flex-wrap: wrap;
   row-gap: calc(var(--tf-u) * 14);
+  /* Room for a glyph-only button's words under it. */
+  padding-bottom: max(28px, calc(var(--tf-u) * 50));
 }
 /* Search: Leanback's own box, as wide as five cards, its text large enough
    to read from the sofa; the site's text colours and fonts are held off. */
