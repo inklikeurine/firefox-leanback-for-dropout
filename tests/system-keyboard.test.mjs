@@ -30,3 +30,4 @@ T.runAsync('system keyboard: a PIN-locked profile\'s digit boxes (Dropout\'s own
   await T.sleep(200);
   T.ok(quiet(p.$('d1')) && quiet(p.$('d2')), 'both digit boxes');
 });
+await T.exit();
