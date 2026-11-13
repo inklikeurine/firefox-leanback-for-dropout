@@ -48,8 +48,9 @@ filters, then the results; the next box or button; with nothing there, the
 key stays the field's). In a field of several lines ▼ ▲ move the cursor.
 **OK on one of Leanback's own text boxes** (sign-in, the reset, a profile's name, and a PIN's digit boxes) that has
 not been typed in opens [the on-screen keyboard](#the-on-screen-keyboard);
-typing in it with a real keyboard makes Enter its own again until the
-selection moves on. A pointer click on one opens the keyboard too.
+typing in it with a real keyboard (or text arriving from the system's own
+on-screen keyboard, a phone's keyboard app or a paste) makes Enter its own
+again until the selection moves on: in *Password*, Enter signs in. A pointer click on one opens the keyboard too.
 
 ## Actions → behaviour by context
 
