@@ -232,3 +232,9 @@ html[data-tenfoot-keyboard-docked="on"] .tenfoot-home {
   --tf-card-w: calc((100vw - var(--tf-rail-width) - var(--tf-kb-side) - var(--tf-gutter) * 2 - var(--tf-card-gap) * 2) / 3);
   --tf-reach: calc(var(--tf-card-w) * 9 / 16 * var(--tenfoot-zoom, 5) / 200 + var(--tenfoot-ring-width, 4px) + 2px);
 }
+/* The results fit as many across as there is room for beside the panel, which
+   grows with Interface Size: three at 100 %, two above (content/home.css,
+   data-tenfoot-fit). */
+html[data-tenfoot-keyboard-docked="on"] .tenfoot-screen-grid[data-tenfoot-fit] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--tf-u) * 250)), 1fr));
+}

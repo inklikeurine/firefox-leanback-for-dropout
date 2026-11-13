@@ -200,7 +200,7 @@ own form, and Dropout's messages (a wrong password, say) are shown on
 Leanback's screen. *Forgot password?* opens Leanback's reset screen. The
 privacy policy, terms and cookies policy scroll with ▲ ▼.
 
-**Browse, My List and the lists** show their shows or episodes five across
+**Browse, My List and the lists** show their shows or episodes five across (fewer at a larger Interface Size)
 (four or six with *Theme This Page*), the same cards as on Home; more
 arrive as you near the end. An empty list says so, and the selection
 waits on the rail.
@@ -265,7 +265,7 @@ it does nothing); under *Look*, Theme This Page (on pages that have
 choices of their own) · Theme · Theme Color · Holidays · Enlarge Selection
 · Ring Width · Button Hints (a bar showing the keys that matter now, and the
 same along the foot of the on-screen keyboard; off unless turned on). Moving through the values of a look shows each at once;
-OK keeps it, Back puts it back. Then *Accessibility*: Interface Size · High
+OK keeps it, Back puts it back. Then *Accessibility*: Interface Size (100 % fills a TV's screen; 115 % and 130 % are larger, with fewer cards across a show, a list or search so nothing is cut off) · High
 Contrast · Reduce Motion · Caption Size · Caption Color · Caption
 Background · Color Filter (Experimental). At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes

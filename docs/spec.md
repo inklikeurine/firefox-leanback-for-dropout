@@ -603,7 +603,7 @@ default rather than throwing):
 | `seasonStart` | `"latest"` | `latest` or `first` — the season a show opens on when its address names none |
 | `theme` | `"dropout"` | `dropout`, `midnight`, `oled`, `warm` (lib/themes.js) |
 | `holidays` | `"off"` | `off`, `auto` (by date), or one look: `newyear` (1–6 Jan), `valentines` (7–14 Feb), `stpatricks` (14–17 Mar), `halloween` (17–31 Oct), `winter` (Dec) |
-| `uiScale` | `100` | Interface Size: 100, 115 or 130 (%) |
+| `uiScale` | `100` | Interface Size: 100, 115 or 130 (%). 100 % is drawn at 92 % of a 1920-wide layout, which fills a TV's screen; a show's episodes, a list and search's results fit as many across as there is room for (Medium cards: five, four, three; search: three, two, two) |
 | `highContrast` | `false` | black and white, white edges, a ring of at least 6 px |
 | `reduceMotion` | `"system"` | `system`, `on`, `off` |
 | `captionSize` | `"default"` | `default` (the player's own), `large`, `larger`, `largest` |
