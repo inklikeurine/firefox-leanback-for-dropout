@@ -1146,7 +1146,6 @@ error in the parent process.
 | `page:focus` | player → bg → page | `{hint: "below" \| "back"}` | leave the player: `back` is Back (the details page); `below` only goes anywhere on Dropout's own page |
 | `page:episode` | player → bg → page | `{delta: 1 \| -1}` | next / previous episode |
 | `page:action` | player → bg → page, or harness → page | `{action}` | run an action the page owns (`search`, `menu`, …); `browser-back` is BrowserBack pressed in the player frame |
-| `page:panel` | player → bg → page | `{open, byBack}` | the playback settings panel opened or closed (`byBack`: by Firefox's Back taking its step off); if Firefox's Back passes over the video playing's own step too, the page goes forward to it again |
 | `page:info` | player → bg → page | — | reply `{ok, hold, series, title, season, episode}`: whether the details page holds the video, and the title over it (Dropout 24/7 in place: not held, the stream's name); `ok: false` off an episode page |
 | `page:state` | harness → page | — | reply: a snapshot (page kind, `watch`, theater, focused element and rect, ring/hints, the screen's model, the show page, the rail). Tests only |
 | `history:progress` | player → bg | `{key, url, title, position, duration, ended, next}` | where the video is; `next` is Dropout's up-next `{url, title}`, or null |
