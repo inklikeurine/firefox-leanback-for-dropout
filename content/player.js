@@ -62,6 +62,8 @@
     settings: Settings.normalize(null),
     rules: DEFAULT_RULES,
     video: null,
+    panelStep: false, // the settings panel stands on a step of its own in the history
+    droppingPanelStep: false,
     observer: null,
     mutationTimer: 0,
     barIdleTimer: 0,
@@ -383,11 +385,57 @@
       onAction: (id) => {
         if (id === "forget") send({ type: "history:clear" });
       },
-      onClose: () => leaveTransport()
+      onClose: () => leaveTransport(),
+      onPanel: (open) => syncPanelStep(open)
     });
     state.bar.setStyle(state.settings);
     state.bar.setInfo(state.info);
     return state.bar;
+  }
+
+  // The remote's Back is Firefox's own: it goes back in the tab's history
+  // whatever this frame does with the key, which would leave the video. So
+  // while the settings panel is open it stands on a step of its own in the
+  // history (this frame's, at the same address). Firefox's Back takes that
+  // step off and the panel goes up a level, as Escape does; at its top it
+  // closes and the video plays on. Closed any other way, the step is taken
+  // back off.
+  const PANEL_STATE = "tenfootPanel";
+
+  function onPanelStep() {
+    const s = history.state;
+    return Boolean(s && typeof s === "object" && s[PANEL_STATE] === true);
+  }
+
+  function syncPanelStep(open) {
+    if (open) {
+      if (state.panelStep || onPanelStep()) return;
+      try {
+        const s = history.state && typeof history.state === "object" ? history.state : {};
+        history.pushState(Object.assign({}, s, { [PANEL_STATE]: true }), "", location.href);
+        state.panelStep = true;
+      } catch (_err) { /* no step: Back leaves the video, as it would anyway */ }
+      return;
+    }
+    if (!state.panelStep) return;
+    state.panelStep = false;
+    if (!onPanelStep()) return;
+    state.droppingPanelStep = true;
+    history.back();
+  }
+
+  function onPopState() {
+    if (state.droppingPanelStep) {
+      state.droppingPanelStep = false;
+      return;
+    }
+    if (!state.panelStep || onPanelStep()) return;
+    state.panelStep = false;
+    const b = state.bar;
+    if (!b || !b.panelOpen) return;
+    b.dispatch("back");
+    // Still open, a level up: a step again for the next Back.
+    if (b.panelOpen) syncPanelStep(true);
   }
 
   // Accessibility in the player: Leanback's caption style and the video's
@@ -630,6 +678,9 @@
     // Firefox goes back on the remote's BrowserBack whatever this frame does
     // with it (T2). The page decides whether that needs any help.
     if (action === "back" && e.key === "BrowserBack") {
+      // The settings panel on its step: Firefox's Back takes the step off
+      // and the panel goes up a level (onPopState).
+      if (state.bar && state.bar.panelOpen && state.panelStep && onPanelStep()) return;
       dropBar();
       send({ type: "page:action", action: "browser-back" });
       return;
@@ -1288,6 +1339,7 @@
     });
     API.runtime.onMessage.addListener(onMessage);
     window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("popstate", onPopState);
     // The remote's menu button arrives as a ContextMenu key here too; without
     // this, Firefox's own menu would open over the video.
     window.addEventListener("contextmenu", onContextMenu, true);

@@ -60,7 +60,7 @@ selection moves on. A pointer click on one opens the keyboard too.
 | `left` / `right` | spatial / row move (an **engaged** `<select>` takes them instead); ◀ at the left edge enters the rail where there is one | ◀ **up one level**, at the top **closes the panel**; ▶ takes the entry (never an action) | along the buttons; ◀ from the first enters the rail | seek ∓/± the seek step; **while the bar is open they walk it instead**; ◀ hides the "Up next" card while it is up |
 | `select` | activate; on a season, open it; on a `<select>` → engage or confirm; on the player → enter the player | take the entry: flip a switch, open a list of values, pick one; Clear Continue Watching asks once more | *Watch*, *Resume*, *Start Over* → the video, playing; *My List* presses Dropout's own; *Episodes* opens the season | play / pause (one press is one: a held OK, or the press of *Watch* arriving here too, does nothing); take the control under the selection; play the next episode while the "Up next" card is up |
 | `back` (Escape) | cancel an engaged `<select>` → close a dialog → the page before; with nothing behind, **one layer up the site** | up one level → close | the page before | submenu → settings panel → transport bar → the details page |
-| `back` (BrowserBack) | Firefox's own Back, everywhere; Leanback steps in only when nothing of the site is behind the page, and then does what Escape does | | | |
+| `back` (BrowserBack) | Firefox's own Back, everywhere; Leanback steps in only when nothing of the site is behind the page, and then does what Escape does | up one level → close: the settings stand on a step of their own in the history while open, so Firefox's Back lands on the page again | the page before | in the settings panel: up one level → close, the video staying (the panel's own step in the history, as on the page); otherwise the details page |
 | `menu` | **opens Leanback's settings** | closes it | opens Leanback's settings | opens the **settings panel** in the player frame |
 | `search` | go to `/search` | — | same | same |
 | `play_pause` `stop` `next` `previous` `fast_forward` `rewind` | ignored (no player) | — | play/pause is *Watch*; next/previous open that episode's details page; the rest do nothing | handled in the player; next/previous play that episode straight away |
@@ -291,10 +291,18 @@ history's own list where Firefox has one (the Navigation API), not by
 counting the steps it saw: Dropout's search adds steps Leanback cannot always
 see.
 
-What that means for layers: the remote's Back leaves the page, whatever is
-open on it, so ◀ is the way out of what is open — it closes the settings
-panels one level at a time and leaves the keyboard on search for the rail from its
-left column. The rail closes with ▶, the transport bar with ▲.
+What that means for layers: the remote's Back leaves the page, whatever else
+is open on it, so ◀ is the way out of what is open — it closes the settings
+panels one level at a time too, and leaves the keyboard on search for the rail
+from its left column. The rail closes with ▶, the transport bar with ▲.
+
+The settings are the exception. While Leanback's settings (or the playback
+settings panel) are open, they stand on a step of their own in the history,
+at the same address, pushed on the key press that opened them (so the page
+under it counts as used): Firefox's Back takes that step off without leaving
+the page, and the settings go up a level, or close at their top, putting a
+step back while they stay open. Closed any other way (Menu, ◀ at the top,
+Escape), the step is taken off again.
 
 Most air-mouse remotes have no media keys; their QWERTY pad is needed only to
 type a search or log in. What a typical one sends:

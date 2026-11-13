@@ -358,6 +358,23 @@
       ]
     },
     {
+      "step": "Firefox's own Back with the playback settings open closes them, and the video stays",
+      "check": [
+        "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
+        "(function (r) { return r.ok === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
+        "press ContextMenu",
+        "sleep 0.8",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? [!document.querySelector('.tenfoot-settings').hidden, Boolean(history.state && history.state.tenfootPanel)].join('|') : null\" }); return r.filter(Boolean)[0] === 'true|true'; })()",
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 0.8",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? [!document.querySelector('.tenfoot-settings').hidden, Boolean(history.state && history.state.tenfootPanel)].join('|') : null\" }); return r.filter(Boolean)[0] === 'false|false'; })()",
+        "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'playing' && /\\/videos\\/ep1$/.test((await browser.tabs.get(__fx)).url); })()",
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 0.5",
+        "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details'; })()"
+      ]
+    },
+    {
       "step": "Firefox's own Back while it plays goes to the details page",
       "check": [
         "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
@@ -427,6 +444,39 @@
         "(await __act('back'), true)",
         "sleep 2",
         "(function (s) { return s.kind === 'browse'; })(await __page({ type: 'page:state' }))"
+      ]
+    },
+    {
+      "journey": "Settings and the remote's Back"
+    },
+    {
+      "step": "Menu opens the settings on a step of their own in the history",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/browse' }), true)",
+        "sleep 2",
+        "press ContextMenu",
+        "sleep 0.5",
+        "(async () => { const s = await __page({ type: 'page:state' }); const [r] = await browser.tabs.executeScript(__fx, { code: \"Boolean(history.state && history.state.tenfootMenu)\" }); return Array.isArray(s.menu) && r === true; })()"
+      ]
+    },
+    {
+      "step": "in Accessibility, Firefox's Back goes up to the settings, on the same page",
+      "check": [
+        "(async () => { for (let i = 0; i < 30 && (await __page({ type: 'page:state' })).menuItem !== 'menu:accessibility'; i++) await __act('down'); return (await __page({ type: 'page:state' })).menuItem === 'menu:accessibility'; })()",
+        "press Enter",
+        "sleep 0.5",
+        "(await __page({ type: 'page:state' })).menu.includes('uiScale')",
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 1",
+        "(async () => { const s = await __page({ type: 'page:state' }); const t = await browser.tabs.get(__fx); return Array.isArray(s.menu) && s.menu.includes('menu:accessibility') && s.kind === 'browse' && /\\/browse$/.test(t.url); })()"
+      ]
+    },
+    {
+      "step": "at the top, Firefox's Back closes the settings and Home stays",
+      "check": [
+        "(await browser.tabs.goBack(__fx), true)",
+        "sleep 1",
+        "(async () => { const s = await __page({ type: 'page:state' }); const t = await browser.tabs.get(__fx); return s.menu === null && s.kind === 'browse' && /\\/browse$/.test(t.url); })()"
       ]
     },
     {

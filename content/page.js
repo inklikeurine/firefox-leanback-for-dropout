@@ -95,6 +95,8 @@
     home: null,
     screenRefocus: 0,
     historyLength: 0,
+    menuStep: false, // the settings stand on a step of their own in the history
+    droppingMenuStep: false,
     rail: null,
     railActive: false,
     railReturn: null,
@@ -299,6 +301,8 @@
     state.engaged = null;
     if (state.menu) state.menu.close();
     state.menuReturn = null;
+    // A new page: the settings' step, if any, was the last page's.
+    state.menuStep = false;
     state.kind = Rules.classify(state.rules, location.pathname);
     // A hub (/dimension-20) has a one-segment address like a show, but it is
     // drawn by the same component as Home, and gets the same screen.
@@ -1022,6 +1026,9 @@
     const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
+      // Leanback's settings: Firefox's Back takes their step off, and they go
+      // up a level (onPopState); nothing else to do here.
+      if (P.holdsBack()) return;
       if (overlay() && !(state.keyboard.isOpen && state.keyboard.isDocked)) {
         // A question is answered, not left by going back a page.
         e.preventDefault();
@@ -1167,6 +1174,8 @@
   function onPopState() {
     if (state.leaving || !state.enabled) return;
     clearBackFallback();
+    // The settings' own step in the history (content/page-settings.js).
+    if (P.onMenuPop()) return;
     if (overlay()) overlay().close();
     if (location.href !== state.href) onNavigate(true);
     else if (state.inPlace) followInPlace();
