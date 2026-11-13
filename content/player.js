@@ -1154,6 +1154,72 @@
     report();
   }
 
+  // ----- a video that cannot play --------------------------------------------
+  //
+  // Leanback hides the player's own controls, and with them the player's own
+  // word on a video that will not play, so on a TV a failure looked like
+  // nothing happening. This frame says so on the picture instead: Firefox's
+  // own reason (the media element's error), and, when this Firefox has no
+  // H.264 decoder at all (Dropout's videos are H.264), that, which is a
+  // matter for the TV's Firefox and not for Dropout. It goes once the video
+  // plays.
+  const MEDIA_ERRORS = { 2: "MEDIA_ERR_NETWORK", 3: "MEDIA_ERR_DECODE", 4: "MEDIA_ERR_SRC_NOT_SUPPORTED" };
+  const H264 = 'video/mp4; codecs="avc1.640028"';
+
+  // true, false, or null when it cannot be asked.
+  function canDecodeH264() {
+    try {
+      const MS = window.MediaSource;
+      if (MS && typeof MS.isTypeSupported === "function") return Boolean(MS.isTypeSupported(H264));
+    } catch (_err) { /* not asked */ }
+    return null;
+  }
+
+  function errorBox() {
+    let box = document.querySelector(".tenfoot-play-error");
+    if (box) return box;
+    box = document.createElement("div");
+    box.className = "tenfoot-play-error";
+    box.setAttribute("role", "alert");
+    for (const cls of ["tenfoot-play-error-title", "tenfoot-play-error-text", "tenfoot-play-error-said"]) {
+      const p = document.createElement("p");
+      p.className = cls;
+      box.appendChild(p);
+    }
+    box.hidden = true;
+    document.documentElement.appendChild(box);
+    return box;
+  }
+
+  // `said`: Firefox's own reason, or "" when there is none (no decoder found
+  // before anything was tried).
+  function showPlayError(said) {
+    if (!state.settings.enabled) return;
+    const h264 = canDecodeH264();
+    const box = errorBox();
+    box.querySelector(".tenfoot-play-error-title").textContent = "This video can't play here.";
+    box.querySelector(".tenfoot-play-error-text").textContent = h264 === false
+      ? "This Firefox has no H.264 video decoder, and Dropout's videos are H.264. Install the video codecs for this computer's Firefox (on Fedora, the full FFmpeg), then try again."
+      : "Try again in a moment. If no video plays at all, this computer's Firefox may be missing the video codecs Dropout's videos need.";
+    const line = box.querySelector(".tenfoot-play-error-said");
+    line.textContent = said ? `Firefox says: ${said}` : "";
+    line.hidden = !said;
+    box.hidden = false;
+  }
+
+  function hidePlayError() {
+    const box = document.querySelector(".tenfoot-play-error");
+    if (box) box.hidden = true;
+  }
+
+  function onMediaError(e) {
+    const err = e && e.target && e.target.error;
+    if (!err || !MEDIA_ERRORS[err.code]) return; // aborted on purpose, or no error after all
+    const said = `${MEDIA_ERRORS[err.code]}${err.message ? ` (${err.message})` : ""}`;
+    console.warn(LOG, "the video cannot play:", said, "H.264 decoder:", canDecodeH264());
+    showPlayError(said);
+  }
+
   function attach(v) {
     if (state.video === v) return;
     if (state.video) detach(state.video);
@@ -1169,6 +1235,13 @@
     v.addEventListener("ended", onEnded);
     v.addEventListener("timeupdate", onTimeUpdate);
     v.addEventListener("seeked", onSeeked);
+    v.addEventListener("error", onMediaError);
+    v.addEventListener("playing", hidePlayError);
+    // No H.264 decoder: nothing Dropout sends will play, so it is said at once.
+    if (canDecodeH264() === false) {
+      console.warn(LOG, "this Firefox has no H.264 video decoder; Dropout's videos will not play");
+      showPlayError("");
+    }
     state.lastSave = Date.now();
     state.titleShownFor = null;
     state.upNext = { shown: false, dismissed: false, siteHidden: false };
@@ -1190,6 +1263,8 @@
     v.removeEventListener("ended", onEnded);
     v.removeEventListener("timeupdate", onTimeUpdate);
     v.removeEventListener("seeked", onSeeked);
+    v.removeEventListener("error", onMediaError);
+    v.removeEventListener("playing", hidePlayError);
     if (state.video === v) state.video = null;
   }
 

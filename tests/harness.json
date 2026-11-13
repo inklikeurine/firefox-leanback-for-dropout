@@ -339,6 +339,13 @@
       ]
     },
     {
+      "step": "a video Firefox cannot play says so on the picture, and the box goes once it plays",
+      "check": [
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const v = document.querySelector('video'); Object.defineProperty(v, 'error', { value: { code: 4, message: 'fixture' }, configurable: true }); v.dispatchEvent(new Event('error')); const b = document.querySelector('.tenfoot-play-error'); const r = b.getBoundingClientRect(); return !b.hidden && Math.abs(r.left + r.width / 2 - innerWidth / 2) < 2 && r.width > 300 && getComputedStyle(b).position === 'fixed' && b.querySelector('.tenfoot-play-error-said').textContent === 'Firefox says: MEDIA_ERR_SRC_NOT_SUPPORTED (fixture)'; })() : null\" }); return r.filter((x) => x !== null)[0]; })()",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const v = document.querySelector('video'); delete v.error; v.dispatchEvent(new Event('playing')); return document.querySelector('.tenfoot-play-error').hidden; })() : null\" }); return r.filter((x) => x !== null)[0]; })()"
+      ]
+    },
+    {
       "step": "the menu button is the player's; Back walks out of the player to the details page",
       "check": [
         "(await __act('menu')).menu === null",
