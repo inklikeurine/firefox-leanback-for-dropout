@@ -125,7 +125,8 @@
     }
   ],
   "browser_action": {
-    "default_title": "Leanback for Dropout: click to turn TV navigation on or off"
+    "default_title": "Leanback for Dropout",
+    "default_popup": "popup/popup.html"
   },
   "commands": {
     "toggle-tv-mode": {

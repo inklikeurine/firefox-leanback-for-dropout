@@ -32,7 +32,7 @@ scripts, and the background script relays between them.
 
 | File | Runs in | Owns |
 | --- | --- | --- |
-| `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; toolbar toggle and badge; `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
+| `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; the badge (the toolbar button opens `popup/`, which saves the on/off itself and asks the tab's page script for `page:state`); `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
 | `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`); a row with `menu` is in a menu of its own (Accessibility), one with `look` previews as you move through its values. `PAGE_LOOKS`: Theme This Page's choices per kind of page. *Back On Home*'s default follows `development` until it is picked (`exitHookSet`). |
 | `lib/themes.js` | Page, player | [The look](#the-look-libthemesjs): themes, holiday looks by date, Accessibility's look; `apply()` writes it onto `<html>` (CSS properties, `data-tenfoot-*`), `applyPlayer()` the caption style and the video's colour filter in the player frame. |
 | `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `profileIndex` (the profile watching, from the page's `VHX.config.profile_index`), `send` (a reply that is always an object), `el` and `svgIcon` (the elements and icons Leanback draws), `prefersReducedMotion`. |
@@ -68,6 +68,7 @@ scripts, and the background script relays between them.
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
 | `sites/dropout.json` | Fetched by the background | [All Dropout knowledge](#sitesdropoutjson). |
 | `options/options.html/.js/.css` | Options page (`open_in_tab`) | The settings form. |
+| `popup/popup.html/.js/.css` | The toolbar button's panel (`browser_action.default_popup`) | The on/off switch, the version, what Leanback makes of the tab in front (`page:state` from its page script), *All settings…* (`runtime.openOptionsPage()`). |
 
 `nav/*` and the message protocol know nothing about Dropout; everything
 Leanback knows about Dropout's pages is in `sites/dropout.json`.
@@ -1193,8 +1194,10 @@ The parts of `manifest.json` (MV2) that are not obvious:
 - `sites/dropout.json` is not in `web_accessible_resources`: the background
   fetches it, and an extension reading its own file needs no declaration.
 - `commands.toggle-tv-mode` has no default key (set one in `about:addons` →
-  Manage Extension Shortcuts). No popup: a popup cannot be driven from a
-  remote.
+  Manage Extension Shortcuts). The toolbar button's panel (`popup/`) is
+  for a desktop with a mouse: a popup cannot be driven from a remote, and a
+  TV in kiosk has no toolbar, so nothing on the TV depends on it; the
+  remote's Menu opens the settings there.
 - No `update_url`: distribution is AMO (unlisted) or a temporary load.
 
 ## `sites/dropout.json`

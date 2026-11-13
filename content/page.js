@@ -1250,6 +1250,15 @@
     }
   }
 
+  function signedInNow() {
+    const c = (state.rules && state.rules.common) || {};
+    try {
+      if (c.signedOut && document.querySelector(c.signedOut)) return false;
+      if (c.signedIn && document.querySelector(c.signedIn)) return true;
+    } catch (_err) { /* a selector the page cannot read */ }
+    return null;
+  }
+
   function snapshot() {
     const cur = state.playerFocused ? null : currentEl();
     const describe = (el) => ({
@@ -1265,6 +1274,9 @@
       ok: true,
       enabled: state.enabled,
       kind: state.kind,
+      // Signed in, signed out, or not known (null), from the page's own marks
+      // (rules: common.signedIn / signedOut); the toolbar panel shows it.
+      signedIn: signedInNow(),
       watch: state.watch,
       theater: state.theater,
       playerFocused: state.playerFocused,

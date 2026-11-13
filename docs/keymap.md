@@ -135,7 +135,7 @@ Moving through the values of Theme, Theme Color, Holidays, Enlarge
 Selection, Ring Width and Interface Size shows each at once too; closing the
 panel without OK puts the saved one back.
 
-The toolbar button turns Leanback off.
+The toolbar button's panel turns Leanback off.
 
 ▲ ▼ move, no wrapping. OK or ▶: a switch flips, an entry with several values
 opens its short list (OK picks one, ticked, and goes back up). ◀ or Back go

@@ -600,6 +600,20 @@
       ]
     }
   ],
+  "popupEvals": [
+    {
+      "journey": "The toolbar button's panel"
+    },
+    {
+      "step": "it shows the version, the switch as saved, and what it makes of the tab in front",
+      "check": [
+        "document.getElementById('version').textContent === 'v' + browser.runtime.getManifest().version",
+        "document.getElementById('enabled').checked === true",
+        "document.querySelectorAll('#tab dt').length > 0",
+        "document.getElementById('settings').textContent === 'All settings…'"
+      ]
+    }
+  ],
   "optionsEvals": [
     {
       "journey": "The options page"

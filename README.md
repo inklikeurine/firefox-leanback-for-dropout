@@ -255,7 +255,7 @@ it picks a track), Caption Style (font, background, window) and Leanback's
 settings. Anywhere else it holds Leanback's settings, the same list in the
 same words, with *Clear Continue Watching* at the foot. ▲ ▼ move, OK or ▶
 takes an entry, ◀ or Back goes up a level and closes the panel from the
-top. The toolbar button turns Leanback off.
+top. The toolbar button's panel turns Leanback off.
 
 **Leanback's settings**: under *Playback*, Autoplay Next Episode · Seek
 Step; under *Browsing*, Shows Open On · Skip dropout.tv Home · Back On Home
@@ -289,15 +289,18 @@ walks up the site itself: episode → season → Home. Because the remote's Back
 the page, ◀ is how you close what is open on it (the settings panel, the
 rail with ▶, the control bar with ▲).
 
-The toolbar button turns the extension on and off; a keyboard shortcut for
-that can be set under *Manage Extension Shortcuts*.
+On a desktop, the toolbar button opens a small panel: a switch that turns the
+extension on and off, what Leanback makes of the tab in front (the kind of
+page, whether an episode's player is found, signed in or not), the version,
+and *All settings…* for the full settings page. A keyboard shortcut that turns
+it on and off can be set under *Manage Extension Shortcuts*.
 
 ## Permissions
 
 | Permission | Why it's needed |
 | --- | --- |
 | `storage` | Remembers your settings and your watch history (how far you got in each video), and, in session storage, which frame of a tab is the video player. |
-| `*://watch.dropout.tv/*` | Runs the navigation script on the site and lets the toolbar toggle reach it. |
+| `*://watch.dropout.tv/*` | Runs the navigation script on the site, and lets the toolbar button's panel read which Dropout page the tab is on. |
 | `*://embed.vhx.tv/*` | Dropout's video player is an iframe from this host; the extension needs a script inside it to control playback and receive keys. |
 | `*://www.dropout.tv/*` | Forwards the marketing home page (site root only) to Browse. |
 

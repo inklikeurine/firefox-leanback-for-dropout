@@ -94,11 +94,11 @@ T.runAsync('tabs.onRemoved forgets the frame', async () => {
   T.eq(await ctx.playerFrameOf(1), null);
 });
 
-T.runAsync('toolbar click toggles enabled; the badge follows storage.onChanged', async () => {
+T.runAsync('the shortcut toggles enabled; the badge follows storage.onChanged', async () => {
   const { shim, ctx } = boot();
   await T.sleep(5);
   T.eq(shim.calls.filter((c) => c.api === 'browserAction.setBadgeText').at(-1).args[0].text, '', 'on at start');
-  await shim.listeners.actionClicked[0].fn({ id: 1 });
+  await shim.listeners.command[0].fn('toggle-tv-mode');
   await T.sleep(5);
   T.eq(shim.store.settings.enabled, false);
   await shim.changeStorage({ settings: { newValue: shim.store.settings } });
