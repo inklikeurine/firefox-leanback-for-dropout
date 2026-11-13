@@ -204,8 +204,12 @@ take the focus.
 
 A screen not ready when the page is set up (Home's rows come later) also sets
 `html[data-tenfoot-pending]`: `content/page.css` keeps `<body>` hidden under
-it (a video playing in the full window excepted) until `refreshScreen()` finds the screen ready or
-`stopScreen()` gives up.
+it (a video playing in the full window excepted, and the cookie dialog's
+`#lanyard_root`, which may come up meanwhile and has to be answered) until
+`refreshScreen()` finds the screen ready or `stopScreen()` gives up, and ten
+seconds at the most (`setPending()`'s own timer, `PENDING_MAX_MS`): a cookie
+dialog up holds the give-up in `tryInitialFocus()`, and a page must never be
+left dark.
 
 ## Spatial navigation (`nav/spatial.js`)
 
