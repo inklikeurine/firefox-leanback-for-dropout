@@ -555,9 +555,12 @@ use ([targets.md](./targets.md)).
 - **Player controls** (options page only): *The site's own player controls*
   leaves the player's own bar alone and draws nothing over the video, for
   troubleshooting.
-- **Toggle.** The toolbar button, or a user-assigned
-  shortcut (`commands`, no default binding) turns Leanback off/on for the
-  site; the state persists.
+- **Toggle.** The switch in the toolbar button's panel (`popup/`), or a
+  user-assigned shortcut (`commands`, no default binding) turns Leanback
+  off/on for the site; the state persists. The panel also shows the version,
+  what Leanback makes of the tab in front (its `page:state`: the kind of
+  page, an episode's player found or not, signed in or not) and *All
+  settings…* (the options page).
 
 ## Optional / future functionality
 
@@ -722,7 +725,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 38 | During playback: settings → Leanback Settings | The same entries, in the same order and words, as on Home |
 | 39 | Fresh profile, first visit | The cookie dialog is reachable by arrows and closable by Enter, above Home |
 | 40 | Wiggle the mouse over cards on Home and tiles on `/series` | The ring does not move; no hover tooltips |
-| 41 | Click the toolbar button; click again | The site behaves as stock Firefox (Dropout's own Home); then Leanback is back |
+| 41 | Click the toolbar button: its panel opens; untick *TV navigation*; tick it again | The site behaves as stock Firefox (Dropout's own Home); then Leanback is back |
 | 42 | Change the ring colour in options, reload | New colour |
 | 43 | *Back On Home: Closes the tab*; go to Home; Escape | The tab closes (in kiosk: Firefox exits) |
 | 44 | Restart Firefox | Settings kept |
