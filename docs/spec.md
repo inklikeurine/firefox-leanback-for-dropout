@@ -466,7 +466,10 @@ use ([targets.md](./targets.md)).
   from); *+ My List* / *✓ My List* (Dropout's own button, pressed; the
   screen reader says *Add to My List* / *Remove from My List*); *Episodes* (the season's page, else the show's); *Clear
   Progress* when the history draws any progress for it, partway or watched
-  (see *Clear Progress* under the watch history). On the right
+  (see *Clear Progress* under the watch history). *Watch* / *Resume* has a
+  play glyph before its word; *Start Over* (↺), *Episodes* (a list) and
+  *Clear Progress* (✕) are round glyph-only buttons, named by their words
+  for a screen reader, the word shown under the one selected. On the right
   the episode's picture (`og:image`, else the history's), with the progress
   bar and the time left ("15:00 left") when in progress. The selection lands
   on *Watch* or *Resume*; ▲ ▼ do nothing; ◀ from the first button is the

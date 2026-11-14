@@ -228,7 +228,10 @@ or *Resume* with *Start Over* beside it when you stopped partway; *+ My
 List* (*✓ My List* once it is there); *Episodes*, the episode's
 season on its show's page; and *Clear Progress* when you have watched some
 or all of it, which makes the episode unstarted again (out of Continue
-Watching, no bar on its card) until you play it again. On the right, the
+Watching, no bar on its card) until you play it again. *Watch* or *Resume*
+has a play glyph and its word; *Start Over* (↺), *Episodes* (a list) and
+*Clear Progress* (✕) are round glyphs, each one's word under it while it is
+selected. On the right, the
 episode's picture, with how far you got and the time left. The selection starts on *Watch* or *Resume*;
 play/pause on the remote does the same.
 
