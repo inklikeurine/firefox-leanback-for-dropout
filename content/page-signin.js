@@ -88,6 +88,7 @@
       input.spellcheck = false;
       input.setAttribute("autocapitalize", "off");
       input.setAttribute("data-tenfoot-nozoom", "");
+      P.keyboardBox(input);
       wrap.append(lab, input);
       return { wrap, input };
     }

@@ -176,6 +176,13 @@ the button). The remote's Back is Firefox's, so nothing depends
 on it. Nothing else gets past it while it is open. The pointer presses a key
 as it does any button.
 
+**The system's own on-screen keyboard stays shut.** A TV's desktop may have
+one of its own (KDE Plasma's, say) that opens whenever a text box is selected.
+The boxes Leanback's keyboard types into (sign-in, the reset, search, a
+profile's name, a PIN's digit boxes) tell Firefox they take no typing through
+the system (`ime-mode: disabled` while Leanback is on, and `inputmode="none"`),
+so it never opens over Leanback's. A real keyboard still types into them.
+
 **On search it is docked:** up as soon as the page is, for as long as the page is,
 with the search box on it and the selection on its keys. There ◀ ▶ don't go round a
 row: ▶ on the right column goes to the results, where the selection last was, ◀ on the
