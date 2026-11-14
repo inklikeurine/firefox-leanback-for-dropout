@@ -581,6 +581,12 @@
       ]
     },
     {
+      "step": "a cookie window pinning the page (Ketch's Customize Settings) leaves the body unpinned, so the window is not under the sign-in screen",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"document.body.setAttribute('style', 'top: 0px; position: fixed; width: 100%;'); const pos = getComputedStyle(document.body).position; document.body.removeAttribute('style'); pos\" }); return r === 'relative'; })()"
+      ]
+    },
+    {
       "step": "sign-in's boxes take no typing through the system, so a TV's own on-screen keyboard stays shut",
       "check": [
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"[...document.querySelectorAll('.tenfoot-signin input')].map((b) => getComputedStyle(b).getPropertyValue('ime-mode') + '/' + b.getAttribute('inputmode')).join(',')\" }); return r === 'disabled/none,disabled/none'; })()"

@@ -550,6 +550,13 @@ Read 2026-10-29, signed out.
 - The Ketch cookie dialog (`#ketch-consent-banner`, *Accept All*,
   *Customize Settings*, a close button) appears for a fresh profile on
   these pages too.
+  Its bigger windows (*Customize Settings*, and Cookie Preferences opened
+  again later: `#ketch-modal`, *Reject All*, *Accept All*, the purposes,
+  *Confirm My Choices*) stop the page scrolling by pinning `<body>` with an
+  inline `top: 0px; position: fixed; width: 100%`, taken off when they close
+  (read 2026-11-13). A pinned body is a layer of its own, so the window in
+  it would go under Leanback's screens outside it; `content/page.css` keeps
+  the body unpinned while Leanback is on.
 - `#background > .fullsize.image` is the picture behind the box; the box
   itself has no background of its own.
 
