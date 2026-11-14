@@ -41,6 +41,13 @@ Some remotes send `Escape` or `GoBack` for back, and some have media keys;
 
 ## Constraints to design for
 
+- **Firefox must decode H.264.** Dropout's videos are H.264 (with AAC sound).
+  Some Linux builds of Firefox lean on the system's FFmpeg, and a cut-down
+  one (Fedora's `ffmpeg-free`, say) may not decode them: then no video plays,
+  and the picture says "This video can't play here." with Firefox's reason.
+  Check `about:support` → Media → Codec Support for H.264 on the TV's
+  Firefox.
+
 - **Never require a global key remap** (udev, hwdb, xremap and the like). Many
   setups rule them out; the extension is app-local by nature.
 - **Ask before anything system-wide.** A `policies.json` under
