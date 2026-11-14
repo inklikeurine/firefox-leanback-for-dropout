@@ -405,10 +405,27 @@
 
     // A screen Leanback is still building keeps Dropout's page hidden under it
     // (content/page.css), so Dropout's page never shows first. Lifted when the
-    // screen is up, or when it is given up (stopScreen).
+    // screen is up, or when it is given up (stopScreen) — and, whatever else
+    // holds it (a cookie box up while the screen is built, a page that never
+    // fills), after PENDING_MAX_MS at the most: the page is never left dark.
+    const PENDING_MAX_MS = 10000;
+
     function setPending(on) {
-      if (on) root.setAttribute("data-tenfoot-pending", "");
-      else root.removeAttribute("data-tenfoot-pending");
+      if (!on) {
+        root.removeAttribute("data-tenfoot-pending");
+        if (state.pendingTimer) clearTimeout(state.pendingTimer);
+        state.pendingTimer = 0;
+        return;
+      }
+      if (root.hasAttribute("data-tenfoot-pending")) return;
+      root.setAttribute("data-tenfoot-pending", "");
+      if (state.pendingTimer) clearTimeout(state.pendingTimer);
+      state.pendingTimer = setTimeout(() => {
+        state.pendingTimer = 0;
+        if (!root.hasAttribute("data-tenfoot-pending")) return;
+        console.warn("[leanback-for-dropout]", `a screen was not ready after ${PENDING_MAX_MS / 1000} s; showing Dropout's page`);
+        root.removeAttribute("data-tenfoot-pending");
+      }, PENDING_MAX_MS);
     }
 
     function inScreen(el) {

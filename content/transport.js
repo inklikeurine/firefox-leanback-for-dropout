@@ -656,6 +656,7 @@
       view.open();
       renderPanel();
       schedulePaint();
+      if (typeof o.onPanel === "function") o.onPanel(true);
       return true;
     }
 
@@ -665,6 +666,7 @@
       panel = null;
       view.close();
       closeVendorMenu();
+      if (typeof o.onPanel === "function") o.onPanel(false);
       const v = getVideo();
       if (resume && v && v.paused && !v.ended) {
         if (typeof o.onPlayback === "function") o.onPlayback(false);

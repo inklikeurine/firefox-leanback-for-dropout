@@ -200,7 +200,7 @@ own form, and Dropout's messages (a wrong password, say) are shown on
 Leanback's screen. *Forgot password?* opens Leanback's reset screen. The
 privacy policy, terms and cookies policy scroll with ▲ ▼.
 
-**Browse, My List and the lists** show their shows or episodes five across
+**Browse, My List and the lists** show their shows or episodes five across (fewer at a larger Interface Size)
 (four or six with *Theme This Page*), the same cards as on Home; more
 arrive as you near the end. An empty list says so, and the selection
 waits on the rail.
@@ -228,7 +228,10 @@ or *Resume* with *Start Over* beside it when you stopped partway; *+ My
 List* (*✓ My List* once it is there); *Episodes*, the episode's
 season on its show's page; and *Clear Progress* when you have watched some
 or all of it, which makes the episode unstarted again (out of Continue
-Watching, no bar on its card) until you play it again. On the right, the
+Watching, no bar on its card) until you play it again. *Watch* or *Resume*
+has a play glyph and its word; *Start Over* (↺), *Episodes* (a list) and
+*Clear Progress* (✕) are round glyphs, each one's word under it while it is
+selected. On the right, the
 episode's picture, with how far you got and the time left. The selection starts on *Watch* or *Resume*;
 play/pause on the remote does the same.
 
@@ -255,7 +258,7 @@ it picks a track), Caption Style (font, background, window) and Leanback's
 settings. Anywhere else it holds Leanback's settings, the same list in the
 same words, with *Clear Continue Watching* at the foot. ▲ ▼ move, OK or ▶
 takes an entry, ◀ or Back goes up a level and closes the panel from the
-top. The toolbar button turns Leanback off.
+top. The toolbar button's panel turns Leanback off.
 
 **Leanback's settings**: under *Playback*, Autoplay Next Episode · Seek
 Step; under *Browsing*, Shows Open On · Skip dropout.tv Home · Back On Home
@@ -265,7 +268,7 @@ it does nothing); under *Look*, Theme This Page (on pages that have
 choices of their own) · Theme · Theme Color · Holidays · Enlarge Selection
 · Ring Width · Button Hints (a bar showing the keys that matter now, and the
 same along the foot of the on-screen keyboard; off unless turned on). Moving through the values of a look shows each at once;
-OK keeps it, Back puts it back. Then *Accessibility*: Interface Size · High
+OK keeps it, Back puts it back. Then *Accessibility*: Interface Size (100 % fills a TV's screen; 115 % and 130 % are larger, with fewer cards across a show, a list or search so nothing is cut off) · High
 Contrast · Reduce Motion · Caption Size · Caption Color · Caption
 Background · Color Filter (Experimental). At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes
@@ -289,15 +292,18 @@ walks up the site itself: episode → season → Home. Because the remote's Back
 the page, ◀ is how you close what is open on it (the settings panel, the
 rail with ▶, the control bar with ▲).
 
-The toolbar button turns the extension on and off; a keyboard shortcut for
-that can be set under *Manage Extension Shortcuts*.
+On a desktop, the toolbar button opens a small panel: a switch that turns the
+extension on and off, what Leanback makes of the tab in front (the kind of
+page, whether an episode's player is found, signed in or not), the version,
+and *All settings…* for the full settings page. A keyboard shortcut that turns
+it on and off can be set under *Manage Extension Shortcuts*.
 
 ## Permissions
 
 | Permission | Why it's needed |
 | --- | --- |
 | `storage` | Remembers your settings and your watch history (how far you got in each video), and, in session storage, which frame of a tab is the video player. |
-| `*://watch.dropout.tv/*` | Runs the navigation script on the site and lets the toolbar toggle reach it. |
+| `*://watch.dropout.tv/*` | Runs the navigation script on the site, and lets the toolbar button's panel read which Dropout page the tab is on. |
 | `*://embed.vhx.tv/*` | Dropout's video player is an iframe from this host; the extension needs a script inside it to control playback and receive keys. |
 | `*://www.dropout.tv/*` | Forwards the marketing home page (site root only) to Browse. |
 
@@ -344,7 +350,7 @@ to play its player there. The manifest declares
 - Dropout 24/7 plays on its page only while the stream's page carries its
   player's address; otherwise *Watch* opens the stream's page, where the
   sound waits for *Watch* there.
-- The on-screen keyboard opens for sign-in, the password reset, search, a profile's name and a PIN;
+- The on-screen keyboard opens for sign-in, the password reset, search, a profile's name and a PIN, and the system's own on-screen keyboard (Plasma's, say) is kept shut on those boxes while Leanback is on;
   a profile's PIN screen is Dropout's own, with Leanback's number pad on it (its markup has not been seen yet, so it is the least tried part). Signing in uses Dropout's invisible
   reCAPTCHA, which normally asks nothing; if it ever shows a puzzle, it is
   Dropout's own, and needs a pointer.

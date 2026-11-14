@@ -41,6 +41,15 @@
 
 (function () {
   const LAYER_CLASS = "tenfoot-home";
+  // The glyphs a hero's buttons can carry (24 × 24, lib/common.js svgIcon).
+  const GLYPHS = Object.freeze({
+    check: { d: "M5 12.5l4.5 4.5L19 7" },
+    plus: { d: "M12 5v14M5 12h14" },
+    play: { d: "M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.4-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z", fill: true },
+    restart: { d: ["M4.5 12a7.5 7.5 0 1 0 2.2-5.3", "M4.5 3.5v4h4"], stroke: 2.5 },
+    episodes: { d: ["M9 6.5h11", "M9 12h11", "M9 17.5h11", "M4.5 6.5h.01", "M4.5 12h.01", "M4.5 17.5h.01"], stroke: 2.5 },
+    clear: { d: ["M6.5 6.5l11 11", "M17.5 6.5l-11 11"], stroke: 2.5 }
+  });
   const COLUMNS = 5;
   const PREFETCH_ROWS = 2;
   const MORE_TIMEOUT_MS = 6000;
@@ -141,6 +150,10 @@
     field.spellcheck = false;
     field.setAttribute("aria-label", "Search");
     field.setAttribute("data-tenfoot-nozoom", "");
+    // Leanback's keyboard types here; the system's stays shut
+    // (content/keyboard.css).
+    field.setAttribute("data-tenfoot-kb-box", "");
+    field.setAttribute("inputmode", "none");
     fieldBox.appendChild(field);
     field.addEventListener("input", () => {
       if (model && model.field) Common.typeInto(model.field.proxy, field.value);
@@ -287,8 +300,12 @@
         setAttr(node, "data-tenfoot-danger", a.danger ? "true" : null);
         setAttr(node, "aria-disabled", a.disabled ? "true" : null);
         const gname = a.glyph || (typeof a.listed === "boolean" ? (a.listed ? "check" : "plus") : "");
-        if (gname) {
-          // My List, a Saved: a drawn plus or tick, then the words. The glyph
+        // A glyph-only button (an episode's Start Over, Episodes, Clear
+        // Progress): round, its words under it while it is selected
+        // (content/home.css); its name is still the words.
+        setAttr(node, "data-tenfoot-icon", a.iconOnly && GLYPHS[gname] ? "true" : null);
+        if (gname && GLYPHS[gname]) {
+          // My List, Watch, a Saved: a drawn glyph, then the words. The glyph
           // is redrawn only when it changes, so the element keeps focus.
           let word = node.querySelector(".tenfoot-hero-word");
           if (!word) {
@@ -301,7 +318,7 @@
           const glyph = node.querySelector(".tenfoot-hero-glyph");
           if (!glyph || glyph.dataset.glyph !== want) {
             if (glyph) glyph.remove();
-            const g = Common.svgIcon(doc, want === "check" ? "M5 12.5l4.5 4.5L19 7" : "M12 5v14M5 12h14", { strokeWidth: 3 });
+            const g = Common.svgIcon(doc, GLYPHS[want].d, GLYPHS[want].fill ? { fill: true } : { strokeWidth: GLYPHS[want].stroke || 3 });
             g.setAttribute("class", "tenfoot-hero-glyph");
             g.dataset.glyph = want;
             node.insertBefore(g, word);
@@ -423,6 +440,18 @@
       return { layout: "grid", box, titleBox, name, sub, grid, holder: grid, cards: new Map(), links: [], items: [] };
     }
 
+    // How many cards across a grid is laid out with: its columns as the
+    // browser drew them ("323px 323px …"), or 0 when it is not laid out (not
+    // shown yet, or no layout at all).
+    function laidOutColumns(grid) {
+      try {
+        const t = String(doc.defaultView.getComputedStyle(grid).gridTemplateColumns || "").trim();
+        return /^\d[\d.]*px(\s+\d[\d.]*px)*$/.test(t) ? t.split(/\s+/).length : 0;
+      } catch (_err) {
+        return 0;
+      }
+    }
+
     function renderSections() {
       const list = (model && model.sections) || [];
       const seen = new Set();
@@ -448,11 +477,18 @@
           setText(sec.name, s.title || "");
           setText(sec.sub, s.sub || "");
           sec.titleBox.hidden = !s.title && !s.sub;
-          // A standard grid takes Theme This Page's columns (Card Size).
+          // A standard grid (and search's results) fits as many cards across
+          // as Interface Size and Card Size (Theme This Page) leave room for, filling the row
+          // (content/home.css, data-tenfoot-fit); the number across is read
+          // back from the layout once the cards are in. Theme This Page's
+          // columns stand in until it can be (a grid not laid out).
+          const fit = s.columns === COLUMNS || s.fit === true;
           const wanted = s.columns === COLUMNS && typeof o.columns === "function" ? o.columns() : null;
           const cols = Math.max(1, wanted || s.columns || COLUMNS);
+          setAttr(sec.grid, "data-tenfoot-fit", fit ? "on" : null);
           sec.grid.style.setProperty("--tf-cols", String(cols));
-          sec.columns = cols;
+          sec.fit = fit;
+          sec.columns = fit && sec.laidOut ? sec.laidOut : cols;
           // Profiles: square pictures with round corners, the row centred.
           setAttr(sec.box, "data-tenfoot-avatars", s.avatars ? "true" : null);
         }
@@ -463,6 +499,10 @@
         const ref = prev ? prev.nextSibling : sectionsBox.firstChild;
         if (sec.box !== ref) sectionsBox.insertBefore(sec.box, ref);
         prev = sec.box;
+        if (sec.fit) {
+          const across = laidOutColumns(sec.grid);
+          if (across) sec.columns = sec.laidOut = across;
+        }
       }
       for (const [k, sec] of sectionEls) {
         if (!seen.has(k)) {

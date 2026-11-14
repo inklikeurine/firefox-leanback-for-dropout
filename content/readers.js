@@ -73,7 +73,7 @@
         // The box is on the docked keyboard (page-keyboard.js), not the screen.
         field: { value: String(input.value || ""), placeholder: input.getAttribute("placeholder") || "Search", proxy: input, docked: true },
         pills: filters.length ? { items: filters } : null,
-        sections: [{ key: "results", title: "", sub: "", columns: SEARCH_COLUMNS, items: page.items }],
+        sections: [{ key: "results", title: "", sub: "", columns: SEARCH_COLUMNS, fit: true, items: page.items }],
         empty: textOf(qs(rules.empty, doc)),
         more: qs(rules.more, doc)
       };
@@ -103,17 +103,20 @@
       const key = H && !c.live && c.href ? H.keyOf(c.href) : null;
       const entry = key ? store.entries[key] : null;
       const at = key ? H.resumePoint(store, key) : null;
-      const actions = [{ key: "watch", label: at ? "Resume" : "Watch", run: at ? "resume" : "watch", primary: true }];
-      if (at) actions.push({ key: "restart", label: "Start Over", run: "restart" });
+      // Watch (or Resume) keeps its words, with a play glyph; Start Over,
+      // Episodes and Clear Progress are round glyphs, each one's words under
+      // it while it is selected (screen.js, iconOnly).
+      const actions = [{ key: "watch", label: at ? "Resume" : "Watch", run: at ? "resume" : "watch", primary: true, glyph: "play" }];
+      if (at) actions.push({ key: "restart", label: "Start Over", run: "restart", glyph: "restart", iconOnly: true });
       const list = qs(rules.listAction, doc);
       if (list) {
         const listed = Common.matches(list, rules.listed);
         actions.push({ key: "mylist", label: "My List", ariaLabel: listed ? "Remove from My List" : "Add to My List", proxy: list, listed });
       }
       const back = hrefOf(qs(rules.season, doc)) || hrefOf(qs(rules.show, doc));
-      if (back) actions.push({ key: "episodes", label: "Episodes", href: back });
+      if (back) actions.push({ key: "episodes", label: "Episodes", href: back, glyph: "episodes", iconOnly: true });
       // Any progress drawn for it, half-way or watched: cleared on OK.
-      if (key && H.progressOf(store, key) !== null) actions.push({ key: "clear", label: "Clear Progress", run: "clear" });
+      if (key && H.progressOf(store, key) !== null) actions.push({ key: "clear", label: "Clear Progress", run: "clear", glyph: "clear", iconOnly: true });
       const reading = at && H ? H.reading(entry) : null;
       const length = reading && reading.duration ? reading.duration : 0;
       const image = qs(rules.image, doc);

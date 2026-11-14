@@ -22,6 +22,9 @@
     const lookKey = (...a) => P.lookKey(...a);
     const previewLook = (...a) => P.previewLook(...a);
     const cookiePreferences = (...a) => P.cookiePreferences(...a);
+    // The step in the tab's history that the settings stand on (see
+    // pushMenuStep()).
+    const MENU_STATE = "tenfootMenu";
 
     function renderSettings() {
       if (state.menu.isOpen) state.menu.render(state.settingsMenu.view());
@@ -33,8 +36,67 @@
       // that is not open yet would let the rail think the selection left it.
       state.menu.open();
       renderSettings();
+      pushMenuStep();
       showHints();
       return true;
+    }
+
+    // The remote's Back is Firefox's own: it goes back in the tab's history
+    // whatever the page does with the key. So while the settings are open
+    // they stand on a step of their own in the history, at the same address
+    // (pushed on the key press that opened them, so the page under it counts
+    // as used and Firefox's Back does not pass over it). Firefox's Back
+    // lands on the page again, without leaving it, and the settings go up a
+    // level (onMenuPop()); at their top they close. Closed any other way, the
+    // step is taken back off.
+    function onMenuStep() {
+      const s = history.state;
+      return Boolean(s && typeof s === "object" && s[MENU_STATE] === true);
+    }
+
+    function pushMenuStep() {
+      if (state.menuStep || onMenuStep()) return;
+      try {
+        const s = history.state && typeof history.state === "object" ? history.state : {};
+        history.pushState(Object.assign({}, s, { [MENU_STATE]: true }), "", location.href);
+      } catch (_err) {
+        return; // no step: Back leaves the page, as it would anyway
+      }
+      state.menuStep = true;
+      state.historyLength = history.length;
+    }
+
+    function dropMenuStep() {
+      if (!state.menuStep) return;
+      state.menuStep = false;
+      if (!onMenuStep()) return;
+      state.droppingMenuStep = true;
+      history.back();
+    }
+
+    // A popstate: the settings' own step coming off (Firefox's Back, or
+    // dropMenuStep()). True when it was that, and dealt with.
+    function onMenuPop() {
+      if (state.droppingMenuStep) {
+        state.droppingMenuStep = false;
+        return true;
+      }
+      if (!state.menuStep || onMenuStep()) return false;
+      state.menuStep = false;
+      if (!state.menu.isOpen) return true;
+      const r = state.settingsMenu.key("back");
+      if (r === "out") closeMenu();
+      else {
+        renderSettings();
+        // Still open, a level up: a step again for the next Back.
+        pushMenuStep();
+      }
+      return true;
+    }
+
+    // The settings open on their step: the remote's Back is for them.
+    function holdsBack() {
+      return Boolean(state.menu.isOpen && state.menuStep && onMenuStep());
     }
 
     function openMenu() {
@@ -57,6 +119,7 @@
     function closeMenu() {
       if (!state.menu.close()) return false;
       state.settingsMenu.close();
+      dropMenuStep();
       if (state.menuReturn && state.menuReturn.isConnected) focusEl(state.menuReturn);
       else if (state.playerFocused || state.theater) enterPlayer();
       else if (state.screen) {
@@ -106,7 +169,7 @@
       renderSettings();
     }
 
-    Object.assign(P, { renderSettings, openSettings, openMenu, closeMenu, dispatchInMenu, createSettingsMenu, onPanelPick });
+    Object.assign(P, { renderSettings, openSettings, openMenu, closeMenu, onMenuPop, holdsBack, dropMenuStep, dispatchInMenu, createSettingsMenu, onPanelPick });
   }
 
   globalThis.TenfootPageSettings = Object.freeze({ install });
