@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.37.2] — 2026-11-14
+
+### Added
+
+- **The toolbar button opens a small panel** (desktop): a switch that turns
+  Leanback on and off, what it makes of the tab in front (the kind of page,
+  whether an episode's player is found, signed in or not), the version, and
+  *All settings…*. The keyboard shortcut still turns it on and off.
+
+### Changed
+
+- **Interface Size 100 % fills a TV's screen.** It is drawn as 115 % was;
+  115 % and 130 % are larger again. A show's episodes, the lists and search's
+  results fit as many cards across as there is room for (five, four, three at
+  100, 115, 130 %; search three, two, two), filling the row, so nothing is cut
+  off at the right and no strip is left empty.
+- **Back in the settings goes up a level**, and at their top closes them,
+  instead of leaving the page. The same in the playback settings: the video
+  stays.
+- **An episode's details page has glyphs:** a play glyph on *Watch* /
+  *Resume*; *Start Over*, *Episodes* and *Clear Progress* are round
+  glyph-only buttons, the word under the one selected.
+
+### Fixed
+
+- **A TV's own on-screen keyboard (Plasma's) no longer opens** over
+  Leanback's on sign-in, search, a profile's name or a PIN; a real keyboard
+  still types.
+- **Sign-in works with Enter after typing with another keyboard** (the
+  system's on-screen one, a phone's, a paste): Enter no longer opened
+  Leanback's keyboard instead.
+- **Dropout's cookie windows (Customize Settings, Cookie Preferences) show
+  over Leanback's screens**; on the sign-in screen they opened hidden under it.
+- **After a cookie window closes, the remote works again:** the selection
+  comes back to where it was (or the page's first stop) instead of nowhere.
+- **A page is never left dark while Leanback waits:** Dropout's cookie box is
+  never hidden while a screen is built, and the page shows after ten seconds
+  at the most.
+- **A video that cannot play says why** on the picture, with Firefox's own
+  reason, and names a missing H.264 decoder when that is the cause.
+
 ## [0.37.1] — 2026-11-03
 
 ### Changed
