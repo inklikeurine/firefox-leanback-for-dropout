@@ -272,7 +272,14 @@ at most four times in a row (`SCREEN_REFOCUS_LIMIT`; a focus trap answering
 inside that call, `refocus()`, does not reset the count), and never from a
 dialog: the focus landing in one before the debounced check has seen it
 open makes it the dialog (`syncModal()`) at once, so the cookie banner's
-focus trap is never fought. `stampChrome()` stamps Dropout's top bar and footer
+focus trap is never fought. When the dialog closes, the selection goes back to
+the last stop selected outside any dialog (`state.lastOutside`, kept by the
+focus handler), which is not always the one selected when the dialog was seen
+opening: a dialog that took the selection first (Ketch's Cookie Preferences)
+would otherwise be its own way back, and gone. Back on the rail, the rail has
+the keys again. With nothing to go back to, `landAfterDialog()` picks the
+page's first stop: the docked keyboard's keys, sign-in's first box, the
+screen's selection. `stampChrome()` stamps Dropout's top bar and footer
 (`common.chrome`) `data-tenfoot-chrome`, which `page.css` hides, on every
 page kind but `other`.
 
