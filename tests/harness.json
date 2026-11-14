@@ -44,6 +44,12 @@
       ]
     },
     {
+      "step": "Interface Size 100 % draws at 92 % of a 1920-wide layout (the rail's width says so)",
+      "check": [
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"Math.round(document.querySelector('.tenfoot-rail').getBoundingClientRect().width / innerWidth * 1920 * 10) / 10\" }); return Math.abs(r - 89.6 * 0.92) < 1; })()"
+      ]
+    },
+    {
       "step": "the selection is enlarged and drawn in the theme's colours",
       "check": [
         "(function (s) { return typeof s.zoomed === 'string' && s.zoomed.startsWith('matrix(1.05'); })(await __page({ type: 'page:state' }))",
@@ -64,7 +70,7 @@
       "check": [
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const img = document.querySelector('.tenfoot-row[data-tenfoot-row=\\\"https://watch.dropout.tv/trending\\\"] .tenfoot-card[data-tenfoot-card=\\\"https://watch.dropout.tv/game-changer\\\"] .tenfoot-card-art'); return img.getAttribute('src') === 'https://watch.dropout.tv/art-1.svg'; })()\" }); return r === true; })()",
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cs = getComputedStyle(document.querySelector('.tenfoot-rail-item[data-tenfoot-page=\\\"true\\\"]')); return cs.backgroundColor + '|' + cs.color; })()\" }); return r === 'rgba(0, 0, 0, 0)|rgb(254, 234, 59)'; })()",
-        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const u = innerWidth / 1920 * 0.8; return Math.abs(document.querySelector('.tenfoot-rail').getBoundingClientRect().width - 89.6 * u) <= 1 && Math.abs(document.querySelector('.tenfoot-card').getBoundingClientRect().width - 352 * u) <= 1; })()\" }); return r === true; })()"
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const u = innerWidth / 1920 * 0.92; return Math.abs(document.querySelector('.tenfoot-rail').getBoundingClientRect().width - 89.6 * u) <= 1 && Math.abs(document.querySelector('.tenfoot-card').getBoundingClientRect().width - 352 * u) <= 1; })()\" }); return r === true; })()"
       ]
     },
     {
@@ -459,7 +465,7 @@
         "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/new-releases' }), true)",
         "sleep 2",
         "(function (s) { return s.kind === 'series' && s.home && s.home.kind === 'screen' && s.home.title === 'New Releases' && s.home.count === 18 && s.rail && s.rail.page === null && s.focused && s.focused.href === 'https://watch.dropout.tv/new-releases/videos/nr-ep-1'; })(await __page({ type: 'page:state' }))",
-        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cards = [...document.querySelectorAll('.tenfoot-screen .tenfoot-card')].map((c) => c.getBoundingClientRect()); const u = innerWidth / 1920 * 0.8; const layer = document.querySelector('.tenfoot-screen').getBoundingClientRect(); const firstRow = cards.slice(0, 5).every((c) => Math.abs(c.top - cards[0].top) < 1); return [firstRow, cards[5].top > cards[0].bottom, Math.abs(cards[1].left - cards[0].left - 380 * u) < 2, Math.abs(cards[0].width - 352 * u) < 2, layer.width === innerWidth && layer.height === innerHeight, getComputedStyle(document.querySelector('.site-header')).display, getComputedStyle(document.querySelector('footer.footer--site')).display].join('|'); })()\" }); return r === 'true|true|true|true|true|none|none'; })()",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const cards = [...document.querySelectorAll('.tenfoot-screen .tenfoot-card')].map((c) => c.getBoundingClientRect()); const u = innerWidth / 1920 * 0.92; const layer = document.querySelector('.tenfoot-screen').getBoundingClientRect(); const firstRow = cards.slice(0, 5).every((c) => Math.abs(c.top - cards[0].top) < 1); return [firstRow, cards[5].top > cards[0].bottom, Math.abs(cards[1].left - cards[0].left - 380 * u) < 2, Math.abs(cards[0].width - 352 * u) < 2, layer.width === innerWidth && layer.height === innerHeight, getComputedStyle(document.querySelector('.site-header')).display, getComputedStyle(document.querySelector('footer.footer--site')).display].join('|'); })()\" }); return r === 'true|true|true|true|true|none|none'; })()",
         "(await __act('down')).focused.href === 'https://watch.dropout.tv/new-releases/videos/nr-ep-6'",
         "sleep 0.4",
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const layer = document.querySelector('.tenfoot-screen'); const card = document.activeElement.getBoundingClientRect(); return layer.getAttribute('data-tenfoot-scrolled') === 'true' && card.top < innerHeight * 0.2 && card.top > 0; })()\" }); return r === true; })()"

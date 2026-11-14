@@ -427,6 +427,18 @@
       return { layout: "grid", box, titleBox, name, sub, grid, holder: grid, cards: new Map(), links: [], items: [] };
     }
 
+    // How many cards across a grid is laid out with: its columns as the
+    // browser drew them ("323px 323px …"), or 0 when it is not laid out (not
+    // shown yet, or no layout at all).
+    function laidOutColumns(grid) {
+      try {
+        const t = String(doc.defaultView.getComputedStyle(grid).gridTemplateColumns || "").trim();
+        return /^\d[\d.]*px(\s+\d[\d.]*px)*$/.test(t) ? t.split(/\s+/).length : 0;
+      } catch (_err) {
+        return 0;
+      }
+    }
+
     function renderSections() {
       const list = (model && model.sections) || [];
       const seen = new Set();
@@ -452,11 +464,18 @@
           setText(sec.name, s.title || "");
           setText(sec.sub, s.sub || "");
           sec.titleBox.hidden = !s.title && !s.sub;
-          // A standard grid takes Theme This Page's columns (Card Size).
+          // A standard grid (and search's results) fits as many cards across
+          // as Interface Size and Card Size (Theme This Page) leave room for, filling the row
+          // (content/home.css, data-tenfoot-fit); the number across is read
+          // back from the layout once the cards are in. Theme This Page's
+          // columns stand in until it can be (a grid not laid out).
+          const fit = s.columns === COLUMNS || s.fit === true;
           const wanted = s.columns === COLUMNS && typeof o.columns === "function" ? o.columns() : null;
           const cols = Math.max(1, wanted || s.columns || COLUMNS);
+          setAttr(sec.grid, "data-tenfoot-fit", fit ? "on" : null);
           sec.grid.style.setProperty("--tf-cols", String(cols));
-          sec.columns = cols;
+          sec.fit = fit;
+          sec.columns = fit && sec.laidOut ? sec.laidOut : cols;
           // Profiles: square pictures with round corners, the row centred.
           setAttr(sec.box, "data-tenfoot-avatars", s.avatars ? "true" : null);
         }
@@ -467,6 +486,10 @@
         const ref = prev ? prev.nextSibling : sectionsBox.firstChild;
         if (sec.box !== ref) sectionsBox.insertBefore(sec.box, ref);
         prev = sec.box;
+        if (sec.fit) {
+          const across = laidOutColumns(sec.grid);
+          if (across) sec.columns = sec.laidOut = across;
+        }
       }
       for (const [k, sec] of sectionEls) {
         if (!seen.has(k)) {

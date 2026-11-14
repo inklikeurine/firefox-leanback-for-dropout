@@ -3,12 +3,12 @@
    while Leanback is on (html[data-tenfoot="on"]). Sizes are in --tf-u, a
    fraction of the viewport width, so the screen looks the same on a 1080p and
    a 4K television; text never goes below 13 px. Home and the rail are drawn
-   at 80 % of a 1920-wide layout. */
+   at 92 % of a 1920-wide layout (Interface Size 100 %). */
 
 :root {
   /* --tf-scale: Interface Size (Accessibility); the theme's colours below are
      set again on <html> by the page script (lib/themes.js). */
-  --tf-u: calc(100vw / 1920 * 0.8 * var(--tf-scale, 1));
+  --tf-u: calc(100vw / 1920 * 0.92 * var(--tf-scale, 1));
   --tenfoot-accent: #feea3b;
   --tf-bg: #0b0c10;
   --tf-surface: #15171c;
@@ -683,6 +683,17 @@ html[data-tenfoot="on"] .tenfoot-screen-pills[hidden] {
 }
 .tenfoot-screen-grid .tenfoot-card {
   width: var(--tf-card-w);
+}
+/* A standard grid (a show's episodes, a list): as many cards across as fit at
+   about the card size (Interface Size, Card Size), stretched to fill the row,
+   so there is no strip left over on the right at one size and no card cut off
+   at another. page.js reads back how many fit (screen.js). */
+.tenfoot-screen-grid[data-tenfoot-fit] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--tf-card-w) * 0.96)), 1fr));
+  margin-right: var(--tf-gutter);
+}
+.tenfoot-screen-grid[data-tenfoot-fit] .tenfoot-card {
+  width: auto;
 }
 
 .tenfoot-home-more {

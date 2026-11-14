@@ -659,8 +659,11 @@ the `profiles` and `profileEdit` kinds keep their screen under a dialog).
 settings change and every preview: the theme's colours as `--tf-*`
 properties (`home.css` `:root` has Dropout Dark's), the accent as
 `--tenfoot-accent` and `--tenfoot-ring-color` (the holiday's when one is on,
-else Theme Color), `--tf-scale` (Interface Size; `--tf-u` is multiplied by
-it), `--tf-glow` / `--tf-glow2` for a holiday's glow, and
+else Theme Color), `--tf-scale` (Interface Size; `--tf-u`, 92 % of a 1920-wide layout at
+100 %, is multiplied by it; a show's episodes, a list and search's results
+are grids that fit as many cards across as there is room for,
+`data-tenfoot-fit`, and `screen.js` reads the number across back from the
+layout for ▲ ▼), `--tf-glow` / `--tf-glow2` for a holiday's glow, and
 `data-tenfoot-theme`, `-holiday`, `-contrast`, `-motion` for the rules that
 need more than a colour. Every colour in the stylesheets that was Dropout's
 yellow or one of the dark greys reads these properties. Theme This Page is

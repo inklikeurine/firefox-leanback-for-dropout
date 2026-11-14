@@ -73,7 +73,7 @@
         // The box is on the docked keyboard (page-keyboard.js), not the screen.
         field: { value: String(input.value || ""), placeholder: input.getAttribute("placeholder") || "Search", proxy: input, docked: true },
         pills: filters.length ? { items: filters } : null,
-        sections: [{ key: "results", title: "", sub: "", columns: SEARCH_COLUMNS, items: page.items }],
+        sections: [{ key: "results", title: "", sub: "", columns: SEARCH_COLUMNS, fit: true, items: page.items }],
         empty: textOf(qs(rules.empty, doc)),
         more: qs(rules.more, doc)
       };
