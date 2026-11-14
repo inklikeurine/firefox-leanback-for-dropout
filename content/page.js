@@ -105,6 +105,7 @@
     profile: 0, // which of the account's profiles is watching (its history)
     metaSent: null,
     pendingInitialFocus: 0,
+    pendingTimer: 0, // the most a screen being built keeps Dropout's page hidden (setPending)
     initialFocusTimer: 0,
     menuRefocus: 0,
     refocusing: false, // inside refocus(): the focus is being taken back
