@@ -24,6 +24,22 @@
       return qsa(pinRules().boxes).filter((b) => b.tagName === "INPUT" && !b.disabled && b.type !== "hidden");
     }
 
+    // A box Leanback's keyboard types into. The system's own on-screen
+    // keyboard (a TV's, such as Plasma's) would open over it as soon as it is
+    // selected: Firefox is told the box takes no typing through the system
+    // (content/keyboard.css, ime-mode), and inputmode="none" says the same to
+    // any keyboard that reads it. A real keyboard still types. Dropout's own
+    // PIN boxes are marked as they appear.
+    function keyboardBox(input) {
+      if (!input || input.hasAttribute("data-tenfoot-kb-box")) return;
+      input.setAttribute("data-tenfoot-kb-box", "");
+      input.setAttribute("inputmode", "none");
+    }
+
+    function markPinBoxes() {
+      for (const b of pinBoxes()) keyboardBox(b);
+    }
+
     // The layout a box gets, or null for a box Leanback does not open the
     // keyboard for.
     function layoutFor(el) {
@@ -144,7 +160,7 @@
       if (state.typedBox && state.typedBox !== el) state.typedBox = null;
     }
 
-    Object.assign(P, { onBoxKey, onClick, onSelect, dockKeyboard, undockKeyboard, toResults, keyboardEdge, keyboardEntered });
+    Object.assign(P, { keyboardBox, markPinBoxes, onBoxKey, onClick, onSelect, dockKeyboard, undockKeyboard, toResults, keyboardEdge, keyboardEntered });
   }
 
   globalThis.TenfootPageKeyboard = Object.freeze({ install });

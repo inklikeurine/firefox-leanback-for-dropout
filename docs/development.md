@@ -55,6 +55,7 @@ document.querySelector("video")           // the media element the extension dri
 | Arrows do nothing on a page | The page kind wasn't recognised (URL not in `routes` in `sites/dropout.json`) |
 | Keys don't reach the player | The `embed.vhx.tv` script didn't register (frame blocked, or `all_frames` missing) — see the relay in the background console |
 | Playback doesn't start | Autoplay blocked — press OK once; check `about:preferences#privacy` → Autoplay for the site |
+| "This video can't play here." on the picture | Firefox could not play the video; the box says Firefox's reason. "No H.264 video decoder": this Firefox has no H.264 decoder (check `about:support` → Media → Codec Support); on Fedora, install the full FFmpeg for Firefox (or use the Flathub Firefox) |
 | Navigation broke after a Dropout update | Re-check the site: [site-notes.md](./site-notes.md#checking-the-site-again) |
 
 ## Testing and releasing

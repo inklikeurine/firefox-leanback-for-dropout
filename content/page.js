@@ -78,6 +78,7 @@
     pendingPlayerFocus: false,
     modal: null,
     modalReturn: null,
+    lastOutside: null, // the last stop selected outside any dialog: where a dialog's close comes back to
     menu: null,
     ask: null, // a question in a box (nav/ask.js): Sign out?, Delete profile?
     keyboard: null, // the on-screen keyboard (nav/keyboard.js)
@@ -95,6 +96,8 @@
     home: null,
     screenRefocus: 0,
     historyLength: 0,
+    menuStep: false, // the settings stand on a step of their own in the history
+    droppingMenuStep: false,
     rail: null,
     railActive: false,
     railReturn: null,
@@ -102,6 +105,7 @@
     profile: 0, // which of the account's profiles is watching (its history)
     metaSent: null,
     pendingInitialFocus: 0,
+    pendingTimer: 0, // the most a screen being built keeps Dropout's page hidden (setPending)
     initialFocusTimer: 0,
     menuRefocus: 0,
     refocusing: false, // inside refocus(): the focus is being taken back
@@ -299,6 +303,8 @@
     state.engaged = null;
     if (state.menu) state.menu.close();
     state.menuReturn = null;
+    // A new page: the settings' step, if any, was the last page's.
+    state.menuStep = false;
     state.kind = Rules.classify(state.rules, location.pathname);
     // A hub (/dimension-20) has a one-segment address like a show, but it is
     // drawn by the same component as Home, and gets the same screen.
@@ -894,7 +900,12 @@
     if (state.modal && state.modal.isConnected) state.modal.removeAttribute("data-tenfoot-dialog");
     if (m) m.setAttribute("data-tenfoot-dialog", "");
     if (m) {
-      state.modalReturn = currentEl();
+      // Where its close comes back to: the selection now, unless the dialog
+      // took it before the page script saw the dialog open (Ketch's windows
+      // do), or one dialog took over from another; then the last stop
+      // selected outside them.
+      const cur = currentEl();
+      if (!state.modal) state.modalReturn = cur && !inDialog(cur) ? cur : state.lastOutside;
       state.modal = m;
       // The dialog's own first choice, else its first stop for now.
       const start = modalStart(m);
@@ -909,8 +920,49 @@
       state.modalAwaitStart = false;
       const r = state.modalReturn;
       state.modalReturn = null;
-      if (r && r.isConnected) focusEl(r);
+      if (r && r.isConnected && !inDialog(r) && Spatial.isVisible(r, window)) {
+        // Back on the rail: the rail has the keys again (the dialog taking
+        // the selection took them from it).
+        if (state.rail && state.rail.contains(r)) state.railActive = true;
+        focusEl(r);
+      } else landAfterDialog();
     }
+  }
+
+  // Inside one of the site's dialogs (rules: common.modals)?
+  function inDialog(el) {
+    if (!el || !el.closest) return false;
+    return Rules.selectorList((state.rules.common || {}).modals).some((sel) => {
+      try {
+        return Boolean(el.closest(sel));
+      } catch (_err) {
+        return false;
+      }
+    });
+  }
+
+  // A dialog closed with nothing to come back to (what was selected went with
+  // it): the page's own first stop — the docked keyboard's keys, the
+  // screen's selection, sign-in's first box — so the remote never lands on
+  // nothing.
+  function landAfterDialog() {
+    if (state.keyboard && state.keyboard.isDocked) {
+      state.railActive = false;
+      state.keyboard.enter();
+      return;
+    }
+    if (state.signin) {
+      focusEl(state.signin.submit.hidden ? state.signin.alt : state.signin.email);
+      return;
+    }
+    if (state.screen) {
+      const t = state.screen.current || state.screen.initialTarget();
+      if (t) {
+        focusEl(t, { scroll: false });
+        return;
+      }
+    }
+    refocusPage();
   }
 
   function dispatchInModal(action) {
@@ -1022,6 +1074,9 @@
     const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
+      // Leanback's settings: Firefox's Back takes their step off, and they go
+      // up a level (onPopState); nothing else to do here.
+      if (P.holdsBack()) return;
       if (overlay() && !(state.keyboard.isOpen && state.keyboard.isDocked)) {
         // A question is answered, not left by going back a page.
         e.preventDefault();
@@ -1082,6 +1137,7 @@
       return;
     }
     if (state.playerFocused) state.playerFocused = false;
+    if (!inDialog(t)) state.lastOutside = t;
     const box = overlay();
     if (box) {
       // An open question keeps the selection, a bounded number of times
@@ -1167,6 +1223,8 @@
   function onPopState() {
     if (state.leaving || !state.enabled) return;
     clearBackFallback();
+    // The settings' own step in the history (content/page-settings.js).
+    if (P.onMenuPop()) return;
     if (overlay()) overlay().close();
     if (location.href !== state.href) onNavigate(true);
     else if (state.inPlace) followInPlace();
@@ -1202,6 +1260,7 @@
     refreshScreen();
     stampChrome();
     syncForm();
+    P.markPinBoxes();
     if (state.pendingInitialFocus) tryInitialFocus();
     if (state.pendingLoadMore) continueLoadMore();
     if (state.kind === "video") {
@@ -1250,6 +1309,15 @@
     }
   }
 
+  function signedInNow() {
+    const c = (state.rules && state.rules.common) || {};
+    try {
+      if (c.signedOut && document.querySelector(c.signedOut)) return false;
+      if (c.signedIn && document.querySelector(c.signedIn)) return true;
+    } catch (_err) { /* a selector the page cannot read */ }
+    return null;
+  }
+
   function snapshot() {
     const cur = state.playerFocused ? null : currentEl();
     const describe = (el) => ({
@@ -1265,6 +1333,9 @@
       ok: true,
       enabled: state.enabled,
       kind: state.kind,
+      // Signed in, signed out, or not known (null), from the page's own marks
+      // (rules: common.signedIn / signedOut); the toolbar panel shows it.
+      signedIn: signedInNow(),
       watch: state.watch,
       theater: state.theater,
       playerFocused: state.playerFocused,

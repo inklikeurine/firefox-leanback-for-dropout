@@ -175,7 +175,7 @@ async function updateBadge(settings) {
   try {
     await API.browserAction.setBadgeText({ text: s.enabled ? "" : "OFF" });
     await API.browserAction.setBadgeBackgroundColor({ color: "#5a5a5a" });
-    await API.browserAction.setTitle({ title: s.enabled ? "Leanback for Dropout is on (click to turn off)" : "Leanback for Dropout is off (click to turn on)" });
+    await API.browserAction.setTitle({ title: s.enabled ? "Leanback for Dropout is on" : "Leanback for Dropout is off" });
   } catch (err) {
     console.warn(LOG, "badge update failed:", err && err.message);
   }
@@ -277,10 +277,6 @@ API.runtime.onMessage.addListener((message, sender, sendResponse) => {
     .then((result) => sendResponse(result))
     .catch((err) => sendResponse({ ok: false, error: err && err.message ? err.message : "Error" }));
   return true;
-});
-
-API.browserAction.onClicked.addListener(() => {
-  toggleEnabled().catch((err) => console.error(LOG, "toggle failed:", err));
 });
 
 if (API.commands && API.commands.onCommand) {

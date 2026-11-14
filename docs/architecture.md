@@ -32,7 +32,7 @@ scripts, and the background script relays between them.
 
 | File | Runs in | Owns |
 | --- | --- | --- |
-| `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; toolbar toggle and badge; `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
+| `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; the badge (the toolbar button opens `popup/`, which saves the on/off itself and asks the tab's page script for `page:state`); `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
 | `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`); a row with `menu` is in a menu of its own (Accessibility), one with `look` previews as you move through its values. `PAGE_LOOKS`: Theme This Page's choices per kind of page. *Back On Home*'s default follows `development` until it is picked (`exitHookSet`). |
 | `lib/themes.js` | Page, player | [The look](#the-look-libthemesjs): themes, holiday looks by date, Accessibility's look; `apply()` writes it onto `<html>` (CSS properties, `data-tenfoot-*`), `applyPlayer()` the caption style and the video's colour filter in the player frame. |
 | `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `profileIndex` (the profile watching, from the page's `VHX.config.profile_index`), `send` (a reply that is always an object), `el` and `svgIcon` (the elements and icons Leanback draws), `prefersReducedMotion`. |
@@ -68,6 +68,7 @@ scripts, and the background script relays between them.
 | `nav/site-rules.js` | Both content scripts | URL → page kind, selector lists. Pure. |
 | `sites/dropout.json` | Fetched by the background | [All Dropout knowledge](#sitesdropoutjson). |
 | `options/options.html/.js/.css` | Options page (`open_in_tab`) | The settings form. |
+| `popup/popup.html/.js/.css` | The toolbar button's panel (`browser_action.default_popup`) | The on/off switch, the version, what Leanback makes of the tab in front (`page:state` from its page script), *All settings…* (`runtime.openOptionsPage()`). |
 
 `nav/*` and the message protocol know nothing about Dropout; everything
 Leanback knows about Dropout's pages is in `sites/dropout.json`.
@@ -204,8 +205,12 @@ take the focus.
 
 A screen not ready when the page is set up (Home's rows come later) also sets
 `html[data-tenfoot-pending]`: `content/page.css` keeps `<body>` hidden under
-it (a video playing in the full window excepted) until `refreshScreen()` finds the screen ready or
-`stopScreen()` gives up.
+it (a video playing in the full window excepted, and the cookie dialog's
+`#lanyard_root`, which may come up meanwhile and has to be answered) until
+`refreshScreen()` finds the screen ready or `stopScreen()` gives up, and ten
+seconds at the most (`setPending()`'s own timer, `PENDING_MAX_MS`): a cookie
+dialog up holds the give-up in `tryInitialFocus()`, and a page must never be
+left dark.
 
 ## Spatial navigation (`nav/spatial.js`)
 
@@ -272,7 +277,14 @@ at most four times in a row (`SCREEN_REFOCUS_LIMIT`; a focus trap answering
 inside that call, `refocus()`, does not reset the count), and never from a
 dialog: the focus landing in one before the debounced check has seen it
 open makes it the dialog (`syncModal()`) at once, so the cookie banner's
-focus trap is never fought. `stampChrome()` stamps Dropout's top bar and footer
+focus trap is never fought. When the dialog closes, the selection goes back to
+the last stop selected outside any dialog (`state.lastOutside`, kept by the
+focus handler), which is not always the one selected when the dialog was seen
+opening: a dialog that took the selection first (Ketch's Cookie Preferences)
+would otherwise be its own way back, and gone. Back on the rail, the rail has
+the keys again. With nothing to go back to, `landAfterDialog()` picks the
+page's first stop: the docked keyboard's keys, sign-in's first box, the
+screen's selection. `stampChrome()` stamps Dropout's top bar and footer
 (`common.chrome`) `data-tenfoot-chrome`, which `page.css` hides, on every
 page kind but `other`.
 
@@ -652,8 +664,11 @@ the `profiles` and `profileEdit` kinds keep their screen under a dialog).
 settings change and every preview: the theme's colours as `--tf-*`
 properties (`home.css` `:root` has Dropout Dark's), the accent as
 `--tenfoot-accent` and `--tenfoot-ring-color` (the holiday's when one is on,
-else Theme Color), `--tf-scale` (Interface Size; `--tf-u` is multiplied by
-it), `--tf-glow` / `--tf-glow2` for a holiday's glow, and
+else Theme Color), `--tf-scale` (Interface Size; `--tf-u`, 92 % of a 1920-wide layout at
+100 %, is multiplied by it; a show's episodes, a list and search's results
+are grids that fit as many cards across as there is room for,
+`data-tenfoot-fit`, and `screen.js` reads the number across back from the
+layout for ▲ ▼), `--tf-glow` / `--tf-glow2` for a holiday's glow, and
 `data-tenfoot-theme`, `-holiday`, `-contrast`, `-motion` for the rules that
 need more than a colour. Every colour in the stylesheets that was Dropout's
 yellow or one of the dark greys reads these properties. Theme This Page is
@@ -1193,8 +1208,10 @@ The parts of `manifest.json` (MV2) that are not obvious:
 - `sites/dropout.json` is not in `web_accessible_resources`: the background
   fetches it, and an extension reading its own file needs no declaration.
 - `commands.toggle-tv-mode` has no default key (set one in `about:addons` →
-  Manage Extension Shortcuts). No popup: a popup cannot be driven from a
-  remote.
+  Manage Extension Shortcuts). The toolbar button's panel (`popup/`) is
+  for a desktop with a mouse: a popup cannot be driven from a remote, and a
+  TV in kiosk has no toolbar, so nothing on the TV depends on it; the
+  remote's Menu opens the settings there.
 - No `update_url`: distribution is AMO (unlisted) or a temporary load.
 
 ## `sites/dropout.json`

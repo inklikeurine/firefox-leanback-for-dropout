@@ -148,6 +148,11 @@ html[data-tenfoot="on"][data-tenfoot-pending] {
 html[data-tenfoot="on"][data-tenfoot-pending] body {
   visibility: hidden !important;
 }
+/* …but never the cookie box (Ketch, in #lanyard_root): it may come up while
+   a screen is still being built, and it has to be answered. */
+html[data-tenfoot="on"][data-tenfoot-pending] #lanyard_root {
+  visibility: visible !important;
+}
 html.tenfoot-theater[data-tenfoot="on"][data-tenfoot-pending] [data-tenfoot-theater-root] {
   visibility: visible !important;
 }

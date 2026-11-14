@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Leanback for Dropout</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Leanback for Dropout</h1>
+    <span id="version" class="muted"></span>
+  </header>
+  <label class="switch">
+    <input type="checkbox" id="enabled">
+    <span>TV navigation</span>
+  </label>
+  <section>
+    <h2>This tab</h2>
+    <dl id="tab"></dl>
+  </section>
+  <button type="button" id="settings">All settings…</button>
+  <p class="muted" id="shortcut"></p>
+  <script src="../lib/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

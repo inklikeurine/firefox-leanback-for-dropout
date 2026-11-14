@@ -415,3 +415,44 @@ html[data-tenfoot-filter="tritanopia"] video {
   filter: url(#tenfoot-filter-tritanopia) !important;
 }
 
+/* A video that cannot play (content/player.js): what went wrong, in the middle
+   of the picture, until it plays. */
+.tenfoot-play-error {
+  --tf-pu: calc(100vw / 1920);
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  width: min(90vw, calc(var(--tf-pu) * 1100));
+  padding: calc(var(--tf-pu) * 40) calc(var(--tf-pu) * 48);
+  border-radius: calc(var(--tf-pu) * 16);
+  background: rgba(10, 11, 14, 0.92);
+  color: #f5f6f7;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.tenfoot-play-error[hidden],
+.tenfoot-play-error [hidden] {
+  display: none;
+}
+.tenfoot-play-error p {
+  margin: 0;
+}
+.tenfoot-play-error-title {
+  font-size: max(20px, calc(var(--tf-pu) * 40));
+  font-weight: 800;
+  color: var(--tenfoot-ring-color, #feea3b);
+}
+.tenfoot-play-error-text {
+  margin-top: calc(var(--tf-pu) * 16) !important;
+  font-size: max(15px, calc(var(--tf-pu) * 26));
+  line-height: 1.4;
+}
+.tenfoot-play-error-said {
+  margin-top: calc(var(--tf-pu) * 16) !important;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: max(12px, calc(var(--tf-pu) * 18));
+  color: #9aa0ac;
+}

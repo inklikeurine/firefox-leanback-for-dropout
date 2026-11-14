@@ -62,6 +62,8 @@
     settings: Settings.normalize(null),
     rules: DEFAULT_RULES,
     video: null,
+    panelStep: false, // the settings panel stands on a step of its own in the history
+    droppingPanelStep: false,
     observer: null,
     mutationTimer: 0,
     barIdleTimer: 0,
@@ -383,11 +385,57 @@
       onAction: (id) => {
         if (id === "forget") send({ type: "history:clear" });
       },
-      onClose: () => leaveTransport()
+      onClose: () => leaveTransport(),
+      onPanel: (open) => syncPanelStep(open)
     });
     state.bar.setStyle(state.settings);
     state.bar.setInfo(state.info);
     return state.bar;
+  }
+
+  // The remote's Back is Firefox's own: it goes back in the tab's history
+  // whatever this frame does with the key, which would leave the video. So
+  // while the settings panel is open it stands on a step of its own in the
+  // history (this frame's, at the same address). Firefox's Back takes that
+  // step off and the panel goes up a level, as Escape does; at its top it
+  // closes and the video plays on. Closed any other way, the step is taken
+  // back off.
+  const PANEL_STATE = "tenfootPanel";
+
+  function onPanelStep() {
+    const s = history.state;
+    return Boolean(s && typeof s === "object" && s[PANEL_STATE] === true);
+  }
+
+  function syncPanelStep(open) {
+    if (open) {
+      if (state.panelStep || onPanelStep()) return;
+      try {
+        const s = history.state && typeof history.state === "object" ? history.state : {};
+        history.pushState(Object.assign({}, s, { [PANEL_STATE]: true }), "", location.href);
+        state.panelStep = true;
+      } catch (_err) { /* no step: Back leaves the video, as it would anyway */ }
+      return;
+    }
+    if (!state.panelStep) return;
+    state.panelStep = false;
+    if (!onPanelStep()) return;
+    state.droppingPanelStep = true;
+    history.back();
+  }
+
+  function onPopState() {
+    if (state.droppingPanelStep) {
+      state.droppingPanelStep = false;
+      return;
+    }
+    if (!state.panelStep || onPanelStep()) return;
+    state.panelStep = false;
+    const b = state.bar;
+    if (!b || !b.panelOpen) return;
+    b.dispatch("back");
+    // Still open, a level up: a step again for the next Back.
+    if (b.panelOpen) syncPanelStep(true);
   }
 
   // Accessibility in the player: Leanback's caption style and the video's
@@ -630,6 +678,9 @@
     // Firefox goes back on the remote's BrowserBack whatever this frame does
     // with it (T2). The page decides whether that needs any help.
     if (action === "back" && e.key === "BrowserBack") {
+      // The settings panel on its step: Firefox's Back takes the step off
+      // and the panel goes up a level (onPopState).
+      if (state.bar && state.bar.panelOpen && state.panelStep && onPanelStep()) return;
       dropBar();
       send({ type: "page:action", action: "browser-back" });
       return;
@@ -1154,6 +1205,72 @@
     report();
   }
 
+  // ----- a video that cannot play --------------------------------------------
+  //
+  // Leanback hides the player's own controls, and with them the player's own
+  // word on a video that will not play, so on a TV a failure looked like
+  // nothing happening. This frame says so on the picture instead: Firefox's
+  // own reason (the media element's error), and, when this Firefox has no
+  // H.264 decoder at all (Dropout's videos are H.264), that, which is a
+  // matter for the TV's Firefox and not for Dropout. It goes once the video
+  // plays.
+  const MEDIA_ERRORS = { 2: "MEDIA_ERR_NETWORK", 3: "MEDIA_ERR_DECODE", 4: "MEDIA_ERR_SRC_NOT_SUPPORTED" };
+  const H264 = 'video/mp4; codecs="avc1.640028"';
+
+  // true, false, or null when it cannot be asked.
+  function canDecodeH264() {
+    try {
+      const MS = window.MediaSource;
+      if (MS && typeof MS.isTypeSupported === "function") return Boolean(MS.isTypeSupported(H264));
+    } catch (_err) { /* not asked */ }
+    return null;
+  }
+
+  function errorBox() {
+    let box = document.querySelector(".tenfoot-play-error");
+    if (box) return box;
+    box = document.createElement("div");
+    box.className = "tenfoot-play-error";
+    box.setAttribute("role", "alert");
+    for (const cls of ["tenfoot-play-error-title", "tenfoot-play-error-text", "tenfoot-play-error-said"]) {
+      const p = document.createElement("p");
+      p.className = cls;
+      box.appendChild(p);
+    }
+    box.hidden = true;
+    document.documentElement.appendChild(box);
+    return box;
+  }
+
+  // `said`: Firefox's own reason, or "" when there is none (no decoder found
+  // before anything was tried).
+  function showPlayError(said) {
+    if (!state.settings.enabled) return;
+    const h264 = canDecodeH264();
+    const box = errorBox();
+    box.querySelector(".tenfoot-play-error-title").textContent = "This video can't play here.";
+    box.querySelector(".tenfoot-play-error-text").textContent = h264 === false
+      ? "This Firefox has no H.264 video decoder, and Dropout's videos are H.264. Install the video codecs for this computer's Firefox (on Fedora, the full FFmpeg), then try again."
+      : "Try again in a moment. If no video plays at all, this computer's Firefox may be missing the video codecs Dropout's videos need.";
+    const line = box.querySelector(".tenfoot-play-error-said");
+    line.textContent = said ? `Firefox says: ${said}` : "";
+    line.hidden = !said;
+    box.hidden = false;
+  }
+
+  function hidePlayError() {
+    const box = document.querySelector(".tenfoot-play-error");
+    if (box) box.hidden = true;
+  }
+
+  function onMediaError(e) {
+    const err = e && e.target && e.target.error;
+    if (!err || !MEDIA_ERRORS[err.code]) return; // aborted on purpose, or no error after all
+    const said = `${MEDIA_ERRORS[err.code]}${err.message ? ` (${err.message})` : ""}`;
+    console.warn(LOG, "the video cannot play:", said, "H.264 decoder:", canDecodeH264());
+    showPlayError(said);
+  }
+
   function attach(v) {
     if (state.video === v) return;
     if (state.video) detach(state.video);
@@ -1169,6 +1286,13 @@
     v.addEventListener("ended", onEnded);
     v.addEventListener("timeupdate", onTimeUpdate);
     v.addEventListener("seeked", onSeeked);
+    v.addEventListener("error", onMediaError);
+    v.addEventListener("playing", hidePlayError);
+    // No H.264 decoder: nothing Dropout sends will play, so it is said at once.
+    if (canDecodeH264() === false) {
+      console.warn(LOG, "this Firefox has no H.264 video decoder; Dropout's videos will not play");
+      showPlayError("");
+    }
     state.lastSave = Date.now();
     state.titleShownFor = null;
     state.upNext = { shown: false, dismissed: false, siteHidden: false };
@@ -1190,6 +1314,8 @@
     v.removeEventListener("ended", onEnded);
     v.removeEventListener("timeupdate", onTimeUpdate);
     v.removeEventListener("seeked", onSeeked);
+    v.removeEventListener("error", onMediaError);
+    v.removeEventListener("playing", hidePlayError);
     if (state.video === v) state.video = null;
   }
 
@@ -1288,6 +1414,7 @@
     });
     API.runtime.onMessage.addListener(onMessage);
     window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("popstate", onPopState);
     // The remote's menu button arrives as a ContextMenu key here too; without
     // this, Firefox's own menu would open over the video.
     window.addEventListener("contextmenu", onContextMenu, true);

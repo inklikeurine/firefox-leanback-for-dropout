@@ -466,7 +466,10 @@ use ([targets.md](./targets.md)).
   from); *+ My List* / *✓ My List* (Dropout's own button, pressed; the
   screen reader says *Add to My List* / *Remove from My List*); *Episodes* (the season's page, else the show's); *Clear
   Progress* when the history draws any progress for it, partway or watched
-  (see *Clear Progress* under the watch history). On the right
+  (see *Clear Progress* under the watch history). *Watch* / *Resume* has a
+  play glyph before its word; *Start Over* (↺), *Episodes* (a list) and
+  *Clear Progress* (✕) are round glyph-only buttons, named by their words
+  for a screen reader, the word shown under the one selected. On the right
   the episode's picture (`og:image`, else the history's), with the progress
   bar and the time left ("15:00 left") when in progress. The selection lands
   on *Watch* or *Resume*; ▲ ▼ do nothing; ◀ from the first button is the
@@ -552,9 +555,12 @@ use ([targets.md](./targets.md)).
 - **Player controls** (options page only): *The site's own player controls*
   leaves the player's own bar alone and draws nothing over the video, for
   troubleshooting.
-- **Toggle.** The toolbar button, or a user-assigned
-  shortcut (`commands`, no default binding) turns Leanback off/on for the
-  site; the state persists.
+- **Toggle.** The switch in the toolbar button's panel (`popup/`), or a
+  user-assigned shortcut (`commands`, no default binding) turns Leanback
+  off/on for the site; the state persists. The panel also shows the version,
+  what Leanback makes of the tab in front (its `page:state`: the kind of
+  page, an episode's player found or not, signed in or not) and *All
+  settings…* (the options page).
 
 ## Optional / future functionality
 
@@ -603,7 +609,7 @@ default rather than throwing):
 | `seasonStart` | `"latest"` | `latest` or `first` — the season a show opens on when its address names none |
 | `theme` | `"dropout"` | `dropout`, `midnight`, `oled`, `warm` (lib/themes.js) |
 | `holidays` | `"off"` | `off`, `auto` (by date), or one look: `newyear` (1–6 Jan), `valentines` (7–14 Feb), `stpatricks` (14–17 Mar), `halloween` (17–31 Oct), `winter` (Dec) |
-| `uiScale` | `100` | Interface Size: 100, 115 or 130 (%) |
+| `uiScale` | `100` | Interface Size: 100, 115 or 130 (%). 100 % is drawn at 92 % of a 1920-wide layout, which fills a TV's screen; a show's episodes, a list and search's results fit as many across as there is room for (Medium cards: five, four, three; search: three, two, two) |
 | `highContrast` | `false` | black and white, white edges, a ring of at least 6 px |
 | `reduceMotion` | `"system"` | `system`, `on`, `off` |
 | `captionSize` | `"default"` | `default` (the player's own), `large`, `larger`, `largest` |
@@ -719,7 +725,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 38 | During playback: settings → Leanback Settings | The same entries, in the same order and words, as on Home |
 | 39 | Fresh profile, first visit | The cookie dialog is reachable by arrows and closable by Enter, above Home |
 | 40 | Wiggle the mouse over cards on Home and tiles on `/series` | The ring does not move; no hover tooltips |
-| 41 | Click the toolbar button; click again | The site behaves as stock Firefox (Dropout's own Home); then Leanback is back |
+| 41 | Click the toolbar button: its panel opens; untick *TV navigation*; tick it again | The site behaves as stock Firefox (Dropout's own Home); then Leanback is back |
 | 42 | Change the ring colour in options, reload | New colour |
 | 43 | *Back On Home: Closes the tab*; go to Home; Escape | The tab closes (in kiosk: Firefox exits) |
 | 44 | Restart Firefox | Settings kept |
