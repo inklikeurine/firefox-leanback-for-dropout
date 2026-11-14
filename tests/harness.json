@@ -360,8 +360,10 @@
     {
       "step": "Firefox's own Back with the playback settings open closes them, and the video stays",
       "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { autoplayNext: false }) }), true)",
         "(function (s) { return s.watch === 'playing'; })(await __act('select'))",
         "(function (r) { return r.ok === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
+        "(function (r) { return r.ok === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'seek', by: -100000 }))",
         "press ContextMenu",
         "sleep 0.8",
         "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? [!document.querySelector('.tenfoot-settings').hidden, Boolean(history.state && history.state.tenfootPanel)].join('|') : null\" }); return r.filter(Boolean)[0] === 'true|true'; })()",
@@ -371,7 +373,8 @@
         "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'playing' && /\\/videos\\/ep1$/.test((await browser.tabs.get(__fx)).url); })()",
         "(await browser.tabs.goBack(__fx), true)",
         "sleep 0.5",
-        "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details'; })()"
+        "(async function () { const s = await __page({ type: 'page:state' }); return s.watch === 'details'; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { autoplayNext: true }) }), true)"
       ]
     },
     {
