@@ -345,6 +345,14 @@
       ]
     },
     {
+      "step": "this Firefox's H.264 decoder is checked by decoding a real frame, and a working one puts up no box",
+      "check": [
+        "(function (r) { return r.ok === true && r.state.h264 === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? typeof VideoDecoder === 'function' && typeof EncodedVideoChunk === 'function' : null\" }); return r.filter((x) => x !== null)[0] === true; })()",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const b = document.querySelector('.tenfoot-play-error'); return !b || b.hidden; })() : null\" }); return r.filter((x) => x !== null)[0] === true; })()"
+      ]
+    },
+    {
       "step": "a video Firefox cannot play says so on the picture, and the box goes once it plays",
       "check": [
         "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const v = document.querySelector('video'); Object.defineProperty(v, 'error', { value: { code: 4, message: 'fixture' }, configurable: true }); v.dispatchEvent(new Event('error')); const b = document.querySelector('.tenfoot-play-error'); const r = b.getBoundingClientRect(); return !b.hidden && Math.abs(r.left + r.width / 2 - innerWidth / 2) < 2 && r.width > 300 && getComputedStyle(b).position === 'fixed' && b.querySelector('.tenfoot-play-error-said').textContent === 'Firefox says: MEDIA_ERR_SRC_NOT_SUPPORTED (fixture)'; })() : null\" }); return r.filter((x) => x !== null)[0]; })()",
