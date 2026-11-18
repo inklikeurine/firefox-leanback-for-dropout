@@ -686,8 +686,13 @@ Animations, `transform` only). A preview (`state.preview`) is laid over the
 saved settings until it is picked or left. In the player frame,
 `applyPlayer()` sets `data-tenfoot-caption-*` (`player.css` sizes the
 caption window by `zoom`, colours it and its box over the player's own) and
-`data-tenfoot-filter`, with the SVG `feColorMatrix` filters added to the
-frame once; the video's CSS `filter` names one. It also sets
+`data-tenfoot-filter` (a kind, or `boost` for *Color Boost* alone), with
+one SVG filter per kind and one for the boost, kept in the frame and drawn
+again on each call: the kind's `feColorMatrix` at *Filter Strength*
+(`FILTERS[kind][strength]`, worked out once from Machado (2009) for
+`color-interpolation-filters="linearRGB"`), then a `saturate` for the
+boost. The video's CSS `filter` names one. The playback panel's
+`onPreview` calls `applyPlayer()` with a value being tried. It also sets
 `data-tenfoot-motion="reduce"` there, as `apply()` does on the page, so
 *Reduce Motion* stops the frame's own slides and fades (`player.css`).
 `TenfootCommon.prefersReducedMotion()` reads that attribute before the

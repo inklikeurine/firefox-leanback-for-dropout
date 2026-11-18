@@ -404,6 +404,11 @@
         state.settings = Object.assign({}, state.settings, patch);
         send({ type: "settings:set", patch });
       },
+      // A look tried while choosing it (the video's Color Filter): shown on
+      // the picture at once; null puts back what is saved.
+      onPreview: (patch) => {
+        if (Themes) Themes.applyPlayer(document.documentElement, patch ? Object.assign({}, state.settings, patch) : state.settings);
+      },
       // Leanback Settings → Clear Continue Watching, confirmed.
       onAction: (id) => {
         if (id === "forget") send({ type: "history:clear" });

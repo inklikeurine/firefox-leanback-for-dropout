@@ -279,7 +279,9 @@ job: Captions On/Off, Play/Pause, Next or Previous Episode, Skip Ahead or
 Back, My List, Search, Home or Accessibility, or one of the remote's own
 jobs for buttons Leanback doesn't recognise; keys that type can't be
 taught); then Caption Size · Caption Color · Caption Background · Color
-Filter (Experimental). At the foot, *Cookie
+Filter (Experimental) · Filter Strength · Color Boost (stronger colours).
+Moving through the filter's values in the playback panel shows each on the
+picture. At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes
 up until it is answered). The options page
 (`about:addons` → Leanback for Dropout → Preferences) has the same, plus
@@ -369,7 +371,8 @@ to play its player there. The manifest declares
   histories with them.
 - The video's colour filter is experimental: it shifts the colours a kind of
   colour blindness loses into ones it keeps, which helps some people and
-  not others, and it may cost a slow computer smooth playback.
+  not others (a lower *Filter Strength* suits colour vision that is only
+  partly affected), and it may cost a slow computer smooth playback.
 - Leanback's caption style changes how Dropout's player draws captions on
   this computer only; with *Player's own*, the player's own Caption Style
   applies.

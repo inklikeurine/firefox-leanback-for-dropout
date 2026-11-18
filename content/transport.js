@@ -778,6 +778,8 @@
         const menu = globalThis.TenfootSettingsMenu.create({
           settings,
           save: (patch) => { if (typeof o.onSetting === "function") o.onSetting(patch); },
+          // The video's colour filter, tried on the picture while choosing.
+          preview: (patch) => { if (typeof o.onPreview === "function") o.onPreview(patch); },
           onClear: () => { if (typeof o.onAction === "function") o.onAction("forget"); },
           showCleared: true
         });
