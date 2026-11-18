@@ -5,6 +5,10 @@
 
 (function () {
   const RING_CLASS = "tenfoot-ring";
+  const DIM_CLASS = "tenfoot-dim"; // Dim Around Selection: the page darkened around the ring
+  // Leanback's own boxes over the page: a selection in one of them is never
+  // spotlit, so the rest of the box stays readable.
+  const UNDIMMED = ".tenfoot-settings, .tenfoot-ask, .tenfoot-kb";
   const HINTS_CLASS = "tenfoot-hints";
   const SCALED_CLASS = "tenfoot-scaled";
   const SCALE_VAR = "--tenfoot-zoom"; // percent; content/page.css does the maths
@@ -53,6 +57,16 @@
       el.setAttribute("aria-hidden", "true");
       el.hidden = true;
       root.appendChild(el);
+    }
+    // Shown only under data-tenfoot-dim (content/page.css); it follows the
+    // ring's box, just under it.
+    let dim = doc.querySelector(`.${DIM_CLASS}`);
+    if (!dim) {
+      dim = doc.createElement("div");
+      dim.className = DIM_CLASS;
+      dim.setAttribute("aria-hidden", "true");
+      dim.hidden = true;
+      root.insertBefore(dim, el);
     }
     let target = null;
     let raf = 0;
@@ -104,7 +118,21 @@
       el.style.width = `${Math.round(b.width * 10) / 10}px`;
       el.style.height = `${Math.round(b.height * 10) / 10}px`;
       if (corner !== undefined) el.style.borderRadius = `${corner}px`;
+      dim.style.transform = el.style.transform;
+      dim.style.width = el.style.width;
+      dim.style.height = el.style.height;
+      dim.style.borderRadius = el.style.borderRadius;
       drawn = b;
+    }
+
+    // The dimming shows with the ring, unless the selection is in one of
+    // Leanback's own boxes.
+    function syncDim() {
+      let inBox = false;
+      try {
+        inBox = Boolean(target && target.closest && target.closest(UNDIMMED));
+      } catch (_err) { /* a target that can't be asked is spotlit */ }
+      dim.hidden = el.hidden || inBox;
     }
 
     function place() {
@@ -116,6 +144,7 @@
       const live = target.getBoundingClientRect();
       if (live.width <= 0 || live.height <= 0) {
         el.hidden = true;
+        syncDim();
         drawn = null;
         return;
       }
@@ -134,6 +163,7 @@
       if (k >= 1) from = null;
       draw(box, Math.round((cornerOf(f) + pad) * 10) / 10);
       el.hidden = false;
+      syncDim();
       if (from || t < settleUntil) schedule();
     }
 
@@ -203,6 +233,7 @@
       from = null;
       drawn = null;
       el.hidden = true;
+      syncDim();
     }
 
     function setStyle(s) {
@@ -230,10 +261,11 @@
       if (raf) win.cancelAnimationFrame(raf);
       hide();
       el.remove();
+      dim.remove();
     }
 
     setStyle(style);
-    return Object.freeze({ follow, hide, setStyle, refresh: schedule, destroy, element: el, get target() { return target; } });
+    return Object.freeze({ follow, hide, setStyle, refresh: schedule, destroy, element: el, dimElement: dim, get target() { return target; } });
   }
 
   /**
@@ -342,5 +374,5 @@
     return { left, top, width: w, height: h, right: left + w, bottom: top + h, x: left, y: top };
   }
 
-  globalThis.TenfootFocusRing = Object.freeze({ createRing, createHintBar, unscaledRect, RING_CLASS, HINTS_CLASS, SCALED_CLASS, SCALE_VAR });
+  globalThis.TenfootFocusRing = Object.freeze({ createRing, createHintBar, unscaledRect, RING_CLASS, DIM_CLASS, HINTS_CLASS, SCALED_CLASS, SCALE_VAR });
 })();

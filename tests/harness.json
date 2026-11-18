@@ -110,6 +110,23 @@
       ]
     },
     {
+      "step": "Selection: a light edge, corners and strong dimming on Home; then glow, then underline; back to today's",
+      "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { ringEdge: 'light', ringStyle: 'corners', dimAround: 'strong' }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const ring = document.querySelector('.tenfoot-ring'); const dim = document.querySelector('.tenfoot-dim'); const rs = getComputedStyle(ring); const ds = getComputedStyle(dim); return JSON.stringify({ edge: rs.getPropertyValue('--tenfoot-edge').trim(), mask: rs.maskImage, dim: ds.display, shade: ds.boxShadow, under: dim.style.transform === ring.style.transform }); })()\" }); const v = JSON.parse(r); return v.edge === 'rgba(255, 255, 255, 0.95)' && /gradient/.test(v.mask) && v.dim === 'block' && v.shade.includes('0.6)') && v.under; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { ringStyle: 'glow', dimAround: 'off' }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const ring = document.querySelector('.tenfoot-ring'); const rs = getComputedStyle(ring); return JSON.stringify({ shadow: rs.boxShadow, bg: rs.backgroundImage }); })()\" }); const v = JSON.parse(r); return (v.shadow.match(/rgb/g) || []).length >= 3 && v.bg === 'none'; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { ringStyle: 'underline' }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const rs = getComputedStyle(document.querySelector('.tenfoot-ring')); return JSON.stringify({ shadow: rs.boxShadow, bg: rs.backgroundImage, border: rs.borderTopColor }); })()\" }); const v = JSON.parse(r); return v.shadow === 'none' && /gradient/.test(v.bg) && v.border === 'rgba(0, 0, 0, 0)'; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { ringEdge: 'dark', ringStyle: 'solid', dimAround: 'off' }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const dim = document.querySelector('.tenfoot-dim'); return [getComputedStyle(document.querySelector('.tenfoot-ring')).maskImage, getComputedStyle(dim).display].join('|'); })()\" }); return r === 'none|none'; })()"
+      ]
+    },
+    {
       "step": "▼ again: the next row settles at the same height",
       "check": [
         "(await __act('down')).focused.href === 'https://watch.dropout.tv/videos/nr-1'",

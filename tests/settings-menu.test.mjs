@@ -86,7 +86,7 @@ T.run('Clear Continue Watching takes OK twice; ▶ never runs it; moving away di
   T.eq(p.m.view().entries[p.m.view().index].value, '', 'until the next move');
 });
 
-T.run('Accessibility: a menu of its own — Display, Captions, Video; a choice in it as at the top', () => {
+T.run('Accessibility: a menu of its own — Display, Selection, Captions, Video; a choice in it as at the top', () => {
   const { m, log } = menu();
   down(m, ROWS.length);
   T.eq(m.view().entries[m.view().index].label, 'Accessibility');
@@ -94,7 +94,7 @@ T.run('Accessibility: a menu of its own — Display, Captions, Video; a choice i
   const v = m.view();
   T.eq(v.title, 'Accessibility');
   T.eq(v.entries.map((e) => e.label), S.ROWS.filter((r) => r.menu === 'accessibility').map((r) => r.label));
-  T.eq([...new Set(v.entries.map((e) => e.group))], ['Display', 'Captions', 'Video']);
+  T.eq([...new Set(v.entries.map((e) => e.group))], ['Display', 'Selection', 'Captions', 'Video']);
   m.key('down');
   m.key('select');
   T.eq(log, [['save', { highContrast: true }]]);

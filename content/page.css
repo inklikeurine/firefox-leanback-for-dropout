@@ -21,13 +21,70 @@
   z-index: 2147483647;
   border: var(--tenfoot-ring-width) solid var(--tenfoot-ring-color);
   border-radius: 8px; /* until nav/focus-ring.js matches it to the target's */
-  box-shadow: 0 0 0 2px var(--tenfoot-edge), inset 0 0 0 2px var(--tenfoot-edge);
+  box-shadow: 0 0 0 2px var(--tenfoot-edge), inset 0 0 0 2px var(--tenfoot-edge), var(--tf-ring-glow, 0 0 0 0 transparent);
   will-change: transform;
   margin: 0;
   padding: 0;
 }
 .tenfoot-ring[hidden] {
   display: none;
+}
+
+/* Selection (Accessibility; lib/themes.js writes the attributes). Ring Edge:
+   the thin line each side of the ring, dark by default. */
+html[data-tenfoot-ring-edge="light"] {
+  --tenfoot-edge: rgba(255, 255, 255, 0.95);
+}
+html[data-tenfoot-ring-edge="off"] {
+  --tenfoot-edge: transparent;
+}
+/* Ring Style. Glow: the ring, with a soft halo of its colour. */
+html[data-tenfoot-ring-style="glow"] .tenfoot-ring {
+  --tf-ring-glow: 0 0 calc(var(--tenfoot-ring-width) * 4) var(--tenfoot-ring-width) color-mix(in srgb, var(--tenfoot-ring-color) 55%, transparent);
+}
+/* Underline: no box; a bar of twice the ring width along the bottom, on its
+   edge line. */
+html[data-tenfoot-ring-style="underline"] .tenfoot-ring {
+  border-color: transparent;
+  box-shadow: none;
+  background: linear-gradient(to top,
+    var(--tenfoot-ring-color) 0, var(--tenfoot-ring-color) calc(var(--tenfoot-ring-width) * 2),
+    var(--tenfoot-edge) calc(var(--tenfoot-ring-width) * 2), var(--tenfoot-edge) calc(var(--tenfoot-ring-width) * 2 + 2px),
+    transparent calc(var(--tenfoot-ring-width) * 2 + 2px));
+  background-clip: border-box;
+}
+/* Corners: only the four corners of the ring, each arm a quarter of the
+   side (48 px at most), edges included (the mask reaches 2 px outside). */
+html[data-tenfoot-ring-style="corners"] .tenfoot-ring {
+  --tf-arm: calc(min(25%, 48px) + 2px);
+  mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000), linear-gradient(#000, #000), linear-gradient(#000, #000);
+  mask-size: var(--tf-arm) var(--tf-arm);
+  mask-position: left -2px top -2px, right -2px top -2px, left -2px bottom -2px, right -2px bottom -2px;
+  mask-repeat: no-repeat;
+  mask-clip: no-clip;
+}
+
+/* Dim Around Selection: one box that follows the ring (nav/focus-ring.js),
+   its shadow darkening the whole screen around it. */
+.tenfoot-dim {
+  position: fixed;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 2147483646;
+  display: none;
+  margin: 0;
+  padding: 0;
+  will-change: transform;
+}
+html[data-tenfoot-dim="light"] .tenfoot-dim:not([hidden]) {
+  display: block;
+  box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.35);
+}
+html[data-tenfoot-dim="strong"] .tenfoot-dim:not([hidden]) {
+  display: block;
+  box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.6);
 }
 
 /* The focused target grows a little, by --tenfoot-zoom percent. */

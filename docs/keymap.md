@@ -128,7 +128,7 @@ entries are not settings:
 | Entry | Does |
 | --- | --- |
 | Theme This Page (first under Look, on a page with choices of its own) | opens the page's own choices (Home's banner, card size, an episode's picture); moving through a choice's values shows each on the page at once, OK keeps one, ◀ or Back puts the saved one back |
-| Accessibility | opens its own list: Interface Size, High Contrast, Reduce Motion, the caption style, Color Filter |
+| Accessibility | opens its own list: Interface Size, High Contrast, Reduce Motion, the Selection settings (Ring Width, Ring Edge, Ring Style, Dim Around Selection, Enlarge Selection), the caption style, Color Filter |
 | Cookie Preferences (where the page has them) | closes the panel and opens the cookie settings (Ketch's, in Leanback's look), the selection on the first purpose |
 | Clear Continue Watching | forgets every video not finished, and empties Continue Watching; watched ones stay watched. The first OK asks, the second clears |
 
@@ -255,7 +255,7 @@ Quality, the first setting.
 | Speed | the player's own menu |
 | Closed Captions | a switch: OK turns the player's first track on, or captions off; ▶ opens the player's CC/subtitles menu (its tracks, and Customize) |
 | Caption Style | the player's Customize → Font, Background, Window, each listing its settings (Family, Color, Size, Opacity, Edge Style) with the current choice; OK on one opens its choices, OK picks one and goes back up; one ◀ from Customize comes all the way back |
-| Leanback Settings | Leanback's own, the same list as on a page: Autoplay Next Episode, Seek Step, Shows Open On, Skip dropout.tv Home, Back On Home, Enlarge Selection, Ring Width, Ring Colour, Button Hints; then Clear Continue Watching (OK twice) |
+| Leanback Settings | Leanback's own, the same list as on a page: Autoplay Next Episode, Seek Step, Shows Open On, Skip dropout.tv Home, Back On Home, Ring Colour, Button Hints, Accessibility (the same list as on a page); then Clear Continue Watching (OK twice) |
 
 - ▲ ▼ move, no wrap. **OK or ▶ takes the entry**: a submenu opens; an on/off
   switch flips; an entry with several values opens its short list, where OK
