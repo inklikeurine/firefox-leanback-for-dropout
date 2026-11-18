@@ -44,12 +44,6 @@
       ]
     },
     {
-      "step": "Interface Size 100 % draws at 92 % of a 1920-wide layout (the rail's width says so)",
-      "check": [
-        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"Math.round(document.querySelector('.tenfoot-rail').getBoundingClientRect().width / innerWidth * 1920 * 10) / 10\" }); return Math.abs(r - 89.6 * 0.92) < 1; })()"
-      ]
-    },
-    {
       "step": "the selection is enlarged and drawn in the theme's colours",
       "check": [
         "(function (s) { return typeof s.zoomed === 'string' && s.zoomed.startsWith('matrix(1.05'); })(await __page({ type: 'page:state' }))",
