@@ -53,6 +53,7 @@
 
   const Settings = globalThis.TenfootSettings;
   const Keymap = globalThis.TenfootKeymap;
+  const Repeat = globalThis.TenfootRepeat;
   const Rules = globalThis.TenfootSiteRules;
   const Transport = globalThis.TenfootTransport;
   const History = globalThis.TenfootHistory;
@@ -737,6 +738,13 @@
       if (state.bar && state.bar.panelOpen && state.panelStep && onPanelStep()) return;
       dropBar();
       send({ type: "page:action", action: "browser-back" });
+      return;
+    }
+    // A held ◀ ▶ (seeking) or ▲ ▼: as Accessibility → Remote says, once any of
+    // its settings is changed; until then as the system repeats, as before.
+    if (state.repeat && Repeat.isCustom(state.settings) && state.repeat.keydown(e, action) === "skip") {
+      e.preventDefault();
+      e.stopImmediatePropagation();
       return;
     }
     if (!dispatch(action)) return;
@@ -1563,6 +1571,18 @@
     });
     API.runtime.onMessage.addListener(onMessage);
     window.addEventListener("keydown", onKeyDown, true);
+    // A held move's own repeats (nav/repeat.js), used once Accessibility →
+    // Remote is changed from its defaults.
+    state.repeat = Repeat.createRepeater({
+      settings: () => state.settings,
+      move: (action) => {
+        if (!state.settings.enabled || !Repeat.isCustom(state.settings)) return false;
+        const done = dispatch(action);
+        if (done && state.transport) armBarIdle();
+        return done;
+      }
+    });
+    window.addEventListener("keyup", (e) => state.repeat.keyup(e), true);
     window.addEventListener("popstate", onPopState);
     // The remote's menu button arrives as a ContextMenu key here too; without
     // this, Firefox's own menu would open over the video.
@@ -1590,9 +1610,13 @@
     window.addEventListener("blur", () => {
       if (state.transport) leaveTransport();
       saveProgress(false);
+      state.repeat.end();
     });
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") saveProgress(false);
+      if (document.visibilityState === "hidden") {
+        saveProgress(false);
+        state.repeat.end();
+      }
     });
     applyEnabled(settings.enabled);
     state.observer = new MutationObserver(() => {

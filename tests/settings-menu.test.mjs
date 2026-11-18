@@ -94,7 +94,7 @@ T.run('Accessibility: a menu of its own — Display, Remote, Captions, Video; a 
   const v = m.view();
   T.eq(v.title, 'Accessibility');
   const rows = S.ROWS.filter((r) => r.menu === 'accessibility').map((r) => r.label);
-  T.eq(v.entries.map((e) => e.label), [...rows.slice(0, 3), 'Remote Buttons', ...rows.slice(3)]);
+  T.eq(v.entries.map((e) => e.label), [...rows.slice(0, 6), 'Remote Buttons', ...rows.slice(6)]);
   T.eq([...new Set(v.entries.map((e) => e.group))], ['Display', 'Remote', 'Captions', 'Video']);
   m.key('down');
   m.key('select');

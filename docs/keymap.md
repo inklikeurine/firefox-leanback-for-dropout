@@ -34,6 +34,25 @@ remote-class keys, not keyboard shortcuts: `MediaPlayPause` / `MediaPlay` /
 
 `BrowserSearch`, which some remotes have, is `search`.
 
+## Holding a button
+
+A held arrow moves once at once, then repeats as *Accessibility → Remote*
+says (`nav/repeat.js`), in the page and the player alike:
+
+- *Repeat Starts After*: *As the system says* (the default) follows the
+  system's own key repeat, at most *Repeat Speed* moves a second; a time
+  (0.25 s to 2 s) uses Leanback's own repeats from that long after the press;
+  *Never* moves once per press.
+- *Repeat Speed*: 2 to 12 moves a second (12 by default).
+- *Ignore Quick Second Press*: a second press of the same button this soon
+  after letting go is ignored (*Off* by default); another button always
+  counts.
+
+A remote that repeats by itself, sending many quick presses instead of one
+held press, is treated as a hold: a press within 0.15 s of the same button's
+release carries it on. In the player, held ◀ ▶ and ▲ ▼ follow the system's
+repeats, unpaced, until one of the three is changed. OK, Back and Menu never
+repeat.
 ## Taught buttons
 
 *Accessibility → Remote Buttons* teaches Leanback a button for a job: pick
@@ -192,7 +211,7 @@ solid pill with no ring, starts on *a* (*5* on the pad). ◀ ▶ go along a row 
 round its ends; ▲ ▼ go straight up and down, keep their place across rows
 and go round from the top row to the bottom row and back, docked too. OK types the key; **Menu takes out the
 letter before the cursor**; a held OK or arrow repeats as the browser repeats it
-(a held move is slowed by the page script as everywhere). A real keyboard types
+(a held move is timed as everywhere: see *Holding a button* above). A real keyboard types
 into the box while it is open. *Done* closes it (the caller does what
 Enter in the box does) and Escape closes it with no answer; both put the
 selection back on the box. *Done* does what Enter in the box does (sign-in's
