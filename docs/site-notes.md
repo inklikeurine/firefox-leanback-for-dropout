@@ -563,7 +563,17 @@ Read 2026-10-29, signed out.
 ### The front page (signed out)
 
 Read 2026-10-30, signed out. `watch.dropout.tv/` answers 200 with
-`body.logged-out.sites-show[data-track-event="site_home"]`:
+`body.logged-out.sites-show[data-track-event="site_home"]`.
+
+An inline script of Dropout's on this page (read 2026-11-18) moves on as
+soon as it runs: with a subscription (`VHX.config.user_has_subscription`
+or a `_current_user` id) to `/browse`, otherwise
+`self.location.href = "https://signup.dropout.tv"`. That address does not
+answer (the connection times out), so without Leanback the tab loads for
+ever and ends on Firefox's "timed out" page. `content/early.js` cancels
+that move (see [architecture.md](./architecture.md)).
+
+The page:
 
 ```text
 main.main-container

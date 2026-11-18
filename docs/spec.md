@@ -255,7 +255,10 @@ use ([targets.md](./targets.md)).
   *Sign In* (yellow, selected), *Browse* (Home, signed out), *Privacy
   Policy* and *Terms of Use* (`legal`), in the middle of the screen; no
   rail. Starting a subscription is not offered on the TV. Signed in, `/`
-  goes on to Home.
+  goes on to Home. Dropout's own page there moves anyone without a
+  subscription on to `signup.dropout.tv`, which does not answer (the tab
+  loaded for ever); while Leanback is on, that move is stopped and the
+  welcome stays.
 - **Sign-in (`/login`).** Leanback's own screen, one screen for both
   boxes, over Dropout's form, which stays underneath unseen (`pages.signin`):
   "DROPOUT" in yellow over "Sign in", an **Email** box and a **Password**
