@@ -178,7 +178,6 @@
   const syncForm = (...a) => P.syncForm(...a);
   const redirectPage = (...a) => P.redirectPage(...a);
   const offerWelcome = (...a) => P.offerWelcome(...a);
-  const syncSession = (...a) => P.syncSession(...a);
   const scrollReading = (...a) => P.scrollReading(...a);
   // From page-signin.js.
   const removeSignin = (...a) => P.removeSignin(...a);
@@ -1443,7 +1442,6 @@
     state.historyLength = history.length;
     clearBackFallback();
     if (openSeason() || redirectPage() || offerWelcome()) return;
-    syncSession().catch(() => { /* nothing to say */ });
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     if (state.kind === "series") captureEpisodeOrder();
     stampChrome();
