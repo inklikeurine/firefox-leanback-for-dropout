@@ -522,6 +522,7 @@
       transport: state.transport,
       resumed: state.resume.resumed,
       held: held(),
+      h264: canDecodeH264(),
       focused: typeof document.hasFocus === "function" ? document.hasFocus() : false
     };
   }
@@ -1217,13 +1218,92 @@
   const MEDIA_ERRORS = { 2: "MEDIA_ERR_NETWORK", 3: "MEDIA_ERR_DECODE", 4: "MEDIA_ERR_SRC_NOT_SUPPORTED" };
   const H264 = 'video/mp4; codecs="avc1.640028"';
 
-  // true, false, or null when it cannot be asked.
-  function canDecodeH264() {
+  // Asking Firefox isn't enough: with Fedora's patent-free FFmpeg and its
+  // empty OpenH264 stand-in, Firefox says yes to H.264 every way it can be
+  // asked and then decodes nothing. So the answer is checked by decoding one
+  // real frame: a black 16×16 H.264 High-profile picture, made with
+  // `ffmpeg -f lavfi -i color=c=black:s=16x16 -frames:v 1 -c:v libx264
+  // -profile:v high -level 1.0 -bsf:v filter_units=remove_types=6`, its
+  // setup (SPS and PPS, as an avcC record) and its one frame.
+  const H264_SAMPLE = {
+    codec: "avc1.64100a",
+    setup: "AWQQCv/hABJnZBAKrLvYCIAAAAMAgAAAGQIBAAVo7g8siw==",
+    frame: "AAAADmWIhAS//vet34FNwys9"
+  };
+  const H264_DECODE_MS = 3000;
+  let h264Answer = null;  // true, false, or null while not known
+  let h264Asked = null;   // the one check, once started
+
+  function bytes(b64) {
+    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  }
+
+  // What Firefox says when asked: true, false, or null when it can't be asked.
+  function saysH264() {
     try {
       const MS = window.MediaSource;
       if (MS && typeof MS.isTypeSupported === "function") return Boolean(MS.isTypeSupported(H264));
     } catch (_err) { /* not asked */ }
     return null;
+  }
+
+  // Decodes the sample frame: true when a picture comes out, false when the
+  // decoder fails or gives nothing, null when this Firefox has no WebCodecs
+  // or the decoder doesn't answer in time.
+  function decodesH264() {
+    const VD = window.VideoDecoder;
+    const Chunk = window.EncodedVideoChunk;
+    if (typeof VD !== "function" || typeof Chunk !== "function") return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let pictures = 0;
+      let failed = false;
+      let dec = null;
+      const done = (answer) => {
+        clearTimeout(timer);
+        try { if (dec && dec.state !== "closed") dec.close(); } catch (_err) { /* already gone */ }
+        resolve(answer);
+      };
+      const timer = setTimeout(() => done(null), H264_DECODE_MS);
+      try {
+        dec = new VD({
+          output: (picture) => {
+            pictures += 1;
+            try { picture.close(); } catch (_err) { /* nothing to free */ }
+          },
+          error: () => { failed = true; }
+        });
+        dec.configure({ codec: H264_SAMPLE.codec, description: bytes(H264_SAMPLE.setup), codedWidth: 16, codedHeight: 16 });
+        dec.decode(new Chunk({ type: "key", timestamp: 0, data: bytes(H264_SAMPLE.frame) }));
+        dec.flush().then(
+          () => done(!failed && pictures > 0),
+          () => done(pictures > 0)
+        );
+      } catch (_err) {
+        done(false);
+      }
+    });
+  }
+
+  // The check, run once per frame. A "no" from Firefox is believed at once;
+  // a "yes" is believed only once a frame decodes. With no answer either
+  // way, it is asked again next time.
+  function checkH264() {
+    if (!h264Asked) {
+      const said = saysH264();
+      h264Asked = (said === false ? Promise.resolve(false) : decodesH264().then((decoded) => (decoded === null ? said : decoded)))
+        .then((answer) => answer, () => null)
+        .then((answer) => {
+          h264Answer = answer;
+          if (answer === null) h264Asked = null;
+          return answer;
+        });
+    }
+    return h264Asked;
+  }
+
+  // The answer so far: true, false, or null while it is not known.
+  function canDecodeH264() {
+    return h264Answer;
   }
 
   function errorBox() {
@@ -1269,6 +1349,20 @@
     const said = `${MEDIA_ERRORS[err.code]}${err.message ? ` (${err.message})` : ""}`;
     console.warn(LOG, "the video cannot play:", said, "H.264 decoder:", canDecodeH264());
     showPlayError(said);
+    // Shown at once; the words about the decoder follow when the check ends.
+    const v = e.target;
+    checkH264().then(() => {
+      const box = document.querySelector(".tenfoot-play-error");
+      if (box && !box.hidden && !playedVideos.has(v)) showPlayError(said);
+    });
+  }
+
+  // Videos that have played: once one has, the decoder check never puts the
+  // box up for it.
+  const playedVideos = new WeakSet();
+  function onPlayedOnce(e) {
+    if (e && e.target) playedVideos.add(e.target);
+    hidePlayError();
   }
 
   function attach(v) {
@@ -1287,12 +1381,14 @@
     v.addEventListener("timeupdate", onTimeUpdate);
     v.addEventListener("seeked", onSeeked);
     v.addEventListener("error", onMediaError);
-    v.addEventListener("playing", hidePlayError);
-    // No H.264 decoder: nothing Dropout sends will play, so it is said at once.
-    if (canDecodeH264() === false) {
-      console.warn(LOG, "this Firefox has no H.264 video decoder; Dropout's videos will not play");
+    v.addEventListener("playing", onPlayedOnce);
+    // No H.264 decoder: nothing Dropout sends will play, so it is said as
+    // soon as the check knows, unless the video has played meanwhile.
+    checkH264().then((answer) => {
+      if (answer !== false || state.video !== v || playedVideos.has(v)) return;
+      console.warn(LOG, "this Firefox has no working H.264 video decoder; Dropout's videos will not play");
       showPlayError("");
-    }
+    });
     state.lastSave = Date.now();
     state.titleShownFor = null;
     state.upNext = { shown: false, dismissed: false, siteHidden: false };
@@ -1315,7 +1411,7 @@
     v.removeEventListener("timeupdate", onTimeUpdate);
     v.removeEventListener("seeked", onSeeked);
     v.removeEventListener("error", onMediaError);
-    v.removeEventListener("playing", hidePlayError);
+    v.removeEventListener("playing", onPlayedOnce);
     if (state.video === v) state.video = null;
   }
 
