@@ -35,3 +35,4 @@ T.runAsync("with Autoplay Next Episode on, Dropout's own \"no countdown\" is lef
   await tick(win, video);
   T.eq(win.OTTData.up_next.disable_autoplay, true);
 });
+await T.exit();
