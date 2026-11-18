@@ -1011,7 +1011,11 @@ countdown from the time left. OK is `playNext()`: Dropout's play link
 (`player.upNextHide`) is pressed, the card stays down for this video, and
 `player:ended` carries `dismissed: true`, stopping the page's autoplay. With
 `autoplayNext` off there is no countdown and Hide is pressed once when the
-card appears. An empty end screen (Vimeo's outro) is no offer.
+card appears. `holdSiteCountdown()`, on every `syncUpNext()`, also sets
+`OTTData.up_next.disable_autoplay` (reached through `wrappedJSObject`)
+while `autoplayNext` is off or the card was hidden, with either player
+controls, so Dropout's own countdown never runs; otherwise it is put back
+to the value Dropout sent. An empty end screen (Vimeo's outro) is no offer.
 
 **The settings panel** opens from the bar's gear, or the options button
 during playback, drawn by `nav/panel.js`. It pauses the picture and holds a

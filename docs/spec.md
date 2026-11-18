@@ -334,7 +334,7 @@ use ([targets.md](./targets.md)).
   own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
   name box of Add Profile and Edit Profile, and the digit boxes
   of a PIN-locked profile's PIN screen (Dropout's own) — opens it, and a pointer click on
-  one of those boxes opens it too, since the air mouse has no keyboard. On search it
+  one of those boxes opens it too, for a remote with no keyboard or mouse. On search it
   is always up (see **Search**).
   The look is bare letters: a key has no box until it is selected, when it
   becomes a solid accent-colour pill with no ring, and for a moment on OK it
@@ -521,6 +521,11 @@ use ([targets.md](./targets.md)).
   show, and its keys. Hiding it stops autoplay for this episode. With
   *Autoplay Next Episode* off it counts nothing down, and Dropout's own card
   is told to stand down (its Hide). Dropout's card stays in place, invisible.
+- **Nothing plays next by itself when it shouldn't.** With *Autoplay Next
+  Episode* off, or the card hidden, Dropout's own countdown is switched off
+  too (its player's own "no autoplay" switch), with Leanback's controls and
+  with Dropout's: Dropout's card then offers the next episode without
+  counting down.
 - **Transport bar.** Leanback's own: play/pause · position · settings ·
   fullscreen, round buttons on a dark fade along the bottom of the picture,
   the play button larger with a yellow symbol, the time so far under the
@@ -561,11 +566,6 @@ use ([targets.md](./targets.md)).
   what Leanback makes of the tab in front (its `page:state`: the kind of
   page, an episode's player found or not, signed in or not) and *All
   settings…* (the options page).
-
-## Optional / future functionality
-
-- Gamepad support via the Gamepad API (today: map the pad to keys outside the
-  browser).
 
 ## Permissions
 
@@ -820,16 +820,17 @@ Where Leanback already has something close, it is said beside the item: the
 milestone builds on it, and what exactly changes is settled when the work
 starts.
 
-- **Colour-blind-safe colours.** May be done here or in the theming
-  releases below. The player's *Color Filter (Experimental)* already
-  changes the video's colours; Leanback's own colours do not change yet.
+- **The video's Color Filter, improved.** *Color Filter (Experimental)*
+  already changes the video's colours; the milestone makes its filters more
+  accurate, adds a strength and a colour boost, and shows each choice on the
+  picture while choosing. Colour-blind-safe colours for Leanback's own look
+  are in 0.40.0.
 - **Button remapping**: which remote button does what.
 - **A larger focus ring.** *Ring Width* (2–12 px) and *Enlarge Selection*
   exist already; the milestone goes beyond them.
 - **A setting that stops going on to the next episode by itself.**
   *Autoplay Next Episode* is that switch already; the milestone makes sure
   it always stops the next episode, Dropout's own countdown included.
-- **Turning off previews that play by themselves.**
 - **Reduce Motion, extended.** It is in 0.36.0 (Accessibility); the
   milestone takes it further.
 - **Adjustable hold and repeat timing** for the remote's buttons (today an
@@ -853,6 +854,9 @@ starts.
   every kind of signed-in page reachable from the interface, each with
   *Reset This Page*. See
   [theming.md](./theming.md#040--the-theming-engine).
+- **Colour-blind-safe colours** for Leanback's own look: every theme's
+  colours stay easy to tell apart for red-weak, green-weak and blue-weak
+  vision, and colour is never the only sign of anything.
 
 ### 0.41.0 — themes that rearrange whole screens
 
@@ -872,6 +876,12 @@ it ever happens on the TV; if neither does, this milestone is dropped.
   Dropout's plans, checkout or account page instead of Browse, Leanback says
   the subscription has to be renewed on a phone or computer, with *Sign out*
   and *Browse*. Dropout's exact address for that page is not known yet.
+
+### 0.43.0 — game controllers
+
+- **Game controllers without a key-mapping program**, through Firefox's
+  Gamepad API: the D-pad and stick move, A is OK, B is Back, Start is Menu,
+  with the same repeat timing and button teaching as a remote.
 
 ### 1.0
 

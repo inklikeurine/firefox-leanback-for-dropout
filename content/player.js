@@ -202,6 +202,7 @@
   // hid it. With "Play next episode" off it counts nothing down, and Dropout's
   // own card is told to stand down (its Hide).
   function syncUpNext() {
+    holdSiteCountdown();
     const v = state.video;
     const d = ottData();
     const u = d && d.upNext;
@@ -234,6 +235,27 @@
     if (show !== state.upNext.shown) {
       state.upNext.shown = show;
       reportOffer();
+    }
+  }
+
+  // Dropout's own countdown to the next episode. Its card reads
+  // OTTData.up_next.disable_autoplay at every tick and when the video ends;
+  // set, the card is shown but never counts down or moves on. So whenever
+  // nothing should start by itself (Autoplay Next Episode off, or the card
+  // dismissed) it is set, with either player controls; otherwise it goes back
+  // to what Dropout sent. Pressing Hide (pressSiteHide) stays the back-up.
+  let siteDisable = null; // Dropout's own value, read the first time
+  function holdSiteCountdown() {
+    try {
+      const w = window.wrappedJSObject || window;
+      const u = w.OTTData && w.OTTData.up_next;
+      if (!u || typeof u !== "object") return;
+      if (siteDisable === null) siteDisable = u.disable_autoplay === true;
+      const hold = Boolean(state.settings.enabled) && (!state.settings.autoplayNext || state.upNext.dismissed);
+      const want = hold || siteDisable;
+      if (u.disable_autoplay !== want) u.disable_autoplay = want;
+    } catch (_err) {
+      // The page's object out of reach: the Hide press still stands.
     }
   }
 
