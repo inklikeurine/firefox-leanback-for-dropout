@@ -42,3 +42,4 @@ T.runAsync("the player frame gets Leanback's Reduce Motion, and loses it when tu
   await T.sleep(20);
   T.eq(root.dataset.tenfootMotion, undefined);
 });
+await T.exit();
