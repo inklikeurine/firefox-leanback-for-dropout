@@ -421,6 +421,9 @@ html[data-tenfoot-filter="deuteranopia"] video {
 html[data-tenfoot-filter="tritanopia"] video {
   filter: url(#tenfoot-filter-tritanopia) !important;
 }
+html[data-tenfoot-filter="boost"] video {
+  filter: url(#tenfoot-filter-boost) !important;
+}
 
 /* A video that cannot play (content/player.js): what went wrong, in the middle
    of the picture, until it plays. */

@@ -142,7 +142,11 @@ use ([targets.md](./targets.md)).
   Background* (in the player frame, over the player's own captions; *Player's
   own* leaves them alone), and *Color Filter (Experimental)*: an SVG colour
   matrix on the video that moves what red-, green- or blue-weak colour
-  vision loses into colours it keeps (daltonisation).
+  vision loses into colours it keeps (daltonisation, from Machado's
+  simulation, for linear light), with *Filter Strength* (25, 50, 75, 100 %)
+  and *Color Boost* (off, low, medium, high: stronger colours, with or
+  without a filter); moving through their values in the playback panel
+  shows each on the picture at once, and Back puts it back.
 - **Cookie Preferences** (Leanback's settings, at the foot, on a page that
   has them): the cookie box comes up only until it is answered, and
   Dropout's own way back to it is in the footer Leanback hides. The entry
@@ -618,6 +622,8 @@ default rather than throwing):
 | `captionColor` | `"default"` | `default`, `white`, `yellow`, `cyan` |
 | `captionBackground` | `"default"` | `default`, `black` (a box), `none` (a shadow) |
 | `videoFilter` | `"off"` | `off`, `protanopia`, `deuteranopia`, `tritanopia`: a colour matrix on the video (experimental) |
+| `videoFilterStrength` | `100` | *Filter Strength*: 25, 50, 75 or 100 (%) |
+| `videoColorBoost` | `"off"` | *Color Boost*: `off`, `low` (×1.15), `medium` (×1.3), `high` (×1.5) saturation, after the filter |
 | `pageLooks` | each first value | Theme This Page, per kind of page: `home: {banner: large/small/off, cards}`, `lists: {cards}`, `show: {cards}`, `details: {picture: right/left/off}`; `cards` is `medium`, `small` or `large` (five, six or four across a grid) |
 
 The watch history is a separate key per Dropout profile, `progress:<n>`
@@ -817,9 +823,8 @@ Where Leanback already has something close, it is said beside the item: the
 milestone builds on it, and what exactly changes is settled when the work
 starts.
 
-- **The video's Color Filter, improved.** *Color Filter (Experimental)*
-  already changes the video's colours; the milestone makes its filters more
-  accurate, adds a strength and a colour boost, and shows each choice on the
+- **The video's Color Filter, improved** (#15): the filters for linear
+  light, *Filter Strength* and *Color Boost*, each choice shown on the
   picture while choosing. Colour-blind-safe colours for Leanback's own look
   are in 0.40.0.
 - **Button remapping**: which remote button does what.
