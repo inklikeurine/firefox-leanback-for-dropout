@@ -154,3 +154,5 @@ T.runAsync('on a page, the Remote Buttons screen takes the next press as the but
   p.key('ChannelUp');
   T.eq(p.doc.querySelector('.tenfoot-settings-title').textContent, 'Channel + for My List?');
 });
+
+await T.exit();
