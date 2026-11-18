@@ -271,9 +271,11 @@ OK keeps it, Back puts it back. Then *Accessibility*: Interface Size (100 % fill
 Contrast · Reduce Motion; under *Selection*, Ring Width (2 to 24 px) · Ring
 Edge (the thin line each side of the ring: dark, light or off) · Ring Style
 (solid, glow, underline or corners) · Dim Around Selection (off, light or
-strong: everything but the selection darkened) · Enlarge Selection; then
-Caption Size · Caption Color · Caption Background · Color Filter
-(Experimental). At the foot, *Cookie
+strong: everything but the selection darkened) · Enlarge Selection; under
+*Remote*, Repeat Starts After (as the system says, 0.25 to 2 s, or never) ·
+Repeat Speed (2 to 12 moves a second) · Ignore Quick Second Press (off, or
+0.2 to 1 s); then Caption Size · Caption Color · Caption Background · Color
+Filter (Experimental). At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes
 up until it is answered). The options page
 (`about:addons` → Leanback for Dropout → Preferences) has the same, plus
