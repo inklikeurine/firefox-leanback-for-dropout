@@ -805,14 +805,9 @@ or sends it, and it asks for no new permission. 0.37.0 has:
 - **One My List button**: *+ My List* when not in the list and *✓ My List*
   when it is, on Home's banner, a show's page and an episode's page alike.
 - **A list of the things that don't match** across Leanback's screens, for
-  the 0.39.0 theming foundations to fix.
+  the 0.39.0 theming foundations to fix ([#66](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/66)).
 
-Not in 0.37.0: a phone sign-in page reached by a QR code. A browser add-on
-can't run a server, so it needs a small helper program installed on the TV
-computer, and it is left for later. Dropout's own TV code
-(`dropout.tv/activate`) works only for Dropout's official apps, and its
-emailed sign-in link signs in whichever device opens it, so neither helps
-here.
+Not in 0.37.0: signing in from a phone with a QR code ([#61](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/61)).
 
 ### 0.38.0 — accessibility options
 
@@ -862,16 +857,8 @@ starts.
 
 ### 0.42.0 — two rare sign-in blocks (may be unnecessary)
 
-Both are explained instead of silent. Before building either, check whether
-it ever happens on the TV; if neither does, this milestone is dropped.
-
-- **Google's "are you a person" puzzle.** If Google shows a challenge window,
-  Leanback's screen steps back so the window is on top, with a line saying to
-  use the remote's pointer; when it closes, Leanback's screen comes back.
-- **An account with no active subscription.** If signing in lands on
-  Dropout's plans, checkout or account page instead of Browse, Leanback says
-  the subscription has to be renewed on a phone or computer, with *Sign out*
-  and *Browse*. Dropout's exact address for that page is not known yet.
+- Google's "are you a person" puzzle: [#62](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/62)
+- An account with no active subscription: [#63](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/63)
 
 ### 1.0
 
