@@ -75,3 +75,5 @@ T.runAsync('in the playback panel, moving through Color Filter shows each on the
   await T.sleep(20);
   T.eq(root.dataset.tenfootFilter, undefined, 'Back: as saved');
 });
+
+await T.exit();
