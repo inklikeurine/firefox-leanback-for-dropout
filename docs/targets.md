@@ -43,10 +43,12 @@ Some remotes send `Escape` or `GoBack` for back, and some have media keys;
 
 - **Firefox must decode H.264.** Dropout's videos are H.264 (with AAC sound).
   Some Linux builds of Firefox lean on the system's FFmpeg, and a cut-down
-  one (Fedora's `ffmpeg-free`, say) may not decode them: then no video plays,
-  and the picture says "This video can't play here." with Firefox's reason.
-  Check `about:support` → Media → Codec Support for H.264 on the TV's
-  Firefox.
+  one (Fedora's `ffmpeg-free` with its empty `noopenh264` stand-in, say) may
+  not decode them: then no video plays, and the picture says "This video
+  can't play here." with Firefox's reason. Such a Firefox still says it can
+  play H.264 when asked, `about:support` included, so Leanback checks by
+  decoding one tiny H.264 frame when the player opens; when that fails, the
+  picture says this Firefox has no working H.264 decoder.
 
 - **Never require a global key remap** (udev, hwdb, xremap and the like). Many
   setups rule them out; the extension is app-local by nature.

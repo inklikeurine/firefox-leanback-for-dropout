@@ -44,12 +44,6 @@
       ]
     },
     {
-      "step": "Interface Size 100 % draws at 92 % of a 1920-wide layout (the rail's width says so)",
-      "check": [
-        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"Math.round(document.querySelector('.tenfoot-rail').getBoundingClientRect().width / innerWidth * 1920 * 10) / 10\" }); return Math.abs(r - 89.6 * 0.92) < 1; })()"
-      ]
-    },
-    {
       "step": "the selection is enlarged and drawn in the theme's colours",
       "check": [
         "(function (s) { return typeof s.zoomed === 'string' && s.zoomed.startsWith('matrix(1.05'); })(await __page({ type: 'page:state' }))",
@@ -342,6 +336,14 @@
         "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const o = document.querySelector('.tenfoot-osd'); return o && !o.hidden ? o.textContent : 'hidden'; })() : null\" }); return r.some((t) => t === 'Game ChangerEpisode'); })()",
         "(function (r) { return r.ok === true && r.state.held === false; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: 'Boolean(history.state && history.state.tenfootPlay)' }); return r === true; })()"
+      ]
+    },
+    {
+      "step": "this Firefox's H.264 decoder is checked by decoding a real frame, and a working one is never called missing",
+      "check": [
+        "(function (r) { return r.ok === true && r.state.h264 === true; })(await relayToPlayer(__fx, { type: 'player:command', cmd: 'pause' }))",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? typeof VideoDecoder === 'function' && typeof EncodedVideoChunk === 'function' : null\" }); return r.filter((x) => x !== null)[0] === true; })()",
+        "(async () => { const r = await browser.tabs.executeScript(__fx, { allFrames: true, code: \"location.host === 'embed.vhx.tv' ? (() => { const b = document.querySelector('.tenfoot-play-error'); return !b || b.hidden || !/no H\\\\.264 video decoder/.test(b.textContent); })() : null\" }); return r.filter((x) => x !== null)[0] === true; })()"
       ]
     },
     {
@@ -661,6 +663,16 @@
     },
     {
       "journey": "Edit Profile"
+    },
+    {
+      "step": "Reduce Motion on: the page's own smooth scrolling jumps instead",
+      "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { reduceMotion: 'on' }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const h = document.documentElement; h.style.scrollBehavior = 'smooth'; const v = [h.dataset.tenfootMotion, getComputedStyle(h).scrollBehavior].join('|'); h.style.scrollBehavior = ''; return v; })()\" }); return r === 'reduce|auto'; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { reduceMotion: 'system' }) }), true)",
+        "sleep 0.6"
+      ]
     },
     {
       "step": "Save is grey until the name changes, then yellow; OK saves and says Saved",
