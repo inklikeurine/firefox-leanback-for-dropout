@@ -1528,9 +1528,22 @@
     root.appendChild(style);
   }
 
+  // Signed out, Dropout's page at "/" moves on to an address that does not
+  // answer (content/early.js). Where Firefox has no Navigation API to cancel
+  // that move before it starts, stop it here: the page stays, with Leanback's
+  // welcome on it.
+  function stopDeadMove(settings) {
+    if (!settings.enabled || window.navigation || location.pathname !== "/") return;
+    if (!document.body || !document.body.classList.contains("logged-out")) return;
+    try {
+      window.stop();
+    } catch (_err) { /* the move goes on */ }
+  }
+
   async function init() {
     const [settings, rulesReply] = await Promise.all([Settings.load(API), send({ type: "rules:get" })]);
     state.settings = settings;
+    stopDeadMove(settings);
     if (arrive(false, settings.enabled)) return;
     state.rules = rulesReply && rulesReply.ok && rulesReply.rules && typeof rulesReply.rules === "object" ? rulesReply.rules : null;
     if (!state.rules) {

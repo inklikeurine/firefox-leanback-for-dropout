@@ -15,6 +15,8 @@
     "https://watch.dropout.tv/dropout-24-7": "hub",
     "https://watch.dropout.tv/login": "signin",
     "https://watch.dropout.tv/forgot_password": "forgot-password",
+    "https://watch.dropout.tv/?front": "front",
+    "https://signup.dropout.tv/": "collection",
     "https://watch.dropout.tv/settings/manage/profile": "edit-profile"
   },
   "prefs": {
@@ -689,6 +691,15 @@
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const h = document.documentElement; h.style.scrollBehavior = 'smooth'; const v = [h.dataset.tenfootMotion, getComputedStyle(h).scrollBehavior].join('|'); h.style.scrollBehavior = ''; return v; })()\" }); return r === 'reduce|auto'; })()",
         "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { reduceMotion: 'system' }) }), true)",
         "sleep 0.6"
+      ]
+    },
+    {
+      "step": "Signed out at \"/\": Dropout's move on to signup.dropout.tv (which does not answer) is stopped, and Leanback's welcome stays",
+      "check": [
+        "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/?front' }), true)",
+        "sleep 3",
+        "(await browser.tabs.get(__fx)).url === 'https://watch.dropout.tv/?front'",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"[document.documentElement.dataset.tenfootKind, Boolean(document.querySelector('.tenfoot-screen'))].join('|')\" }); return r === 'welcome|true'; })()"
       ]
     },
     {
