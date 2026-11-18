@@ -138,7 +138,13 @@ use ([targets.md](./targets.md)).
   *Reduce Motion* (as the system says, on, off: nothing of Leanback's
   slides or fades, in the page and the player alike; the ring jumps from one
   thing to the next, and the page's own smooth scrolling, Dropout's too,
-  jumps); under *Remote*, *Repeat Starts After*, *Repeat Speed* and
+  jumps); under *Selection*, *Ring Width*, *Ring Edge* (the thin
+  line each side of the ring: dark, light, off), *Ring Style* (solid; glow,
+  a soft halo of the ring's colour; underline, a bar of twice the ring's
+  width under the item; corners, only the ring's four corners), *Dim Around
+  Selection* (off, light, strong: the screen darkened around the selection,
+  never inside Leanback's settings, questions or keyboard) and *Enlarge
+  Selection*; under *Remote*, *Repeat Starts After*, *Repeat Speed* and
   *Ignore Quick Second Press* (how a held button repeats:
   [keymap.md](./keymap.md#holding-a-button)); then *Caption Size*, *Caption Color* and *Caption
   Background* (in the player frame, over the player's own captions; *Player's
@@ -599,7 +605,10 @@ default rather than throwing):
 | --- | --- | --- |
 | `enabled` | `true` | TV navigation on for Dropout hosts |
 | `ringColor` | `"#feea3b"` | *Theme Color*, `#rrggbb`: the ring and everything Dropout yellow. Offered: Dropout Yellow, Soft White `#f2f2f2`, Sky Blue `#7cc6fe`, Mint `#8fe3b6`, Lavender `#b9a6ff`, Peach `#ffb38a`, Rose `#ff9eb5`; the 0.35 colours (`#ffffff`, `#ff4081`, `#41d6c3`, `#ff8a3d`) move to the nearest |
-| `ringWidth` | `4` | px, 2–12 |
+| `ringWidth` | `4` | px: 2, 3, 4, 6, 8, 10, 12, 16, 20, 24 |
+| `ringEdge` | `"dark"` | `dark`, `light`, `off`: the thin line each side of the ring (page and player) |
+| `ringStyle` | `"solid"` | `solid`, `glow`, `underline`, `corners` (the player's round buttons: solid or glow) |
+| `dimAround` | `"off"` | `off`, `light`, `strong`: the screen darkened around the selection |
 | `focusZoom` | `5` | how much bigger the selected item gets, in percent (0–25); 0 turns it off |
 | `hintBar` | `false` | show button hints |
 | `playerChrome` | `"leanback"` | `leanback` or `site`: the site's own player controls, for troubleshooting. On the options page only |
@@ -829,8 +838,9 @@ starts.
   picture while choosing. Colour-blind-safe colours for Leanback's own look
   are in 0.40.0.
 - **Button remapping**: which remote button does what.
-- **A larger focus ring.** *Ring Width* (2–12 px) and *Enlarge Selection*
-  exist already; the milestone goes beyond them.
+- **A larger, clearer focus ring** (#56): *Ring Width* up to 24 px, *Ring
+  Edge*, *Ring Style* and *Dim Around Selection*, with *Enlarge Selection*
+  in a *Selection* group in Accessibility.
 - **A setting that stops going on to the next episode by itself.**
   *Autoplay Next Episode* is that switch already; the milestone makes sure
   it always stops the next episode, Dropout's own countdown included.

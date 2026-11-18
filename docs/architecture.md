@@ -957,6 +957,17 @@ tops the playback panel until used.
   so the curves run parallel. Style: `--tenfoot-ring-color` (`#feea3b`),
   `--tenfoot-ring-width` (`4px`), a dark outer edge for contrast on light
   pictures, no transition under reduced motion.
+- *Selection* (Accessibility): `lib/themes.js` writes
+  `data-tenfoot-ring-edge` (`light`, `off`: `--tenfoot-edge`),
+  `data-tenfoot-ring-style` (`glow`: an extra halo shadow,
+  `--tf-ring-glow`; `underline`: no border, a bottom gradient bar;
+  `corners`: a four-corner `mask`, `mask-clip: no-clip` so the outer edge
+  stays) and `data-tenfoot-dim` on the page's root, and the edge and glow in
+  the player frame (its round buttons stay solid otherwise). *Dim Around
+  Selection* is a second fixed box, `.tenfoot-dim`, drawn by `createRing`
+  with the ring's own box, just under it, its 200vmax shadow darkening the
+  rest of the screen; it hides with the ring and while the selection is in
+  `.tenfoot-settings`, `.tenfoot-ask` or `.tenfoot-kb`.
 - The selection zoom (`focusZoom`, *Enlarge Selection*: `--tenfoot-zoom`,
   class `tenfoot-scaled`) enlarges the focused element, made `inline-block`
   first if inline (a transform does nothing to an inline box), unless marked
