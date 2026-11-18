@@ -18,7 +18,6 @@
   const API = typeof browser !== "undefined" ? browser : chrome;
   const LOG = "[leanback-for-dropout]";
   const MARK = "tenfoot";
-  const MOVE_THROTTLE_MS = 80;
   const MUTATION_DEBOUNCE_MS = 100;
   const INITIAL_FOCUS_TIMEOUT_MS = 10000;
   const LOAD_MORE_TIMEOUT_MS = 6000;
@@ -1047,10 +1046,6 @@
   // events
   // ---------------------------------------------------------------------------
 
-  function isMove(action) {
-    return action === "up" || action === "down" || action === "left" || action === "right";
-  }
-
   function onKeyDown(e) {
     if (!state.enabled) return;
     const editable = Keymap.isEditable(e.target);
@@ -1087,7 +1082,8 @@
       browserBack();
       return;
     }
-    if (e.repeat && isMove(action) && performance.now() - state.lastMove < MOVE_THROTTLE_MS) {
+    // A held move: as often as Accessibility → Remote says (nav/repeat.js).
+    if (state.repeat && state.repeat.keydown(e, action) === "skip") {
       e.preventDefault();
       return;
     }
@@ -1570,6 +1566,21 @@
     }
     installSiteStyle();
     window.addEventListener("keydown", onKeyDown, true);
+    // A held move's repeats, on Leanback's own clock when Accessibility →
+    // Remote asks for one: they stop when the button is let go, the window
+    // loses the keys, the page is hidden, or the move lands in a text box.
+    state.repeat = globalThis.TenfootRepeat.createRepeater({
+      settings: () => state.settings,
+      move: (action) => {
+        if (!state.enabled || Keymap.isEditable(document.activeElement)) return false;
+        const consumed = dispatch(action, { editable: false });
+        if (consumed) showHints();
+        return consumed;
+      }
+    });
+    window.addEventListener("keyup", (e) => state.repeat.keyup(e), true);
+    window.addEventListener("blur", () => state.repeat.end());
+    document.addEventListener("visibilitychange", () => { if (document.hidden) state.repeat.end(); });
     window.addEventListener("contextmenu", onContextMenu, true);
     window.addEventListener("focusin", onFocusIn, true);
     document.addEventListener("click", onClick, true);

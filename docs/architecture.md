@@ -103,7 +103,11 @@ screen is only redrawn.
   `back`, `menu`, `search`, `play_pause`, `stop`, `next`, `previous`,
   `fast_forward`, `rewind`) for the current context.
 - `preventDefault()`/`stopPropagation()` only when the action was consumed;
-  other keys reach the site untouched. Auto-repeat: one move per 80 ms.
+  other keys reach the site untouched. A held move: `nav/repeat.js`
+  (`createRepeater`) says whether each keydown moves (`move`, `skip`,
+  `pass`) and runs Leanback's own repeats when *Repeat Starts After* is a
+  time; `keyup`, `blur` and a hidden page end the hold. The player frame uses
+  it only once a *Remote* setting differs from its default (`isCustom`).
 - In an editable target (`input`, `textarea`, `[contenteditable]`, an open
   `<select>`) only these are taken: `back`; `left` with the caret at the very
   start and nothing selected (to the rail where there is one, else the
