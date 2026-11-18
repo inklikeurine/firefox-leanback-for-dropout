@@ -375,6 +375,13 @@ html.tenfoot-settings-open .tenfoot-seek {
   }
 }
 
+/* Reduce Motion (Accessibility), in the player frame: nothing of Leanback's
+   slides or fades — the bar, the playback panel, the up-next ring. */
+html[data-tenfoot-motion="reduce"] :is([class*="tenfoot-"], [class*="tenfoot-"] *) {
+  transition: none !important;
+  animation: none !important;
+}
+
 /* Captions (Accessibility): Leanback's size, colour and background over the
    player's own, when one is picked (lib/themes.js applyPlayer). */
 html[data-tenfoot-caption-size="large"] .vp-captions [class*="captionsWindow"] {
