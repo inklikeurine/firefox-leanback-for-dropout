@@ -2,7 +2,8 @@
 
 **The rule: only what a TV remote's face sends is mapped.** There are no
 keyboard shortcuts in this extension, with exactly one noted exception (`/`
-for search). No feature is reachable only by pressing a letter, because on a
+for search). Buttons the viewer teaches ([Taught buttons](#taught-buttons))
+add to the remote's face; they can never be keys that type. No feature is reachable only by pressing a letter, because on a
 remote that means flipping it over to a cramped QWERTY pad — which is the
 thing this extension exists to avoid.
 
@@ -52,6 +53,28 @@ held press, is treated as a hold: a press within 0.15 s of the same button's
 release carries it on. In the player, held ◀ ▶ and ▲ ▼ follow the system's
 repeats, unpaced, until one of the three is changed. OK, Back and Menu never
 repeat.
+## Taught buttons
+
+*Accessibility → Remote Buttons* teaches Leanback a button for a job: pick
+the job, press the button, then *Use this button* (or *Try again*); Back
+cancels at every step. Each job lists its taught buttons, and OK on one
+removes it; *Reset Buttons* (OK twice) removes them all. The options page
+lists them too, each with *Remove*.
+
+- **Jobs**: the remote's own (OK, Up, Down, Left, Right, Back, Menu), for a
+  remote whose buttons Leanback doesn't recognise; and jobs for spare
+  buttons: Play/Pause, Next Episode, Previous Episode, Skip Ahead and Skip
+  Back (one seek step), Captions On/Off (the player's own CC button), My
+  List (the screen's *+ My List* / *✓ My List*), Search, Home and
+  Accessibility (Leanback's settings open at Accessibility; during
+  playback, the playback panel).
+- **What can't be taught**: keys that type (letters, digits, Space,
+  Backspace…), so the rule above holds; the system's (Home, volume, power);
+  a button pressed with Shift, Ctrl, Alt or Meta; and any button the
+  remote's face already uses, which keeps its job. A taught button is added,
+  never taking a job away, so a mistake can't lock anyone out.
+- A taught button does nothing while typing in a box. A key Firefox reports
+  as `Unidentified` is kept by its `code`.
 
 ## The one keyboard exception
 

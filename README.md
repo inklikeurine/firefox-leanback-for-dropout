@@ -274,12 +274,17 @@ Edge (the thin line each side of the ring: dark, light or off) · Ring Style
 strong: everything but the selection darkened) · Enlarge Selection; under
 *Remote*, Repeat Starts After (as the system says, 0.25 to 2 s, or never) ·
 Repeat Speed (2 to 12 moves a second) · Ignore Quick Second Press (off, or
-0.2 to 1 s); then Caption Size · Caption Color · Caption Background · Color
+0.2 to 1 s) · Remote Buttons (teach Leanback a button on your remote for a
+job: Captions On/Off, Play/Pause, Next or Previous Episode, Skip Ahead or
+Back, My List, Search, Home or Accessibility, or one of the remote's own
+jobs for buttons Leanback doesn't recognise; keys that type can't be
+taught); then Caption Size · Caption Color · Caption Background · Color
 Filter (Experimental). At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes
 up until it is answered). The options page
 (`about:addons` → Leanback for Dropout → Preferences) has the same, plus
-*Start Videos Muted*, a theme colour of your own and *Player controls*:
+*Start Videos Muted*, a theme colour of your own, the taught *Remote
+Buttons* (each with *Remove*) and *Player controls*:
 *The site's own player controls* hands the player back to Dropout, for
 troubleshooting.
 

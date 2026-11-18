@@ -8,6 +8,7 @@
 (function () {
   const API = typeof browser !== "undefined" ? browser : chrome;
   const Settings = globalThis.TenfootSettings;
+  const Keymap = globalThis.TenfootKeymap;
   const $ = (id) => document.getElementById(id);
   const status = $("status");
   let statusTimer = 0;
@@ -76,6 +77,42 @@
     }
     $("ringColorPicker").value = s.ringColor;
     $("ringColorText").value = s.ringColor;
+    renderButtons(s.buttons || {});
+  }
+
+  // Taught buttons: one line each, its job and its name, with Remove.
+  function renderButtons(buttons) {
+    const list = $("buttons");
+    while (list.firstChild) list.removeChild(list.firstChild);
+    const keys = Object.keys(buttons);
+    $("noButtons").hidden = keys.length > 0;
+    for (const job of Settings.BUTTON_JOBS) {
+      for (const k of keys.filter((x) => buttons[x] === job.id)) {
+        const li = document.createElement("li");
+        li.className = "row";
+        const text = document.createElement("span");
+        text.textContent = `${job.label}: ${Keymap.keyName(k)}`;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Remove";
+        remove.dataset.key = k;
+        remove.addEventListener("click", () => removeButton(k));
+        li.append(text, remove);
+        list.appendChild(li);
+      }
+    }
+  }
+
+  async function removeButton(key) {
+    try {
+      const current = await Settings.load(API);
+      const next = Object.assign({}, current.buttons);
+      delete next[key];
+      render(await Settings.save(API, { buttons: next }));
+      say("Removed");
+    } catch (err) {
+      say("Could not save: " + (err && err.message ? err.message : "unknown error"));
+    }
   }
 
   function say(text) {

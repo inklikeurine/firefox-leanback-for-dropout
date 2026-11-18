@@ -123,3 +123,9 @@ h3.group {
   font-size: 1em;
 }
 
+/* Remote Buttons: the taught buttons, one per line. */
+.buttons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

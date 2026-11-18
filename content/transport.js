@@ -1131,6 +1131,18 @@
         return true;
       },
 
+      // Remote Buttons waiting for a press in Leanback's settings here: the
+      // press itself (nav/settings-menu.js learnKey). False: not learning, or
+      // Back, which comes as an action as always.
+      learnKey(e) {
+        if (!open || !panel) return false;
+        const lvl = level();
+        if (!lvl || lvl.kind !== "leanback" || !lvl.menu.learning()) return false;
+        if (!lvl.menu.learnKey(e)) return false;
+        if (panel) renderPanel();
+        return true;
+      },
+
       // Every key the row understands. Anything it returns false for is left
       // to the caller, which is how ▼ reaches the page below.
       dispatch(action) {
