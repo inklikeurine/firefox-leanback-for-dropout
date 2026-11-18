@@ -60,3 +60,5 @@ T.runAsync('the dimming box follows the ring, and hides with it or in Leanback\'
   ring.hide();
   T.eq(dim.hidden, true, 'gone with the ring');
 });
+
+await T.exit();
