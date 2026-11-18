@@ -678,8 +678,12 @@ the DOM before that:
     h3.ott-up-next-title "E2, S1 - Game Changer"
 ```
 
-When the ring completes, the page goes to the next episode by itself. Whether
-Hide also stops that is not known.
+When the ring completes, the page goes to the next episode by itself. The
+card's script reads `OTTData.up_next.disable_autoplay` at every one-second
+tick and when the video ends, from the same object (`up_next` is passed
+straight to the card): when it is true the card is shown but never counts
+down or moves on, so setting it at any time before the end stops the
+autoplay. Whether Hide alone also stops it is not known.
 
 **Vimeo's end screen**, `div.Outro_module_outroWrapper__….vp-outro-wrapper`
 with `div.Outro_module_outro__…[role="dialog"]` inside, is always in the DOM and
