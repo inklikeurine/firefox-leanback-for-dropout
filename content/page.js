@@ -577,9 +577,37 @@
         return openMenu();
       case "search":
         return state.kind === "search" ? leaveSearch() : goTop(state.rules.searchUrl || "/search");
+      case "home":
+        return P.goHome();
+      case "accessibility":
+        return openAccessibility();
+      case "mylist":
+        return pressMyList();
       default:
         return Keymap.PLAYER_ACTIONS.has(action) ? playerAction(action) : false;
     }
+  }
+
+  // Taught buttons' jobs (Accessibility → Remote Buttons) that are the page's.
+  // Accessibility: Leanback's settings, open at that menu; while a video
+  // plays, the playback panel, where Leanback's settings are.
+  function openAccessibility() {
+    if (!state.menu.isOpen) {
+      P.openMenu();
+      if (!state.menu.isOpen) return true; // the player's panel took it
+    }
+    state.settingsMenu.openAt("accessibility");
+    P.renderSettings();
+    return true;
+  }
+
+  // My List: the screen's own My List button (+ My List / ✓ My List), where
+  // the page has one.
+  function pressMyList() {
+    const b = document.querySelector('.tenfoot-screen [data-tenfoot-action="mylist"]');
+    if (!b) return false;
+    b.click();
+    return true;
   }
 
   function move(dir) {
@@ -1047,6 +1075,13 @@
 
   function onKeyDown(e) {
     if (!state.enabled) return;
+    // Remote Buttons waiting for a press: the press itself, not its action.
+    if (state.menu && state.menu.isOpen && state.settingsMenu && state.settingsMenu.learning() && state.settingsMenu.learnKey(e)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      P.renderSettings();
+      return;
+    }
     const editable = Keymap.isEditable(e.target);
     const atStart = editable && Keymap.caretAtStart(e.target);
     const singleLine = editable && Keymap.isSingleLine(e.target);
@@ -1065,7 +1100,7 @@
       e.stopImmediatePropagation();
       return;
     }
-    const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine });
+    const action = Keymap.actionFor(e, { inPlayer: false, editable, atStart, singleLine }, state.settings.buttons);
     if (!action) return;
     if (action === "back" && e.key === "BrowserBack") {
       // Leanback's settings: Firefox's Back takes their step off, and they go

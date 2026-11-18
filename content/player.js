@@ -603,6 +603,14 @@
         v.currentTime = 0;
         send({ type: "page:focus", hint: "back" });
         break;
+      case "captions": {
+        // Captions on or off: the player's own CC button (a taught button's
+        // job). Setting a TextTrack's mode draws nothing in this player.
+        const cc = state.rules.captionsButton ? qs(state.rules.captionsButton) : null;
+        if (!cc) return { ok: false, error: "No captions button", state: currentState() };
+        cc.click();
+        break;
+      }
       default:
         return { ok: false, error: "Unknown command" };
     }
@@ -655,6 +663,23 @@
       case "fast_forward":
         execute("seek", 3 * step);
         return true;
+      case "seek_forward":
+        execute("seek", step);
+        return true;
+      case "seek_back":
+        execute("seek", -step);
+        return true;
+      case "captions":
+        execute("captions");
+        return true;
+      case "accessibility":
+        if (openSettingsPanel()) return true;
+        send({ type: "page:action", action });
+        return true;
+      case "mylist":
+      case "home":
+        send({ type: "page:action", action });
+        return true;
       case "stop":
         execute("stop");
         return true;
@@ -692,7 +717,13 @@
 
   function onKeyDown(e) {
     if (!state.settings.enabled) return;
-    const action = Keymap.actionFor(e, { inPlayer: true, editable: Keymap.isEditable(e.target) });
+    // Remote Buttons waiting for a press in the playback panel.
+    if (state.bar && state.bar.learnKey(e)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    const action = Keymap.actionFor(e, { inPlayer: true, editable: Keymap.isEditable(e.target) }, state.settings.buttons);
     if (!action) return;
     state.gesture = true;
     unmuteOnGesture();

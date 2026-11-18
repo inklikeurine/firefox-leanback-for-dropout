@@ -12,7 +12,7 @@ const FULL = (over = {}) => ({ ...S.DEFAULTS, exitHookSet: false, development: f
 T.run('defaults match the spec', () => {
   T.eq(S.DEFAULTS, {
     enabled: true, ringColor: '#feea3b', ringWidth: 4, ringEdge: 'dark', ringStyle: 'solid', dimAround: 'off', focusZoom: 5, hintBar: false, playerChrome: 'leanback', seekStep: 10, autoplayNext: true, startMuted: false, skipMarketingSite: true, exitHook: 'close-tab', seasonStart: 'latest',
-    theme: 'dropout', holidays: 'off', uiScale: 100, highContrast: false, reduceMotion: 'system', repeatDelay: 'system', repeatRate: 12, bounceMs: 0, captionSize: 'default', captionColor: 'default', captionBackground: 'default', videoFilter: 'off', videoFilterStrength: 100, videoColorBoost: 'off'
+    theme: 'dropout', holidays: 'off', uiScale: 100, highContrast: false, reduceMotion: 'system', repeatDelay: 'system', repeatRate: 12, bounceMs: 0, captionSize: 'default', captionColor: 'default', captionBackground: 'default', videoFilter: 'off', videoFilterStrength: 100, videoColorBoost: 'off', buttons: {}
   });
   T.eq(S.SEEK_STEPS, [5, 10, 15, 30, 60, 120, 300], 'the only seek steps offered');
   T.eq(S.DEFAULTS.startMuted, false, 'videos play with sound unless the user asks otherwise');

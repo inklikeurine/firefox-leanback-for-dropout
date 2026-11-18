@@ -13,10 +13,26 @@
 // the look shows each at once (preview); Back leaves it as it was. Clearing
 // cannot be undone, so it takes OK twice. ◀ or Back go back up a level; from
 // the top they are the owner's to handle (key() says "out").
+//
+// Remote Buttons (in Accessibility): the jobs a button can be taught, each
+// with the buttons that do it. OK on a job lists them (OK on one removes it)
+// and *Teach a button*, which waits for a press: the owner hands that press
+// over raw (learnKey(event)) while learning() is true. Leanback names it and
+// asks *Use this button* / *Try again*. Back cancels at every step. *Reset
+// Buttons* takes OK twice.
 
 (function () {
   const Settings = () => globalThis.TenfootSettings;
   const MENUS = { accessibility: "Accessibility" };
+  const Keys = () => globalThis.TenfootKeymap;
+  const BUTTONS_ENTRY = { id: "buttons", label: "Remote Buttons", kind: "drill", group: "Remote" };
+  // Why a pressed button can't be taught, in the viewer's words.
+  const REFUSED = {
+    modifier: "Press one button on its own.",
+    typing: "Keys that type can't be taught. Try another button.",
+    system: "That button belongs to the system. Try another.",
+    unknown: "That button sends nothing Leanback can tell apart. Try another."
+  };
 
   /**
    * @param {{
@@ -35,6 +51,7 @@
     let levels = [];
     let armed = false;
     let cleared = false;
+    let resetArmed = false;
 
     function level() {
       return levels[levels.length - 1] || null;
@@ -83,6 +100,113 @@
       return Settings().ROWS.filter((r) => r.menu === id && r.panel !== false);
     }
 
+    // Remote Buttons ------------------------------------------------------
+
+    function learned() {
+      const b = settings().buttons;
+      return b && typeof b === "object" ? b : {};
+    }
+
+    function jobOf(id) {
+      return Settings().BUTTON_JOBS.find((j) => j.id === id) || null;
+    }
+
+    function jobLabel(id) {
+      const j = jobOf(id);
+      return j ? j.label : id;
+    }
+
+    // The buttons taught for a job, as their keys.
+    function keysFor(job) {
+      return Object.keys(learned()).filter((k) => learned()[k] === job);
+    }
+
+    function buttonsList() {
+      const list = Settings().BUTTON_JOBS.map((j) => ({
+        id: `job:${j.id}`, label: j.label, kind: "drill",
+        group: j.own ? "The remote's own buttons" : "Jobs for spare buttons",
+        value: keysFor(j.id).map((k) => Keys().keyName(k)).join(", ")
+      }));
+      list.push({ id: "reset", label: "Reset Buttons", kind: "action", value: resetArmed ? "OK again to reset" : "", separator: true });
+      return list;
+    }
+
+    function jobList(job) {
+      return [{ id: "teach", label: "Teach a button", kind: "action" }]
+        .concat(keysFor(job).map((k) => ({ id: `remove:${k}`, label: `Remove ${Keys().keyName(k)}`, kind: "action" })));
+    }
+
+    function saveButtons(next) {
+      o.save({ buttons: next });
+    }
+
+    /** Waiting for a button to be pressed: the owner hands presses to learnKey(). */
+    function learning() {
+      const l = level();
+      return Boolean(l && l.kind === "learn");
+    }
+
+    /**
+     * A key press while learning. True when it was taken (draw view() again);
+     * false for Back (Escape or BrowserBack), which the owner handles as Back.
+     */
+    function learnKey(event) {
+      const l = level();
+      if (!l || l.kind !== "learn" || !event) return false;
+      if (event.key === "Escape" || event.key === "BrowserBack") return false;
+      if (event.repeat) return true;
+      const r = Keys().learnable(event, learned());
+      if (!r.ok) {
+        if (r.reason === "builtin" || r.reason === "taught") {
+          l.note = `That button is already ${jobLabel(r.action)}.${r.reason === "taught" ? " Remove it there first." : ""}`;
+        } else l.note = REFUSED[r.reason] || REFUSED.unknown;
+        return true;
+      }
+      levels.push({ kind: "confirm", job: l.job, key: r.id, name: r.name, index: 0 });
+      return true;
+    }
+
+    function takeButtons(l) {
+      if (l.kind === "buttons") {
+        const e = buttonsList()[l.index];
+        if (!e) return true;
+        if (e.id === "reset") {
+          if (resetArmed) {
+            resetArmed = false;
+            saveButtons({});
+          } else resetArmed = true;
+          return true;
+        }
+        levels.push({ kind: "job", job: e.id.slice(4), index: 0 });
+        return true;
+      }
+      if (l.kind === "job") {
+        const e = jobList(l.job)[l.index];
+        if (!e) return true;
+        if (e.id === "teach") {
+          levels.push({ kind: "learn", job: l.job, index: 0, note: "" });
+          return true;
+        }
+        const next = Object.assign({}, learned());
+        delete next[e.id.slice(7)];
+        saveButtons(next);
+        l.index = 0;
+        return true;
+      }
+      if (l.kind === "confirm") {
+        if (l.index === 0) {
+          saveButtons(Object.assign({}, learned(), { [l.key]: l.job }));
+          levels.splice(-2, 2); // back to the job, which now lists it
+        } else {
+          levels.pop();
+          const w = level();
+          if (w && w.kind === "learn") w.note = "";
+        }
+        return true;
+      }
+      return true; // learning: only a button press answers
+    }
+
     // Theme This Page's options for the page, as rows of the menu.
     function lookRows(look) {
       return Settings().PAGE_LOOKS[look.key].options.map((opt) => Object.assign({ kind: "choice", group: "" }, opt));
@@ -97,7 +221,17 @@
     // The entries of a level that lists rows: the top, a menu, Theme This Page.
     function listOf(l) {
       const s = settings();
-      if (l.kind === "menu") return menuRows(l.menu).map((r) => rowEntry(r, s));
+      if (l.kind === "menu") {
+        const list = menuRows(l.menu).map((r) => rowEntry(r, s));
+        if (l.menu === "accessibility") {
+          // Remote Buttons: under Remote, else after Display.
+          let at = -1;
+          list.forEach((e, i) => { if (e.group === "Remote") at = i; });
+          if (at < 0) list.forEach((e, i) => { if (e.group === "Display") at = i; });
+          list.splice(at + 1, 0, Object.assign({}, BUTTONS_ENTRY));
+        }
+        return list;
+      }
       if (l.kind === "look") {
         const now = (s.pageLooks || {})[l.look.key] || {};
         return lookRows(l.look).map((r) => ({ id: r.id, label: r.label, kind: "choice", value: Settings().valueText(r, now[r.id]) }));
@@ -116,6 +250,22 @@
         };
       }
       if (l && l.kind === "menu") return { title: MENUS[l.menu], index: l.index, entries: listOf(l) };
+      if (l && l.kind === "buttons") return { title: "Remote Buttons", index: l.index, entries: buttonsList() };
+      if (l && l.kind === "job") return { title: jobLabel(l.job), index: l.index, entries: jobList(l.job) };
+      if (l && l.kind === "learn") {
+        return {
+          title: `Teach a button: ${jobLabel(l.job)}`,
+          index: 0,
+          entries: [{ id: "waiting", label: l.note || "Press the button you want", kind: "info", value: "Back cancels" }]
+        };
+      }
+      if (l && l.kind === "confirm") {
+        return {
+          title: `${l.name} for ${jobLabel(l.job)}?`,
+          index: l.index,
+          entries: [{ id: "use", label: "Use this button", kind: "action" }, { id: "again", label: "Try again", kind: "action" }]
+        };
+      }
       if (l && l.kind === "look") return { title: `Theme This Page: ${l.look.title}`, index: l.index, entries: listOf(l) };
       return { title: "Leanback Settings", index: l ? l.index : 0, entries: entries() };
     }
@@ -124,6 +274,17 @@
       levels = [{ kind: "top", index: 0 }];
       armed = false;
       cleared = false;
+      resetArmed = false;
+    }
+
+    /** Open straight at one of the menus (Accessibility), as if picked from the top. */
+    function openAt(menu) {
+      open();
+      if (MENUS[menu]) {
+        const i = entries().findIndex((e) => e.id === `menu:${menu}`);
+        if (i >= 0) levels[0].index = i;
+        levels.push({ kind: "menu", menu, index: 0 });
+      }
     }
 
     // A choice's values, opened: `patchOf(value)` is what picking one saves;
@@ -141,6 +302,7 @@
       if (next !== l.index) {
         l.index = next;
         armed = false;
+        resetArmed = false;
         if (l.kind === "choice" && l.previewed) preview(l.patchOf(l.values[l.index]));
       }
       return true;
@@ -148,6 +310,10 @@
 
     function take(byRight) {
       const l = level();
+      if (l.kind === "buttons" || l.kind === "job" || l.kind === "learn" || l.kind === "confirm") {
+        if (byRight && l.kind !== "buttons") return true; // ▶ never runs an action
+        return takeButtons(l);
+      }
       if (l.kind === "choice") {
         o.save(l.patchOf(l.values[l.index]));
         if (l.previewed) preview(null);
@@ -166,6 +332,10 @@
       if (entry.id === "look") {
         const look = pageLook();
         if (look) levels.push({ kind: "look", look, index: 0 });
+        return true;
+      }
+      if (entry.id === "buttons") {
+        levels.push({ kind: "buttons", index: 0 });
         return true;
       }
       if (entry.id.startsWith("menu:")) {
@@ -193,6 +363,7 @@
     function up() {
       const l = level();
       if (l && l.kind === "choice" && l.previewed) preview(null);
+      resetArmed = false;
       levels.pop();
     }
 
@@ -232,7 +403,7 @@
       levels = [];
     }
 
-    return Object.freeze({ open, view, key, pick, close });
+    return Object.freeze({ open, openAt, view, key, pick, close, learning, learnKey });
   }
 
   globalThis.TenfootSettingsMenu = Object.freeze({ create });
