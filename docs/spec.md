@@ -135,7 +135,8 @@ use ([targets.md](./targets.md)).
 - **Accessibility** (a menu of its own in Leanback's settings): *Interface
   Size* (100, 115, 130 %: everything Leanback draws), *High Contrast*
   (black and white, white edges on buttons, a ring of at least 6 px),
-  *Reduce Motion* (as the system says, on, off: nothing of Leanback's
+  *Remote Buttons* (teaching Leanback a button for a job:
+  [keymap.md](./keymap.md#taught-buttons)), *Reduce Motion* (as the system says, on, off: nothing of Leanback's
   slides or fades, in the page and the player alike; the ring jumps from one
   thing to the next, and the page's own smooth scrolling, Dropout's too,
   jumps), *Caption Size*, *Caption Color* and *Caption
@@ -618,6 +619,7 @@ default rather than throwing):
 | `captionColor` | `"default"` | `default`, `white`, `yellow`, `cyan` |
 | `captionBackground` | `"default"` | `default`, `black` (a box), `none` (a shadow) |
 | `videoFilter` | `"off"` | `off`, `protanopia`, `deuteranopia`, `tritanopia`: a colour matrix on the video (experimental) |
+| `buttons` | `{}` | *Remote Buttons*: taught buttons, `{ "<key>": "<job>" }` (a key Firefox calls `Unidentified` as `code:<code>`); jobs: `select`, `up`, `down`, `left`, `right`, `back`, `menu`, `play_pause`, `next`, `previous`, `seek_forward`, `seek_back`, `captions`, `mylist`, `search`, `home`, `accessibility` ([keymap.md](./keymap.md#taught-buttons)) |
 | `pageLooks` | each first value | Theme This Page, per kind of page: `home: {banner: large/small/off, cards}`, `lists: {cards}`, `show: {cards}`, `details: {picture: right/left/off}`; `cards` is `medium`, `small` or `large` (five, six or four across a grid) |
 
 The watch history is a separate key per Dropout profile, `progress:<n>`
@@ -822,7 +824,8 @@ starts.
   accurate, adds a strength and a colour boost, and shows each choice on the
   picture while choosing. Colour-blind-safe colours for Leanback's own look
   are in 0.40.0.
-- **Button remapping**: which remote button does what.
+- **Button remapping** (#16): *Remote Buttons* in Accessibility, teaching
+  Leanback a button for a job ([keymap.md](./keymap.md#taught-buttons)).
 - **A larger focus ring.** *Ring Width* (2–12 px) and *Enlarge Selection*
   exist already; the milestone goes beyond them.
 - **A setting that stops going on to the next episode by itself.**

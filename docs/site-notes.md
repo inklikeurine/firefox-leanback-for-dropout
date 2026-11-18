@@ -880,5 +880,6 @@ logged-in page is committed.
 | `player.upNextOverlay` | `.vp-outro-wrapper`, `.ott-up-next` | 1 each in the frame, near the end |
 | `player.upNextButton` | `a.ott-up-next-thumb-link` | 1 on Dropout's card: plays the next episode |
 | `player.upNextHide` | `button.ott-up-next-hide` | 1 on Dropout's card, before the play link |
+| `player.captionsButton` | `#cc-control-bar-button, button[data-cc-button]` | 1 in the control bar; a click turns captions on or off (a taught button's *Captions On/Off*) |
 
 `common.modals` (`.reveal-modal.open`) matches only while a dialog is open.

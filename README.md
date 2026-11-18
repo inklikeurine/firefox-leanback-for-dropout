@@ -269,12 +269,17 @@ choices of their own) · Theme · Theme Color · Holidays · Enlarge Selection
 · Ring Width · Button Hints (a bar showing the keys that matter now, and the
 same along the foot of the on-screen keyboard; off unless turned on). Moving through the values of a look shows each at once;
 OK keeps it, Back puts it back. Then *Accessibility*: Interface Size (100 % fills a TV's screen; 115 % and 130 % are larger, with fewer cards across a show, a list or search so nothing is cut off) · High
-Contrast · Reduce Motion · Caption Size · Caption Color · Caption
-Background · Color Filter (Experimental). At the foot, *Cookie
+Contrast · Reduce Motion · Remote Buttons (teach Leanback a button on your
+remote for a job: Captions On/Off, Play/Pause, Next or Previous Episode,
+Skip Ahead or Back, My List, Search, Home or Accessibility, or one of the
+remote's own jobs for buttons Leanback doesn't recognise; keys that type
+can't be taught) · Caption Size · Caption Color · Caption Background · Color
+Filter (Experimental). At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes
 up until it is answered). The options page
 (`about:addons` → Leanback for Dropout → Preferences) has the same, plus
-*Start Videos Muted*, a theme colour of your own and *Player controls*:
+*Start Videos Muted*, a theme colour of your own, the taught *Remote
+Buttons* (each with *Remove*) and *Player controls*:
 *The site's own player controls* hands the player back to Dropout, for
 troubleshooting.
 
