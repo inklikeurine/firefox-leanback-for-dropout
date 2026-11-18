@@ -144,3 +144,5 @@ T.runAsync('on a page, Repeat Starts After Never: a held ▶ moves once', async 
   T.ok(second !== first, 'the press moved');
   T.eq(p.doc.activeElement, second, 'the repeat did not');
 });
+
+await T.exit();
