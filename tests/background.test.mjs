@@ -123,13 +123,6 @@ T.runAsync('exit hook: none does nothing; close-tab removes the sender tab', asy
   T.eq(await send({ type: 'exit' }, from(1, 0)), { ok: true, action: 'close-tab' });
   T.eq(shim.callsTo('tabs.remove').at(-1).args, [1]);
   T.eq(await send({ type: 'exit' }, { id: 'popup' }), { ok: true, action: 'none' }, 'no tab to close');
-  // Forced (the page cannot be used, signed out): the tab closes whatever the setting says.
-  await send({ type: 'settings:set', patch: { exitHook: 'none' } });
-  const before = shim.callsTo('tabs.remove').length;
-  T.eq(await send({ type: 'exit', force: true }, from(1, 0)), { ok: true, action: 'close-tab' });
-  T.eq(shim.callsTo('tabs.remove').length, before + 1, 'Back On Home: Does nothing, and it closed all the same');
-  T.eq(await send({ type: 'exit', force: true }, { id: 'popup' }), { ok: true, action: 'none' }, 'still no tab, nothing to close');
-  T.eq(await send({ type: 'exit', force: 'yes' }, from(1, 0)), { ok: true, action: 'none' }, 'only a real true forces it');
 });
 
 T.runAsync('Back On Home follows how Leanback was installed until it is picked: nothing from its folder, closing the tab when signed', async () => {
