@@ -663,6 +663,16 @@
       "journey": "Edit Profile"
     },
     {
+      "step": "Reduce Motion on: the page's own smooth scrolling jumps instead",
+      "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { reduceMotion: 'on' }) }), true)",
+        "sleep 0.6",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const h = document.documentElement; h.style.scrollBehavior = 'smooth'; const v = [h.dataset.tenfootMotion, getComputedStyle(h).scrollBehavior].join('|'); h.style.scrollBehavior = ''; return v; })()\" }); return r === 'reduce|auto'; })()",
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { reduceMotion: 'system' }) }), true)",
+        "sleep 0.6"
+      ]
+    },
+    {
       "step": "Save is grey until the name changes, then yellow; OK saves and says Saved",
       "check": [
         "(await browser.tabs.update(__fx, { url: 'https://watch.dropout.tv/settings/manage/profile' }), true)",

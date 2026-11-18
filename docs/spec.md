@@ -136,7 +136,9 @@ use ([targets.md](./targets.md)).
   Size* (100, 115, 130 %: everything Leanback draws), *High Contrast*
   (black and white, white edges on buttons, a ring of at least 6 px),
   *Reduce Motion* (as the system says, on, off: nothing of Leanback's
-  slides or fades), *Caption Size*, *Caption Color* and *Caption
+  slides or fades, in the page and the player alike; the ring jumps from one
+  thing to the next, and the page's own smooth scrolling, Dropout's too,
+  jumps), *Caption Size*, *Caption Color* and *Caption
   Background* (in the player frame, over the player's own captions; *Player's
   own* leaves them alone), and *Color Filter (Experimental)*: an SVG colour
   matrix on the video that moves what red-, green- or blue-weak colour
