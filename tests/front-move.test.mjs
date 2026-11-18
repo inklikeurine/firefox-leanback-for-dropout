@@ -23,3 +23,5 @@ T.runAsync('Home, or Leanback turned off: nothing is stopped', async () => {
   await T.sleep(100);
   T.eq([home.stops, off.stops], [0, 0]);
 });
+
+await T.exit();
