@@ -429,6 +429,13 @@ html[data-tenfoot="on"][data-tenfoot-kind="profiles"] body {
   }
 }
 
+/* Reduce Motion (Accessibility): the page's own smooth scrolling jumps too,
+   Dropout's included. */
+html[data-tenfoot-motion="reduce"],
+html[data-tenfoot-motion="reduce"] body {
+  scroll-behavior: auto !important;
+}
+
 /* A question in a box (nav/ask.js): over everything, the screen dimmed. */
 .tenfoot-ask {
   position: fixed;

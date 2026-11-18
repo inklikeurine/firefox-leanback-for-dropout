@@ -136,7 +136,9 @@ use ([targets.md](./targets.md)).
   Size* (100, 115, 130 %: everything Leanback draws), *High Contrast*
   (black and white, white edges on buttons, a ring of at least 6 px),
   *Reduce Motion* (as the system says, on, off: nothing of Leanback's
-  slides or fades); under *Selection*, *Ring Width*, *Ring Edge* (the thin
+  slides or fades, in the page and the player alike; the ring jumps from one
+  thing to the next, and the page's own smooth scrolling, Dropout's too,
+  jumps); under *Selection*, *Ring Width*, *Ring Edge* (the thin
   line each side of the ring: dark, light, off), *Ring Style* (solid; glow,
   a soft halo of the ring's colour; underline, a bar of twice the ring's
   width under the item; corners, only the ring's four corners), *Dim Around
@@ -340,7 +342,7 @@ use ([targets.md](./targets.md)).
   own text boxes — sign-in's *Email* and *Password*, the reset's *Email*, the
   name box of Add Profile and Edit Profile, and the digit boxes
   of a PIN-locked profile's PIN screen (Dropout's own) — opens it, and a pointer click on
-  one of those boxes opens it too, since the air mouse has no keyboard. On search it
+  one of those boxes opens it too, for a remote with no keyboard or mouse. On search it
   is always up (see **Search**).
   The look is bare letters: a key has no box until it is selected, when it
   becomes a solid accent-colour pill with no ring, and for a moment on OK it
@@ -527,6 +529,11 @@ use ([targets.md](./targets.md)).
   show, and its keys. Hiding it stops autoplay for this episode. With
   *Autoplay Next Episode* off it counts nothing down, and Dropout's own card
   is told to stand down (its Hide). Dropout's card stays in place, invisible.
+- **Nothing plays next by itself when it shouldn't.** With *Autoplay Next
+  Episode* off, or the card hidden, Dropout's own countdown is switched off
+  too (its player's own "no autoplay" switch), with Leanback's controls and
+  with Dropout's: Dropout's card then offers the next episode without
+  counting down.
 - **Transport bar.** Leanback's own: play/pause · position · settings ·
   fullscreen, round buttons on a dark fade along the bottom of the picture,
   the play button larger with a yellow symbol, the time so far under the
@@ -567,11 +574,6 @@ use ([targets.md](./targets.md)).
   what Leanback makes of the tab in front (its `page:state`: the kind of
   page, an episode's player found or not, signed in or not) and *All
   settings…* (the options page).
-
-## Optional / future functionality
-
-- Gamepad support via the Gamepad API (today: map the pad to keys outside the
-  browser).
 
 ## Permissions
 
@@ -814,14 +816,9 @@ or sends it, and it asks for no new permission. 0.37.0 has:
 - **One My List button**: *+ My List* when not in the list and *✓ My List*
   when it is, on Home's banner, a show's page and an episode's page alike.
 - **A list of the things that don't match** across Leanback's screens, for
-  the 0.39.0 theming foundations to fix.
+  the 0.39.0 theming foundations to fix ([#66](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/66)).
 
-Not in 0.37.0: a phone sign-in page reached by a QR code. A browser add-on
-can't run a server, so it needs a small helper program installed on the TV
-computer, and it is left for later. Dropout's own TV code
-(`dropout.tv/activate`) works only for Dropout's official apps, and its
-emailed sign-in link signs in whichever device opens it, so neither helps
-here.
+Not in 0.37.0: signing in from a phone with a QR code ([#61](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/61)).
 
 ### 0.38.0 — accessibility options
 
@@ -829,9 +826,11 @@ Where Leanback already has something close, it is said beside the item: the
 milestone builds on it, and what exactly changes is settled when the work
 starts.
 
-- **Colour-blind-safe colours.** May be done here or in the theming
-  releases below. The player's *Color Filter (Experimental)* already
-  changes the video's colours; Leanback's own colours do not change yet.
+- **The video's Color Filter, improved.** *Color Filter (Experimental)*
+  already changes the video's colours; the milestone makes its filters more
+  accurate, adds a strength and a colour boost, and shows each choice on the
+  picture while choosing. Colour-blind-safe colours for Leanback's own look
+  are in 0.40.0.
 - **Button remapping**: which remote button does what.
 - **A larger, clearer focus ring** (#56): *Ring Width* up to 24 px, *Ring
   Edge*, *Ring Style* and *Dim Around Selection*, with *Enlarge Selection*
@@ -839,7 +838,6 @@ starts.
 - **A setting that stops going on to the next episode by itself.**
   *Autoplay Next Episode* is that switch already; the milestone makes sure
   it always stops the next episode, Dropout's own countdown included.
-- **Turning off previews that play by themselves.**
 - **Reduce Motion, extended.** It is in 0.36.0 (Accessibility); the
   milestone takes it further.
 - **Adjustable hold and repeat timing** for the remote's buttons (today an
@@ -863,6 +861,9 @@ starts.
   every kind of signed-in page reachable from the interface, each with
   *Reset This Page*. See
   [theming.md](./theming.md#040--the-theming-engine).
+- **Colour-blind-safe colours** for Leanback's own look: every theme's
+  colours stay easy to tell apart for red-weak, green-weak and blue-weak
+  vision, and colour is never the only sign of anything.
 
 ### 0.41.0 — themes that rearrange whole screens
 
@@ -872,16 +873,14 @@ starts.
 
 ### 0.42.0 — two rare sign-in blocks (may be unnecessary)
 
-Both are explained instead of silent. Before building either, check whether
-it ever happens on the TV; if neither does, this milestone is dropped.
+- Google's "are you a person" puzzle: [#62](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/62)
+- An account with no active subscription: [#63](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/63)
 
-- **Google's "are you a person" puzzle.** If Google shows a challenge window,
-  Leanback's screen steps back so the window is on top, with a line saying to
-  use the remote's pointer; when it closes, Leanback's screen comes back.
-- **An account with no active subscription.** If signing in lands on
-  Dropout's plans, checkout or account page instead of Browse, Leanback says
-  the subscription has to be renewed on a phone or computer, with *Sign out*
-  and *Browse*. Dropout's exact address for that page is not known yet.
+### 0.43.0 — game controllers
+
+- **Game controllers without a key-mapping program**, through Firefox's
+  Gamepad API: the D-pad and stick move, A is OK, B is Back, Start is Menu,
+  with the same repeat timing and button teaching as a remote.
 
 ### 1.0
 

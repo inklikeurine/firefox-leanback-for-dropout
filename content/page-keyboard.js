@@ -158,7 +158,7 @@
       if (layoutFor(e.target)) state.typedBox = e.target;
     }
 
-    // A pointer click on one of those boxes (the air mouse has no keyboard).
+    // A pointer click on one of those boxes (for a remote with no keyboard or mouse).
     // A script's own click has no detail.
     function onClick(e) {
       if (!state.enabled || e.detail <= 0 || (state.keyboard && state.keyboard.isOpen)) return;

@@ -34,7 +34,7 @@ scripts, and the background script relays between them.
 | --- | --- | --- |
 | `background.js` | Event page (`persistent: false`) | Serves `sites/dropout.json` (`rules:get`, cached); the per-tab player-frame registry, in `storage.session` because an event page loses plain variables when it unloads (a `Map` if the API is missing); the page ⇄ player relay; the badge (the toolbar button opens `popup/`, which saves the on/off itself and asks the tab's page script for `page:state`); `commands`; the exit hook (`tabs.remove(sender.tab.id)`); the **only writer** of the watch history. |
 | `lib/settings.js` | Every context (first in each script list) and the options page | Defaults, validation on read, `load`/`save`/`watch`. `ROWS`: the one list of Leanback's settings that every settings panel and the options page show (`valueText`, `choicesOf`, `rowOf`); a row with `menu` is in a menu of its own (Accessibility), one with `look` previews as you move through its values. `PAGE_LOOKS`: Theme This Page's choices per kind of page. *Back On Home*'s default follows `development` until it is picked (`exitHookSet`). |
-| `lib/themes.js` | Page, player | [The look](#the-look-libthemesjs): themes, holiday looks by date, Accessibility's look; `apply()` writes it onto `<html>` (CSS properties, `data-tenfoot-*`), `applyPlayer()` the caption style and the video's colour filter in the player frame. |
+| `lib/themes.js` | Page, player | [The look](#the-look-libthemesjs): themes, holiday looks by date, Accessibility's look; `apply()` writes it onto `<html>` (CSS properties, `data-tenfoot-*`), `applyPlayer()` the caption style, the video's colour filter and Reduce Motion in the player frame. |
 | `lib/common.js` | Page, player | `qs`/`qsa`/`matches` that never throw on a bad selector and take a rule's list, `textOf`, `clock`, `profileIndex` (the profile watching, from the page's `VHX.config.profile_index`), `send` (a reply that is always an object), `el` and `svgIcon` (the elements and icons Leanback draws), `prefersReducedMotion`. |
 | `lib/history.js` | Background, page, player | The [watch history](#watch-history-libhistoryjs). Pure apart from `load`/`save`/`watch` on a profile's `storage.local` key, `progress:<profile>` (`keyFor`), and `claimLegacy`, which moves the history from before profiles (`progress`) to the first profile. |
 | `content/page.js` | Top frame of `watch.dropout.tv` | The page script: URL → page kind; keys → actions; focus, spatial navigation, ring, hints, load-more, dialogs, the two-step `<select>`, messages, life cycle. Its eight parts below (`content/page-*.js`) install into one shared context (`P`: its `state` and the functions the parts call), each calling the others through it. |
@@ -682,7 +682,11 @@ saved settings until it is picked or left. In the player frame,
 `applyPlayer()` sets `data-tenfoot-caption-*` (`player.css` sizes the
 caption window by `zoom`, colours it and its box over the player's own) and
 `data-tenfoot-filter`, with the SVG `feColorMatrix` filters added to the
-frame once; the video's CSS `filter` names one.
+frame once; the video's CSS `filter` names one. It also sets
+`data-tenfoot-motion="reduce"` there, as `apply()` does on the page, so
+*Reduce Motion* stops the frame's own slides and fades (`player.css`).
+`TenfootCommon.prefersReducedMotion()` reads that attribute before the
+system's setting, so every script follows Leanback's choice.
 
 ## The on-screen keyboard (`nav/keyboard.js`)
 
@@ -937,7 +941,8 @@ tops the playback panel until used.
   `z-index`, moved to the target's `getBoundingClientRect()` on `focusin`,
   `scroll` (capture) and `resize`, at most once per animation frame. It is
   placed by `transform` (no CSS transition): on a new target it glides over
-  90 ms (ease-out, none under reduced motion) from where it was drawn to
+  90 ms (ease-out, none under reduced motion: Leanback's *Reduce Motion*,
+  `data-tenfoot-motion="reduce"` on the root, or the system's) from where it was drawn to
   `finalRect()` — the target's box at its full zoom, with every ancestor
   that carries an inline `translate…` (the rows Leanback slides) taken to
   where its transition ends. So the ring goes once to where the selection
@@ -1022,7 +1027,11 @@ countdown from the time left. OK is `playNext()`: Dropout's play link
 (`player.upNextHide`) is pressed, the card stays down for this video, and
 `player:ended` carries `dismissed: true`, stopping the page's autoplay. With
 `autoplayNext` off there is no countdown and Hide is pressed once when the
-card appears. An empty end screen (Vimeo's outro) is no offer.
+card appears. `holdSiteCountdown()`, on every `syncUpNext()`, also sets
+`OTTData.up_next.disable_autoplay` (reached through `wrappedJSObject`)
+while `autoplayNext` is off or the card was hidden, with either player
+controls, so Dropout's own countdown never runs; otherwise it is put back
+to the value Dropout sent. An empty end screen (Vimeo's outro) is no offer.
 
 **The settings panel** opens from the bar's gear, or the options button
 during playback, drawn by `nav/panel.js`. It pauses the picture and holds a
