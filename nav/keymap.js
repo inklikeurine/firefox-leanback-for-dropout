@@ -18,6 +18,12 @@
 //
 // Media keys are kept for remotes that have them (many air mice do not). They are
 // remote-class keys, not keyboard shortcuts.
+//
+// Taught buttons (Accessibility → Remote Buttons, settings.buttons) add to
+// this: a button the viewer taught Leanback does its job. Only buttons that
+// don't type can be taught, never the browser's or the system's, and never
+// one the remote's face already uses, so the rule above still holds and a
+// taught button can never take a job away.
 
 (function () {
   const REMOTE = {
@@ -44,15 +50,60 @@
   // moment it opens, so reaching it with one is no extra burden.
   const KEYBOARD_EXCEPTIONS = { "/": "search" };
 
+  // Taught buttons: never these (the system's, or no button at all).
+  const RESERVED = new Set(["BrowserHome", "AudioVolumeUp", "AudioVolumeDown", "AudioVolumeMute", "Power", "PowerOff", "Standby", "WakeUp", "Dead", "Process"]);
+  const MODIFIERS = new Set(["Shift", "Control", "Alt", "AltGraph", "Meta", "OS", "Super", "Hyper", "Fn", "FnLock", "CapsLock", "NumLock", "ScrollLock", "Symbol", "SymbolLock"]);
+  const TYPING = new Set(["Backspace", "Delete", "Tab", "Insert"]);
+  // Friendlier words for some remote keys.
+  const NAMES = {
+    ColorF0Red: "Red", ColorF1Green: "Green", ColorF2Yellow: "Yellow", ColorF3Blue: "Blue",
+    ChannelUp: "Channel +", ChannelDown: "Channel −", Info: "Info", Guide: "Guide",
+    Subtitle: "Subtitles", ClosedCaptionToggle: "CC", Favorites: "Favourites"
+  };
+
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
+  /** How a button is stored when taught: its key, or its code when the key is unknown. */
+  function keyId(event) {
+    if (!event) return null;
+    if (typeof event.key === "string" && event.key && event.key !== "Unidentified") return event.key;
+    return typeof event.code === "string" && event.code ? `code:${event.code}` : null;
+  }
+
+  /** A taught button's name, as the viewer sees it. */
+  function keyName(id) {
+    const s = String(id || "");
+    if (s.startsWith("code:")) return s.slice(5);
+    return own(NAMES, s) ? NAMES[s] : s;
+  }
+
+  /**
+   * Can this key press be taught? {ok: true, id, name}, or {ok: false,
+   * reason: "modifier" | "typing" | "system" | "builtin" | "taught" | "unknown",
+   * action?} (the job it already does, for builtin and taught).
+   */
+  function learnable(event, learned) {
+    const id = keyId(event);
+    if (!id) return { ok: false, reason: "unknown" };
+    const key = String(event.key || "");
+    if (MODIFIERS.has(key) || event.ctrlKey || event.altKey || event.metaKey) return { ok: false, reason: "modifier" };
+    if (key.length === 1 || TYPING.has(key)) return { ok: false, reason: "typing" };
+    if (RESERVED.has(key)) return { ok: false, reason: "system" };
+    if (own(REMOTE, key)) return { ok: false, reason: "builtin", action: REMOTE[key] };
+    if (learned && own(learned, id)) return { ok: false, reason: "taught", action: learned[id] };
+    return { ok: true, id, name: keyName(id) };
+  }
+
   /**
    * @param {KeyboardEvent|{key:string,ctrlKey?:boolean,altKey?:boolean,metaKey?:boolean}} event
    * @param {{editable?: boolean, atStart?: boolean, singleLine?: boolean}} ctx —
    *   atStart: the text cursor sits at the very start of the field, with
    *   nothing selected; singleLine: a one-line field (a search box), where ▼
    *   and ▲ have nothing to do
+   * @param {object} [learned] taught buttons, { "<key>": "<action>" }
    * @returns {string|null} action name, or null when the key is not ours
    */
-  function actionFor(event, ctx) {
+  function actionFor(event, ctx, learned) {
     if (!event || typeof event.key !== "string") return null;
     if (event.ctrlKey || event.altKey || event.metaKey) return null;
     const key = event.key;
@@ -68,12 +119,16 @@
     }
     if (Object.prototype.hasOwnProperty.call(REMOTE, key)) return REMOTE[key];
     if (Object.prototype.hasOwnProperty.call(KEYBOARD_EXCEPTIONS, key)) return KEYBOARD_EXCEPTIONS[key];
+    if (learned && typeof learned === "object" && key.length !== 1) {
+      const id = keyId(event);
+      if (id && own(learned, id)) return learned[id];
+    }
     return null;
   }
 
   // Actions the page hands to the player frame rather than acting on itself.
   const PLAYER_ACTIONS = new Set([
-    "play_pause", "stop", "next", "previous", "fast_forward", "rewind"
+    "play_pause", "stop", "next", "previous", "fast_forward", "rewind", "seek_forward", "seek_back", "captions"
   ]);
 
   // True for an element the user types into: our keys must not steal from it.
@@ -104,5 +159,5 @@
     }
   }
 
-  globalThis.TenfootKeymap = Object.freeze({ actionFor, isEditable, isSingleLine, caretAtStart, PLAYER_ACTIONS, REMOTE, KEYBOARD_EXCEPTIONS });
+  globalThis.TenfootKeymap = Object.freeze({ actionFor, isEditable, isSingleLine, caretAtStart, keyId, keyName, learnable, PLAYER_ACTIONS, REMOTE, KEYBOARD_EXCEPTIONS });
 })();

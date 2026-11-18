@@ -422,7 +422,10 @@
         play_pause: { cmd: "toggle" },
         stop: { cmd: "stop" },
         fast_forward: { cmd: "seek", by: 3 * step },
-        rewind: { cmd: "seek", by: -3 * step }
+        rewind: { cmd: "seek", by: -3 * step },
+        seek_forward: { cmd: "seek", by: step },
+        seek_back: { cmd: "seek", by: -step },
+        captions: { cmd: "captions" }
       };
       const c = commands[action];
       if (!c) return false;

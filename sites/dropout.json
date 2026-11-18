@@ -339,6 +339,7 @@
     "upNextOverlay": ".vp-outro-wrapper, [class*='Outro_module_outroWrapper'], .ott-up-next",
     "upNextButton": "a.ott-up-next-thumb-link",
     "upNextHide": "button.ott-up-next-hide",
+    "captionsButton": "#cc-control-bar-button, button[data-cc-button]",
     "transportKeep": [
       "[class*='PlayButton_module_']",
       "#cc-control-bar-button",

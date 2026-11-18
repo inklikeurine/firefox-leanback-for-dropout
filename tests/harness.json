@@ -697,6 +697,18 @@
       "journey": "The options page"
     },
     {
+      "step": "Remote Buttons: a taught button is listed with its job, and Remove takes it off",
+      "check": [
+        "(await browser.storage.local.set({ settings: Object.assign({}, (await browser.storage.local.get('settings')).settings || {}, { buttons: { F2: 'captions' } }) }), true)",
+        "sleep 0.5",
+        "document.querySelector('#buttons li span').textContent === 'Captions On/Off: F2' && document.getElementById('noButtons').hidden === true",
+        "(document.querySelector('#buttons li button').click(), true)",
+        "sleep 0.5",
+        "document.querySelectorAll('#buttons li').length === 0 && document.getElementById('noButtons').hidden === false",
+        "Object.keys((await browser.storage.local.get('settings')).settings.buttons || {}).length === 0"
+      ]
+    },
+    {
       "step": "it opens with the settings as saved",
       "check": [
         "document.title === 'Leanback for Dropout settings'",
