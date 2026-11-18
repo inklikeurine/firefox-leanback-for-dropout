@@ -101,7 +101,18 @@
 }
 /* The selection: the ring, on a dark edge, round like the button. */
 .tenfoot-tc[data-tenfoot-current="true"] {
-  box-shadow: 0 0 0 2px var(--tenfoot-edge), 0 0 0 calc(2px + var(--tenfoot-ring-width)) var(--tenfoot-ring-color);
+  box-shadow: 0 0 0 2px var(--tenfoot-edge), 0 0 0 calc(2px + var(--tenfoot-ring-width)) var(--tenfoot-ring-color), var(--tf-ring-glow, 0 0 0 0 transparent);
+}
+/* Selection (Accessibility) in the player: Ring Edge, and the Glow style.
+   The round buttons keep a solid ring for Underline and Corners. */
+html[data-tenfoot-ring-edge="light"] {
+  --tenfoot-edge: rgba(255, 255, 255, 0.95);
+}
+html[data-tenfoot-ring-edge="off"] {
+  --tenfoot-edge: transparent;
+}
+html[data-tenfoot-ring-style="glow"] .tenfoot-tc[data-tenfoot-current="true"] {
+  --tf-ring-glow: 0 0 calc(var(--tenfoot-ring-width) * 4) var(--tenfoot-ring-width) color-mix(in srgb, var(--tenfoot-ring-color) 55%, transparent);
 }
 
 /* Position. Shown, never selected: ◀ ▶ seek whenever the row is not holding a

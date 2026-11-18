@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dropout</title>
+</head>
+<body class="site-background-color logged-out sites sites-show">
+<!-- Fixture in the shape of Dropout's signed-out page at "/" (read
+     2026-11-18; words and picture made up). Dropout's own inline script
+     there sends anyone without a subscription on to signup.dropout.tv, which
+     does not answer (#11); the script at the end does the same. -->
+<main class="main-container">
+  <div class="promo-banner"><a href="/checkout/x" data-rect="0,0,1280,40">20% OFF</a></div>
+  <header class="site-header" data-rect="0,40,1280,60"><a href="/login" data-rect="1180,55,60,30">Sign In</a></header>
+  <div class="hero--container">
+    <h1 class="head-image"><img src="poster.svg" alt="Dropout"></h1>
+    <h2 class="head-2">Independent. Funny. Ad Free.</h2>
+    <p class="head-3">Watch new episodes every week.</p>
+    <a href="/plans" class="button" data-rect="540,500,200,50">Start Your Free Trial</a>
+  </div>
+</main>
+<script src="layout.js"></script>
+<script>
+  if (location.pathname === "/") {
+    let isSubscribed = false;
+    if (isSubscribed === true) {
+      self.location.href = "/browse";
+    } else {
+      self.location.href = "https://signup.dropout.tv";
+    }
+  }
+</script>
+</body>
+</html>

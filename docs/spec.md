@@ -139,7 +139,13 @@ use ([targets.md](./targets.md)).
   [keymap.md](./keymap.md#taught-buttons)), *Reduce Motion* (as the system says, on, off: nothing of Leanback's
   slides or fades, in the page and the player alike; the ring jumps from one
   thing to the next, and the page's own smooth scrolling, Dropout's too,
-  jumps); under *Remote*, *Repeat Starts After*, *Repeat Speed* and
+  jumps); under *Selection*, *Ring Width*, *Ring Edge* (the thin
+  line each side of the ring: dark, light, off), *Ring Style* (solid; glow,
+  a soft halo of the ring's colour; underline, a bar of twice the ring's
+  width under the item; corners, only the ring's four corners), *Dim Around
+  Selection* (off, light, strong: the screen darkened around the selection,
+  never inside Leanback's settings, questions or keyboard) and *Enlarge
+  Selection*; under *Remote*, *Repeat Starts After*, *Repeat Speed* and
   *Ignore Quick Second Press* (how a held button repeats:
   [keymap.md](./keymap.md#holding-a-button)); then *Caption Size*, *Caption Color* and *Caption
   Background* (in the player frame, over the player's own captions; *Player's
@@ -250,7 +256,10 @@ use ([targets.md](./targets.md)).
   *Sign In* (yellow, selected), *Browse* (Home, signed out), *Privacy
   Policy* and *Terms of Use* (`legal`), in the middle of the screen; no
   rail. Starting a subscription is not offered on the TV. Signed in, `/`
-  goes on to Home.
+  goes on to Home. Dropout's own page there moves anyone without a
+  subscription on to `signup.dropout.tv`, which does not answer (the tab
+  loaded for ever); while Leanback is on, that move is stopped and the
+  welcome stays.
 - **Sign-in (`/login`).** Leanback's own screen, one screen for both
   boxes, over Dropout's form, which stays underneath unseen (`pages.signin`):
   "DROPOUT" in yellow over "Sign in", an **Email** box and a **Password**
@@ -317,18 +326,6 @@ use ([targets.md](./targets.md)).
   email kept. An empty box ("Enter your email."), a bad email ("Please enter
   a valid email.") and no answer ("Dropout isn't answering…", after 15 s on
   the same page) are said on the screen.
-  **"Dropout signed you out."** Leanback remembers that this TV was signed
-  in: a flag in `storage.local` (nothing else of the account), set whenever a
-  page loads signed in (`common.signedIn`) and cleared by every sign-out —
-  Leanback's own *Sign Out* on the picker, Dropout's own *Log out* form, and
-  the `/logout` address. A page that loads signed out while the flag is set
-  (the sign-in expired, or the password was changed elsewhere) opens Leanback's
-  question box: "Dropout signed you out.", "Sign in again to carry on.", *Sign
-  in* (selected) and *Not now*. *Sign in* goes to the sign-in screen (and from
-  there, the picker, then Home); *Not now* **closes the tab** (with it the
-  window, when it is the last tab), whatever *Back On Home* says, because
-  Dropout does not work signed out; the flag stays for another tab. Asked once per tab, never on the sign-in and reset screens or the
-  policies, and not while a sign-in is in progress.
   **Signed out** (`common.signedOut`): the rail's top entry is *Sign in*,
   and the first Home of a tab goes on to the welcome by itself — once per
   tab, so Back from it, or its *Browse*, comes back to Home and stays.
@@ -600,7 +597,10 @@ default rather than throwing):
 | --- | --- | --- |
 | `enabled` | `true` | TV navigation on for Dropout hosts |
 | `ringColor` | `"#feea3b"` | *Theme Color*, `#rrggbb`: the ring and everything Dropout yellow. Offered: Dropout Yellow, Soft White `#f2f2f2`, Sky Blue `#7cc6fe`, Mint `#8fe3b6`, Lavender `#b9a6ff`, Peach `#ffb38a`, Rose `#ff9eb5`; the 0.35 colours (`#ffffff`, `#ff4081`, `#41d6c3`, `#ff8a3d`) move to the nearest |
-| `ringWidth` | `4` | px, 2–12 |
+| `ringWidth` | `4` | px: 2, 3, 4, 6, 8, 10, 12, 16, 20, 24 |
+| `ringEdge` | `"dark"` | `dark`, `light`, `off`: the thin line each side of the ring (page and player) |
+| `ringStyle` | `"solid"` | `solid`, `glow`, `underline`, `corners` (the player's round buttons: solid or glow) |
+| `dimAround` | `"off"` | `off`, `light`, `strong`: the screen darkened around the selection |
 | `focusZoom` | `5` | how much bigger the selected item gets, in percent (0–25); 0 turns it off |
 | `hintBar` | `false` | show button hints |
 | `playerChrome` | `"leanback"` | `leanback` or `site`: the site's own player controls, for troubleshooting. On the options page only |
@@ -760,7 +760,6 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 63 | Sign-in screen: *Forgot password?*, OK; *Send reset email*, OK (Dropout sends you a reset email) | "Reset password" with the email carried over; then "Check your email on your phone or computer…", the ring on *Back to sign in* |
 | 64 | Sign-in screen: OK on *Email*; type with the keys, `@gmail.com`, Menu, *Done*; OK on *Password*, *Show*, *Hide*, *Done* | The panel down the left, the sign-in form moved over beside it, *a* a solid pill with no ring; the letters go into the box and on the panel's top line; one press types `@gmail.com`; Menu takes out the last letter; *Done* goes on to *Password*; *Show* makes the password readable, *Hide* hides it; *Done* presses *Sign in* |
 | 65 | Edit Profile: change the name with the keyboard, *Done*, *Save*, OK | *Save* turns yellow once the name changes; after OK the screen closes, the picker showing the new name |
-| 66 | Signed in on this TV, sign out on another device (or let the sign-in expire); open Home | "Dropout signed you out.", *Sign in* ringed; *Not now* closes the tab |
 | 67 | `web-ext lint --source-dir ./leanback-for-dropout --warnings-as-errors` | Passes |
 
 ## Known limitations
@@ -805,9 +804,6 @@ or sends it, and it asks for no new permission. 0.37.0 has:
 - **After signing in, "Who is watching?"; choosing a profile always ends on
   Home** (the owner's decision: not back to the page that asked for the
   sign-in, not wherever Dropout would go).
-- **"Dropout signed you out."** When this TV was signed in and a page loads
-  signed out, Leanback says so and offers *Sign in*, rather than leaving a
-  Home whose videos won't play.
 - **When Dropout doesn't answer**: a message, never a spinner left turning,
   and *Sign in* can be pressed again.
 - **The rail's Home after a search** opens Home, however many steps
@@ -832,8 +828,9 @@ starts.
   are in 0.40.0.
 - **Button remapping** (#16): *Remote Buttons* in Accessibility, teaching
   Leanback a button for a job ([keymap.md](./keymap.md#taught-buttons)).
-- **A larger focus ring.** *Ring Width* (2–12 px) and *Enlarge Selection*
-  exist already; the milestone goes beyond them.
+- **A larger, clearer focus ring** (#56): *Ring Width* up to 24 px, *Ring
+  Edge*, *Ring Style* and *Dim Around Selection*, with *Enlarge Selection*
+  in a *Selection* group in Accessibility.
 - **A setting that stops going on to the next episode by itself.**
   *Autoplay Next Episode* is that switch already; the milestone makes sure
   it always stops the next episode, Dropout's own countdown included.
