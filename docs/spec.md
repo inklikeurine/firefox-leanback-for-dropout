@@ -138,7 +138,9 @@ use ([targets.md](./targets.md)).
   *Reduce Motion* (as the system says, on, off: nothing of Leanback's
   slides or fades, in the page and the player alike; the ring jumps from one
   thing to the next, and the page's own smooth scrolling, Dropout's too,
-  jumps), *Caption Size*, *Caption Color* and *Caption
+  jumps); under *Remote*, *Repeat Starts After*, *Repeat Speed* and
+  *Ignore Quick Second Press* (how a held button repeats:
+  [keymap.md](./keymap.md#holding-a-button)); then *Caption Size*, *Caption Color* and *Caption
   Background* (in the player frame, over the player's own captions; *Player's
   own* leaves them alone), and *Color Filter (Experimental)*: an SVG colour
   matrix on the video that moves what red-, green- or blue-weak colour
@@ -614,6 +616,9 @@ default rather than throwing):
 | `uiScale` | `100` | Interface Size: 100, 115 or 130 (%). 100 % is drawn at 92 % of a 1920-wide layout, which fills a TV's screen; a show's episodes, a list and search's results fit as many across as there is room for (Medium cards: five, four, three; search: three, two, two) |
 | `highContrast` | `false` | black and white, white edges, a ring of at least 6 px |
 | `reduceMotion` | `"system"` | `system`, `on`, `off` |
+| `repeatDelay` | `"system"` | *Repeat Starts After*: `system`, 250, 500, 750, 1000, 1500, 2000 (ms) or `never` |
+| `repeatRate` | `12` | *Repeat Speed*: 2, 4, 6, 8, 10 or 12 moves a second |
+| `bounceMs` | `0` | *Ignore Quick Second Press*: 0 (off), 200, 300, 500, 750 or 1000 ms |
 | `captionSize` | `"default"` | `default` (the player's own), `large`, `larger`, `largest` |
 | `captionColor` | `"default"` | `default`, `white`, `yellow`, `cyan` |
 | `captionBackground` | `"default"` | `default`, `black` (a box), `none` (a shadow) |
@@ -661,7 +666,8 @@ watching in it (`profiles`).
 - The watch history hears from a playing video at most every 15 s; the
   background applies one report at a time.
 - Focus ring updates are `requestAnimationFrame`-throttled on scroll/resize.
-- Arrow repeat is capped at one move per 80 ms.
+- A held arrow repeats as *Accessibility → Remote* says; by default as the
+  system repeats it, at most 12 moves a second ([keymap.md](./keymap.md#holding-a-button)).
 - Player state messages are sent on change and at most 4×/s while playing.
 
 ## UX guidelines
@@ -830,8 +836,9 @@ starts.
   it always stops the next episode, Dropout's own countdown included.
 - **Reduce Motion, extended.** It is in 0.36.0 (Accessibility); the
   milestone takes it further.
-- **Adjustable hold and repeat timing** for the remote's buttons (today an
-  arrow held down moves at most once every 80 ms).
+- **Adjustable hold and repeat timing** (#20): *Repeat Starts After*,
+  *Repeat Speed* and *Ignore Quick Second Press* in a *Remote* group in
+  Accessibility.
 
 ### 0.39.0 — theming foundations, in the refactor
 
