@@ -265,16 +265,19 @@ Step; under *Browsing*, Shows Open On · Skip dropout.tv Home · Back On Home
 (does nothing / closes the tab — for kiosk setups; until you pick one it
 closes the tab, except on a copy loaded from its folder for testing, where
 it does nothing); under *Look*, Theme This Page (on pages that have
-choices of their own) · Theme · Theme Color · Holidays · Enlarge Selection
-· Ring Width · Button Hints (a bar showing the keys that matter now, and the
+choices of their own) · Theme · Theme Color · Holidays · Button Hints (a bar showing the keys that matter now, and the
 same along the foot of the on-screen keyboard; off unless turned on). Moving through the values of a look shows each at once;
 OK keeps it, Back puts it back. Then *Accessibility*: Interface Size (100 % fills a TV's screen; 115 % and 130 % are larger, with fewer cards across a show, a list or search so nothing is cut off) · High
-Contrast · Reduce Motion; under *Remote*, Repeat Starts After (as the system
-says, 0.25 to 2 s, or never) · Repeat Speed (2 to 12 moves a second) ·
-Ignore Quick Second Press (off, or 0.2 to 1 s); then Caption Size · Caption
-Color · Caption Background · Color Filter (Experimental) · Filter Strength ·
-Color Boost (stronger colours). Moving through the filter's values in the
-playback panel shows each on the picture. At the foot, *Cookie
+Contrast · Reduce Motion; under *Selection*, Ring Width (2 to 24 px) · Ring
+Edge (the thin line each side of the ring: dark, light or off) · Ring Style
+(solid, glow, underline or corners) · Dim Around Selection (off, light or
+strong: everything but the selection darkened) · Enlarge Selection; under
+*Remote*, Repeat Starts After (as the system says, 0.25 to 2 s, or never) ·
+Repeat Speed (2 to 12 moves a second) · Ignore Quick Second Press (off, or
+0.2 to 1 s); then Caption Size · Caption Color · Caption Background · Color
+Filter (Experimental) · Filter Strength · Color Boost (stronger colours).
+Moving through the filter's values in the playback panel shows each on the
+picture. At the foot, *Cookie
 Preferences* opens the cookie settings again (the cookie box only comes
 up until it is answered). The options page
 (`about:addons` → Leanback for Dropout → Preferences) has the same, plus

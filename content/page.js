@@ -178,7 +178,6 @@
   const syncForm = (...a) => P.syncForm(...a);
   const redirectPage = (...a) => P.redirectPage(...a);
   const offerWelcome = (...a) => P.offerWelcome(...a);
-  const syncSession = (...a) => P.syncSession(...a);
   const scrollReading = (...a) => P.scrollReading(...a);
   // From page-signin.js.
   const removeSignin = (...a) => P.removeSignin(...a);
@@ -1443,7 +1442,6 @@
     state.historyLength = history.length;
     clearBackFallback();
     if (openSeason() || redirectPage() || offerWelcome()) return;
-    syncSession().catch(() => { /* nothing to say */ });
     state.pendingInitialFocus = Date.now() + INITIAL_FOCUS_TIMEOUT_MS;
     if (state.kind === "series") captureEpisodeOrder();
     stampChrome();
@@ -1528,9 +1526,22 @@
     root.appendChild(style);
   }
 
+  // Signed out, Dropout's page at "/" moves on to an address that does not
+  // answer (content/early.js). Where Firefox has no Navigation API to cancel
+  // that move before it starts, stop it here: the page stays, with Leanback's
+  // welcome on it.
+  function stopDeadMove(settings) {
+    if (!settings.enabled || window.navigation || location.pathname !== "/") return;
+    if (!document.body || !document.body.classList.contains("logged-out")) return;
+    try {
+      window.stop();
+    } catch (_err) { /* the move goes on */ }
+  }
+
   async function init() {
     const [settings, rulesReply] = await Promise.all([Settings.load(API), send({ type: "rules:get" })]);
     state.settings = settings;
+    stopDeadMove(settings);
     if (arrive(false, settings.enabled)) return;
     state.rules = rulesReply && rulesReply.ok && rulesReply.rules && typeof rulesReply.rules === "object" ? rulesReply.rules : null;
     if (!state.rules) {

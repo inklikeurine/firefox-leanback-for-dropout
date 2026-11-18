@@ -272,6 +272,8 @@ T.runAsync('every value is reachable: the list holds them all, and one not offer
   const current = () => panel.querySelector('[data-tenfoot-current="true"] .tenfoot-settings-label').textContent;
   for (let i = 0; i < 5; i += 1) key('ArrowDown');
   key('ArrowRight');
+  for (let i = 0; i < 14 && current() !== 'Accessibility'; i += 1) key('ArrowDown');
+  key('ArrowRight');
   for (let i = 0; i < 14 && current() !== 'Enlarge Selection'; i += 1) key('ArrowDown');
   key('Enter');
   const labels = [...panel.querySelectorAll('.tenfoot-settings-label')].map((r) => r.textContent);

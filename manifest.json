@@ -123,6 +123,9 @@
       "css": [
         "content/early.css"
       ],
+      "js": [
+        "content/early.js"
+      ],
       "run_at": "document_start"
     }
   ],

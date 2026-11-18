@@ -55,6 +55,7 @@ scripts, and the background script relays between them.
 | `content/cards.js` | Top frame | The card every screen draws (a link, or a button pressing one of Dropout's: `proxy`; a first letter when there is no picture: `initial`), `reconcile()` by key, readers for Dropout's tiles (`textOf`, `parseDuration`, `percentOf`…). |
 | `content/player.js` | Every `embed.vhx.tv` frame (`all_frames: true`) | Registers (`player:hello`); finds the `<video>`; holds it behind the details page (`player:hold`); keys while the frame has focus; `player:command`; `player:state`, `player:ended`, progress reports; resume; `startMuted` once per video; **when** the transport bar is open and what Back means then. |
 | `content/transport.js` | Every `embed.vhx.tv` frame | Draws the [transport bar, title, up-next card and settings panel](#the-transport-bar-and-the-settings-panel); drives the `<video>`. Site-agnostic apart from the `player` rules it is handed. |
+| `content/early.js` | `watch.dropout.tv` at `document_start` | Before Dropout's scripts: cancels a move to an address that never answers (`signup.dropout.tv`, where Dropout's signed-out `/` sends anyone without a subscription) through the Navigation API's `navigate` event, while Leanback is on. Without the API (Firefox before 147), `page.js` `stopDeadMove()` calls `window.stop()` on a signed-out `/` once it starts. |
 | `content/marketing.js` | `www.dropout.tv` at `document_start` | With *skip marketing site* on, `/` → `location.replace("https://watch.dropout.tv/browse")`. Nothing else. |
 | `nav/spatial.js` | Top frame | Directional focus search, row-aware moves, focus memory. |
 | `nav/trail.js` | Top frame | The trail behind [Back](#back-contentpage-backjs--navtrailjs); `sessionStorage` only. |
@@ -840,22 +841,6 @@ changes or Leanback is turned off. The layer reuses the screens' look
   removes both keys on any other page kind. They are the page origin's session
   storage, which Dropout's own scripts can read; the email is what the
   viewer is giving Dropout's own form anyway.
-- **"Dropout signed you out"** (`syncSession()` in `page-forms.js`, from
-  `setupPage()` once the page is staying): the flag is `storage.local`
-  `signedIn: true` (no new permission; nothing about the account). A page
-  with `common.signedIn` (`body.logged-in`) sets it; `clearSignedIn()` removes
-  it, called by Leanback's own *Sign Out* (`page-profiles.js` `signOut()`,
-  before it sends the form), by a capturing `submit` listener for any form
-  whose action is `signout.url` (Dropout's own Log out), and on the `/logout`
-  address itself. A signed-out page with the flag asks (`askUser()`, *Sign in*
-  selected), unless it is the sign-in or reset screen, a policy, or a sign-in
-  is noted (`state.signinNoted`, set by `homeAfterSignIn()` when the note
-  below exists); `sessionStorage` `tenfoot.signedout-asked` makes it once per
-  tab. *Sign in* navigates to `rules.signinUrl`; *Not now* sends
-`{type: "exit", force: true}`, which the background (`handleExit()`) answers by
-closing the sender's tab even with *Back On Home* set to do nothing (only a
-real `true` forces it). Back on the question answers nothing and closes only
-the box.
 - **The picker, then Home** (`homeAfterSignIn()` in `page-forms.js`, called
   from `redirectPage()` on every page load): one note in session storage,
   `tenfoot.signin-home` = `<stage>:<time>`. `signIn()` writes `signed` just
@@ -962,6 +947,17 @@ tops the playback panel until used.
   so the curves run parallel. Style: `--tenfoot-ring-color` (`#feea3b`),
   `--tenfoot-ring-width` (`4px`), a dark outer edge for contrast on light
   pictures, no transition under reduced motion.
+- *Selection* (Accessibility): `lib/themes.js` writes
+  `data-tenfoot-ring-edge` (`light`, `off`: `--tenfoot-edge`),
+  `data-tenfoot-ring-style` (`glow`: an extra halo shadow,
+  `--tf-ring-glow`; `underline`: no border, a bottom gradient bar;
+  `corners`: a four-corner `mask`, `mask-clip: no-clip` so the outer edge
+  stays) and `data-tenfoot-dim` on the page's root, and the edge and glow in
+  the player frame (its round buttons stay solid otherwise). *Dim Around
+  Selection* is a second fixed box, `.tenfoot-dim`, drawn by `createRing`
+  with the ring's own box, just under it, its 200vmax shadow darkening the
+  rest of the screen; it hides with the ring and while the selection is in
+  `.tenfoot-settings`, `.tenfoot-ask` or `.tenfoot-kb`.
 - The selection zoom (`focusZoom`, *Enlarge Selection*: `--tenfoot-zoom`,
   class `tenfoot-scaled`) enlarges the focused element, made `inline-block`
   first if inline (a transform does nothing to an inline box), unless marked

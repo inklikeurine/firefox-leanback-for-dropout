@@ -11,7 +11,7 @@ const FULL = (over = {}) => ({ ...S.DEFAULTS, exitHookSet: false, development: f
 
 T.run('defaults match the spec', () => {
   T.eq(S.DEFAULTS, {
-    enabled: true, ringColor: '#feea3b', ringWidth: 4, focusZoom: 5, hintBar: false, playerChrome: 'leanback', seekStep: 10, autoplayNext: true, startMuted: false, skipMarketingSite: true, exitHook: 'close-tab', seasonStart: 'latest',
+    enabled: true, ringColor: '#feea3b', ringWidth: 4, ringEdge: 'dark', ringStyle: 'solid', dimAround: 'off', focusZoom: 5, hintBar: false, playerChrome: 'leanback', seekStep: 10, autoplayNext: true, startMuted: false, skipMarketingSite: true, exitHook: 'close-tab', seasonStart: 'latest',
     theme: 'dropout', holidays: 'off', uiScale: 100, highContrast: false, reduceMotion: 'system', repeatDelay: 'system', repeatRate: 12, bounceMs: 0, captionSize: 'default', captionColor: 'default', captionBackground: 'default', videoFilter: 'off', videoFilterStrength: 100, videoColorBoost: 'off'
   });
   T.eq(S.SEEK_STEPS, [5, 10, 15, 30, 60, 120, 300], 'the only seek steps offered');
@@ -27,7 +27,7 @@ T.run('normalize: garbage in, defaults out', () => {
 
 T.run('normalize: valid values pass, numbers clamp and round, colours lower-case', () => {
   const s = S.normalize({ enabled: false, ringColor: '#ABCDEF', ringWidth: 99, focusZoom: 100, hintBar: false, playerChrome: 'leanback', seekStep: '15.6', autoplayNext: false, skipMarketingSite: false, exitHook: 'close-tab', seasonStart: 'first' });
-  T.eq(s, FULL({ enabled: false, ringColor: '#abcdef', ringWidth: 12, focusZoom: 25, hintBar: false, playerChrome: 'leanback', seekStep: 15, autoplayNext: false, startMuted: false, skipMarketingSite: false, exitHook: 'close-tab', seasonStart: 'first' }));
+  T.eq(s, FULL({ enabled: false, ringColor: '#abcdef', ringWidth: 24, focusZoom: 25, hintBar: false, playerChrome: 'leanback', seekStep: 15, autoplayNext: false, startMuted: false, skipMarketingSite: false, exitHook: 'close-tab', seasonStart: 'first' }));
   T.eq(S.normalize({ focusZoom: 0 }).focusZoom, 0, 'zero turns the zoom off rather than falling back to the default');
   T.eq(S.normalize({ seekStep: 250 }).seekStep, 300, 'snaps up');
   T.eq(S.normalize({ seekStep: 11 }).seekStep, 10, 'and down');
@@ -93,11 +93,11 @@ T.runAsync('watch fires for local "settings" changes only, with a normalised obj
 
 T.run('the one list: every setting but the on/off and troubleshooting switches, each with its words and group', () => {
   // the whole list: the one test that pins every setting, in order, and its group
-  T.eq(S.ROWS.map((r) => r.id), ['autoplayNext', 'seekStep', 'startMuted', 'seasonStart', 'skipMarketingSite', 'exitHook', 'theme', 'ringColor', 'holidays', 'focusZoom', 'ringWidth', 'hintBar',
-    'uiScale', 'highContrast', 'reduceMotion', 'repeatDelay', 'repeatRate', 'bounceMs', 'captionSize', 'captionColor', 'captionBackground', 'videoFilter', 'videoFilterStrength', 'videoColorBoost']);
-  T.eq(S.ROWS.map((r) => r.group), ['Playback', 'Playback', 'Playback', 'Browsing', 'Browsing', 'Browsing', 'Look', 'Look', 'Look', 'Look', 'Look', 'Look',
-    'Display', 'Display', 'Display', 'Remote', 'Remote', 'Remote', 'Captions', 'Captions', 'Captions', 'Video', 'Video', 'Video']);
-  T.eq(S.ROWS.filter((r) => r.menu).map((r) => r.menu), Array(12).fill('accessibility'), 'Accessibility, a menu of its own');
+  T.eq(S.ROWS.map((r) => r.id), ['autoplayNext', 'seekStep', 'startMuted', 'seasonStart', 'skipMarketingSite', 'exitHook', 'theme', 'ringColor', 'holidays', 'hintBar',
+    'uiScale', 'highContrast', 'reduceMotion', 'ringWidth', 'ringEdge', 'ringStyle', 'dimAround', 'focusZoom', 'repeatDelay', 'repeatRate', 'bounceMs', 'captionSize', 'captionColor', 'captionBackground', 'videoFilter', 'videoFilterStrength', 'videoColorBoost']);
+  T.eq(S.ROWS.map((r) => r.group), ['Playback', 'Playback', 'Playback', 'Browsing', 'Browsing', 'Browsing', 'Look', 'Look', 'Look', 'Look',
+    'Display', 'Display', 'Display', 'Selection', 'Selection', 'Selection', 'Selection', 'Selection', 'Remote', 'Remote', 'Remote', 'Captions', 'Captions', 'Captions', 'Video', 'Video', 'Video']);
+  T.eq(S.ROWS.filter((r) => r.menu).map((r) => r.menu), Array(17).fill('accessibility'), 'Accessibility, a menu of its own');
   T.eq(S.rowOf('ringColor').label, 'Theme Color');
   T.eq(S.ROWS.filter((r) => r.panel === false).map((r) => r.id), ['startMuted'], 'on the options page only');
   const d = S.normalize(null);
@@ -110,7 +110,7 @@ T.run('the one list: every setting but the on/off and troubleshooting switches, 
   T.eq([S.valueText(S.rowOf('seekStep'), 30), S.valueText(S.rowOf('focusZoom'), 0), S.valueText(S.rowOf('ringColor'), '#ffffff'), S.valueText(S.rowOf('hintBar'), true)], ['30 s', 'Off', '#ffffff', 'On']);
   T.eq(S.valueText(S.rowOf('seekStep'), 300), '5 min');
   T.eq(S.valueText(S.rowOf('ringColor'), '#123456'), '#123456', 'a colour of your own reads as itself');
-  T.eq(S.choicesOf(S.rowOf('ringWidth'), 5), [2, 3, 4, 5, 6, 8, 10, 12], 'a value not offered is listed, in order');
+  T.eq(S.choicesOf(S.rowOf('ringWidth'), 5), [2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24], 'a value not offered is listed, in order');
   T.eq(S.choicesOf(S.rowOf('ringColor'), '#123456').at(-1), '#123456');
 });
 
