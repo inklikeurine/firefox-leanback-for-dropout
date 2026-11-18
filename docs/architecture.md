@@ -532,7 +532,7 @@ show's name (the yellow kicker), the season line (`h5.badges-container`, "•"
 shown as "·"), the synopsis, and the buttons — *Watch* (`run: "watch"`), or
 *Resume* (`run: "resume"`) and *Start Over* (`run: "restart"`) when
 `TenfootHistory.resumePoint()` has a point, the same the player resumes from;
-*My List* (`proxy`: Dropout's own button; `listed` from its class, a drawn plus or tick, the `aria-label` *Add to* / *Remove from My List*); *Episodes* (the season link, else the show
+*My List* (`proxy`: Dropout's own button; `listed` from its class; any action with `listed` is glyph-only, the rail's bookmark — `lib/common.js` `BOOKMARK_PATH` — outlined or filled in, its words the `aria-label` *Add to* / *Remove from My List*); *Episodes* (the season link, else the show
 link); *Clear Progress* (`run: "clear"`) when `progressOf()` has anything for
 it. That one sends `history:forget` (`page-video.js` `clearProgress`), then
 redraws the page from the history as cleared and selects *Watch*. The first button keeps the key `watch` whatever it says, so the

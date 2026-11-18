@@ -469,12 +469,13 @@ use ([targets.md](./targets.md)).
   "Season 2, Episode 1 · 28-Feb-2020", the synopsis (six lines), then one
   row of buttons: *Watch* (yellow), or *Resume* with *Start Over* beside it
   when the episode is in progress (the same reading the player resumes
-  from); *+ My List* / *✓ My List* (Dropout's own button, pressed; the
-  screen reader says *Add to My List* / *Remove from My List*); *Episodes* (the season's page, else the show's); *Clear
+  from); *My List* (Dropout's own button, pressed: the rail's bookmark,
+  an outline when not in the list and filled in when it is; its words
+  *Add to My List* / *Remove from My List*); *Episodes* (the season's page, else the show's); *Clear
   Progress* when the history draws any progress for it, partway or watched
   (see *Clear Progress* under the watch history). *Watch* / *Resume* has a
-  play glyph before its word; *Start Over* (↺), *Episodes* (a list) and
-  *Clear Progress* (✕) are round glyph-only buttons, named by their words
+  play glyph before its word; *Start Over* (↺), *My List* (the bookmark),
+  *Episodes* (a list) and *Clear Progress* (✕) are round glyph-only buttons, named by their words
   for a screen reader, the word shown under the one selected. On the right
   the episode's picture (`og:image`, else the history's), with the progress
   bar and the time left ("15:00 left") when in progress. The selection lands
@@ -713,7 +714,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 10 | Open that episode again; then Back to its show | It starts where you stopped; "Resumed at …" shows for a moment; Back, then *Start Over* on the details page goes back to 0:00. On the show's page the yellow button says *Resume S… E…*, and OK plays it |
 | 11 | Enter on a show with several seasons that you have not watched | Leanback's screen opens on the **newest** season, with no flash of Season 1: the show's picture and name, a yellow *Play S… E1*, *Trailer* and *My List*; the seasons newest first with that one yellow; its name and episode count over the episodes, five across; ring on Episode 1; the rail on the left; no Dropout top bar, no Share, no dropdowns |
 | 12 | Up to the seasons, Right, OK; then Back | Up lands on the yellow season; Right moves along (the row slides); OK opens that season, which turns yellow; Back leaves the show for Home |
-| 13 | Up to the show's buttons, Right to *My List*, OK, OK | *+ My List* turns to *✓ My List*, and back on the second OK; the button shows no blue when selected |
+| 13 | Up to the show's buttons, Right to *My List*, OK, OK | The outline bookmark fills in and its words turn to *Remove from My List*, and back on the second OK; the button shows no blue when selected |
 | 14 | On the show's buttons, *Trailer*, OK; then Escape | The trailer opens with the ring inside it; Escape closes it and the ring returns to *Trailer* |
 | 15 | A show you are partway through: open the season you are watching | Watched episodes carry a tick, the one in progress a bar, and the ring starts on the one to watch next |
 | 16 | A season you are caught up with (all watched but the newest), *Shows Open On: Newest* | The episodes run newest first; the newest is top left, selected |
@@ -751,7 +752,7 @@ Run in a logged-in profile unless stated. "Ring" = the focus ring.
 | 48 | Sign out, open Home | It goes on to the welcome; *Browse* there returns to Home and stays |
 | 49 | Picker: ▶ to *Manage Profiles*, OK; then *Add Profile*, OK; Back; then a profile's *Edit*, OK | "Manage profiles" at once: a pencil over each picture and an *Edit* button under each name, the ring on the profile watching; ▼ to its *Edit*, ▲ back; then *Add Profile* and *Done*; ▶ at the end goes round. Add Profile: Leanback's screen — the title, the picture, a large name box (ringed), *Cancel* then *Continue* (dimmed until a name is typed); OK on the picture: Dropout's chooser, dark and large, the ring on a picture. Edit: the same screen with *Save* (dimmed), *Cancel*, a red *Delete Profile*; the rail beside both |
 | 50 | On My List, a Dropout 24/7 card, OK | Dropout 24/7's page (Leanback's, *Watch* ringed), not Dropout's plain stream page |
-| 51 | A details page of an episode partway through: ▶ to *Clear Progress*, OK; then Back to Home | "Progress cleared"; the buttons are *Watch*, *+ My List*, *Episodes*, *Watch* ringed; the picture has no bar. On Home it is gone from Continue Watching, and its card elsewhere has no bar |
+| 51 | A details page of an episode partway through: ▶ to *Clear Progress*, OK; then Back to Home | "Progress cleared"; the buttons are *Watch*, *My List* (an outline bookmark), *Episodes*, *Watch* ringed; the picture has no bar. On Home it is gone from Continue Watching, and its card elsewhere has no bar |
 | 52 | Signed out, a fresh profile: open a show's page (`https://watch.dropout.tv/game-changer`) | The cookie dialog has the selection, *Accept All* ringed; OK closes it and the selection is back on the show; no "too much recursion" in the console |
 | 53 | On "Who is watching?": ▶ to *Sign Out*, OK; Back; OK, ▶, OK | A box "Sign out of Dropout?", *Cancel* ringed; Back closes it with the ring back on *Sign Out*; *Sign Out*: signed out, the welcome |
 | 54 | Edit Profile of a spare profile: *Delete Profile*, OK; OK; again, ▶, OK | "Delete <name>?", *Cancel* ringed; *Cancel* deletes nothing; *Delete Profile*: the profile is gone, back on the picker |
@@ -814,8 +815,10 @@ or sends it, and it asks for no new permission. 0.37.0 has:
   and *Sign in* can be pressed again.
 - **The rail's Home after a search** opens Home, however many steps
   Dropout's search added to the history.
-- **One My List button**: *+ My List* when not in the list and *✓ My List*
-  when it is, on Home's banner, a show's page and an episode's page alike.
+- **One My List button**: the rail's bookmark, glyph-only, an outline when
+  not in the list and filled in when it is, its words (*Add to My List* /
+  *Remove from My List*) under it while it is selected, on Home's banner, a
+  show's page and an episode's page alike.
 - **A list of the things that don't match** across Leanback's screens, for
   the 0.39.0 theming foundations to fix ([#66](https://github.com/inklikeurine/firefox-leanback-for-dropout/issues/66)).
 

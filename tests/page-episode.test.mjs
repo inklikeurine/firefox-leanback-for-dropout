@@ -31,7 +31,7 @@ T.runAsync('the details page: the show, the title, the synopsis, the picture on 
   T.eq(L.querySelectorAll('.tenfoot-card').length, 0, 'no row of cards under it');
   T.ok(L.querySelector('.tenfoot-hero-primary').textContent === 'Watch', 'Watch is the yellow one');
   p.key('ArrowRight');
-  T.eq([p.doc.activeElement.textContent, p.doc.activeElement.getAttribute('aria-label'), p.doc.activeElement.dataset.tenfootListed], ['My List', 'Add to My List', 'false']);
+  T.eq([p.doc.activeElement.textContent, p.doc.activeElement.getAttribute('aria-label'), p.doc.activeElement.dataset.tenfootListed], ['Add to My List', 'Add to My List', 'false']);
   p.key('ArrowRight');
   T.eq(p.doc.activeElement.getAttribute('href'), 'https://watch.dropout.tv/game-changer', 'Episodes: the show, as this page names no season');
   p.key('ArrowDown');
@@ -457,7 +457,7 @@ T.runAsync('Dropout 24/7\'s stream opens on its details page — its name, its w
   T.eq(p.last('history:meta'), undefined, 'a live stream is not a video for the watch history');
 });
 
-T.runAsync('the season line under the title, Episodes going to that season; My List presses Dropout\'s own and turns to a tick; turning Leanback off lets the player go', async () => {
+T.runAsync('the season line under the title, Episodes going to that season; My List presses Dropout\'s own and fills in its bookmark; turning Leanback off lets the player go', async () => {
   const html = fixture('video.html').replace('<h1 class="video-title">', '<h5 class="badges-container"><a href="https://watch.dropout.tv/game-changer/season:1"> Season 1, Episode 4 </a> • <a class="meta-data-link" data-similar-items-site="1">28-Feb-2020</a></h5><h1 class="video-title">');
   const p = await boot({ html, url: URLS.video });
   T.eq((await p.state()).home.episode.meta, 'Season 1, Episode 4 · 28-Feb-2020');
@@ -466,7 +466,7 @@ T.runAsync('the season line under the title, Episodes going to that season; My L
   p.key('ArrowRight');
   p.key('Enter');
   await T.sleep(200);
-  T.eq([pressed.length, p.doc.activeElement.textContent, p.doc.activeElement.getAttribute('aria-label'), p.doc.activeElement.dataset.tenfootListed], [1, 'My List', 'Remove from My List', 'true'], 'Dropout\'s button pressed; the state follows it');
+  T.eq([pressed.length, p.doc.activeElement.textContent, p.doc.activeElement.getAttribute('aria-label'), p.doc.activeElement.dataset.tenfootListed], [1, 'Remove from My List', 'Remove from My List', 'true'], 'Dropout\'s button pressed; the state follows it');
   p.key('ArrowRight');
   T.eq(p.doc.activeElement.getAttribute('href'), 'https://watch.dropout.tv/game-changer/season:1', 'Episodes: the season the line names');
   await p.shim.changeStorage({ settings: { newValue: { enabled: false } } });

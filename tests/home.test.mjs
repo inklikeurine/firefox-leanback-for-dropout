@@ -81,7 +81,7 @@ T.runAsync('Home: Leanback draws its own screen over Dropout’s page, from the 
   T.eq(hrefOf(p.active()), `${B}/game-changer`, 'the selection starts on the banner’s Watch now');
   T.eq(p.active().textContent, 'Watch now');
   const buttons = Array.from(p.doc.querySelectorAll('.tenfoot-hero-actions > *')).map((b) => b.textContent);
-  T.eq(buttons, ['Watch now', '›', 'Trailer', 'My List'], 'Watch now, Next featured beside it, then Dropout’s other buttons');
+  T.eq(buttons, ['Watch now', '›', 'Trailer', 'Add to My List'], 'Watch now, Next featured beside it, then Dropout’s other buttons');
   T.eq(p.doc.querySelector('.tenfoot-hero-title').textContent, 'Game Changer');
 });
 
@@ -300,9 +300,9 @@ T.runAsync('Home: the banner — › beside Watch now steps through the featured
   T.eq(p.active().textContent, '›', 'the selection stays on ›, so OK can keep going');
   T.eq((await p.home()).slide, 1);
   const all = () => Array.from(p.doc.querySelectorAll('.tenfoot-hero-actions > *')).map((b) => b.textContent);
-  T.eq(all(), ['Watch now', '›', 'My List'], 'this slide has no trailer');
+  T.eq(all(), ['Watch now', '›', 'Remove from My List'], 'this slide has no trailer');
   const buttons = () => Array.from(p.doc.querySelectorAll('.tenfoot-hero-action'));
-  T.eq([buttons()[1].dataset.tenfootListed, buttons()[1].getAttribute('aria-label')], ['true', 'Remove from My List'], 'already on My List: a tick');
+  T.eq([buttons()[1].dataset.tenfootListed, buttons()[1].getAttribute('aria-label')], ['true', 'Remove from My List'], 'already on My List: a filled bookmark');
   T.eq(buttons()[0].dataset.tenfootListed, undefined, 'only the list button has a state');
   let pressed = 0;
   const real = p.doc.querySelectorAll('.carousel .slide')[1].querySelector('.slide-button--my-list');
@@ -311,20 +311,20 @@ T.runAsync('Home: the banner — › beside Watch now steps through the featured
     real.classList.replace('icon-watchlist-remove', 'icon-watchlist-add');
   });
   p.key('ArrowRight');
-  T.eq(p.active().textContent, 'My List');
+  T.eq(p.active().textContent, 'Remove from My List');
   p.key('ArrowRight');
-  T.eq(p.active().textContent, 'My List', 'no wrap past the last button');
+  T.eq(p.active().textContent, 'Remove from My List', 'no wrap past the last button');
   const before = p.active();
   p.key('Enter');
   T.eq(pressed, 1, 'Dropout’s own button, on the same slide');
   await T.sleep(150);
-  T.eq([buttons()[1].dataset.tenfootListed, buttons()[1].getAttribute('aria-label')], ['false', 'Add to My List'], 'redrawn from the site’s new state: a plus');
+  T.eq([buttons()[1].dataset.tenfootListed, buttons()[1].getAttribute('aria-label')], ['false', 'Add to My List'], 'redrawn from the site’s new state: an outline bookmark');
   T.eq(p.active(), before, 'the same element keeps the selection');
-  T.eq(all(), ['Watch now', '›', 'My List'], 'and nothing moved');
+  T.eq(all(), ['Watch now', '›', 'Add to My List'], 'and nothing moved');
   p.key('ArrowLeft');
   p.key('Enter');
   T.eq(p.doc.querySelector('.tenfoot-hero-title').textContent, 'Game Changer', 'round again');
-  T.eq(all(), ['Watch now', '›', 'Trailer', 'My List']);
+  T.eq(all(), ['Watch now', '›', 'Trailer', 'Add to My List']);
   T.eq(p.active().textContent, '›');
 });
 

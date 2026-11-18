@@ -306,12 +306,13 @@
       ]
     },
     {
-      "step": "▲ again: Play first, in yellow; Trailer and My List drawn as buttons",
+      "step": "▲ again: Play first, in yellow; Trailer drawn as a button, My List as the round bookmark with its words under it",
       "check": [
         "(function (s) { return s.focused.tag === 'a' && /^Play S\\d+ E1$/.test(s.focused.text) && s.show.resume && s.show.resume.action === 'first' && s.show.resume.href === s.focused.href; })(await __act('up'))",
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('.tenfoot-hero-primary:focus') && getComputedStyle(t).backgroundColor === 'rgb(254, 234, 59)' && getComputedStyle(t).color === 'rgb(26, 26, 5)'; })()\" }); return r === true; })()",
         "(await __act('right')).focused.text === 'Trailer'",
-        "(await __act('right')).focused.text === 'My List'",
+        "/^(Add to|Remove from) My List$/.test((await __act('right')).focused.text)",
+        "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; const b = t.getBoundingClientRect(); const g = t.querySelector('svg.tenfoot-hero-glyph'); const w = t.querySelector('.tenfoot-hero-word'); return t.dataset.tenfootIcon === 'true' && Math.abs(b.width - b.height) < 2 && /^bookmark(ed)?$/.test(g.dataset.glyph) && g.getBoundingClientRect().width > 10 && getComputedStyle(w).visibility === 'visible' && w.getBoundingClientRect().top >= b.bottom; })()\" }); return r === true; })()",
         "(async () => { const [r] = await browser.tabs.executeScript(__fx, { code: \"(() => { const t = document.activeElement; return t.matches('button.tenfoot-hero-action:focus') && getComputedStyle(t).backgroundColor === 'rgba(255, 255, 255, 0.08)'; })()\" }); return r === true; })()",
         "(await __act('left')).focused.text === 'Trailer'"
       ]
