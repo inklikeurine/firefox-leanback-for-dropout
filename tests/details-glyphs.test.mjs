@@ -17,7 +17,7 @@ T.runAsync('details page: Resume has a play glyph and its words; Start Over, Epi
     T.ok(b, key + ' is there');
     T.eq([b.getAttribute('data-tenfoot-icon'), glyphOf(b), b.getAttribute('aria-label'), b.querySelector('.tenfoot-hero-word').textContent], ['true', glyph, words, words], key + ': glyph-only, named by its words');
   }
-  T.notOk(btn(p, 'mylist').hasAttribute('data-tenfoot-icon'), 'My List keeps its words');
+  T.eq(btn(p, 'mylist').getAttribute('data-tenfoot-icon'), 'true', 'My List is glyph-only too: the bookmark');
 });
 
 T.runAsync('details page: never watched, Watch has its play glyph and Episodes is glyph-only', async () => {

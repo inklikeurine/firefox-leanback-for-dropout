@@ -29,7 +29,7 @@ navigate, not what you can watch.
   started on Dropout's Roku or Android app, in one row.
 - **A details page before every video**, as on Dropout's Roku app: the
   episode's title, synopsis and picture, and *Watch* — or *Resume* and
-  *Start Over* when you stopped partway — with *+ My List* and
+  *Start Over* when you stopped partway — with *My List* (a bookmark) and
   *Episodes* beside it, and *Clear Progress* when you have watched some or
   all of it. Nothing plays until you press *Watch*.
 - **Picks up where you left off**, with *Start Over* to go back to the
@@ -224,13 +224,13 @@ reaches the rail.
 Continue Watching included, a show's yellow button, *Watch Movie* or an
 extra. On the left: the show's name, the episode's title, "Season 2,
 Episode 1 · 28-Feb-2020", the synopsis, and the buttons — *Watch* (yellow),
-or *Resume* with *Start Over* beside it when you stopped partway; *+ My
-List* (*✓ My List* once it is there); *Episodes*, the episode's
+or *Resume* with *Start Over* beside it when you stopped partway; *My
+List*, the rail's bookmark (filled in once it is there); *Episodes*, the episode's
 season on its show's page; and *Clear Progress* when you have watched some
 or all of it, which makes the episode unstarted again (out of Continue
 Watching, no bar on its card) until you play it again. *Watch* or *Resume*
-has a play glyph and its word; *Start Over* (↺), *Episodes* (a list) and
-*Clear Progress* (✕) are round glyphs, each one's word under it while it is
+has a play glyph and its word; *Start Over* (↺), *My List* (the bookmark),
+*Episodes* (a list) and *Clear Progress* (✕) are round glyphs, each one's word under it while it is
 selected. On the right, the
 episode's picture, with how far you got and the time left. The selection starts on *Watch* or *Resume*;
 play/pause on the remote does the same.

@@ -43,8 +43,10 @@
   const LAYER_CLASS = "tenfoot-home";
   // The glyphs a hero's buttons can carry (24 × 24, lib/common.js svgIcon).
   const GLYPHS = Object.freeze({
-    check: { d: "M5 12.5l4.5 4.5L19 7" },
-    plus: { d: "M12 5v14M5 12h14" },
+    // My List: the rail's bookmark, an outline when not on the list, filled
+    // in (as well as outlined, so it is the same size) when it is.
+    bookmark: { d: globalThis.TenfootCommon.BOOKMARK_PATH, stroke: 2.5 },
+    bookmarked: { d: globalThis.TenfootCommon.BOOKMARK_PATH, stroke: 2.5, solid: true },
     play: { d: "M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.4-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z", fill: true },
     restart: { d: ["M4.5 12a7.5 7.5 0 1 0 2.2-5.3", "M4.5 3.5v4h4"], stroke: 2.5 },
     episodes: { d: ["M9 6.5h11", "M9 12h11", "M9 17.5h11", "M4.5 6.5h.01", "M4.5 12h.01", "M4.5 17.5h.01"], stroke: 2.5 },
@@ -299,26 +301,30 @@
         node.classList.toggle("tenfoot-hero-primary", Boolean(a.primary));
         setAttr(node, "data-tenfoot-danger", a.danger ? "true" : null);
         setAttr(node, "aria-disabled", a.disabled ? "true" : null);
-        const gname = a.glyph || (typeof a.listed === "boolean" ? (a.listed ? "check" : "plus") : "");
-        // A glyph-only button (an episode's Start Over, Episodes, Clear
-        // Progress): round, its words under it while it is selected
-        // (content/home.css); its name is still the words.
-        setAttr(node, "data-tenfoot-icon", a.iconOnly && GLYPHS[gname] ? "true" : null);
+        const isList = typeof a.listed === "boolean";
+        const gname = a.glyph || (isList ? (a.listed ? "bookmarked" : "bookmark") : "");
+        // A glyph-only button (My List, an episode's Start Over, Episodes,
+        // Clear Progress): round, its words under it while it is selected
+        // (content/home.css); its name is still the words. My List's words
+        // say what pressing it does: Add to My List, Remove from My List.
+        const iconOnly = Boolean(a.iconOnly || isList) && Boolean(GLYPHS[gname]);
+        setAttr(node, "data-tenfoot-icon", iconOnly ? "true" : null);
         if (gname && GLYPHS[gname]) {
-          // My List, Watch, a Saved: a drawn glyph, then the words. The glyph
-          // is redrawn only when it changes, so the element keeps focus.
+          // A drawn glyph, then the words. The glyph is redrawn only when it
+          // changes, so the element keeps focus.
           let word = node.querySelector(".tenfoot-hero-word");
           if (!word) {
             node.textContent = "";
             word = el("span", "tenfoot-hero-word");
             node.appendChild(word);
           }
-          setText(word, a.label);
+          setText(word, iconOnly ? a.ariaLabel || a.label : a.label);
           const want = gname;
           const glyph = node.querySelector(".tenfoot-hero-glyph");
           if (!glyph || glyph.dataset.glyph !== want) {
             if (glyph) glyph.remove();
             const g = Common.svgIcon(doc, GLYPHS[want].d, GLYPHS[want].fill ? { fill: true } : { strokeWidth: GLYPHS[want].stroke || 3 });
+            if (GLYPHS[want].solid) g.setAttribute("fill", "currentColor");
             g.setAttribute("class", "tenfoot-hero-glyph");
             g.dataset.glyph = want;
             node.insertBefore(g, word);
